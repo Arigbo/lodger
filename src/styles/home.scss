@@ -1,8 +1,8 @@
 .home-page {
-    margin: 4rem 4rem 0rem 4rem;
+    // margin: 4rem 4rem 0rem 4rem;
     width: auto;
     // background-color: grey;
-    padding: 4rem 0rem 0rem 0rem;
+    padding: 4rem 4rem 0rem 4rem;
     font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
 
 
@@ -16,6 +16,8 @@
                 grid-template-columns: 0.5fr 1.5fr;
             }
 
+            .line {}
+
             &-right {
                 h1 {
 
@@ -27,19 +29,47 @@
                     margin: 0;
                     padding-block: 0;
 
-                    :nth-child(2) {
-                        text-decoration: underline;
-                    }
+
 
                     span {
                         color: $danger;
                         margin: 0;
                         padding: 0;
+
+                    }
+
+                }
+                &-line {
+                    border-bottom: 1px solid $danger;
+                    width: 2.5rem;
+                    margin: 2.5rem 0rem 1rem 0rem;
+                }
+
+                &-social {
+                    margin: 0rem 0rem 2rem 0.5rem;
+
+                    &-top,
+                    &-bottom {
+                        display: flex;
+
+                        :first-child {
+                            border-right: 1px solid;
+                            padding-right: 0.5rem;
+                            margin-right: 0.5rem;
+
+                        }
+
+                        h4 {
+                            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+                            font-size: 1rem;
+                            font-weight: 900;
+                        }
                     }
                 }
 
                 button {
                     margin-top: 1rem;
+                    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif, monospace;
 
                     &:hover {
                         background-color: $danger;

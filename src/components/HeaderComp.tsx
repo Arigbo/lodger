@@ -8,7 +8,7 @@ export const navList = [
 	{ name: "About", link: "/about", title: "About_me", },
 	{ name: "Portfolio", link: "/service", title: "Services_i_offer", },
 	{ name: "Blog", link: "/service", title: "Services_i_offer", },
-	{ name: "Services", link: "/services", title: "Services_i_offer", },
+	{ name: "Services", link: "/service", title: "Services_i_offer", },
 	{ name: "Contact", link: "/service", title: "Services_i_offer", },
 ];
 export const navListIcon = [
