@@ -5,16 +5,33 @@
 
 html {
   font-size: 14px;
+  margin: 0;
+  padding: 0;
+  body {
+    margin: 0;
+    padding: 0;
+main{
+  margin: 0;
+  padding: 0;
+  .app {
+    &-inner {
+      font-family: sans-serif;
+      background-color: whitesmoke;
 
+      &.change {
+        background-color: black;
+        .header-nav,.header{
+          background-color: black;
+        }
+        h1,h2,h3,h4,h5,h6,p,i {
+          color: white;
+        }
+      }
+    }
+  }
+}
+  }
   @media screen and (min-width:768px) {
     font-size: 18px;
   }
 }
-
-body {
-  font-family: sans-serif;
-  background-color: whitesmoke;
-
-}
-
-

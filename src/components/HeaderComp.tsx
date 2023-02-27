@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-
 export const navList = [
 	{ name: "Home", link: "/", title: "Home", },
 	{ name: "About", link: "/about", title: "About_me", },
@@ -20,7 +19,7 @@ export const navListIcon = [
 	{ name: <i className="fa-brands fa-linkedin"></i>, link: "/linkedin.com", title: "Services_i_offer", },
 ];
 
-const HeaderComp = () => {
+const HeaderComp:React.FC<{ children: any }> = () => {
 	const router = useRouter();
 
 	const [navDisplay, setNavDisplay] = useState(false);
@@ -97,9 +96,9 @@ const HeaderComp = () => {
 						</div>
 						<div className="header-nav-mobile-nav-bars">
 							{navDisplay ? (
-								<i className="fa-solid fa-x c-pointer " onClick={hideNavHandler}> </i>
+								<i className="fa-solid fa-x fa-red c-pointer" title="Close"  onClick={hideNavHandler}></i>
 							) : (
-								<i className="fa-solid fa-hamburger c-pointer" onClick={showNavHandler}> </i>
+								<i className="fa-solid fa-hamburger c-pointer" title="Menu" onClick={showNavHandler}> </i>
 							)}
 						</div>
 					</div>
