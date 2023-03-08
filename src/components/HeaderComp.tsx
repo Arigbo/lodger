@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 export const navList = [
 	{ name: "Home", link: "/", title: "Home", },
-	{ name: "About", link: "/about", title: "About_me", },
+	{ name: "Portfolio", link: "/portfolio", title: "POrtfolio", },
 	{ name: "Portfolio", link: "/service", title: "Services_i_offer", },
-	{ name: "Blog", link: "/service", title: "Services_i_offer", },
+	{ name: "Blog", link: "/about", title: "Services_i_offer", },
 	{ name: "Services", link: "/service", title: "Services_i_offer", },
 	{ name: "Contact", link: "/service", title: "Services_i_offer", },
 ];
@@ -19,7 +19,7 @@ export const navListIcon = [
 	{ name: <i className="fa-brands fa-linkedin"></i>, link: "/linkedin.com", title: "Services_i_offer", },
 ];
 
-const HeaderComp:React.FC<{ children: any }> = () => {
+const HeaderComp = () => {
 	const router = useRouter();
 
 	const [navDisplay, setNavDisplay] = useState(false);
@@ -47,7 +47,7 @@ const HeaderComp:React.FC<{ children: any }> = () => {
 						<div className="header-nav-inner-desktop-menu">
 							{navList.map((item) => {
 								return (
-									<div key={item.name} className="app-nav-inner-desktop-menu-inner">
+									<div key={item.name} className="header-nav-inner-desktop-menu-inner">
 										<ul>
 											<li><a className={router.pathname == `${item.link}` ? "active" : ""} href={item.link} title={item.title}><h1>{item.name}<span>.</span></h1></a></li>
 										</ul>

@@ -5,7 +5,9 @@ import Link from "next/link";
 const FooterComp = () => {
 	return (
 		<footer className="footer container" >
-		<h1>FOOTER</h1>
+			<div className="footer-header">
+				<h1>Contact Us</h1>
+			</div>
 		</footer>
 	);
 };

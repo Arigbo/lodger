@@ -253,14 +253,15 @@ const Services = () => {
                             </div>
                         </section>
                         <section className="services-second-section">
-                            <div className="services-second-section-inner">
-                                <div className="services-second-section-inner-header">
-                                    <div className="services-second-section-inner-header mobile">
+                            <div className="portfolio-page-collection">
+                                <div className="portfolio-page-collection-header">
+                                    {/* MOBILE VIEW */}
+                                    <div className="portfolio-page-collection-header mobile">
 
-                                        <div className="services-second-section-inner-header-inner">
+                                        <div className="portfolio-page-collection-header-inner">
                                             {/* First-single-services */}
-                                            <div className={`services-second-section-inner-header-inner-inner ${singleServicesDisplay ? "" : "active"}`}>
-                                                <div className={"services-second-section-inner-header-inner-top"}>
+                                            <div className={`portfolio-page-collection-header-inner-inner ${singleServicesDisplay ? "" : "active"}`}>
+                                                <div className={"portfolio-page-collection-header-inner-top"}>
 
                                                     {singleServicesDisplay ? (
                                                         <div className="c-pointer" onClick={showSingleServicesHandler}>
@@ -275,18 +276,18 @@ const Services = () => {
                                                     )}
 
                                                 </div>
-                                                <div className={`services-second-section_single-section  ${singleServicesDisplay ? "" : "show"}`}>
-                                                    <div className="services-second-section_single-section-inner ">
-                                                        <div className="services-second-section_single-section-inner-image upper">
+                                                <div className={`portfolio-page-collection-single-section  ${singleServicesDisplay ? "" : "show"}`}>
+                                                    <div className="portfolio-page-collection-single-section-inner ">
+                                                        <div className="portfolio-page-collection-single-section-inner-image upper">
                                                             <img src="./images/field1.png" alt="" />
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text">
-                                                            <div className="services-second-section_single-section-inner-text_header">
+                                                        <div className="portfolio-page-collection-single-section-inner-text">
+                                                            <div className="portfolio-page-collection-single-section-inner-text_header">
                                                                 <h1>{"Active & Passive Fire Proofing"}</h1>
                                                             </div>
-                                                            <div className="services-second-section_single-section-inner-text-body">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body">
                                                                 <p>{"Ralonick Services Limited is a professional fire proofing company, offering customer a one stop shop for all their fire proofing needs be it passive or active fire proofing. Passive fire proofing is a vital component of a strategy into the structure of building to safeguard peoples life and limit financial impact of damage to building and their content."}</p>
-                                                                <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                                <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                     <h6>{"Application were fire proofing would be necessary are:"}</h6>
                                                                     <ul>
                                                                         <li>Building</li>
@@ -303,7 +304,7 @@ const Services = () => {
 
                                                             </div>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-image lower container">
+                                                        <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                             <img src="./images/mffp1.png" alt="" />
                                                             <img src="./images/mffp1.png" alt="" />
                                                             <img src="./images/mffp1.png" alt="" />
@@ -312,8 +313,8 @@ const Services = () => {
                                                 </div>
                                             </div>
                                             {/* Second-single-services */}
-                                            <div className={`services-second-section-inner-header-inner-inner ${singleServicesSecondDisplay ? "active" : ""}`}>
-                                                <div className={"services-second-section-inner-header-inner-top"}>
+                                            <div className={`portfolio-page-collection-header-inner-inner ${singleServicesSecondDisplay ? "active" : ""}`}>
+                                                <div className={"portfolio-page-collection-header-inner-top"}>
 
                                                     {singleServicesSecondDisplay ? (
                                                         <div className="c-pointer" onClick={returnSingleServicesSecondHandler}>
@@ -330,21 +331,21 @@ const Services = () => {
                                                     )}
 
                                                 </div>
-                                                <div className={`services-second-section_single-section  ${singleServicesSecondDisplay ? "show" : ""}`}>
-                                                    <div className="services-second-section_single-section-inner ">
-                                                        <div className="services-second-section_single-section-inner-image upper">
+                                                <div className={`portfolio-page-collection-single-section  ${singleServicesSecondDisplay ? "show" : ""}`}>
+                                                    <div className="portfolio-page-collection-single-section-inner ">
+                                                        <div className="portfolio-page-collection-single-section-inner-image upper">
                                                             <img src="./images/field1.png" alt="" />
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text">
-                                                            <div className="services-second-section_single-section-inner-text_header">
+                                                        <div className="portfolio-page-collection-single-section-inner-text">
+                                                            <div className="portfolio-page-collection-single-section-inner-text_header">
                                                                 <h1>{"FIELD JOINT COATING SERVICES"}</h1>
                                                             </div>
-                                                            <div className="services-second-section_single-section-inner-text-body">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body">
                                                                 <p>{"We specialised in typical field joint coating that includes liquid applied materials such as exoxies, Urethanes epoxy/urethanes heat shrinkable sleeves or sometimes fusion bonded epoxy among other materials."}</p>
                                                                 <p>{"Field joint coating services involves the coating of girth weld produce on board the pipe-laying vessels or at any offshore location. Ralonick Services carries out the engineering design and fabrication of customized field joint coating equipment. "}</p>
                                                             </div>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-image lower container">
+                                                        <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
@@ -354,8 +355,8 @@ const Services = () => {
                                             </div>
 
                                             {/* Third-single-services */}
-                                            <div className={`services-second-section-inner-header-inner-inner ${singleServicesThirdDisplay ? "active" : ""}`}>
-                                                <div className="services-second-section-inner-header-inner-top">
+                                            <div className={`portfolio-page-collection-header-inner-inner ${singleServicesThirdDisplay ? "active" : ""}`}>
+                                                <div className="portfolio-page-collection-header-inner-top">
                                                     {singleServicesThirdDisplay ? (
                                                         <div className="c-pointer " onClick={returnSingleServicesThirdHandler} >
                                                             <h1>{"GLASSFIBER REINFORCED EPOXY & POLYESTER PIPE SYSTEM"}</h1>
@@ -370,18 +371,18 @@ const Services = () => {
 
                                                     )}
                                                 </div>
-                                                <div className={`services-second-section_single-section  ${singleServicesThirdDisplay ? "show" : ""}`}>
-                                                    <div className="services-second-section_single-section-inner ">
-                                                        <div className="services-second-section_single-section-inner-image upper">
+                                                <div className={`portfolio-page-collection-single-section  ${singleServicesThirdDisplay ? "show" : ""}`}>
+                                                    <div className="portfolio-page-collection-single-section-inner ">
+                                                        <div className="portfolio-page-collection-single-section-inner-image upper">
                                                             <img src="./images/field1.png" alt="" />
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text">
-                                                            <div className="services-second-section_single-section-inner-text_header">
+                                                        <div className="portfolio-page-collection-single-section-inner-text">
+                                                            <div className="portfolio-page-collection-single-section-inner-text_header">
                                                                 <h1>{"GLASSFIBER REINFORCED EPOXY (GRE) & POLYESTER (GRP) PIPE SYSTEM"}</h1>
                                                             </div>
-                                                            <div className="services-second-section_single-section-inner-text-body">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body">
                                                                 <p>{"Ralonick Service Limited offer solutions for Glass reinforced Epoxy pipes GRP & FRP) in the upstream, downstream of the Oil and gas, refinery,Petrochemical, power plant and other industries. We procure, fabricate andinstall glass reinforcement epoxy pipes as per below application:"}</p>
-                                                                <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                                <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                     <h6>Application:</h6>
                                                                     <ul>
                                                                         <li>Flow and crude oil line</li>
@@ -395,7 +396,7 @@ const Services = () => {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-image lower container">
+                                                        <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
@@ -406,8 +407,8 @@ const Services = () => {
 
 
                                             {/* Fourth-single-services */}
-                                            <div className={`services-second-section-inner-header-inner-inner ${singleServicesFourthDisplay ? "active" : ""}`}>
-                                                <div className="services-second-section-inner-header-inner-top">
+                                            <div className={`portfolio-page-collection-header-inner-inner ${singleServicesFourthDisplay ? "active" : ""}`}>
+                                                <div className="portfolio-page-collection-header-inner-top">
                                                     {singleServicesFourthDisplay ? (
                                                         <div className="c-pointer " onClick={returnSingleServicesFourthHandler}>
                                                             <h1>{"HIGH DENSITY POLYTHENE PIPE"}</h1>
@@ -422,18 +423,18 @@ const Services = () => {
 
                                                     )}
                                                 </div>
-                                                <div className={`services-second-section_single-section  ${singleServicesFourthDisplay ? "show" : ""}`}>
-                                                    <div className="services-second-section_single-section-inner ">
-                                                        <div className="services-second-section_single-section-inner-image upper">
+                                                <div className={`portfolio-page-collection-single-section  ${singleServicesFourthDisplay ? "show" : ""}`}>
+                                                    <div className="portfolio-page-collection-single-section-inner ">
+                                                        <div className="portfolio-page-collection-single-section-inner-image upper">
                                                             <img src="./images/field1.png" alt="" />
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text">
-                                                            <div className="services-second-section_single-section-inner-text_header">
+                                                        <div className="portfolio-page-collection-single-section-inner-text">
+                                                            <div className="portfolio-page-collection-single-section-inner-text_header">
                                                                 <h1>{"HIGH DENSITY POLYTHENE PIPE (HDPE)"}</h1>
                                                             </div>
-                                                            <div className="services-second-section_single-section-inner-text-body">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body">
                                                                 <p>{"Ralonick Service Limited offer solutions for Glass reinforced Epoxy pipes GRP & FRP) in the upstream, downstream of the Oil and gas, refinery,Petrochemical, power plant and other industries. We procure, fabricate andinstall glass reinforcement epoxy pipes as per below application:"}</p>
-                                                                <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                                <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                     <h6>Application:</h6>
                                                                     <ul>
                                                                         <li>Portable water</li>
@@ -443,7 +444,7 @@ const Services = () => {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-image lower container">
+                                                        <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
@@ -453,8 +454,8 @@ const Services = () => {
                                             </div>
 
                                             {/* Fifth-single-services */}
-                                            <div className={`services-second-section-inner-header-inner-inner ${singleServicesFifthDisplay ? "active" : ""}`}>
-                                                <div className="services-second-section-inner-header-inner-top">
+                                            <div className={`portfolio-page-collection-header-inner-inner ${singleServicesFifthDisplay ? "active" : ""}`}>
+                                                <div className="portfolio-page-collection-header-inner-top">
                                                     {singleServicesFifthDisplay ? (
                                                         <div className="c-pointer " onClick={returnSingleServicesFifthHandler}>
                                                             <h1>{"POLYPROPYLENE RANDOM PIPES"}</h1>
@@ -469,18 +470,18 @@ const Services = () => {
 
                                                     )}
                                                 </div>
-                                                <div className={`services-second-section_single-section  ${singleServicesFifthDisplay ? "show" : ""}`}>
-                                                    <div className="services-second-section_single-section-inner ">
-                                                        <div className="services-second-section_single-section-inner-image upper">
+                                                <div className={`portfolio-page-collection-single-section  ${singleServicesFifthDisplay ? "show" : ""}`}>
+                                                    <div className="portfolio-page-collection-single-section-inner ">
+                                                        <div className="portfolio-page-collection-single-section-inner-image upper">
                                                             <img src="./images/field1.png" alt="" />
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text">
-                                                            <div className="services-second-section_single-section-inner-text_header">
+                                                        <div className="portfolio-page-collection-single-section-inner-text">
+                                                            <div className="portfolio-page-collection-single-section-inner-text_header">
                                                                 <h1>{"POLYPROPYLENE RANDOM PIPES (PPR)"}</h1>
                                                             </div>
-                                                            <div className="services-second-section_single-section-inner-text-body">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body">
                                                                 <p>{"Ralonick Service Limited Polypropylene (PP- R) Pipes for the offshore and onshore of the oil and gas, food and beverage processing, heating & cooling, potable water, compressed air, fire protection, gray water and other industrial applications."}</p>
-                                                                <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                                <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                     <h6>Our PP-R Pipe Services cover the following Applications:</h6>
                                                                     <ul>
                                                                         <li>Portable water</li>
@@ -494,7 +495,7 @@ const Services = () => {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-image lower container">
+                                                        <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
@@ -504,8 +505,8 @@ const Services = () => {
                                             </div>
 
                                             {/* Sixth-single-services */}
-                                            <div className={`services-second-section-inner-header-inner-inner ${singleServicesSixthDisplay ? "active" : ""}`}>
-                                                <div className="services-second-section-inner-header-inner-top">
+                                            <div className={`portfolio-page-collection-header-inner-inner ${singleServicesSixthDisplay ? "active" : ""}`}>
+                                                <div className="portfolio-page-collection-header-inner-top">
                                                     {singleServicesSixthDisplay ? (
                                                         <div className="c-pointer " onClick={returnSingleServicesSixthHandler}>
                                                             <h1>{"PROCUREMENT & INSTALLATION OF FRP/GRP PRODUCTS"}</h1>
@@ -520,19 +521,19 @@ const Services = () => {
 
                                                     )}
                                                 </div>
-                                                <div className={`services-second-section_single-section  ${singleServicesSixthDisplay ? "show" : ""}`}>
-                                                    <div className="services-second-section_single-section-inner ">
-                                                        <div className="services-second-section_single-section-inner-image upper">
+                                                <div className={`portfolio-page-collection-single-section  ${singleServicesSixthDisplay ? "show" : ""}`}>
+                                                    <div className="portfolio-page-collection-single-section-inner ">
+                                                        <div className="portfolio-page-collection-single-section-inner-image upper">
                                                             <img src="./images/field1.png" alt="" />
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text">
-                                                            <div className="services-second-section_single-section-inner-text_header">
+                                                        <div className="portfolio-page-collection-single-section-inner-text">
+                                                            <div className="portfolio-page-collection-single-section-inner-text_header">
                                                                 <h1>{"PROCUREMENT AND INSTALLATION OF FRP/GRP PRODUCTS"}</h1>
                                                             </div>
-                                                            <div className="services-second-section_single-section-inner-text-body">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body">
                                                                 <p>{"Ralonick Service Limited provides procurement& installation of FRP/GRP product.We services, supply and installs all kinds of FRP/GRP products for upstream and downstream oil & gas refinery petrochemical and otherindustrial application."}</p>
                                                                 <p>{"Our partnership with our foreign partner AOCOMM Composite Limited amajor manufacturers of FRP and GRP products, we secure leadership in thearea of Technical support, Engineering, Procurementand Maintenanceservices"}</p>
-                                                                <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                                <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                     <h6>Products:</h6>
                                                                     <ul>
                                                                         <li>FRP Handrails</li>
@@ -552,8 +553,8 @@ const Services = () => {
                                             </div>
 
                                             {/* Seventh-single-services */}
-                                            <div className={`services-second-section-inner-header-inner-inner ${singleServicesSeventhDisplay ? "active" : ""}`}>
-                                                <div className="services-second-section-inner-header-inner-top">
+                                            <div className={`portfolio-page-collection-header-inner-inner ${singleServicesSeventhDisplay ? "active" : ""}`}>
+                                                <div className="portfolio-page-collection-header-inner-top">
                                                     {singleServicesSeventhDisplay ? (
                                                         <div className="c-pointer " onClick={returnSingleServicesSeventhHandler}>
                                                             <h1>{"STEEL STRUCTURES AND PIPES FABRICATION & INSTALLATION"}</h1>
@@ -568,18 +569,18 @@ const Services = () => {
 
                                                     )}
                                                 </div>
-                                                <div className={`services-second-section_single-section  ${singleServicesSeventhDisplay ? "show" : ""}`}>
-                                                    <div className="services-second-section_single-section-inner ">
-                                                        <div className="services-second-section_single-section-inner-image upper">
+                                                <div className={`portfolio-page-collection-single-section  ${singleServicesSeventhDisplay ? "show" : ""}`}>
+                                                    <div className="portfolio-page-collection-single-section-inner ">
+                                                        <div className="portfolio-page-collection-single-section-inner-image upper">
                                                             <img src="./images/field1.png" alt="" />
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text">
-                                                            <div className="services-second-section_single-section-inner-text_header">
+                                                        <div className="portfolio-page-collection-single-section-inner-text">
+                                                            <div className="portfolio-page-collection-single-section-inner-text_header">
                                                                 <h1>{"STEEL STRUCTURES AND PIPES FABRICATION & INSTALLATION"}</h1>
                                                             </div>
-                                                            <div className="services-second-section_single-section-inner-text-body">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body">
                                                                 <p>{"Ralonick Service Limited provides Steel structures and pipes fabrication & installation with expertise in construction capabilities and project management. Ralonick delivers solutions by providing competent personnel that has the knowledge in all kinds of fabrication and installation works."}</p>
-                                                                <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                                <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                     <h6>PIPING AND STRUCTURAL FABRICATION SERVICES:</h6>
                                                                     <ul>
                                                                         <li>Pig Launcher fabrication</li>
@@ -593,7 +594,7 @@ const Services = () => {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-image lower container">
+                                                        <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
@@ -604,8 +605,8 @@ const Services = () => {
                                             </div>
 
                                             {/* Eigth-single-services */}
-                                            <div className={`services-second-section-inner-header-inner-inner ${singleServicesEigthDisplay ? "active" : ""}`}>
-                                                <div className="services-second-section-inner-header-inner-top">
+                                            <div className={`portfolio-page-collection-header-inner-inner ${singleServicesEigthDisplay ? "active" : ""}`}>
+                                                <div className="portfolio-page-collection-header-inner-top">
                                                     {singleServicesEigthDisplay ? (
                                                         <div className="c-pointer " onClick={returnSingleServicesEigthHandler}>
                                                             <h1>{"PIPELINE CONSTRUCTION & REPAIR SERVICES"}</h1>
@@ -620,18 +621,18 @@ const Services = () => {
 
                                                     )}
                                                 </div>
-                                                <div className={`services-second-section_single-section  ${singleServicesEigthDisplay ? "show" : ""}`}>
-                                                    <div className="services-second-section_single-section-inner ">
-                                                        <div className="services-second-section_single-section-inner-image upper">
+                                                <div className={`portfolio-page-collection-single-section  ${singleServicesEigthDisplay ? "show" : ""}`}>
+                                                    <div className="portfolio-page-collection-single-section-inner ">
+                                                        <div className="portfolio-page-collection-single-section-inner-image upper">
                                                             <img src="./images/field1.png" alt="" />
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text">
-                                                            <div className="services-second-section_single-section-inner-text_header">
+                                                        <div className="portfolio-page-collection-single-section-inner-text">
+                                                            <div className="portfolio-page-collection-single-section-inner-text_header">
                                                                 <h1>{"PIPELINE CONSTRUCTION & REPAIR SERVICES"}</h1>
                                                             </div>
-                                                            <div className="services-second-section_single-section-inner-text-body">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body">
                                                                 <p>{"Ralonick Service Limited provides Steel structures and pipes fabrication & installation with expertise in construction capabilitie an project managemen"}</p>
-                                                                <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                                <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                     <h6>Ralonick delivers solutions by providing values for our customers through:</h6>
                                                                     <ul>
                                                                         <li>Increased efficiency and production</li>
@@ -658,8 +659,8 @@ const Services = () => {
                                             </div>
 
                                             {/* Ninth-single-services */}
-                                            <div className={`services-second-section-inner-header-inner-inner ${singleServicesNinthDisplay ? "active" : ""}`}>
-                                                <div className="services-second-section-inner-header-inner-top">
+                                            <div className={`portfolio-page-collection-header-inner-inner ${singleServicesNinthDisplay ? "active" : ""}`}>
+                                                <div className="portfolio-page-collection-header-inner-top">
                                                     {singleServicesNinthDisplay ? (
                                                         <div className="c-pointer " onClick={returnSingleServicesNinthHandler}>
                                                             <h1>{"INSULATION SERVICES"}</h1>
@@ -674,18 +675,18 @@ const Services = () => {
 
                                                     )}
                                                 </div>
-                                                <div className={`services-second-section_single-section  ${singleServicesNinthDisplay ? "show" : ""}`}>
-                                                    <div className="services-second-section_single-section-inner ">
-                                                        <div className="services-second-section_single-section-inner-image upper">
+                                                <div className={`portfolio-page-collection-single-section  ${singleServicesNinthDisplay ? "show" : ""}`}>
+                                                    <div className="portfolio-page-collection-single-section-inner ">
+                                                        <div className="portfolio-page-collection-single-section-inner-image upper">
                                                             <img src="./images/field1.png" alt="" />
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text">
-                                                            <div className="services-second-section_single-section-inner-text_header">
+                                                        <div className="portfolio-page-collection-single-section-inner-text">
+                                                            <div className="portfolio-page-collection-single-section-inner-text_header">
                                                                 <h1>{"INSULATION SERVICES"}</h1>
                                                             </div>
-                                                            <div className="services-second-section_single-section-inner-text-body">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body">
                                                                 <p>{"Ralonick Service Limited Offer a complete range of advanced insulation solutions for the oil and gas and food and beverages industries. Our products range covers various insulation requirements for piping and equipment systems, and insulation  of subsea systems. Or uproducts range meets demanding NORSOK requirement and suited for tough environmental conditions."}</p>
-                                                                <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                                <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                     <h6>OUR INSULATION SERVICES COVERS:</h6>
                                                                     <h2>Acoustic insulation</h2>
                                                                     <ul>
@@ -711,7 +712,7 @@ const Services = () => {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-image lower container">
+                                                        <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
@@ -722,8 +723,8 @@ const Services = () => {
                                             </div>
 
                                             {/* Tenth-single-services */}
-                                            <div className={`services-second-section-inner-header-inner-inner ${singleServicesTenthDisplay ? "active" : ""}`}>
-                                                <div className="services-second-section-inner-header-inner-top">
+                                            <div className={`portfolio-page-collection-header-inner-inner ${singleServicesTenthDisplay ? "active" : ""}`}>
+                                                <div className="portfolio-page-collection-header-inner-top">
                                                     {singleServicesTenthDisplay ? (
                                                         <div className="c-pointer " onClick={returnSingleServicesTenthHandler}>
                                                             <h1>{"SCAFFOLDING SERVICES"}</h1>
@@ -738,23 +739,23 @@ const Services = () => {
 
                                                     )}
                                                 </div>
-                                                <div className={`services-second-section_single-section  ${singleServicesTenthDisplay ? "show" : ""}`}>
-                                                    <div className="services-second-section_single-section-inner ">
-                                                        <div className="services-second-section_single-section-inner-image upper">
+                                                <div className={`portfolio-page-collection-single-section  ${singleServicesTenthDisplay ? "show" : ""}`}>
+                                                    <div className="portfolio-page-collection-single-section-inner ">
+                                                        <div className="portfolio-page-collection-single-section-inner-image upper">
                                                             <img src="./images/field1.png" alt="" />
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text">
-                                                            <div className="services-second-section_single-section-inner-text_header">
+                                                        <div className="portfolio-page-collection-single-section-inner-text">
+                                                            <div className="portfolio-page-collection-single-section-inner-text_header">
                                                                 <h1>{"SCAFFOLDING SERVICES"}</h1>
                                                             </div>
-                                                            <div className="services-second-section_single-section-inner-text-body">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body">
                                                                 <p>{"Ralonick Service Limited provides specialist scaffolding services to the offshore and onshore of the Oil and Gas, refinery, petrochemical, chemical and for other industrial applications."}</p>
                                                                 <p>{"Our skilled workforces are known for competency and strict adherenceto safety"}</p>
                                                                 <p>{"At Ralonick Service Limited, we believe in continually improving skill of all scaffold erectors. All our scaffold workers are certified and fully trained in every area of health and safety."}</p>
 
                                                             </div>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-image lower container">
+                                                        <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
@@ -765,8 +766,8 @@ const Services = () => {
                                             </div>
 
                                             {/* Eleventh-single-services */}
-                                            <div className={`services-second-section-inner-header-inner-inner ${singleServicesEleventhDisplay ? "active" : ""}`}>
-                                                <div className="services-second-section-inner-header-inner-top">
+                                            <div className={`portfolio-page-collection-header-inner-inner ${singleServicesEleventhDisplay ? "active" : ""}`}>
+                                                <div className="portfolio-page-collection-header-inner-top">
                                                     {singleServicesEleventhDisplay ? (
                                                         <div className="c-pointer " onClick={returnSingleServicesEleventhHandler}>
                                                             <h1>{"PROVISION OF WELDING HABITAT SERVICES"}</h1>
@@ -781,20 +782,20 @@ const Services = () => {
 
                                                     )}
                                                 </div>
-                                                <div className={`services-second-section_single-section  ${singleServicesEleventhDisplay ? "show" : ""}`}>
-                                                    <div className="services-second-section_single-section-inner ">
-                                                        <div className="services-second-section_single-section-inner-image upper">
+                                                <div className={`portfolio-page-collection-single-section  ${singleServicesEleventhDisplay ? "show" : ""}`}>
+                                                    <div className="portfolio-page-collection-single-section-inner ">
+                                                        <div className="portfolio-page-collection-single-section-inner-image upper">
                                                             <img src="./images/field1.png" alt="" />
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text">
-                                                            <div className="services-second-section_single-section-inner-text_header">
+                                                        <div className="portfolio-page-collection-single-section-inner-text">
+                                                            <div className="portfolio-page-collection-single-section-inner-text_header">
                                                                 <h1>{"PROVISION OF WELDING HABITAT SERVICES"}</h1>
                                                             </div>
-                                                            <div className="services-second-section_single-section-inner-text-body">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body">
                                                                 <p>{"Ralonick Service Limited provides welding habitats services in order to provide safe enclosure for welders to carry out repairs or replacement of process pipe work and equipment, removal and replacement of deck plates hands rails , walkways, vessel internal and external nozzle repairs, crane boom structural repairs and refurbishment, housing of non IS equipment, riser and caisson installation and applying specialist coatings or removing insulations which requires temperature controlled enclosures and as required in other application which requires temperature controlled enclosures and as required in other application"}</p>
                                                             </div>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-image lower container">
+                                                        <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
                                                             <img src="./images/field2.jpg" alt="" />
@@ -806,11 +807,11 @@ const Services = () => {
 
                                         </div>
                                     </div>
-                                    <div className="services-second-section-inner-header desktop">
+                                    <div className="portfolio-page-collection-header desktop">
 
-                                        <div className="services-second-section-inner-header-inner">
+                                        <div className="portfolio-page-collection-header-inner">
                                             {/* First-single-services */}
-                                            <div className={"services-second-section-inner-header-inner-top"}>
+                                            <div className={"portfolio-page-collection-header-inner-top"}>
 
                                                 {singleServicesDisplay ? (
                                                     <div className="c-pointer" onClick={showSingleServicesHandler}>
@@ -825,7 +826,7 @@ const Services = () => {
                                                 )}
                                             </div>
                                             {/* Second-single-services */}
-                                            <div className={"services-second-section-inner-header-inner-top"}>
+                                            <div className={"portfolio-page-collection-header-inner-top"}>
 
                                                 {singleServicesSecondDisplay ? (
                                                     <div className={`c-pointer ${singleServicesSecondDisplay ? "active" : "div"}`} onClick={returnSingleServicesSecondHandler}>
@@ -843,7 +844,7 @@ const Services = () => {
 
                                             </div>
                                             {/* Third-single-services */}
-                                            <div className="services-second-section-inner-header-inner-top">
+                                            <div className="portfolio-page-collection-header-inner-top">
                                                 {singleServicesThirdDisplay ? (
                                                     <div className={`c-pointer ${singleServicesThirdDisplay ? "active" : "div"}`} onClick={returnSingleServicesThirdHandler} >
                                                         <h1>{"GLASSFIBER REINFORCED EPOXY & POLYESTER PIPE SYSTEM"}</h1>
@@ -859,7 +860,7 @@ const Services = () => {
                                                 )}
                                             </div>
                                             {/* Fourth-single-services */}
-                                            <div className="services-second-section-inner-header-inner-top">
+                                            <div className="portfolio-page-collection-header-inner-top">
                                                 {singleServicesFourthDisplay ? (
                                                     <div className={`c-pointer ${singleServicesFourthDisplay ? "active" : "div"}`} onClick={returnSingleServicesFourthHandler}>
                                                         <h1>{"HIGH DENSITY POLYTHENE PIPE"}</h1>
@@ -875,7 +876,7 @@ const Services = () => {
                                                 )}
                                             </div>
                                             {/* Fifth-single-services */}
-                                            <div className="services-second-section-inner-header-inner-top">
+                                            <div className="portfolio-page-collection-header-inner-top">
                                                 {singleServicesFifthDisplay ? (
                                                     <div className={`c-pointer ${singleServicesFifthDisplay ? "active" : "div"}`} onClick={returnSingleServicesFifthHandler}>
                                                         <h1>{"POLYPROPYLENE RANDOM PIPES"}</h1>
@@ -891,7 +892,7 @@ const Services = () => {
                                                 )}
                                             </div>
                                             {/* Sixth-single-services */}
-                                            <div className="services-second-section-inner-header-inner-top">
+                                            <div className="portfolio-page-collection-header-inner-top">
                                                 {singleServicesSixthDisplay ? (
                                                     <div className={`c-pointer ${singleServicesSixthDisplay ? "active" : "div"}`} onClick={returnSingleServicesSixthHandler}>
                                                         <h1>{"PROCUREMENT & INSTALLATION OF FRP/GRP PRODUCTS"}</h1>
@@ -907,7 +908,7 @@ const Services = () => {
                                                 )}
                                             </div>
                                             {/* Seventh-single-services */}
-                                            <div className="services-second-section-inner-header-inner-top">
+                                            <div className="portfolio-page-collection-header-inner-top">
                                                 {singleServicesSeventhDisplay ? (
                                                     <div className={`c-pointer ${singleServicesSeventhDisplay ? "active" : "div"}`} onClick={returnSingleServicesSeventhHandler}>
                                                         <h1>{"STEEL STRUCTURES AND PIPES FABRICATION & INSTALLATION"}</h1>
@@ -923,7 +924,7 @@ const Services = () => {
                                                 )}
                                             </div>
                                             {/* Eigth-single-services */}
-                                            <div className="services-second-section-inner-header-inner-top">
+                                            <div className="portfolio-page-collection-header-inner-top">
                                                 {singleServicesEigthDisplay ? (
                                                     <div className={`c-pointer ${singleServicesEigthDisplay ? "active" : "div"}`} onClick={returnSingleServicesEigthHandler}>
                                                         <h1>{"PIPELINE CONSTRUCTION & REPAIR SERVICES"}</h1>
@@ -939,7 +940,7 @@ const Services = () => {
                                                 )}
                                             </div>
                                             {/* Ninth-single-services */}
-                                            <div className="services-second-section-inner-header-inner-top">
+                                            <div className="portfolio-page-collection-header-inner-top">
                                                 {singleServicesNinthDisplay ? (
                                                     <div className={`c-pointer ${singleServicesNinthDisplay ? "active" : "div"}`} onClick={returnSingleServicesNinthHandler}>
                                                         <h1>{"INSULATION SERVICES"}</h1>
@@ -955,7 +956,7 @@ const Services = () => {
                                                 )}
                                             </div>
                                             {/* Tenth-single-services */}
-                                            <div className="services-second-section-inner-header-inner-top">
+                                            <div className="portfolio-page-collection-header-inner-top">
                                                 {singleServicesTenthDisplay ? (
                                                     <div className={`c-pointer ${singleServicesTenthDisplay ? "active" : "div"}`} onClick={returnSingleServicesTenthHandler}>
                                                         <h1>{"SCAFFOLDING SERVICES"}</h1>
@@ -971,7 +972,7 @@ const Services = () => {
                                                 )}
                                             </div>
                                             {/* Eleventh-single-services */}
-                                            <div className="services-second-section-inner-header-inner-top">
+                                            <div className="portfolio-page-collection-header-inner-top">
                                                 {singleServicesEleventhDisplay ? (
                                                     <div className={`c-pointer ${singleServicesEleventhDisplay ? "active" : "div"}`} onClick={returnSingleServicesEleventhHandler}>
                                                         <h1>{"PROVISION OF WELDING HABITAT SERVICES"}</h1>
@@ -987,19 +988,19 @@ const Services = () => {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="services-second-section-inner-single-section container">
-                                            <div className={`services-second-section_single-section  ${singleServicesDisplay ? "" : "show"}`}>
-                                                <div className="services-second-section_single-section-inner ">
-                                                    <div className="services-second-section_single-section-inner-image upper">
+                                        <div className="portfolio-page-collection-single-section container">
+                                            <div className={`portfolio-page-collection-single-section  ${singleServicesDisplay ? "" : "show"}`}>
+                                                <div className="portfolio-page-collection-single-section-inner ">
+                                                    <div className="portfolio-page-collection-single-section-inner-image upper">
                                                         <img src="./images/field1.png" alt="" />
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-text">
-                                                        <div className="services-second-section_single-section-inner-text_header">
+                                                    <div className="portfolio-page-collection-single-section-inner-text">
+                                                        <div className="portfolio-page-collection-single-section-inner-text_header">
                                                             <h1>{"Active & Passive Fire Proofing"}</h1>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text-body">
+                                                        <div className="portfolio-page-collection-single-section-inner-text-body">
                                                             <p>{"Ralonick Services Limited is a professional fire proofing company, offering customer a one stop shop for all their fire proofing needs be it passive or active fire proofing. Passive fire proofing is a vital component of a strategy into the structure of building to safeguard peoples life and limit financial impact of damage to building and their content."}</p>
-                                                            <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                 <h6>{"Application were fire proofing would be necessary are:"}</h6>
                                                                 <ul>
                                                                     <li>Building</li>
@@ -1016,46 +1017,46 @@ const Services = () => {
 
                                                         </div>
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-image lower container">
+                                                    <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                         <img src="./images/mffp1.png" alt="" />
                                                         <img src="./images/mffp1.png" alt="" />
                                                         <img src="./images/mffp1.png" alt="" />
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className={`services-second-section_single-section  ${singleServicesSecondDisplay ? "show" : ""}`}>
-                                                <div className="services-second-section_single-section-inner ">
-                                                    <div className="services-second-section_single-section-inner-image upper">
+                                            <div className={`portfolio-page-collection-single-section  ${singleServicesSecondDisplay ? "show" : ""}`}>
+                                                <div className="portfolio-page-collection-single-section-inner ">
+                                                    <div className="portfolio-page-collection-single-section-inner-image upper">
                                                         <img src="./images/field1.png" alt="" />
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-text">
-                                                        <div className="services-second-section_single-section-inner-text_header">
+                                                    <div className="portfolio-page-collection-single-section-inner-text">
+                                                        <div className="portfolio-page-collection-single-section-inner-text_header">
                                                             <h1>{"FIELD JOINT COATING SERVICES"}</h1>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text-body">
+                                                        <div className="portfolio-page-collection-single-section-inner-text-body">
                                                             <p>{"We specialised in typical field joint coating that includes liquid applied materials such as exoxies, Urethanes epoxy/urethanes heat shrinkable sleeves or sometimes fusion bonded epoxy among other materials."}</p>
                                                             <p>{"Field joint coating services involves the coating of girth weld produce on board the pipe-laying vessels or at any offshore location. Ralonick Services carries out the engineering design and fabrication of customized field joint coating equipment. "}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-image lower container">
+                                                    <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className={`services-second-section_single-section  ${singleServicesThirdDisplay ? "show" : ""}`}>
-                                                <div className="services-second-section_single-section-inner ">
-                                                    <div className="services-second-section_single-section-inner-image upper">
+                                            <div className={`portfolio-page-collection-single-section  ${singleServicesThirdDisplay ? "show" : ""}`}>
+                                                <div className="portfolio-page-collection-single-section-inner ">
+                                                    <div className="portfolio-page-collection-single-section-inner-image upper">
                                                         <img src="./images/field1.png" alt="" />
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-text">
-                                                        <div className="services-second-section_single-section-inner-text_header">
+                                                    <div className="portfolio-page-collection-single-section-inner-text">
+                                                        <div className="portfolio-page-collection-single-section-inner-text_header">
                                                             <h1>{"GLASSFIBER REINFORCED EPOXY (GRE) & POLYESTER (GRP) PIPE SYSTEM"}</h1>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text-body">
+                                                        <div className="portfolio-page-collection-single-section-inner-text-body">
                                                             <p>{"Ralonick Service Limited offer solutions for Glass reinforced Epoxy pipes GRP & FRP) in the upstream, downstream of the Oil and gas, refinery,Petrochemical, power plant and other industries. We procure, fabricate andinstall glass reinforcement epoxy pipes as per below application:"}</p>
-                                                            <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                 <h6>Application:</h6>
                                                                 <ul>
                                                                     <li>Flow and crude oil line</li>
@@ -1069,25 +1070,25 @@ const Services = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-image lower container">
+                                                    <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className={`services-second-section_single-section  ${singleServicesFourthDisplay ? "show" : ""}`}>
-                                                <div className="services-second-section_single-section-inner ">
-                                                    <div className="services-second-section_single-section-inner-image upper">
+                                            <div className={`portfolio-page-collection-single-section  ${singleServicesFourthDisplay ? "show" : ""}`}>
+                                                <div className="portfolio-page-collection-single-section-inner ">
+                                                    <div className="portfolio-page-collection-single-section-inner-image upper">
                                                         <img src="./images/field1.png" alt="" />
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-text">
-                                                        <div className="services-second-section_single-section-inner-text_header">
+                                                    <div className="portfolio-page-collection-single-section-inner-text">
+                                                        <div className="portfolio-page-collection-single-section-inner-text_header">
                                                             <h1>{"HIGH DENSITY POLYTHENE PIPE (HDPE)"}</h1>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text-body">
+                                                        <div className="portfolio-page-collection-single-section-inner-text-body">
                                                             <p>{"Ralonick Service Limited offer solutions for Glass reinforced Epoxy pipes GRP & FRP) in the upstream, downstream of the Oil and gas, refinery,Petrochemical, power plant and other industries. We procure, fabricate andinstall glass reinforcement epoxy pipes as per below application:"}</p>
-                                                            <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                 <h6>Application:</h6>
                                                                 <ul>
                                                                     <li>Portable water</li>
@@ -1097,25 +1098,25 @@ const Services = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-image lower container">
+                                                    <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className={`services-second-section_single-section  ${singleServicesFifthDisplay ? "show" : ""}`}>
-                                                <div className="services-second-section_single-section-inner ">
-                                                    <div className="services-second-section_single-section-inner-image upper">
+                                            <div className={`portfolio-page-collection-single-section  ${singleServicesFifthDisplay ? "show" : ""}`}>
+                                                <div className="portfolio-page-collection-single-section-inner ">
+                                                    <div className="portfolio-page-collection-single-section-inner-image upper">
                                                         <img src="./images/field1.png" alt="" />
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-text">
-                                                        <div className="services-second-section_single-section-inner-text_header">
+                                                    <div className="portfolio-page-collection-single-section-inner-text">
+                                                        <div className="portfolio-page-collection-single-section-inner-text_header">
                                                             <h1>{"POLYPROPYLENE RANDOM PIPES (PPR)"}</h1>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text-body">
+                                                        <div className="portfolio-page-collection-single-section-inner-text-body">
                                                             <p>{"Ralonick Service Limited Polypropylene (PP- R) Pipes for the offshore and onshore of the oil and gas, food and beverage processing, heating & cooling, potable water, compressed air, fire protection, gray water and other industrial applications."}</p>
-                                                            <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                 <h6>Our PP-R Pipe Services cover the following Applications:</h6>
                                                                 <ul>
                                                                     <li>Portable water</li>
@@ -1129,26 +1130,26 @@ const Services = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-image lower container">
+                                                    <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className={`services-second-section_single-section  ${singleServicesSixthDisplay ? "show" : ""}`}>
-                                                <div className="services-second-section_single-section-inner ">
-                                                    <div className="services-second-section_single-section-inner-image upper">
+                                            <div className={`portfolio-page-collection-single-section  ${singleServicesSixthDisplay ? "show" : ""}`}>
+                                                <div className="portfolio-page-collection-single-section-inner ">
+                                                    <div className="portfolio-page-collection-single-section-inner-image upper">
                                                         <img src="./images/field1.png" alt="" />
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-text">
-                                                        <div className="services-second-section_single-section-inner-text_header">
+                                                    <div className="portfolio-page-collection-single-section-inner-text">
+                                                        <div className="portfolio-page-collection-single-section-inner-text_header">
                                                             <h1>{"PROCUREMENT AND INSTALLATION OF FRP/GRP PRODUCTS"}</h1>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text-body">
+                                                        <div className="portfolio-page-collection-single-section-inner-text-body">
                                                             <p>{"Ralonick Service Limited provides procurement& installation of FRP/GRP product.We services, supply and installs all kinds of FRP/GRP products for upstream and downstream oil & gas refinery petrochemical and otherindustrial application."}</p>
                                                             <p>{"Our partnership with our foreign partner AOCOMM Composite Limited amajor manufacturers of FRP and GRP products, we secure leadership in thearea of Technical support, Engineering, Procurementand Maintenanceservices"}</p>
-                                                            <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                 <h6>Products:</h6>
                                                                 <ul>
                                                                     <li>FRP Handrails</li>
@@ -1163,7 +1164,7 @@ const Services = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-image lower container">
+                                                    <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
@@ -1171,18 +1172,18 @@ const Services = () => {
                                                 </div>
 
                                             </div>
-                                            <div className={`services-second-section_single-section  ${singleServicesSeventhDisplay ? "show" : ""}`}>
-                                                <div className="services-second-section_single-section-inner ">
-                                                    <div className="services-second-section_single-section-inner-image upper">
+                                            <div className={`portfolio-page-collection-single-section  ${singleServicesSeventhDisplay ? "show" : ""}`}>
+                                                <div className="portfolio-page-collection-single-section-inner ">
+                                                    <div className="portfolio-page-collection-single-section-inner-image upper">
                                                         <img src="./images/field1.png" alt="" />
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-text">
-                                                        <div className="services-second-section_single-section-inner-text_header">
+                                                    <div className="portfolio-page-collection-single-section-inner-text">
+                                                        <div className="portfolio-page-collection-single-section-inner-text_header">
                                                             <h1>{"STEEL STRUCTURES AND PIPES FABRICATION & INSTALLATION"}</h1>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text-body">
+                                                        <div className="portfolio-page-collection-single-section-inner-text-body">
                                                             <p>{"Ralonick Service Limited provides Steel structures and pipes fabrication & installation with expertise in construction capabilities and project management. Ralonick delivers solutions by providing competent personnel that has the knowledge in all kinds of fabrication and installation works."}</p>
-                                                            <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                 <h6>PIPING AND STRUCTURAL FABRICATION SERVICES:</h6>
                                                                 <ul>
                                                                     <li>Pig Launcher fabrication</li>
@@ -1196,7 +1197,7 @@ const Services = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-image lower container">
+                                                    <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
@@ -1204,18 +1205,18 @@ const Services = () => {
                                                 </div>
 
                                             </div>
-                                            <div className={`services-second-section_single-section  ${singleServicesEigthDisplay ? "show" : ""}`}>
-                                                <div className="services-second-section_single-section-inner ">
-                                                    <div className="services-second-section_single-section-inner-image upper">
+                                            <div className={`portfolio-page-collection-single-section  ${singleServicesEigthDisplay ? "show" : ""}`}>
+                                                <div className="portfolio-page-collection-single-section-inner ">
+                                                    <div className="portfolio-page-collection-single-section-inner-image upper">
                                                         <img src="./images/field1.png" alt="" />
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-text">
-                                                        <div className="services-second-section_single-section-inner-text_header">
+                                                    <div className="portfolio-page-collection-single-section-inner-text">
+                                                        <div className="portfolio-page-collection-single-section-inner-text_header">
                                                             <h1>{"PIPELINE CONSTRUCTION & REPAIR SERVICES"}</h1>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text-body">
+                                                        <div className="portfolio-page-collection-single-section-inner-text-body">
                                                             <p>{"Ralonick Service Limited provides Steel structures and pipes fabrication & installation with expertise in construction capabilitie an project managemen"}</p>
-                                                            <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                 <h6>Ralonick delivers solutions by providing values for our customers through:</h6>
                                                                 <ul>
                                                                     <li>Increased efficiency and production</li>
@@ -1237,7 +1238,7 @@ const Services = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-image lower container">
+                                                    <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
@@ -1245,18 +1246,18 @@ const Services = () => {
                                                 </div>
 
                                             </div>
-                                            <div className={`services-second-section_single-section  ${singleServicesNinthDisplay ? "show" : ""}`}>
-                                                <div className="services-second-section_single-section-inner ">
-                                                    <div className="services-second-section_single-section-inner-image upper">
+                                            <div className={`portfolio-page-collection-single-section  ${singleServicesNinthDisplay ? "show" : ""}`}>
+                                                <div className="portfolio-page-collection-single-section-inner ">
+                                                    <div className="portfolio-page-collection-single-section-inner-image upper">
                                                         <img src="./images/field1.png" alt="" />
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-text">
-                                                        <div className="services-second-section_single-section-inner-text_header">
+                                                    <div className="portfolio-page-collection-single-section-inner-text">
+                                                        <div className="portfolio-page-collection-single-section-inner-text_header">
                                                             <h1>{"INSULATION SERVICES"}</h1>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text-body">
+                                                        <div className="portfolio-page-collection-single-section-inner-text-body">
                                                             <p>{"Ralonick Service Limited Offer a complete range of advanced insulation solutions for the oil and gas and food and beverages industries. Our products range covers various insulation requirements for piping and equipment systems, and insulation  of subsea systems. Or uproducts range meets demanding NORSOK requirement and suited for tough environmental conditions."}</p>
-                                                            <div className="services-second-section_single-section-inner-text-body_subtitle">
+                                                            <div className="portfolio-page-collection-single-section-inner-text-body_subtitle">
                                                                 <h6>OUR INSULATION SERVICES COVERS:</h6>
                                                                 <h2>Acoustic insulation</h2>
                                                                 <ul>
@@ -1282,7 +1283,7 @@ const Services = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-image lower container">
+                                                    <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
@@ -1290,23 +1291,23 @@ const Services = () => {
                                                 </div>
 
                                             </div>
-                                            <div className={`services-second-section_single-section  ${singleServicesTenthDisplay ? "show" : ""}`}>
-                                                <div className="services-second-section_single-section-inner ">
-                                                    <div className="services-second-section_single-section-inner-image upper">
+                                            <div className={`portfolio-page-collection-single-section  ${singleServicesTenthDisplay ? "show" : ""}`}>
+                                                <div className="portfolio-page-collection-single-section-inner ">
+                                                    <div className="portfolio-page-collection-single-section-inner-image upper">
                                                         <img src="./images/field1.png" alt="" />
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-text">
-                                                        <div className="services-second-section_single-section-inner-text_header">
+                                                    <div className="portfolio-page-collection-single-section-inner-text">
+                                                        <div className="portfolio-page-collection-single-section-inner-text_header">
                                                             <h1>{"SCAFFOLDING SERVICES"}</h1>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text-body">
+                                                        <div className="portfolio-page-collection-single-section-inner-text-body">
                                                             <p>{"Ralonick Service Limited provides specialist scaffolding services to the offshore and onshore of the Oil and Gas, refinery, petrochemical, chemical and for other industrial applications."}</p>
                                                             <p>{"Our skilled workforces are known for competency and strict adherenceto safety"}</p>
                                                             <p>{"At Ralonick Service Limited, we believe in continually improving skill of all scaffold erectors. All our scaffold workers are certified and fully trained in every area of health and safety."}</p>
 
                                                         </div>
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-image lower container">
+                                                    <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
@@ -1314,20 +1315,20 @@ const Services = () => {
                                                 </div>
 
                                             </div>
-                                            <div className={`services-second-section_single-section  ${singleServicesEleventhDisplay ? "show" : ""}`}>
-                                                <div className="services-second-section_single-section-inner ">
-                                                    <div className="services-second-section_single-section-inner-image upper">
+                                            <div className={`portfolio-page-collection-single-section  ${singleServicesEleventhDisplay ? "show" : ""}`}>
+                                                <div className="portfolio-page-collection-single-section-inner ">
+                                                    <div className="portfolio-page-collection-single-section-inner-image upper">
                                                         <img src="./images/field1.png" alt="" />
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-text">
-                                                        <div className="services-second-section_single-section-inner-text_header">
+                                                    <div className="portfolio-page-collection-single-section-inner-text">
+                                                        <div className="portfolio-page-collection-single-section-inner-text_header">
                                                             <h1>{"PROVISION OF WELDING HABITAT SERVICES"}</h1>
                                                         </div>
-                                                        <div className="services-second-section_single-section-inner-text-body">
+                                                        <div className="portfolio-page-collection-single-section-inner-text-body">
                                                             <p>{"Ralonick Service Limited provides welding habitats services in order to provide safe enclosure for welders to carry out repairs or replacement of process pipe work and equipment, removal and replacement of deck plates hands rails , walkways, vessel internal and external nozzle repairs, crane boom structural repairs and refurbishment, housing of non IS equipment, riser and caisson installation and applying specialist coatings or removing insulations which requires temperature controlled enclosures and as required in other application which requires temperature controlled enclosures and as required in other application"}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="services-second-section_single-section-inner-image lower container">
+                                                    <div className="portfolio-page-collection-single-section-inner-image lower container">
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />
                                                         <img src="./images/field2.jpg" alt="" />

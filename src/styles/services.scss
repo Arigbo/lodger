@@ -53,8 +53,8 @@
     .services-second-section {
         margin: 1rem 0rem 1rem 0rem;
 
-        .services-second-section-inner {
-            .services-second-section-inner-header {
+        .portfolio-page-collection {
+            .portfolio-page-collection-header {
                 width: 100%;
 
                 &.mobile {
@@ -64,7 +64,7 @@
                         display: none;
                     }
 
-                    .services-second-section-inner-header-inner-inner {
+                    .portfolio-page-collection-header-inner-inner {
 
                         &.active {
                             border-bottom: 2px solid black;
@@ -95,9 +95,9 @@
 
 
 
-                .services-second-section-inner-header-inner {
+                .portfolio-page-collection-header-inner {
 
-                    .services-second-section-inner-header-inner-top {
+                    .portfolio-page-collection-header-inner-top {
                         border-bottom: 1px solid rgb(225, 223, 223);
 
                         h1 {
@@ -145,10 +145,10 @@
                 }
             }
 
-            .services-second-section_single-section {
+            .portfolio-page-collection-single-section {
                 display: none;
 
-                .services-second-section_single-section-inner {
+                .portfolio-page-collection-single-section-inner {
                     h1 {
                         font-weight: 600;
                         font-size: 27px;
@@ -189,7 +189,7 @@
                 }
 
 
-                .services-second-section_single-section-inner-image {
+                .portfolio-page-collection-single-section-inner-image {
                     &.lower {
                         display: grid;
                         grid-template-columns: 1fr 1fr 1fr;

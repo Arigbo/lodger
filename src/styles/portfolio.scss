@@ -1,0 +1,80 @@
+.portfolio-page {
+    background-image:url(/public/images/jesse.jpg);
+    &-text {
+        text-align: center;
+
+        &-header {
+            h1{
+                font-weight: 900;
+            }
+        }
+
+        &-note {
+            padding-inline: 20%;
+            padding-block-end: 1rem;
+        }
+    }
+
+    &-collection {
+        background-color: white;
+        padding: 1rem;
+
+        &-inner {
+            &-header {
+                padding-inline: 0.5rem;
+                padding-block: 0.2rem;
+                margin-bottom: 1rem;
+                background-color: whitesmoke;
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+                align-items: center;
+                align-content: center;
+                gap: 6rem;
+                &-inner {
+                    &-top {
+                        &-inner {
+                          
+                            h6{
+                                margin: 0;
+                                padding: 0;
+                                text-align: center;
+                            }
+                            &.active{
+                              h6{
+                                
+                                // text-decoration: underline 2px;
+                                color: $danger;
+                                border-bottom: 2px solid;
+                                margin: 0;
+                              }
+                            }
+                        }
+                    }
+                }
+            }
+            &-single-section {
+                &-inner {
+                    display: none;
+    height: 0;
+                    &.show {
+                        height: 100%;
+                        transition: 0.5s;
+                        width: 100%;
+                        display: block;
+                        display: grid;
+                        grid-template-columns: 1fr 1fr 1fr;
+                    }
+    
+                    &-card {
+                        width: 100%;
+    
+                        img {
+                            width: 100%;
+                            height: auto;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

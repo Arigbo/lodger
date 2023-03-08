@@ -1,23 +1,24 @@
 .home-page {
-    width: auto;
-    // background-color: grey;
-    padding: 4rem 4rem 0rem 4rem;
+    width: 100%;
+    padding-inline: 4rem;
     font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-
-
-
-
+    height: auto;
 
     .home-page-hero {
-        padding-top: 4rem;
+        width: 100%;
+
         &-inner {
-            padding-top: 4rem;
-            @media screen and (min-width: $mobile) {
+            width: 100%;
+// DESKTOP SCREEN EFFECT
+            @media screen and (min-width: $second-md) {
                 display: grid;
                 grid-template-columns: 0.8fr 1fr 0.8fr;
             }
 
+
             &-right {
+                // margin-left: 20%;
+
                 h1 {
 
 
@@ -38,6 +39,7 @@
                     }
 
                 }
+
                 &-line {
                     border-bottom: 1px solid $danger;
                     width: 2.5rem;
@@ -69,7 +71,8 @@
                 button {
                     margin-top: 1rem;
                     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif, monospace;
-background-color: transparent;
+                    background-color: transparent;
+
                     &:hover {
                         background-color: $danger;
                         color: whitesmoke;
@@ -82,20 +85,7 @@ background-color: transparent;
                 &-middle {
                     width: 100%;
                     text-align: center;
-
-                    @media screen and (min-width: $mobile) {
-                        margin-top: 4rem;
-                    }
-
-                    // &-circle {
-                    //     background-color: grey;
-                    //     width: 30%;
-                    //     height: 20%;
-                    //     z-index: -1;
-                    //     position: absolute;
-                    //     border-radius: 50rem;
-                    //     top: 24rem;
-                    // }
+                    margin-top: 4rem;
 
                     i {
                         font-size: 30rem;
@@ -116,8 +106,30 @@ background-color: transparent;
                     h1 {
                         font-weight: 600;
                     }
+                }
+            }
 
-                    @media screen and (max-width: $mobile) {
+            // MOBILE SCREEN
+            @media screen and (max-width: $second-md) {
+                &-right {
+                    text-align: center;
+
+                    &-line {
+                        display: none;
+                    }
+
+                    &-social {
+
+                        margin: 0;
+                        padding-inline: 35%;
+                        padding-top: 2rem;
+                        width: 100%;
+
+                    }
+                }
+
+                &-left {
+                    &-last {
                         margin-top: 3rem;
                     }
                 }

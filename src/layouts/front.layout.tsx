@@ -5,28 +5,24 @@ import { useRouter } from "next/router";
 const FrontLayout: React.FC<{ children: React.ReactElement }> = ({ children }) => {
 	const [background, setBackground] = useState(false)
 	const router = useRouter();
-	const showNavHandler = () => {
+	const darkMode = () => {
 		setBackground(true);
 	};
-	const hideNavHandler = () => {
+	const lightMode = () => {
 		setBackground(false);
 	};
+	
 	return (
 		<div className="app">
 			<main className="app-children">
 				<div className={`app-inner ${background ? "change" : "hide"}`}>
 				{background ? (
-						<i className="fa-solid fa-moon c-pointer" onClick={hideNavHandler}> </i>
+						<i className="fa-solid fa-moon c-pointer" onClick={lightMode}> </i>
 					) : (
-						<i className="fa-solid fa-sun c-pointer" onClick={showNavHandler}> </i>
-					)}
-					<HeaderComp>
-					{background ? (
-						<i className="fa-solid fa-moon c-pointer" onClick={hideNavHandler}> </i>
-					) : (
-						<i className="fa-solid fa-sun c-pointer" onClick={showNavHandler}> </i>
-					)}
-					</HeaderComp>
+						<i className="fa-solid fa-sun c-pointer" onClick={darkMode}> </i>
+					)
+					}
+					<HeaderComp/>
 					{children}
 					<FooterComp />
 				</div>
