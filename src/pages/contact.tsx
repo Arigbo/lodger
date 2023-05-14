@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import FrontLayout from "../layouts/front.layout";
 
 const Contact = () => {
+    const[input, setInput]=useState(false)
+    const inputHandler=()=>{
+        setInput(true)
+    }
 return (
     <div>
         <FrontLayout>

@@ -1,10 +1,15 @@
 .portfolio-page {
-    background-image:url(/public/images/jesse.jpg);
+    padding-block-start: 4rem;
+    height: fit-content;
+
+    &-inner {}
+
     &-text {
+        padding-block-start: 2rem;
         text-align: center;
 
         &-header {
-            h1{
+            h1 {
                 font-weight: 900;
             }
         }
@@ -18,8 +23,12 @@
     &-collection {
         background-color: white;
         padding: 1rem;
+        width: 100%;
+        height: fit-content;
 
         &-inner {
+            height: fit-content;
+
             &-header {
                 padding-inline: 0.5rem;
                 padding-block: 0.2rem;
@@ -30,47 +39,69 @@
                 align-items: center;
                 align-content: center;
                 gap: 6rem;
+
                 &-inner {
                     &-top {
                         &-inner {
-                          
-                            h6{
+
+                            h6 {
                                 margin: 0;
                                 padding: 0;
                                 text-align: center;
                             }
-                            &.active{
-                              h6{
-                                
-                                // text-decoration: underline 2px;
-                                color: $danger;
-                                border-bottom: 2px solid;
-                                margin: 0;
-                              }
+
+                            &.active {
+                                h6 {
+                                    color: $danger;
+                                    border-bottom: 2px solid;
+                                    margin: 0;
+                                }
                             }
                         }
                     }
                 }
             }
+
             &-single-section {
                 &-inner {
                     display: none;
-    height: 0;
+
                     &.show {
-                        height: 100%;
-                        transition: 0.5s;
+
                         width: 100%;
                         display: block;
                         display: grid;
                         grid-template-columns: 1fr 1fr 1fr;
+                        gap: 4rem;
                     }
-    
+
                     &-card {
                         width: 100%;
-    
-                        img {
-                            width: 100%;
-                            height: auto;
+                        border: 1px solid black;
+                        box-sizing: border-box;
+                        height: fit-content;
+
+                        &-inner {
+
+
+                            :hover {
+                                img {
+                                    // margin: 1rem;
+                                    // transition: 0.5s;
+                                }
+                            }
+
+                            a {
+                                text-decoration: none;
+
+
+                                img {
+                                    // margin: 0rem;
+                                    // transition: 0.5s;
+                                    width: 100%;
+                                    height: fit-content;
+                                }
+                            }
                         }
                     }
                 }

@@ -72,126 +72,133 @@ const Portfolio = () => {
             <FrontLayout>
                 <div>
                     <div className="portfolio-page container">
-
-                        <section className="portfolio-page-text">
-                            <div className="portfolio-page-text-header">
-                                <h1>MY COLLECTIONS</h1>
-                            </div>
-                            <div className="portfolio-page-text-note">
-                                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque necessitatibus aperiam labore nobis cupiditate? Delectus, facilis aperiam! Deleniti, blanditiis repudiandae?</p>
-                            </div>
-                        </section>
-                        {/* COLLECTION SECTION */}
-                        <div className="portfolio-page-collection">
-                            {/* DESLTOP VIEW */}
-                            <div className="portfolio-page-collection-inner desktop">
-
-                                <div className="portfolio-page-collection-inner-header">
-                                    {/* First-single-services */}
-                                    <div className={"portfolio-page-collection-inner-header-inner-top"}>
-
-                                        {singleServicesDisplay ? (
-                                            <div className="portfolio-page-collection-inner-header-inner-top-inner c-pointer" onClick={showSingleServicesHandler}>
-                                                <h6 >{"ALL"}</h6>
-
-                                            </div>
-                                        ) : (
-                                            <div className={`portfolio-page-collection-inner-header-inner-top-inner c-pointer ${singleServicesDisplay ? "" : "active"}`} onClick={hideSingleServicesHandler}>
-                                                <h6>{"ALL"}</h6>
-
-                                            </div>
-                                        )}
-                                    </div>
-                                    {/* Second-single-services */}
-                                    <div className={"portfolio-page-collection-inner-header-inner-top"}>
-
-                                        {singleServicesSecondDisplay ? (
-                                            <div className={`portfolio-page-collection-inner-header-inner-top-inner c-pointer ${singleServicesSecondDisplay ? "active" : "div"}`} onClick={returnSingleServicesSecondHandler}>
-                                                <h6>{"WEB DEV"}</h6>
-
-                                            </div>
-
-                                        ) : (
-                                            <div className="portfolio-page-collection-inner-header-inner-top-inner c-pointer" onClick={revailSingleServicesSecondHandler}>
-                                                <h6>{"WEB DEV"}</h6>
-
-                                            </div>
-
-                                        )}
-
-                                    </div>
-                                    {/* Third-single-services */}
-                                    <div className="portfolio-page-collection-inner-header-inner-top">
-                                        {singleServicesThirdDisplay ? (
-                                            <div className={`portfolio-page-collection-inner-header-inner-top-inner c-pointer ${singleServicesThirdDisplay ? "active" : "div"}`} onClick={returnSingleServicesThirdHandler} >
-                                                <h6>{"WEB RESEARCH"}</h6>
-
-                                            </div>
-
-                                        ) : (
-                                            <div className="portfolio-page-collection-inner-header-inner-top-inner c-pointer" onClick={revailSingleServicesThirdHandler}>
-                                                <h6 >{"WEB RESEARCH"}</h6>
-                                            </div>
-
-                                        )}
-                                    </div>
-                                    {/* Fourth-single-services */}
-                                    <div className="portfolio-page-collection-inner-header-inner-top">
-                                        {singleServicesFourthDisplay ? (
-                                            <div className={`portfolio-page-collection-inner-header-inner-top-inner c-pointer ${singleServicesFourthDisplay ? "active" : "div"}`} onClick={returnSingleServicesFourthHandler} >
-                                                <h6>{"UNFINISHED"}</h6>
-
-                                            </div>
-
-                                        ) : (
-                                            <div className="portfolio-page-collection-inner-header-inner-top-inner c-pointer" onClick={revailSingleServicesFourthHandler}>
-                                                <h6 >{"UNFINISHED"}</h6>
-                                            </div>
-
-                                        )}
-                                    </div>
-
+                        <div className="portfolio-page-inner">
+                            <section className="portfolio-page-text">
+                                <div className="portfolio-page-text-header">
+                                    <h1>MY COLLECTIONS</h1>
                                 </div>
-                                <div className="portfolio-page-collection-inner-single-section container">
-                                    <div className={`portfolio-page-collection-inner-single-section-inner  ${singleServicesDisplay ? "" : "show"}`}>
-                                    {collectionAll.map((item)=>{
-                                        return(
-                                            <div key={item.name} className="portfolio-page-collection-inner-single-section-inner-card">
-                                              <img src={item.image} alt="" />
-                                                <h4>{item.name}</h4>
-                                            </div>
-                                        )
-                                    })} 
+                                <div className="portfolio-page-text-note">
+                                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque necessitatibus aperiam labore nobis cupiditate? Delectus, facilis aperiam! Deleniti, blanditiis repudiandae?</p>
+                                </div>
+                            </section>
+                            {/* COLLECTION SECTION */}
+                            <div className="portfolio-page-collection">
+                                {/* DESLTOP VIEW */}
+                                <div className="portfolio-page-collection-inner desktop">
+
+                                    <div className="portfolio-page-collection-inner-header">
+                                        {/* First-single-services */}
+                                        <div className={"portfolio-page-collection-inner-header-inner-top"}>
+
+                                            {singleServicesDisplay ? (
+                                                <div className="portfolio-page-collection-inner-header-inner-top-inner c-pointer" onClick={showSingleServicesHandler}>
+                                                    <h6 >{"ALL"}</h6>
+
+                                                </div>
+                                            ) : (
+                                                <div className={`portfolio-page-collection-inner-header-inner-top-inner c-pointer ${singleServicesDisplay ? "" : "active"}`} onClick={hideSingleServicesHandler}>
+                                                    <h6>{"ALL"}</h6>
+
+                                                </div>
+                                            )}
+                                        </div>
+                                        {/* Second-single-services */}
+                                        <div className={"portfolio-page-collection-inner-header-inner-top"}>
+
+                                            {singleServicesSecondDisplay ? (
+                                                <div className={`portfolio-page-collection-inner-header-inner-top-inner c-pointer ${singleServicesSecondDisplay ? "active" : "div"}`} onClick={returnSingleServicesSecondHandler}>
+                                                    <h6>{"WEB DEV"}</h6>
+
+                                                </div>
+
+                                            ) : (
+                                                <div className="portfolio-page-collection-inner-header-inner-top-inner c-pointer" onClick={revailSingleServicesSecondHandler}>
+                                                    <h6>{"WEB DEV"}</h6>
+
+                                                </div>
+
+                                            )}
+
+                                        </div>
+                                        {/* Third-single-services */}
+                                        <div className="portfolio-page-collection-inner-header-inner-top">
+                                            {singleServicesThirdDisplay ? (
+                                                <div className={`portfolio-page-collection-inner-header-inner-top-inner c-pointer ${singleServicesThirdDisplay ? "active" : "div"}`} onClick={returnSingleServicesThirdHandler} >
+                                                    <h6>{"WEB RESEARCH"}</h6>
+
+                                                </div>
+
+                                            ) : (
+                                                <div className="portfolio-page-collection-inner-header-inner-top-inner c-pointer" onClick={revailSingleServicesThirdHandler}>
+                                                    <h6 >{"WEB RESEARCH"}</h6>
+                                                </div>
+
+                                            )}
+                                        </div>
+                                        {/* Fourth-single-services */}
+                                        <div className="portfolio-page-collection-inner-header-inner-top">
+                                            {singleServicesFourthDisplay ? (
+                                                <div className={`portfolio-page-collection-inner-header-inner-top-inner c-pointer ${singleServicesFourthDisplay ? "active" : "div"}`} onClick={returnSingleServicesFourthHandler} >
+                                                    <h6>{"UNFINISHED"}</h6>
+
+                                                </div>
+
+                                            ) : (
+                                                <div className="portfolio-page-collection-inner-header-inner-top-inner c-pointer" onClick={revailSingleServicesFourthHandler}>
+                                                    <h6 >{"UNFINISHED"}</h6>
+                                                </div>
+
+                                            )}
+                                        </div>
+
                                     </div>
-                                    <div className={`portfolio-page-collection-inner-single-section-inner  ${singleServicesSecondDisplay ? "show" : ""}`}>
-                                    {collectionWebDev.map((item)=>{
-                                        return(
-                                            <div key={item.name} className="portfolio-page-collection-inner-single-section-inner-card">
-                                                <img src={item.image} alt="" />
-                                                <h4>{item.name}</h4>
-                                            </div>
-                                        )
-                                    })} 
-                                    </div>
-                                    <div className={`portfolio-page-collection-inner-single-section-inner  ${singleServicesThirdDisplay ? "show" : ""}`}>
-                                    {collectionWebResearch.map((item)=>{
-                                        return(
-                                            <div key={item.name} className="portfolio-page-collection-inner-single-section-inner-card">
-                                                   <img src={item.image} alt="" />
-                                                <h4>{item.name}</h4>
-                                            </div>
-                                        )
-                                    })} 
-                                    </div>
-                                    <div className={`portfolio-page-collection-inner-single-section-inner  ${singleServicesFourthDisplay ? "show" : ""}`}>
-                                    {collectionUnfinishedProject.map((item)=>{
-                                        return(
-                                            <div key={item.name} className="portfolio-page-collection-inner-single-section-inner-card">
-                                                <img src={item.image} alt="" />
-                                                <h4>{item.name}</h4>
-                                            </div>
-                                        )
-                                    })} 
+                                    <div className="portfolio-page-collection-inner-single-section container">
+                                        <div className={`portfolio-page-collection-inner-single-section-inner  ${singleServicesDisplay ? "hide" : "show"}`}>
+                                            {collectionAll.map((item) => {
+                                                return (
+                                                    <div key={item.name} className="portfolio-page-collection-inner-single-section-inner-card">
+                                                        <div className="portfolio-page-collection-inner-single-section-inner-card-inner">
+                                                            <a href="">   <img src={item.image} alt="" /></a>
+                                                            <h4>{item.name}</h4>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                        <div className={`portfolio-page-collection-inner-single-section-inner  ${singleServicesSecondDisplay ? "show" : "hide"}`}>
+                                            {collectionWebDev.map((item) => {
+                                                return (
+                                                    <div key={item.name} className="portfolio-page-collection-inner-single-section-inner-card">
+                                                        <div className="portfolio-page-collection-inner-single-section-inner-card-inner">
+                                                            <a href="">   <img src={item.image} alt="" /></a>
+                                                            <h4>{item.name}</h4>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                        <div className={`portfolio-page-collection-inner-single-section-inner  ${singleServicesThirdDisplay ? "show" : "hide"}`}>
+                                            {collectionWebResearch.map((item) => {
+                                                return (
+                                                    <div key={item.name} className="portfolio-page-collection-inner-single-section-inner-card">
+                                                        <div className="portfolio-page-collection-inner-single-section-inner-card-inner">
+                                                            <a href="">   <img src={item.image} alt="" /></a>
+                                                            <h4>{item.name}</h4>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                        <div className={`portfolio-page-collection-inner-single-section-inner  ${singleServicesFourthDisplay ? "show" : "hide"}`}>
+                                            {collectionUnfinishedProject.map((item) => {
+                                                return (
+                                                    <div key={item.name} className="portfolio-page-collection-inner-single-section-inner-card">
+                                                        <a href="">     <img src={item.image} alt="" /></a>
+                                                        <h4>{item.name}</h4>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

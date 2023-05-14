@@ -16,12 +16,12 @@ const FrontLayout: React.FC<{ children: React.ReactElement }> = ({ children }) =
 		<div className="app">
 			<main className="app-children">
 				<div className={`app-inner ${background ? "change" : "hide"}`}>
-				{background ? (
+				{/* {background ? (
 						<i className="fa-solid fa-moon c-pointer" onClick={lightMode}> </i>
 					) : (
 						<i className="fa-solid fa-sun c-pointer" onClick={darkMode}> </i>
 					)
-					}
+					} */}
 					<HeaderComp/>
 					{children}
 					<FooterComp />

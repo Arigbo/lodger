@@ -6,15 +6,13 @@ const Home = () => {
     return (
         <div>
             <FrontLayout>
-                <div>      <section className="home-page">
-                    <div className="home-page-hero">
+                <div>      <section className="home-page container">
+               <div className="home-page-inner">
+               <div className="home-page-hero">
                         <div className="home-page-hero-inner">
                             <div className="home-page-hero-inner-right">
                                 <div className="home-page-hero-inner-right-text">
-                                    <h1><span>J</span>esse<br /><span>A</span>rigbo<span>.</span> </h1>
-                                </div>
-                                <div className="home-page-hero-inner-right-line">
-
+                                    <h1><span>J</span>esse<br /><span className="span">A</span>rigbo<span>.</span> </h1>
                                 </div>
                                 <div className="home-page-hero-inner-right-social">
                                     <div className="home-page-hero-inner-right-social-top">
@@ -26,7 +24,7 @@ const Home = () => {
                                         <h4>Twitter</h4>
                                     </div>
                                 </div>
-                                <button title="Contact Me" className="button hug" type="submit">CONTACT ME</button>
+                                <input type="submit" value="CONTACT ME" className="btn hug btn-outline-danger"/>
                             </div>
                             {/* <div className="home-page-hero-inner-left"> */}
                             <div className="home-page-hero-inner-left-middle">
@@ -41,6 +39,7 @@ const Home = () => {
                             {/* </div> */}
                         </div>
                     </div>
+               </div>
                 </section>
                 </div>
             </FrontLayout>

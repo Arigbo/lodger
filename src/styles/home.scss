@@ -1,15 +1,19 @@
 .home-page {
     width: 100%;
-    padding-inline: 4rem;
-    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-    height: auto;
+height: fit-content;
+    &-inner {
+
+        padding-block-start: 4rem;
+    }
 
     .home-page-hero {
+        padding-block-start: 2rem;
         width: 100%;
 
         &-inner {
             width: 100%;
-// DESKTOP SCREEN EFFECT
+
+            // DESKTOP SCREEN EFFECT
             @media screen and (min-width: $second-md) {
                 display: grid;
                 grid-template-columns: 0.8fr 1fr 0.8fr;
@@ -17,27 +21,31 @@
 
 
             &-right {
-                // margin-left: 20%;
+                &-text {
+                    margin-bottom: 2rem;
 
-                h1 {
+                    h1 {
+                        color: black;
+                        font-size: 3.5rem;
+                        font-weight: 900;
 
-
-                    color: black;
-                    font-size: 3.5rem;
-                    font-weight: 900;
-
-                    margin: 0;
-                    padding-block: 0;
-
-
-
-                    span {
-                        color: $danger;
                         margin: 0;
-                        padding: 0;
+                        padding-block: 0;
+
+                        .span {
+                            border-bottom: 2px solid;
+                            color: $danger;
+                            padding-bottom: 0.7rem;
+                        }
+
+                        span {
+                            color: $danger;
+                            margin: 0;
+                            padding: 0;
+
+                        }
 
                     }
-
                 }
 
                 &-line {
@@ -61,7 +69,7 @@
                         }
 
                         h4 {
-                            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+                            // font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
                             font-size: 1rem;
                             font-weight: 900;
                         }
@@ -70,7 +78,7 @@
 
                 button {
                     margin-top: 1rem;
-                    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif, monospace;
+                    // font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif, monospace;
                     background-color: transparent;
 
                     &:hover {

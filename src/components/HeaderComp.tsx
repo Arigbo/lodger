@@ -8,7 +8,7 @@ export const navList = [
 	{ name: "Portfolio", link: "/service", title: "Services_i_offer", },
 	{ name: "Blog", link: "/about", title: "Services_i_offer", },
 	{ name: "Services", link: "/service", title: "Services_i_offer", },
-	{ name: "Contact", link: "/service", title: "Services_i_offer", },
+	{ name: "Contact", link: "/contact", title: "Contact", },
 ];
 export const navListIcon = [
 	{ name: <i className="fa-brands fa-whatsapp"></i>, link: "/whatsapp.com", title: "Services_i_offer", },
