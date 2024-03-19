@@ -1,0 +1,52 @@
+{
+  "post": [
+    {
+      "id": 1,
+      "Title": "<h>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ad ipsum eaque, tenetur consectetur excepturi maxime quasi pariatur suscipit doloribus voluptatum.</h>",
+      "body": "<h1>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Aperiam debitis odit dolorem magnam quo. Nostrum accusamus laboriosam qui iure ipsum magni veniam sit porro, expedita laborum dolorem laudantium dignissimos, iusto eos officiis nesciunt voluptate, nemo saepe rem possimus. Quae iure vel rem dolores eum, temporibus quia, architecto corporis iusto officiis illum, odio provident! Possimus corrupti qui ducimus fugiat quod, et ratione beatae id, expedita harum veritatis unde soluta aperiam consectetur nesciunt quos sint vero voluptates perferendis inventore accusantium ab! Deleniti cupiditate, consequatur recusandae alias ea ipsum. Quisquam, explicabo. Beatae similique nesciunt dolor cupiditate id, ipsa incidunt dolore sed ullam iste.</h1>",
+      "likes": 40,
+      "author": "Caleb"
+    },
+    {
+      "id": 2,
+      "Title": "<h>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ad ipsum eaque, tenetur consectetur excepturi maxime quasi pariatur suscipit doloribus voluptatum.</h>",
+      "body": "<h1>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Aperiam debitis odit dolorem magnam quo. Nostrum accusamus laboriosam qui iure ipsum magni veniam sit porro, expedita laborum dolorem laudantium dignissimos, iusto eos officiis nesciunt voluptate, nemo saepe rem possimus. Quae iure vel rem dolores eum, temporibus quia, architecto corporis iusto officiis illum, odio provident! Possimus corrupti qui ducimus fugiat quod, et ratione beatae id, expedita harum veritatis unde soluta aperiam consectetur nesciunt quos sint vero voluptates perferendis inventore accusantium ab! Deleniti cupiditate, consequatur recusandae alias ea ipsum. Quisquam, explicabo. Beatae similique nesciunt dolor cupiditate id, ipsa incidunt dolore sed ullam iste.</h1>",
+      "likes": 30,
+      "author": "Caleb"
+    },
+    {
+      "id": 3,
+      "Title": "<h>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ad ipsum eaque, tenetur consectetur excepturi maxime quasi pariatur suscipit doloribus voluptatum.</h>",
+      "body": "<h1>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Aperiam debitis odit dolorem magnam quo. Nostrum accusamus laboriosam qui iure ipsum magni veniam sit porro, expedita laborum dolorem laudantium dignissimos, iusto eos officiis nesciunt voluptate, nemo saepe rem possimus. Quae iure vel rem dolores eum, temporibus quia, architecto corporis iusto officiis illum, odio provident! Possimus corrupti qui ducimus fugiat quod, et ratione beatae id, expedita harum veritatis unde soluta aperiam consectetur nesciunt quos sint vero voluptates perferendis inventore accusantium ab! Deleniti cupiditate, consequatur recusandae alias ea ipsum. Quisquam, explicabo. Beatae similique nesciunt dolor cupiditate id, ipsa incidunt dolore sed ullam iste.</h1>",
+      "likes": 100,
+      "author": "Caleb"
+    },
+    {
+      "id": 4,
+      "Title": "<h>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ad ipsum eaque, tenetur consectetur excepturi maxime quasi pariatur suscipit doloribus voluptatum.</h>",
+      "body": "<h1>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Aperiam debitis odit dolorem magnam quo. Nostrum accusamus laboriosam qui iure ipsum magni veniam sit porro, expedita laborum dolorem laudantium dignissimos, iusto eos officiis nesciunt voluptate, nemo saepe rem possimus. Quae iure vel rem dolores eum, temporibus quia, architecto corporis iusto officiis illum, odio provident! Possimus corrupti qui ducimus fugiat quod, et ratione beatae id, expedita harum veritatis unde soluta aperiam consectetur nesciunt quos sint vero voluptates perferendis inventore accusantium ab! Deleniti cupiditate, consequatur recusandae alias ea ipsum. Quisquam, explicabo. Beatae similique nesciunt dolor cupiditate id, ipsa incidunt dolore sed ullam iste.</h1>",
+      "likes": 20,
+      "author": "Caleb"
+    }
+  ],
+  "commennts": [
+    {
+      "id": 1,
+      "body": "some comments",
+      "post id": 2
+    },
+    {
+      "id": 2,
+      "body": "some comments",
+      "post id": 2
+    },
+    {
+      "id": 3,
+      "body": "some comments",
+      "post id": 2
+    }
+  ],
+  "profile": {
+    "name": "typicode"
+  }
+}
