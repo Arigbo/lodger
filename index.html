@@ -80,7 +80,7 @@
                     console.log(data);
                     data.map((product) => {
                         document.querySelector(".search_page_inner_results_result").insertAdjacentHTML('beforeend', `
-            <a href="${product.bottles ? `/pages/${product.name}.html` : "/pages/error.html"}" class=${product.bottles ? "" : "none"} >
+            <a href="${product.bottles ? `/pages/error.html` : "/pages/error.html"}" class=${product.bottles ? "" : "none"} >
             <div class="search_page_inner_results_result" >
                  <img src="${product.image}" class="image">
             <div class="search_page_inner_results_result_inner">
