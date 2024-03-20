@@ -1,0 +1,28 @@
+{
+  "post": [
+    {
+      "name": "Jaime",
+      "image": "/images/Slide.png",
+      "price": "22",
+      "bottles": "222",
+      "location":"51 School RD PORT HARCOURT, RIVERS STATE, NIGERIA",
+      "id": 1
+    },
+    {
+      "name": "ferferfe",
+      "image": "/images/Slide.png",
+      "price": "60",
+      "bottles": "6",
+      "location":"51 School RD PORT HARCOURT, RIVERS STATE, NIGERIA",
+      "id": 2
+    },
+    {
+      "name": "",
+      "image": "/images/Slide.png",
+      "price": "20",
+      "bottles": "4",
+      "location":"51 School RD PORT HARCOURT, RIVERS STATE, NIGERIA",
+      "id": 3
+    }
+  ]
+}

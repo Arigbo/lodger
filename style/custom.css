@@ -1,5 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,100..900;1,100..900&display=swap");
 @import "/style/search.css";
+@import "/style/error.css";
 body {
   font-family: chivo;
   margin: 0;
