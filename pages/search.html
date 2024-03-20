@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search for Apartments Nearby</title>
+    <link class="url_logo" rel="icon" type="image/x-icon" href="/favicon/Vector.icon" />
+    <link rel="stylesheet" href="/style/fontawesome-free-6.4.2-web/fontawesome-free-6.4.2-web/css/all.css">
+    <link rel="stylesheet" href="/style/custom.css">
+</head>
+
+<body>
+    <div class="search_page">
+        <div class="search_page_header">
+            <div class="search_page_header_logo">
+                <img src="/images/Vector.png" alt="">
+            </div>
+            <div class="search_page_header_text">
+                <h1>Rent an apartment with ease</h1>
+            </div>
+        </div>
+        <div class="search_page_inner">
+            <div class="search_page_inner_filter">
+                <div class="search_page_inner_filter_search">
+                    <i class="fas fa-search"></i>
+                    <input type="search" name="search" id="" placeholder="Search For an Apartment">
+                </div>
+                <div class="search_page_inner_filter_filter_button">
+                    <i class="fas fa-sliders"></i>
+                </div>
+            </div>
+            <div class="search_page_inner_top_picks">
+                <div class="search_page_inner_top_picks_header">
+                    <h1>Top Picks</h1>
+                </div>
+                <div class="search_page_inner_top_picks_inner">
+                    <ul>
+                        <li><i class="fas fa-house"></i><br> <span>Self Contain</span></li>
+                        <li><i class="fas fa-house"></i><br> <span>Self Contain</span></li>
+                        <li><i class="fas fa-house"></i><br> <span>Self Contain</span></li>
+                        <li><i class="fas fa-house"></i><br> <span>Self Contain</span></li>
+                        <li><i class="fas fa-house"></i><br> <span>Self Contain</span></li>
+                        <li><i class="fas fa-house"></i><br> <span>Self Contain</span></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="search_page_inner_scope_button">
+                <a href="http://"><button type="submit"><i class="fas fa-calendar"></i> <span>Book An Apointment with
+                            the Landlord</span></button></a>
+            </div>
+            <div class="search_page_inner_results">
+                <div class="search_page_inner_results_result"></div>
+            </div>
+        </div>
+        <div class="search_page_nav">
+            <div class="search_page_nav_discover">
+                <i class="fas fa-earth"></i>
+                <h1>Discover</h1>
+            </div>
+            <div class="search_page_nav_discover">
+                <i class="fas fa-bookmark"></i>
+                <h1>Bookmark</h1>
+            </div>
+            <div class="search_page_nav_discover">
+                <i class="fas fa-person"></i>
+                <h1>Profile</h1>
+            </div>
+        </div>
+    </div>
+    <script>
+        function availbleBottle(bottle) {
+            return `<h1><strong class="avail_bottle">Available Rooms: </strong>${bottle}</h1>`;
+        };
+        function getProduct() {
+            fetch(`http://localhost:3000/post`)
+                .then(results => results.json())
+                .then(data => {
+
+                    console.log(data);
+                    data.map((product) => {
+                        document.querySelector(".search_page_inner_results_result").insertAdjacentHTML('beforeend', `
+            <a href="${product.bottles ? `/pages/${product.name}.html` : "/pages/error.html"}" class=${product.bottles ? "" : "none"} >
+            <div class="search_page_inner_results_result" >
+                 <img src="${product.image}" class="image">
+            <div class="search_page_inner_results_result_inner">
+            <h1 class="price">$${product.price}</h1>
+            <h1 class="location">${product.location}</h1>
+            ${product.bottles ? availbleBottle(product.bottles) : `<h1>Not Available</h1>`}
+            </div>
+            </div>
+            </a>
+            `)
+                    });
+                })
+        }
+        getProduct()
+    </script>
+</body>
+
+</html>
