@@ -15,6 +15,7 @@ import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle,
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import type { Property, User, Review, ImagePlaceholder } from "@/lib/definitions";
 
 type amenityIcon = {
     [key: string]: React.ReactNode;
@@ -37,17 +38,38 @@ const useUser = () => {
   return { user };
 }
 
+// This is the new Server Component that fetches data.
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const property = getPropertyById(params.id);
-  const { user } = useUser();
 
   if (!property) {
     notFound();
   }
-
+  
   const landlord = getUserById(property.landlordId);
   const reviews = getReviewsByPropertyId(property.id);
   const images = getImagesByIds(property.imageIds);
+
+  return <PropertyDetailView property={property} landlord={landlord} reviews={reviews} images={images} />;
+}
+
+
+// This is the original component, now focused on rendering UI.
+function PropertyDetailView({
+    property,
+    landlord,
+    reviews: initialReviews,
+    images: initialImages
+}: {
+    property: Property;
+    landlord: User | undefined;
+    reviews: Review[];
+    images: ImagePlaceholder[];
+}) {
+  const { user } = useUser();
+  const [reviews] = useState(initialReviews);
+  const [images] = useState(initialImages);
+
   const averageRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
   
   const isTenant = user?.id === property.currentTenantId;
@@ -228,5 +250,7 @@ function AddReviewForm() {
         </Card>
     );
 }
+
+    
 
     

@@ -46,3 +46,12 @@ export type RentalRequest = {
   message: string;
   requestDate: string; // ISO 8601 date string
 };
+
+export type ImagePlaceholder = {
+  id: string;
+  description: string;
+  imageUrl: string;
+  imageHint: string;
+};
+
+    
