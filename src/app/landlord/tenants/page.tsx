@@ -30,7 +30,7 @@ import { getPropertiesByLandlord, getUserById } from '@/lib/data';
 import type { User, Property } from '@/lib/definitions';
 import { MoreHorizontal, Users, Mail } from 'lucide-react';
 import Link from 'next/link';
-import { isPast, isBefore } from 'date-fns';
+import { isPast, isBefore, add } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -62,8 +62,7 @@ export default function TenantsPage() {
       const tenant = getUserById(property.currentTenantId!);
       
       const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
-      const leaseEndDate = new Date(leaseStartDate.setFullYear(leaseStartDate.getFullYear() + 1));
-      leaseStartDate.setFullYear(leaseStartDate.getFullYear() -1); // Reset date for subsequent checks
+      const leaseEndDate = add(leaseStartDate, { years: 1 });
       
       const isLeaseActive = isPast(leaseStartDate) && isBefore(today, leaseEndDate);
       const isRentDueForCurrentMonth = today.getDate() > 1;
@@ -183,5 +182,3 @@ export default function TenantsPage() {
     </div>
   );
 }
-
-    

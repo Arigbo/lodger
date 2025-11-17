@@ -71,7 +71,7 @@ export default function TenantDetailPage() {
   const nextRentDueDate = add(startOfMonth(today), { months: 1 });
 
   const leaseDaysRemaining = differenceInDays(leaseEndDate, today);
-  const isLeaseEndingSoon = leaseDaysRemaining <= 90;
+  const isLeaseEndingSoon = leaseDaysRemaining <= 90 && leaseDaysRemaining > 0;
 
   // Compassion Calculation
   const monthsRemaining = differenceInMonths(leaseEndDate, today);
@@ -152,7 +152,7 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                         <div className="rounded-lg border bg-secondary/50 p-4">
                             <p className="text-sm font-medium text-muted-foreground">Next Rent Due</p>
                             <p className={cn("text-xl font-bold text-primary")}>
-                                {format(nextRentDueDate, 'MMMM do, yyyy')}
+                                {isLeaseActive ? format(nextRentDueDate, 'MMMM do, yyyy') : 'N/A'}
                             </p>
                         </div>
                         <div className={cn("rounded-lg border p-4", isLeaseEndingSoon ? "border-amber-500/50 bg-amber-50" : "bg-secondary/50")}>
@@ -321,11 +321,3 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
     </div>
   );
 }
-
-    
-
-
-
-
-    
-
