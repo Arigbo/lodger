@@ -19,12 +19,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getPropertiesByLandlord, getRentalRequestsByPropertyId, getUserById, getPropertyById } from '@/lib/data';
+import { getPropertiesByLandlord, getRentalRequestsByPropertyId, getUserById, getPropertyById, updateRentalRequest } from '@/lib/data';
 import type { User, Property, RentalRequest } from '@/lib/definitions';
 import { Check, X, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import React from 'react';
+import React, { useState } from 'react';
+import LeaseGenerationDialog from '@/components/lease-generation-dialog';
 
 // Mock current user
 const useUser = () => {
@@ -40,6 +41,8 @@ type AggregatedRequest = {
 
 export default function RentalRequestsPage() {
   const { user: landlord } = useUser();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<AggregatedRequest | null>(null);
 
   const aggregatedRequests = React.useMemo(() => {
     if (!landlord) return [];
@@ -62,6 +65,26 @@ export default function RentalRequestsPage() {
   }, [landlord]);
 
   const pendingRequests = aggregatedRequests.filter(req => req.request.status === 'pending');
+  const pastRequests = aggregatedRequests.filter(req => req.request.status !== 'pending');
+  
+  const handleAcceptClick = (request: AggregatedRequest) => {
+    setSelectedRequest(request);
+    setDialogOpen(true);
+  };
+  
+  const handleDeclineClick = (requestId: string) => {
+    updateRentalRequest(requestId, 'declined');
+    // Force re-render, ideally state would be managed in a more robust way
+    window.location.reload();
+  };
+
+  const handleLeaseSigned = () => {
+    if (selectedRequest) {
+      updateRentalRequest(selectedRequest.request.id, 'accepted', selectedRequest.applicant?.id);
+    }
+     // Force re-render, ideally state would be managed in a more robust way
+    window.location.reload();
+  }
 
   return (
     <div>
@@ -112,7 +135,9 @@ export default function RentalRequestsPage() {
                     </TableHeader>
                     <TableBody>
                         {pendingRequests.length > 0 ? (
-                            pendingRequests.map(({ request, applicant, property }) => (
+                            pendingRequests.map((aggregatedRequest) => {
+                                const { request, applicant, property } = aggregatedRequest;
+                                return (
                                 <TableRow key={request.id}>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
@@ -132,12 +157,12 @@ export default function RentalRequestsPage() {
                                     <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button size="sm" variant="outline"><Check className="h-4 w-4" /></Button>
-                                            <Button size="sm" variant="destructive"><X className="h-4 w-4" /></Button>
+                                            <Button size="sm" variant="outline" onClick={() => handleAcceptClick(aggregatedRequest)}><Check className="h-4 w-4" /></Button>
+                                            <Button size="sm" variant="destructive" onClick={() => handleDeclineClick(request.id)}><X className="h-4 w-4" /></Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                            ))
+                            )})
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center h-24">No pending requests.</TableCell>
@@ -148,6 +173,16 @@ export default function RentalRequestsPage() {
                 </CardContent>
             </Card>
         </div>
+      )}
+      {selectedRequest && landlord && (
+        <LeaseGenerationDialog
+            isOpen={dialogOpen}
+            onClose={() => setDialogOpen(false)}
+            onLeaseSigned={handleLeaseSigned}
+            landlord={landlord}
+            tenant={selectedRequest.applicant!}
+            property={selectedRequest.property!}
+        />
       )}
     </div>
   );

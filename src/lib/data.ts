@@ -88,9 +88,9 @@ const reviews: Review[] = [
   { id: 'rev-2', propertyId: 'prop-3', userId: 'user-2', rating: 4, comment: 'Great apartment for roommates. The walls are a bit thin, but the amenities are great. The gym is a nice bonus.', date: '2023-09-01T14:30:00Z' },
 ];
 
-const rentalRequests: RentalRequest[] = [
-    { id: 'req-1', propertyId: 'prop-1', userId: 'user-2', status: 'pending', message: 'I am very interested in this loft! I am a quiet and responsible graduate student.', requestDate: '2024-05-20T11:00:00Z'},
-    { id: 'req-2', propertyId: 'prop-2', userId: 'user-3', status: 'accepted', message: 'This studio looks perfect for my needs.', requestDate: '2024-05-18T18:00:00Z'},
+let rentalRequests: RentalRequest[] = [
+    { id: 'req-1', propertyId: 'prop-2', userId: 'user-2', status: 'pending', message: 'I am very interested in this studio! I am a quiet and responsible graduate student.', requestDate: '2024-05-20T11:00:00Z'},
+    { id: 'req-2', propertyId: 'prop-4', userId: 'user-3', status: 'pending', message: 'This house looks perfect for me and my two roommates.', requestDate: '2024-05-18T18:00:00Z'},
 ];
 
 const transactions: Transaction[] = [
@@ -152,8 +152,8 @@ const messages: { [key: string]: Message[] } = {
     ]
 };
 
-const generateLeaseText = (landlord: User, tenant: User, property: Property) => {
-  const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
+export const generateLeaseText = (landlord: User, tenant: User, property: Property) => {
+  const leaseStartDate = new Date(); // Start today for new leases
   const leaseEndDate = add(leaseStartDate, { years: 1 });
 
   return `1. PARTIES
@@ -187,12 +187,37 @@ const leaseAgreements: LeaseAgreement[] = [
     .map(p => {
         const landlord = getUserById(p.landlordId)!;
         const tenant = getUserById(p.currentTenantId!)!;
+        const leaseStartDate = p.leaseStartDate ? new Date(p.leaseStartDate) : new Date();
+        const leaseEndDate = add(leaseStartDate, { years: 1 });
+
         return {
             id: `lease-${p.id}`,
             propertyId: p.id,
             landlordId: p.landlordId,
             tenantId: p.currentTenantId!,
-            leaseText: generateLeaseText(landlord, tenant, p),
+            leaseText: `1. PARTIES
+This Residential Lease Agreement ("Agreement") is made between ${landlord.name} ("Landlord") and ${tenant.name} ("Tenant").
+
+2. PROPERTY
+Landlord agrees to lease to Tenant the property located at ${p.location.address}, ${p.location.city}, ${p.location.state} ${p.location.zip}.
+
+3. TERM
+The term of this lease is for one year, beginning on ${format(leaseStartDate, 'MMMM do, yyyy')} and ending on ${format(leaseEndDate, 'MMMM do, yyyy')}.
+                                    
+4. RENT
+Tenant agrees to pay Landlord the sum of ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(p.price)} per month as rent, due on the 1st day of each month.
+
+5. SECURITY DEPOSIT
+Upon execution of this Agreement, Tenant shall deposit with Landlord the sum of ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(p.price)} as security for the faithful performance of the terms of this lease.
+
+6. UTILITIES
+Tenant is responsible for all utilities and services for the property, unless otherwise specified in the property amenities list.
+
+7. USE OF PREMISES
+The premises shall be used and occupied by Tenant and Tenant's immediate family, exclusively, as a private single-family dwelling, and no part of the premises shall be used at any time during the term of this Agreement for the purpose of carrying on any business, profession, or trade of any kind, or for any purpose other than as a private single-family dwelling.
+                                    
+8. HOUSE RULES
+Tenant agrees to abide by the house rules, which are attached as an addendum to this lease. The current rules include: ${p.rules.join(', ')}.`,
             landlordSigned: false,
             tenantSigned: false,
         }
@@ -227,6 +252,22 @@ export function getReviewsByPropertyId(propertyId: string) {
 
 export function getRentalRequestsByPropertyId(propertyId: string) {
     return rentalRequests.filter(r => r.propertyId === propertyId);
+}
+
+export function updateRentalRequest(requestId: string, status: 'accepted' | 'declined', tenantId?: string) {
+  const requestIndex = rentalRequests.findIndex(r => r.id === requestId);
+  if (requestIndex !== -1) {
+    rentalRequests[requestIndex].status = status;
+    
+    if (status === 'accepted' && tenantId) {
+        const propertyIndex = properties.findIndex(p => p.id === rentalRequests[requestIndex].propertyId);
+        if (propertyIndex !== -1) {
+            properties[propertyIndex].status = 'occupied';
+            properties[propertyIndex].currentTenantId = tenantId;
+            properties[propertyIndex].leaseStartDate = new Date().toISOString().split('T')[0];
+        }
+    }
+  }
 }
 
 export function getTransactionsByLandlord(landlordId: string) {
