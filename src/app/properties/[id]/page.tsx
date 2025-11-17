@@ -10,10 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2 } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import type { Property, User, Review, ImagePlaceholder } from "@/lib/definitions";
-import React, { useState } from "react";
+import React from "react";
 
 // This is the new Server Component that fetches data.
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
@@ -43,6 +41,10 @@ function PropertyDetailView({
     images: ImagePlaceholder[];
 }) {
   'use client';
+  
+  const { useState } = React;
+  const { Textarea } = require("@/components/ui/textarea");
+  const { Label } = require("@/components/ui/label");
 
   const { user } = useUser();
   const [reviews] = useState(initialReviews);
@@ -220,7 +222,9 @@ const useUser = () => {
 }
 
 function AddReviewForm() {
-    const [rating, setRating] = useState(0);
+    const [rating, setRating] = React.useState(0);
+    const { Textarea } = require("@/components/ui/textarea");
+    const { Label } = require("@/components/ui/label");
 
     return (
         <Card>
@@ -248,5 +252,7 @@ function AddReviewForm() {
         </Card>
     );
 }
+
+    
 
     
