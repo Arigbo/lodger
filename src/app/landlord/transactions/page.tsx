@@ -52,7 +52,10 @@ const useUser = () => {
 
 export default function TransactionsPage() {
   const { user: landlord } = useUser();
-  const allTransactions = landlord ? getTransactionsByLandlord(landlord.id) : [];
+  
+  const allTransactions = React.useMemo(() => {
+    return landlord ? getTransactionsByLandlord(landlord.id) : [];
+  }, [landlord]);
 
   const [filteredTransactions, setFilteredTransactions] = React.useState<Transaction[]>(allTransactions);
   const [date, setDate] = React.useState<DateRange | undefined>({
