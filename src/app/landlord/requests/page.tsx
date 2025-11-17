@@ -62,8 +62,6 @@ export default function RentalRequestsPage() {
   }, [landlord]);
 
   const pendingRequests = aggregatedRequests.filter(req => req.request.status === 'pending');
-  const pastRequests = aggregatedRequests.filter(req => req.request.status !== 'pending');
-
 
   return (
     <div>
@@ -143,60 +141,6 @@ export default function RentalRequestsPage() {
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center h-24">No pending requests.</TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-                </CardContent>
-            </Card>
-
-            {/* Past Requests */}
-            <Card>
-                <CardHeader>
-                <CardTitle>Past Requests</CardTitle>
-                <CardDescription>
-                    A history of all previously handled requests.
-                </CardDescription>
-                </CardHeader>
-                <CardContent>
-                 <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Applicant</TableHead>
-                            <TableHead>Property</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead className="text-right">Status</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {pastRequests.length > 0 ? (
-                             pastRequests.map(({ request, applicant, property }) => (
-                                <TableRow key={request.id}>
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Avatar>
-                                                <AvatarImage src={applicant?.avatarUrl} />
-                                                <AvatarFallback>{applicant?.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <span className="font-medium">{applicant?.name}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Link href={`/landlord/properties/${property?.id}`} className="hover:underline text-muted-foreground">
-                                            {property?.title}
-                                        </Link>
-                                    </TableCell>
-                                    <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Badge variant={request.status === 'accepted' ? 'secondary' : 'destructive'}>
-                                            {request.status}
-                                        </Badge>
-                                    </TableCell>
-                                </TableRow>
-                             ))
-                        ) : (
-                             <TableRow>
-                                <TableCell colSpan={4} className="text-center h-24">No past requests.</TableCell>
                             </TableRow>
                         )}
                     </TableBody>
