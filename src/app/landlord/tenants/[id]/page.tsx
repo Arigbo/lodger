@@ -253,7 +253,7 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                                                         {tenantSigned ? (
                                                             <p className="text-green-600">✓ Digitally Signed by {tenant.name}</p>
                                                         ) : (
-                                                            currentUser?.id === tenant.id && <Button size="sm" onClick={() => setTenantSigned(true)} disabled={isEditing}>Sign as Tenant</Button>
+                                                            isCurrentUserTenant && <Button size="sm" onClick={() => setTenantSigned(true)} disabled={isEditing}>Sign as Tenant</Button>
                                                         )}
                                                     </div>
                                                 </div>
@@ -364,3 +364,4 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
 }
 
     
+
