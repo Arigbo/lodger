@@ -48,9 +48,9 @@ type TenantWithProperty = {
 export default function TenantsPage() {
   const { user: landlord } = useUser();
   const today = new Date();
-  // A simple check to see if the 1st of the month has passed.
+  // A simple check to see if we are past the 1st of the month.
   // In a real app, you'd check if a payment for the current month exists.
-  const isRentDue = isPast(startOfMonth(today));
+  const isRentDue = today.getDate() > 1;
 
   const landlordProperties = landlord
     ? getPropertiesByLandlord(landlord.id)

@@ -63,7 +63,7 @@ export default function TenantDetailPage() {
   const leaseEndDate = add(leaseStartDate, { years: 1 });
   
   // Is rent for the current month "due"? (Assuming due on the 1st)
-  const isRentDue = isPast(startOfMonth(today)); 
+  const isRentDue = today.getDate() > 1;
 
   // Calculate next rent due date (assuming 1st of every month)
   let nextRentDueDate = new Date(today.getFullYear(), today.getMonth(), 1);
