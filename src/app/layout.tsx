@@ -25,10 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const isDashboard = pathname.startsWith('/dashboard');
-  const isPropertyPage = pathname.startsWith('/properties');
-
-  const showHeaderAndFooter = !isDashboard && !isPropertyPage;
+  const showHeaderAndFooter = pathname === '/';
 
   return (
     <html lang="en" className="h-full">
