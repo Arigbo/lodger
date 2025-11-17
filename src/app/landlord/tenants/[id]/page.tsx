@@ -2,7 +2,7 @@
 
 'use client';
 
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { getUserById, getPropertiesByTenant } from '@/lib/data';
 import type { User, Property } from '@/lib/definitions';
 import {
@@ -43,8 +43,9 @@ import React, { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
 
-export default function TenantDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function TenantDetailPage() {
+  const params = useParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const tenant = getUserById(id);
   const rentedProperties = tenant ? getPropertiesByTenant(tenant.id) : [];
 
@@ -321,3 +322,4 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
 }
 
     
+
