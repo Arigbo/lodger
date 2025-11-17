@@ -26,7 +26,7 @@ export type Property = {
   landlordId: string;
   status: 'available' | 'occupied';
   rules: string[];
-  currentTenantId?: string | null;
+  currentTenantId?: string;
 };
 
 export type Review = {

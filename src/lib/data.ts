@@ -24,7 +24,6 @@ const properties: Property[] = [
     landlordId: 'user-1',
     status: 'available',
     rules: ['No smoking', 'No pets', 'Quiet hours after 10 PM'],
-    currentTenantId: null,
   },
   {
     id: 'prop-2',
@@ -41,7 +40,6 @@ const properties: Property[] = [
     landlordId: 'user-4',
     status: 'available',
     rules: ['Single occupant only', 'No loud parties'],
-    currentTenantId: null,
   },
   {
     id: 'prop-3',
@@ -75,7 +73,6 @@ const properties: Property[] = [
     landlordId: 'user-4',
     status: 'available',
     rules: ['Tenants responsible for yard maintenance', 'Maximum 4 occupants'],
-    currentTenantId: null,
   },
 ];
 
@@ -99,7 +96,15 @@ export function getPropertyById(id: string) {
   return properties.find(p => p.id === id);
 }
 
-export function getUserById(id: string) {
+export function getPropertiesByLandlord(landlordId: string) {
+  return properties.filter(p => p.landlordId === landlordId);
+}
+
+export function getPropertiesByTenant(tenantId: string) {
+    return properties.filter(p => p.currentTenantId === tenantId);
+}
+
+export function getUserById(id: string): User | undefined {
   return users.find(u => u.id === id);
 }
 

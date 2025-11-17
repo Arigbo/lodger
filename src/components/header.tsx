@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import placeholderImages from '@/lib/placeholder-images.json';
+import { getUserById } from "@/lib/data";
+import type { User } from "@/lib/definitions";
 
 const navLinks = [
   { href: "/properties", label: "All Properties" },
@@ -23,11 +25,23 @@ const navLinks = [
   { href: "/dashboard", label: "For Landlords" },
 ];
 
+// Mock current user - replace with real auth
+const useUser = () => {
+  // To test a landlord, use 'user-1'. 
+  // To test a student tenant, use 'user-3'.
+  // To test a student non-tenant, use 'user-2'.
+  const user = getUserById('user-2'); 
+  const isTenant = user?.role === 'student' && user.id === 'user-3';
+  return { user, isTenant, isAuthenticated: !!user };
+}
+
+
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isAuthenticated = false; // Mock authentication
-  const userAvatar = placeholderImages.placeholderImages.find(p => p.id === 'avatar-2')?.imageUrl;
+  const { user, isTenant, isAuthenticated } = useUser();
+  const userAvatar = user?.avatarUrl;
 
+  const canViewDashboard = user?.role === 'landlord' || isTenant;
 
   return (
     <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur">
@@ -47,27 +61,27 @@ export default function Header() {
           ))}
         </nav>
         <div className="hidden items-center gap-2 md:flex">
-          {isAuthenticated ? (
+          {isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={userAvatar} alt="User Avatar" />
-                    <AvatarFallback>U</AvatarFallback>
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Michael Chen</p>
+                    <p className="text-sm font-medium leading-none">{user.name}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      michael@example.com
+                      {user.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
+                {canViewDashboard && <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>}
                 <DropdownMenuItem asChild><Link href="/account">Profile</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Log out</DropdownMenuItem>
@@ -115,9 +129,13 @@ export default function Header() {
             ))}
             <div className="mt-4 flex w-full flex-col gap-2">
               {isAuthenticated ? (
-                 <Button variant="ghost" asChild className="w-full">
+                 <>
+                  {canViewDashboard && <Button variant="ghost" asChild className="w-full"><Link href="/dashboard">Dashboard</Link></Button>}
+                  <Button variant="ghost" asChild className="w-full">
                     <Link href="/account">My Account</Link>
                   </Button>
+                  <Button variant="outline" className="w-full">Log out</Button>
+                 </>
               ) : (
                 <>
                 <Button variant="ghost" asChild className="w-full">
