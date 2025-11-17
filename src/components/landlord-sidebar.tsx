@@ -1,10 +1,11 @@
+
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Building2, Users, Bell, Wrench } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Bell, Wrench, UserCog } from "lucide-react";
 import { Badge } from "./ui/badge";
 
 const landlordNavLinks = [
@@ -18,6 +19,7 @@ const landlordNavLinks = [
     badge: 3,
   },
   { href: "/landlord/maintenance", label: "Maintenance", icon: Wrench },
+  { href: "/landlord/account", label: "Account", icon: UserCog },
 ];
 
 export default function LandlordSidebar() {
@@ -29,7 +31,7 @@ export default function LandlordSidebar() {
         <Button
           key={link.href}
           asChild
-          variant={pathname === link.href ? "secondary" : "ghost"}
+          variant={pathname.startsWith(link.href) && (link.href !== '/landlord' || pathname === '/landlord') ? "secondary" : "ghost"}
           className="justify-start"
         >
           <Link href={link.href}>
@@ -44,3 +46,5 @@ export default function LandlordSidebar() {
     </nav>
   );
 }
+
+    
