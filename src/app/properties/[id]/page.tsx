@@ -12,8 +12,8 @@ import { Separator } from "@/components/ui/separator";
 import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
 import type { Property, User, Review, ImagePlaceholder } from "@/lib/definitions";
+import React, { useState } from "react";
 
 // This is the new Server Component that fetches data.
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
@@ -248,3 +248,5 @@ function AddReviewForm() {
         </Card>
     );
 }
+
+    
