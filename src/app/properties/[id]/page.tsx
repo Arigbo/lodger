@@ -1,6 +1,4 @@
 
-'use client';
-
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { getPropertyById, getUserById, getReviewsByPropertyId, getImagesByIds } from "@/lib/data";
@@ -17,27 +15,6 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import type { Property, User, Review, ImagePlaceholder } from "@/lib/definitions";
 
-type amenityIcon = {
-    [key: string]: React.ReactNode;
-}
-
-const amenityIcons: amenityIcon = {
-    'Furnished': <Tv className="h-5 w-5 text-primary" />,
-    'Wi-Fi': <Wifi className="h-5 w-5 text-primary" />,
-    'In-unit Laundry': <Wind className="h-5 w-5 text-primary" />, // Using Wind as a proxy for laundry/dryer
-    'Pet Friendly': <Dog className="h-5 w-5 text-primary" />,
-    'Parking Spot': <ParkingCircle className="h-5 w-5 text-primary" />,
-}
-
-// Mock current user - replace with real auth
-const useUser = () => {
-  // To test a landlord, use 'user-1'. 
-  // To test a student tenant, use 'user-3'.
-  // To test a student non-tenant, use 'user-2'.
-  const user = getUserById('user-3'); 
-  return { user };
-}
-
 // This is the new Server Component that fetches data.
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const property = getPropertyById(params.id);
@@ -53,8 +30,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   return <PropertyDetailView property={property} landlord={landlord} reviews={reviews} images={images} />;
 }
 
-
-// This is the original component, now focused on rendering UI.
+// This is the Client Component for rendering UI.
 function PropertyDetailView({
     property,
     landlord,
@@ -66,6 +42,8 @@ function PropertyDetailView({
     reviews: Review[];
     images: ImagePlaceholder[];
 }) {
+  'use client';
+
   const { user } = useUser();
   const [reviews] = useState(initialReviews);
   const [images] = useState(initialImages);
@@ -220,6 +198,26 @@ function PropertyDetailView({
   );
 }
 
+type amenityIcon = {
+    [key: string]: React.ReactNode;
+}
+
+const amenityIcons: amenityIcon = {
+    'Furnished': <Tv className="h-5 w-5 text-primary" />,
+    'Wi-Fi': <Wifi className="h-5 w-5 text-primary" />,
+    'In-unit Laundry': <Wind className="h-5 w-5 text-primary" />, // Using Wind as a proxy for laundry/dryer
+    'Pet Friendly': <Dog className="h-5 w-5 text-primary" />,
+    'Parking Spot': <ParkingCircle className="h-5 w-5 text-primary" />,
+}
+
+// Mock current user - replace with real auth
+const useUser = () => {
+  // To test a landlord, use 'user-1'. 
+  // To test a student tenant, use 'user-3'.
+  // To test a student non-tenant, use 'user-2'.
+  const user = getUserById('user-3'); 
+  return { user };
+}
 
 function AddReviewForm() {
     const [rating, setRating] = useState(0);
@@ -250,7 +248,3 @@ function AddReviewForm() {
         </Card>
     );
 }
-
-    
-
-    
