@@ -43,7 +43,8 @@ import React, { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
 
-export default function TenantDetailPage({ params: { id } }: { params: { id: string } }) {
+export default function TenantDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const tenant = getUserById(id);
   const rentedProperties = tenant ? getPropertiesByTenant(tenant.id) : [];
 
