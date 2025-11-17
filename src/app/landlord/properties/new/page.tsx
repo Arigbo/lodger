@@ -30,7 +30,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { amenities as allAmenities } from '@/lib/definitions';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, UploadCloud } from 'lucide-react';
 
 const formSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -48,6 +48,9 @@ const formSchema = z.object({
     message: 'You have to select at least one amenity.',
   }),
   rules: z.string().optional(),
+  // For now, we will just log the files to the console.
+  // A real implementation would handle file uploads to a server/storage.
+  images: z.any().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -57,7 +60,8 @@ const steps = [
     { id: 2, name: 'Location', fields: ['address', 'city', 'state', 'zip'] },
     { id: 3, name: 'Property Details', fields: ['bedrooms', 'bathrooms', 'area'] },
     { id: 4, name: 'Amenities & Rules', fields: ['amenities', 'rules'] },
-    { id: 5, name: 'Review' }
+    { id: 5, name: 'Upload Photos', fields: ['images'] },
+    { id: 6, name: 'Review' }
 ];
 
 export default function AddPropertyPage() {
@@ -362,8 +366,44 @@ export default function AddPropertyPage() {
                     />
                 </div>
             </div>
-            
+
             <div className={cn(currentStep === 5 ? "block" : "hidden")}>
+                <FormField
+                    control={form.control}
+                    name="images"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Property Photos</FormLabel>
+                            <FormDescription>
+                                Upload high-quality images. We recommend including photos of the exterior, living room, kitchen, bedrooms, and bathrooms.
+                            </FormDescription>
+                            <FormControl>
+                                <div className="mt-4 flex justify-center rounded-lg border border-dashed border-input px-6 py-10">
+                                    <div className="text-center">
+                                        <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                                        <div className="mt-4 flex text-sm leading-6 text-muted-foreground">
+                                            <label
+                                                htmlFor="file-upload"
+                                                className="relative cursor-pointer rounded-md bg-background font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:text-primary/80"
+                                            >
+                                                <span>Upload files</span>
+                                                <input id="file-upload" name="file-upload" type="file" className="sr-only" multiple
+                                                    onChange={(e) => field.onChange(e.target.files)}
+                                                />
+                                            </label>
+                                            <p className="pl-1">or drag and drop</p>
+                                        </div>
+                                        <p className="text-xs leading-5 text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
+                                    </div>
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+            
+            <div className={cn(currentStep === 6 ? "block" : "hidden")}>
                 <h3 className="font-headline text-xl font-semibold">Review Your Listing</h3>
                 <p className="text-muted-foreground">Please review all the information below before submitting.</p>
                 <div className="mt-6 space-y-6 rounded-lg border bg-secondary/50 p-6">
@@ -429,3 +469,5 @@ export default function AddPropertyPage() {
     </Card>
   );
 }
+
+    
