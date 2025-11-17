@@ -48,9 +48,10 @@ const formSchema = z.object({
     message: 'You have to select at least one amenity.',
   }),
   rules: z.string().optional(),
-  // For now, we will just log the files to the console.
-  // A real implementation would handle file uploads to a server/storage.
-  images: z.any().optional(),
+  kitchenImage: z.any().refine((files) => files?.length == 1, 'Kitchen image is required.'),
+  livingRoomImage: z.any().refine((files) => files?.length == 1, 'Living room image is required.'),
+  bathroomImage: z.any().refine((files) => files?.length == 1, 'Bathroom image is required.'),
+  otherImages: z.any().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -60,9 +61,39 @@ const steps = [
     { id: 2, name: 'Location', fields: ['address', 'city', 'state', 'zip'] },
     { id: 3, name: 'Property Details', fields: ['bedrooms', 'bathrooms', 'area'] },
     { id: 4, name: 'Amenities & Rules', fields: ['amenities', 'rules'] },
-    { id: 5, name: 'Upload Photos', fields: ['images'] },
+    { id: 5, name: 'Upload Photos', fields: ['kitchenImage', 'livingRoomImage', 'bathroomImage'] },
     { id: 6, name: 'Review' }
 ];
+
+const FileUpload = ({ field, label, description }: { field: any, label: string, description: string }) => (
+    <FormItem>
+        <FormLabel>{label}</FormLabel>
+        <FormDescription>{description}</FormDescription>
+        <FormControl>
+            <div className="mt-4 flex justify-center rounded-lg border border-dashed border-input px-6 py-10">
+                <div className="text-center">
+                    <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <div className="mt-4 flex text-sm leading-6 text-muted-foreground">
+                        <label
+                            htmlFor={field.name}
+                            className="relative cursor-pointer rounded-md bg-background font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:text-primary/80"
+                        >
+                            <span>Upload a file</span>
+                            <input id={field.name} name={field.name} type="file" className="sr-only"
+                                onChange={(e) => field.onChange(e.target.files)}
+                            />
+                        </label>
+                        <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs leading-5 text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
+                    {field.value?.[0] && <p className="text-sm text-green-600 mt-2">{field.value[0].name}</p>}
+                </div>
+            </div>
+        </FormControl>
+        <FormMessage />
+    </FormItem>
+);
+
 
 export default function AddPropertyPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -367,27 +398,46 @@ export default function AddPropertyPage() {
                 </div>
             </div>
 
-            <div className={cn(currentStep === 5 ? "block" : "hidden")}>
+            <div className={cn(currentStep === 5 ? "block space-y-8" : "hidden")}>
                 <FormField
                     control={form.control}
-                    name="images"
+                    name="kitchenImage"
                     render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Property Photos</FormLabel>
-                            <FormDescription>
-                                Upload high-quality images. We recommend including photos of the exterior, living room, kitchen, bedrooms, and bathrooms.
-                            </FormDescription>
+                        <FileUpload field={field} label="Kitchen Photo (Required)" description="Upload a photo of the kitchen." />
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="livingRoomImage"
+                    render={({ field }) => (
+                        <FileUpload field={field} label="Living Room Photo (Required)" description="Upload a photo of the main living area." />
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="bathroomImage"
+                    render={({ field }) => (
+                        <FileUpload field={field} label="Bathroom Photo (Required)" description="Upload a photo of a primary bathroom." />
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="otherImages"
+                    render={({ field }) => (
+                         <FormItem>
+                            <FormLabel>Additional Photos</FormLabel>
+                            <FormDescription>Upload any other photos, like bedrooms, exterior views, or special features.</FormDescription>
                             <FormControl>
                                 <div className="mt-4 flex justify-center rounded-lg border border-dashed border-input px-6 py-10">
                                     <div className="text-center">
                                         <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
                                         <div className="mt-4 flex text-sm leading-6 text-muted-foreground">
                                             <label
-                                                htmlFor="file-upload"
+                                                htmlFor="otherImages"
                                                 className="relative cursor-pointer rounded-md bg-background font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:text-primary/80"
                                             >
                                                 <span>Upload files</span>
-                                                <input id="file-upload" name="file-upload" type="file" className="sr-only" multiple
+                                                <input id="otherImages" name="otherImages" type="file" className="sr-only" multiple
                                                     onChange={(e) => field.onChange(e.target.files)}
                                                 />
                                             </label>
