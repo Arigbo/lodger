@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -27,22 +27,21 @@ export default function MessagesPage() {
   const searchParams = useSearchParams();
   const conversationIdFromUrl = searchParams.get('conversationId');
   
-  const conversations: Conversation[] = landlord ? getConversationsByLandlord(landlord.id) : [];
+  const conversations: Conversation[] = useMemo(() => {
+    return landlord ? getConversationsByLandlord(landlord.id) : [];
+  }, [landlord]);
 
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
 
   useEffect(() => {
-    // If a conversation ID is in the URL, find and select that conversation.
-    if (conversationIdFromUrl) {
-      const conversationToSelect = conversations.find(c => c.id === conversationIdFromUrl);
-      if (conversationToSelect) {
-        setSelectedConversation(conversationToSelect);
-      }
-    // If no conversation is selected yet and there are available conversations, select the first one.
+    const conversationToSelect = conversations.find(c => c.id === conversationIdFromUrl);
+
+    if (conversationToSelect) {
+      setSelectedConversation(conversationToSelect);
     } else if (!selectedConversation && conversations.length > 0) {
       setSelectedConversation(conversations[0]);
     }
-  }, [conversationIdFromUrl, conversations]); // Rerun only when URL or conversations list change
+  }, [conversationIdFromUrl, conversations, selectedConversation]);
 
 
   const messages = selectedConversation ? getMessagesByConversationId(selectedConversation.id) : [];
