@@ -151,7 +151,9 @@ export default function TenantsPage() {
                             <Mail className="mr-2 h-4 w-4" /> Message Tenant
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>View Lease</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/landlord/tenants/${tenant.id}`}>View Lease</Link>
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -175,3 +177,5 @@ export default function TenantsPage() {
     </div>
   );
 }
+
+    
