@@ -12,13 +12,13 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-3xl">Welcome Back</CardTitle>
-          <CardDescription>Sign in to continue to Urban Nest</CardDescription>
+          <CardDescription>Sign in to continue to ProjectFlow</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="student@university.edu" required />
+              <Input id="email" type="email" placeholder="name@example.com" required />
             </div>
             <div className="grid gap-2">
                 <div className="flex items-center">

@@ -13,8 +13,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Urban Nest",
-  description: "Find your next student apartment with ease.",
+  title: "ProjectFlow",
+  description: "Streamline Your Workflow.",
 };
 
 export default function RootLayout({

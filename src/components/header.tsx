@@ -18,14 +18,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import placeholderImages from '@/lib/placeholder-images.json';
 
 const navLinks = [
-  { href: "/properties", label: "Properties" },
-  { href: "/#how-it-works", label: "How It Works" },
-  { href: "/dashboard", label: "For Landlords" },
+  { href: "/#features", label: "Features" },
+  { href: "/#pricing", label: "Pricing" },
+  { href: "/about", label: "About" },
 ];
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isAuthenticated = true; // Mock authentication
+  const isAuthenticated = false; // Mock authentication
   const userAvatar = placeholderImages.placeholderImages.find(p => p.id === 'avatar-2')?.imageUrl;
 
 
@@ -62,14 +62,13 @@ export default function Header() {
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">Michael Chen</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      michael@university.edu
+                      michael@example.com
                     </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/account">Profile</Link></DropdownMenuItem>
-                <DropdownMenuItem>Bookmarks</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Log out</DropdownMenuItem>
               </DropdownMenuContent>
@@ -79,7 +78,7 @@ export default function Header() {
               <Button variant="ghost" asChild>
                 <Link href="/auth/login">Sign In</Link>
               </Button>
-              <Button asChild className="bg-primary hover:bg-primary/90">
+              <Button asChild>
                 <Link href="/auth/signup">Sign Up</Link>
               </Button>
             </>
