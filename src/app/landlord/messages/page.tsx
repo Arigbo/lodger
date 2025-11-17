@@ -1,9 +1,9 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +14,6 @@ import { cn } from '@/lib/utils';
 import { getConversationsByLandlord, getMessagesByConversationId, getUserById } from '@/lib/data';
 import type { User, Conversation, Message } from '@/lib/definitions';
 import { Send, Phone, Video } from 'lucide-react';
-import Link from 'next/link';
 import { format } from 'date-fns';
 
 // Mock current user
@@ -45,19 +44,16 @@ export default function MessagesPage() {
     if (conversationIdFromUrl) {
       const conversationToSelect = conversations.find(c => c.id === conversationIdFromUrl);
       setSelectedConversation(conversationToSelect || null);
-    } else if (conversations.length > 0 && !selectedConversation) {
+    } else if (conversations.length > 0) {
         const firstConvo = conversations[0];
-        setSelectedConversation(firstConvo);
+        // Only set the first conversation if there isn't one already selected
+        if (!selectedConversation) {
+            setSelectedConversation(firstConvo);
+        }
     }
   }, [searchParams, conversations, selectedConversation]);
 
   const messages = selectedConversation ? getMessagesByConversationId(selectedConversation.id) : [];
-
-  const handleConversationSelect = (convo: Conversation) => {
-    setSelectedConversation(convo);
-    router.push(`${pathname}?conversationId=${convo.id}`);
-  };
-
 
   return (
     <div>
@@ -76,7 +72,15 @@ export default function MessagesPage() {
                     <ScrollArea className="flex-grow">
                         <CardContent className="p-0">
                             {conversations.map(convo => (
-                                <button key={convo.id} onClick={() => handleConversationSelect(convo)} className={cn("flex w-full items-center gap-4 p-4 text-left hover:bg-accent", selectedConversation?.id === convo.id && 'bg-secondary')}>
+                                <Link
+                                    key={convo.id}
+                                    href={`${pathname}?conversationId=${convo.id}`}
+                                    className={cn(
+                                        "flex w-full items-center gap-4 p-4 text-left hover:bg-accent",
+                                        selectedConversation?.id === convo.id && 'bg-secondary'
+                                    )}
+                                    scroll={false}
+                                >
                                     <Avatar>
                                         <AvatarImage src={convo.participant.avatarUrl} />
                                         <AvatarFallback>{convo.participant.name.charAt(0)}</AvatarFallback>
@@ -91,7 +95,7 @@ export default function MessagesPage() {
                                              {convo.unreadCount > 0 && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">{convo.unreadCount}</span>}
                                         </div>
                                     </div>
-                                </button>
+                                </Link>
                             ))}
                         </CardContent>
                     </ScrollArea>
