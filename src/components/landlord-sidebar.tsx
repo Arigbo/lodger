@@ -5,13 +5,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Building2, Users, Bell, Wrench, UserCog, DollarSign } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Bell, Wrench, UserCog, DollarSign, MessageSquare } from "lucide-react";
 import { Badge } from "./ui/badge";
 
 const landlordNavLinks = [
   { href: "/landlord", label: "Overview", icon: LayoutDashboard },
   { href: "/landlord/properties", label: "Properties", icon: Building2 },
   { href: "/landlord/tenants", label: "Tenants", icon: Users },
+  { href: "/landlord/messages", label: "Messages", icon: MessageSquare, badge: 1 },
   { href: "/landlord/transactions", label: "Transactions", icon: DollarSign },
   {
     href: "/landlord/requests",
