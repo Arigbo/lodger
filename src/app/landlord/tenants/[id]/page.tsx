@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Phone, Mail, FileText, CalendarDays, AlertTriangle, Coins, Download, Pencil, Lock, QrCode } from 'lucide-react';
 import Link from 'next/link';
-import { add, format, differenceInDays, differenceInMonths, startOfMonth, isPast, isBefore } from 'date-fns';
+import { add, format, differenceInDays, isPast, isBefore } from 'date-fns';
 import { cn, formatPrice } from '@/lib/utils';
 import {
   AlertDialog,
@@ -43,13 +43,23 @@ import React, { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
 
+// Mock current user
+const useUser = () => {
+    // To test landlord view: 'user-1'
+    // To test tenant view: 'user-3'
+    const user = getUserById('user-1');
+    return { user };
+};
+
 export default function TenantDetailPage() {
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  
+  const { user: currentUser } = useUser();
   const tenant = getUserById(id);
   const rentedProperties = tenant ? getPropertiesByTenant(tenant.id) : [];
 
-  if (!tenant || rentedProperties.length === 0) {
+  if (!tenant || !currentUser || rentedProperties.length === 0) {
     notFound();
   }
 
@@ -69,26 +79,34 @@ export default function TenantDetailPage() {
 
   let nextRentDueDate: Date;
   let isRentDue = false;
+  const isLeaseActive = isPast(leaseStartDate) && isBefore(today, leaseEndDate);
 
   if (lastRentPayment) {
     nextRentDueDate = add(new Date(lastRentPayment.date), { months: 1 });
-    isRentDue = isPast(nextRentDueDate);
-  } else if (property.leaseStartDate) {
-    // New tenant, rent is due if today is past the lease start date
+    if (isLeaseActive) {
+      isRentDue = isPast(nextRentDueDate);
+    }
+  } else if (property.leaseStartDate && isLeaseActive) {
     nextRentDueDate = new Date(property.leaseStartDate);
     isRentDue = isPast(nextRentDueDate);
   } else {
-    // Fallback, should not happen with good data
-    nextRentDueDate = add(startOfMonth(today), { months: 1 });
+    // Fallback if lease isn't active or no payment history
+    nextRentDueDate = add(leaseStartDate, { months: 1 });
   }
 
-  const isLeaseActive = isPast(leaseStartDate) && isBefore(today, leaseEndDate);
   const leaseDaysRemaining = differenceInDays(leaseEndDate, today);
   const isLeaseEndingSoon = isLeaseActive && leaseDaysRemaining <= 90;
 
   // Compassion Calculation
-  const monthsRemaining = differenceInMonths(leaseEndDate, today);
-  const monthsPaid = differenceInMonths(today, leaseStartDate);
+  const monthsBetween = (start: Date, end: Date) => {
+    let months;
+    months = (end.getFullYear() - start.getFullYear()) * 12;
+    months -= start.getMonth();
+    months += end.getMonth();
+    return months <= 0 ? 0 : months;
+  }
+  const monthsRemaining = monthsBetween(today, leaseEndDate);
+  const monthsPaid = monthsBetween(leaseStartDate, today);
   const compassionFee = (property.price * monthsRemaining) + (property.price * 0.5 * monthsPaid);
   
   // State for lease modal
@@ -209,6 +227,7 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                                                 value={leaseText} 
                                                 onChange={(e) => setLeaseText(e.target.value)}
                                                 className="w-full h-[50vh] prose-sm"
+                                                disabled={currentUser?.id !== landlord?.id}
                                             />
                                         ) : (
                                             <div className="whitespace-pre-wrap">{leaseText}</div>
@@ -219,16 +238,16 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                                             <div className="mt-4 grid grid-cols-2 gap-6 items-center font-serif italic">
                                                 <div>
                                                     {landlordSigned ? (
-                                                        <p className="text-green-600">✓ Signed by {landlord?.name}</p>
+                                                        <p className="text-green-600">✓ Digitally Signed by {landlord?.name}</p>
                                                     ) : (
-                                                        <Button size="sm" onClick={() => setLandlordSigned(true)} disabled={isEditing}>Sign as Landlord</Button>
+                                                        currentUser?.id === landlord?.id && <Button size="sm" onClick={() => setLandlordSigned(true)} disabled={isEditing}>Sign as Landlord</Button>
                                                     )}
                                                 </div>
                                                 <div>
                                                      {tenantSigned ? (
-                                                        <p className="text-green-600">✓ Signed by {tenant.name}</p>
+                                                        <p className="text-green-600">✓ Digitally Signed by {tenant.name}</p>
                                                     ) : (
-                                                        <Button size="sm" onClick={() => setTenantSigned(true)} disabled={isEditing}>Sign as Tenant</Button>
+                                                        currentUser?.id === tenant.id && <Button size="sm" onClick={() => setTenantSigned(true)} disabled={isEditing}>Sign as Tenant</Button>
                                                     )}
                                                 </div>
                                             </div>
@@ -243,9 +262,11 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                                     </div>
                                 </div>
                                 <DialogFooter className="mt-4">
-                                    <Button variant="ghost" onClick={() => setIsEditing(!isEditing)} disabled={isDocLocked}>
+                                   {currentUser?.id === landlord?.id && (
+                                     <Button variant="ghost" onClick={() => setIsEditing(!isEditing)} disabled={isDocLocked}>
                                         {isEditing ? <><Lock className="mr-2 h-4 w-4" /> Save & Lock</> : <><Pencil className="mr-2 h-4 w-4" /> Edit</>}
                                     </Button>
+                                   )}
                                     <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Download</Button>
                                 </DialogFooter>
                             </DialogContent>
@@ -334,3 +355,5 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
     </div>
   );
 }
+
+    
