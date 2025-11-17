@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Phone, Mail, FileText, CalendarDays, AlertTriangle, Coins, Download, Pencil, Lock, QrCode } from 'lucide-react';
 import Link from 'next/link';
-import { add, format, differenceInDays, differenceInMonths, startOfMonth, isPast } from 'date-fns';
+import { add, format, differenceInDays, differenceInMonths, startOfMonth, isPast, isBefore } from 'date-fns';
 import { cn, formatPrice } from '@/lib/utils';
 import {
   AlertDialog,
@@ -62,14 +62,13 @@ export default function TenantDetailPage() {
   const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
   const leaseEndDate = add(leaseStartDate, { years: 1 });
   
-  // Is rent for the current month "due"? (Assuming due on the 1st)
-  const isRentDue = today.getDate() > 1;
+  // Rent is due if today is past the 1st of the month AND the lease is active.
+  const isLeaseActive = isPast(leaseStartDate) && isBefore(today, leaseEndDate);
+  const isRentDueForCurrentMonth = today.getDate() > 1;
+  const isRentDue = isLeaseActive && isRentDueForCurrentMonth;
 
   // Calculate next rent due date (assuming 1st of every month)
-  let nextRentDueDate = new Date(today.getFullYear(), today.getMonth(), 1);
-  if (today.getDate() > 1) {
-    nextRentDueDate = add(nextRentDueDate, { months: 1 });
-  }
+  const nextRentDueDate = add(startOfMonth(today), { months: 1 });
 
   const leaseDaysRemaining = differenceInDays(leaseEndDate, today);
   const isLeaseEndingSoon = leaseDaysRemaining <= 90;
@@ -275,7 +274,7 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                                 <AlertDialogTitle>End Tenancy Agreement?</AlertDialogTitle>
                                 {isRentDue ? (
                                     <AlertDialogDescription>
-                                        The tenant's rent is currently due. You can end the tenancy immediately without penalty.
+                                        The tenant's rent for the current month is marked as due. You can end the tenancy immediately without penalty.
                                     </AlertDialogDescription>
                                 ) : (
                                     <AlertDialogDescription>
@@ -329,3 +328,4 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
 
 
     
+

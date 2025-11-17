@@ -30,7 +30,7 @@ import { getPropertiesByLandlord, getUserById } from '@/lib/data';
 import type { User, Property } from '@/lib/definitions';
 import { MoreHorizontal, Users, Mail } from 'lucide-react';
 import Link from 'next/link';
-import { isPast, startOfMonth } from 'date-fns';
+import { isPast, isBefore } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -43,14 +43,12 @@ const useUser = () => {
 type TenantWithProperty = {
   tenant: User;
   property: Property;
+  isRentDue: boolean;
 };
 
 export default function TenantsPage() {
   const { user: landlord } = useUser();
   const today = new Date();
-  // A simple check to see if we are past the 1st of the month.
-  // In a real app, you'd check if a payment for the current month exists.
-  const isRentDue = today.getDate() > 1;
 
   const landlordProperties = landlord
     ? getPropertiesByLandlord(landlord.id)
@@ -62,8 +60,16 @@ export default function TenantsPage() {
     )
     .map((property) => {
       const tenant = getUserById(property.currentTenantId!);
-      // The filter ensures tenant is not undefined, but we check to be safe
-      return tenant ? { tenant, property } : null;
+      
+      const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
+      const leaseEndDate = new Date(leaseStartDate.setFullYear(leaseStartDate.getFullYear() + 1));
+      leaseStartDate.setFullYear(leaseStartDate.getFullYear() -1); // Reset date for subsequent checks
+      
+      const isLeaseActive = isPast(leaseStartDate) && isBefore(today, leaseEndDate);
+      const isRentDueForCurrentMonth = today.getDate() > 1;
+      const isRentDue = isLeaseActive && isRentDueForCurrentMonth;
+
+      return tenant ? { tenant, property, isRentDue } : null;
     })
     .filter((item): item is TenantWithProperty => item !== null);
 
@@ -100,7 +106,7 @@ export default function TenantsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tenants.map(({ tenant, property }) => (
+              {tenants.map(({ tenant, property, isRentDue }) => (
                 <TableRow key={tenant.id}>
                   <TableCell>
                      <Link href={`/landlord/tenants/${tenant.id}`} className="hover:underline">
