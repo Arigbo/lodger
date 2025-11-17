@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Link from "next/link";
 
 export default function SignupPage() {
@@ -10,21 +11,46 @@ export default function SignupPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-3xl">Create an Account</CardTitle>
-          <CardDescription>Get started with ProjectFlow today.</CardDescription>
+          <CardDescription>Join our community of students and landlords.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" placeholder="John Doe" required />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="name@example.com" required />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required />
+          <form className="space-y-6">
+             <div className="grid gap-3">
+                <Label>I am a...</Label>
+                <RadioGroup defaultValue="student" className="grid grid-cols-2 gap-4">
+                  <div>
+                    <RadioGroupItem value="student" id="student" className="peer sr-only" />
+                    <Label
+                      htmlFor="student"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    >
+                      Student
+                    </Label>
+                  </div>
+                  <div>
+                    <RadioGroupItem value="landlord" id="landlord" className="peer sr-only" />
+                    <Label
+                      htmlFor="landlord"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    >
+                      Landlord
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            <div className="space-y-4">
+                <div className="grid gap-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input id="name" placeholder="John Doe" required />
+                </div>
+                <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" placeholder="name@example.com" required />
+                </div>
+                <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" required />
+                </div>
             </div>
             <Button type="submit" className="w-full">Create Account</Button>
           </form>
