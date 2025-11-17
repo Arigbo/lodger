@@ -62,7 +62,7 @@ const properties: Property[] = [
     status: 'occupied',
     rules: ['No smoking', 'Small pets considered with a fee'],
     currentTenantId: 'user-3',
-    leaseStartDate: '2024-01-15',
+    leaseStartDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
   },
   {
     id: 'prop-4',
@@ -272,5 +272,3 @@ export function getConversationsByLandlord(landlordId: string): Conversation[] {
 export function getMessagesByConversationId(conversationId: string): Message[] {
     return messages[conversationId] || [];
 }
-
-    
