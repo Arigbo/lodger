@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -30,7 +31,8 @@ const useUser = () => {
   // To test a landlord, use 'user-1'. 
   // To test a student tenant, use 'user-3'.
   // To test a student non-tenant, use 'user-2'.
-  const user = getUserById('user-2'); 
+  // Set user to null to simulate logged-out state on landing page
+  const user = null; 
   const isTenant = user?.role === 'student' && user.id === 'user-3';
   return { user, isTenant, isAuthenticated: !!user };
 }
@@ -82,7 +84,7 @@ export default function Header() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {canViewDashboard && <DropdownMenuItem asChild><Link href="/landlord">Dashboard</Link></DropdownMenuItem>}
-                <DropdownMenuItem asChild><Link href="/account">Profile</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/landlord/account">Profile</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Log out</DropdownMenuItem>
               </DropdownMenuContent>
@@ -132,7 +134,7 @@ export default function Header() {
                  <>
                   {canViewDashboard && <Button variant="ghost" asChild className="w-full"><Link href="/landlord">Dashboard</Link></Button>}
                   <Button variant="ghost" asChild className="w-full">
-                    <Link href="/account">My Account</Link>
+                    <Link href="/landlord/account">My Account</Link>
                   </Button>
                   <Button variant="outline" className="w-full">Log out</Button>
                  </>

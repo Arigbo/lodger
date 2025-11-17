@@ -1,3 +1,4 @@
+
 "use client"
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -217,7 +218,7 @@ const useUser = () => {
   // To test a landlord, use 'user-1'. 
   // To test a student tenant, use 'user-3'.
   // To test a student non-tenant, use 'user-2'.
-  const user = getUserById('user-3'); 
+  const user = getUserById('user-2'); 
   return { user };
 }
 
