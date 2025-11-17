@@ -26,6 +26,9 @@ export default function RootLayout({
 }>) {
   const pathname = usePathname();
   const isDashboard = pathname.startsWith('/dashboard');
+  const isPropertyPage = pathname.startsWith('/properties');
+
+  const showHeaderAndFooter = !isDashboard && !isPropertyPage;
 
   return (
     <html lang="en" className="h-full">
@@ -47,9 +50,9 @@ export default function RootLayout({
         )}
       >
         <div className="flex min-h-screen flex-col">
-          {!isDashboard && <Header />}
+          {showHeaderAndFooter && <Header />}
           <main className="flex-grow">{children}</main>
-          {!isDashboard && <Footer />}
+          {showHeaderAndFooter && <Footer />}
         </div>
         <Toaster />
       </body>
