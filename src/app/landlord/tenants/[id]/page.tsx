@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Phone, Mail, FileText, CalendarDays, AlertTriangle, Coins, Download, Pencil, Lock, QrCode } from 'lucide-react';
+import { Phone, Mail, FileText, CalendarDays, AlertTriangle, Coins, Download, Pencil, Lock, QrCode, RefreshCcw } from 'lucide-react';
 import Link from 'next/link';
 import { add, format, differenceInDays, isPast, isBefore } from 'date-fns';
 import { cn, formatPrice } from '@/lib/utils';
@@ -71,6 +71,7 @@ export default function TenantDetailPage() {
   const today = new Date();
   const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
   const leaseEndDate = add(leaseStartDate, { years: 1 });
+  const isLeaseExpired = isPast(leaseEndDate);
 
   const tenantTransactions = getTransactionsByTenantId(tenant.id);
   const lastRentPayment = tenantTransactions
@@ -139,6 +140,7 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
   const [landlordSigned, setLandlordSigned] = useState(false);
   const [tenantSigned, setTenantSigned] = useState(false);
   const isDocLocked = landlordSigned && tenantSigned;
+  const isCurrentUserTenant = currentUser.id === tenant.id;
 
 
   return (
@@ -186,15 +188,15 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                                 {isLeaseActive ? format(nextRentDueDate, 'MMMM do, yyyy') : 'N/A'}
                             </p>
                         </div>
-                        <div className={cn("rounded-lg border p-4", isLeaseEndingSoon ? "border-amber-500/50 bg-amber-50" : "bg-secondary/50")}>
+                        <div className={cn("rounded-lg border p-4", isLeaseEndingSoon ? "border-amber-500/50 bg-amber-50" : isLeaseExpired ? "border-destructive/50 bg-destructive/5" : "bg-secondary/50")}>
                             <div className="flex items-center justify-between">
-                                <p className="text-sm font-medium text-muted-foreground">Lease End Date</p>
+                                <p className="text-sm font-medium text-muted-foreground">{isLeaseExpired ? "Lease Expired On" : "Lease End Date"}</p>
                                 {isLeaseEndingSoon && <AlertTriangle className="h-5 w-5 text-amber-500" />}
                             </div>
-                            <p className={cn("text-xl font-bold", isLeaseEndingSoon && "text-amber-600")}>
+                            <p className={cn("text-xl font-bold", isLeaseEndingSoon && "text-amber-600", isLeaseExpired && "text-destructive")}>
                                 {format(leaseEndDate, 'MMMM do, yyyy')}
                             </p>
-                             {isLeaseEndingSoon && <p className="text-xs text-amber-500 mt-1">{leaseDaysRemaining} days remaining</p>}
+                             {isLeaseEndingSoon && !isLeaseExpired && <p className="text-xs text-amber-500 mt-1">{leaseDaysRemaining} days remaining</p>}
                         </div>
                     </div>
                     <div className="flex items-center justify-between rounded-lg border p-4">
@@ -202,75 +204,80 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                              <p className="text-sm font-medium text-muted-foreground">Lease Started</p>
                             <p>{format(leaseStartDate, 'MMMM do, yyyy')}</p>
                         </div>
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button variant="outline"><FileText className="mr-2 h-4 w-4"/> View Lease Agreement</Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-3xl">
-                                <DialogHeader>
-                                    <DialogTitle>Lease Agreement: {property.title}</DialogTitle>
-                                    <DialogDescription>
-                                        This is a legally binding document. Dated: {format(leaseStartDate, 'MMMM do, yyyy')}
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="relative">
-                                    {isDocLocked && (
-                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                                            <div className="text-9xl font-bold text-red-500/10 rotate-[-30deg] select-none">
-                                                RentU
+                        
+                        {isLeaseExpired && isCurrentUserTenant ? (
+                            <Button variant="outline"><RefreshCcw className="mr-2 h-4 w-4"/> Request New Lease</Button>
+                        ) : (
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline"><FileText className="mr-2 h-4 w-4"/> View Lease Agreement</Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-3xl">
+                                    <DialogHeader>
+                                        <DialogTitle>Lease Agreement: {property.title}</DialogTitle>
+                                        <DialogDescription>
+                                            This is a legally binding document. Dated: {format(leaseStartDate, 'MMMM do, yyyy')}
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="relative">
+                                        {isDocLocked && (
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                                                <div className="text-9xl font-bold text-red-500/10 rotate-[-30deg] select-none">
+                                                    RentU
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
-                                    <div className="prose max-h-[60vh] overflow-y-auto pr-6 text-sm border rounded-md p-4 bg-background">
-                                        {isEditing ? (
-                                            <Textarea 
-                                                value={leaseText} 
-                                                onChange={(e) => setLeaseText(e.target.value)}
-                                                className="w-full h-[50vh] prose-sm"
-                                                disabled={currentUser?.id !== landlord?.id}
-                                            />
-                                        ) : (
-                                            <div className="whitespace-pre-wrap">{leaseText}</div>
                                         )}
-                                        <div className="mt-8 pt-4 border-t">
-                                            <h3>9. SIGNATURES</h3>
-                                            <p>By signing below, the parties agree to the terms of this Lease Agreement.</p>
-                                            <div className="mt-4 grid grid-cols-2 gap-6 items-center font-serif italic">
-                                                <div>
-                                                    {landlordSigned ? (
-                                                        <p className="text-green-600">✓ Digitally Signed by {landlord?.name}</p>
-                                                    ) : (
-                                                        currentUser?.id === landlord?.id && <Button size="sm" onClick={() => setLandlordSigned(true)} disabled={isEditing}>Sign as Landlord</Button>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                     {tenantSigned ? (
-                                                        <p className="text-green-600">✓ Digitally Signed by {tenant.name}</p>
-                                                    ) : (
-                                                        currentUser?.id === tenant.id && <Button size="sm" onClick={() => setTenantSigned(true)} disabled={isEditing}>Sign as Tenant</Button>
-                                                    )}
+                                        <div className="prose max-h-[60vh] overflow-y-auto pr-6 text-sm border rounded-md p-4 bg-background">
+                                            {isEditing ? (
+                                                <Textarea 
+                                                    value={leaseText} 
+                                                    onChange={(e) => setLeaseText(e.target.value)}
+                                                    className="w-full h-[50vh] prose-sm"
+                                                    disabled={currentUser?.id !== landlord?.id}
+                                                />
+                                            ) : (
+                                                <div className="whitespace-pre-wrap">{leaseText}</div>
+                                            )}
+                                            <div className="mt-8 pt-4 border-t">
+                                                <h3>9. SIGNATURES</h3>
+                                                <p>By signing below, the parties agree to the terms of this Lease Agreement.</p>
+                                                <div className="mt-4 grid grid-cols-2 gap-6 items-center font-serif italic">
+                                                    <div>
+                                                        {landlordSigned ? (
+                                                            <p className="text-green-600">✓ Digitally Signed by {landlord?.name}</p>
+                                                        ) : (
+                                                            currentUser?.id === landlord?.id && <Button size="sm" onClick={() => setLandlordSigned(true)} disabled={isEditing}>Sign as Landlord</Button>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        {tenantSigned ? (
+                                                            <p className="text-green-600">✓ Digitally Signed by {tenant.name}</p>
+                                                        ) : (
+                                                            currentUser?.id === tenant.id && <Button size="sm" onClick={() => setTenantSigned(true)} disabled={isEditing}>Sign as Tenant</Button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div className="mt-8 pt-4 border-t flex flex-col items-center text-center">
-                                            <h4 className="font-semibold text-base flex items-center gap-2"><QrCode/> Document Verification</h4>
-                                            <p className="text-xs text-muted-foreground mt-1">Scan this QR code to verify the authenticity of this document.</p>
-                                            <div className="mt-2 p-2 border rounded-md">
-                                                <Image src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=lease-agreement-${property.id}`} alt="Lease Agreement QR Code" width={120} height={120} />
+                                            <div className="mt-8 pt-4 border-t flex flex-col items-center text-center">
+                                                <h4 className="font-semibold text-base flex items-center gap-2"><QrCode/> Document Verification</h4>
+                                                <p className="text-xs text-muted-foreground mt-1">Scan this QR code to verify the authenticity of this document.</p>
+                                                <div className="mt-2 p-2 border rounded-md">
+                                                    <Image src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=lease-agreement-${property.id}`} alt="Lease Agreement QR Code" width={120} height={120} />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <DialogFooter className="mt-4">
-                                   {currentUser?.id === landlord?.id && (
-                                     <Button variant="ghost" onClick={() => setIsEditing(!isEditing)} disabled={isDocLocked}>
-                                        {isEditing ? <><Lock className="mr-2 h-4 w-4" /> Save & Lock</> : <><Pencil className="mr-2 h-4 w-4" /> Edit</>}
-                                    </Button>
-                                   )}
-                                    <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Download</Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
+                                    <DialogFooter className="mt-4">
+                                    {currentUser?.id === landlord?.id && (
+                                        <Button variant="ghost" onClick={() => setIsEditing(!isEditing)} disabled={isDocLocked}>
+                                            {isEditing ? <><Lock className="mr-2 h-4 w-4" /> Save & Lock</> : <><Pencil className="mr-2 h-4 w-4" /> Edit</>}
+                                        </Button>
+                                    )}
+                                        <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Download</Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        )}
                     </div>
                 </CardContent>
              </Card>
