@@ -30,6 +30,9 @@ import { getPropertiesByLandlord, getUserById } from '@/lib/data';
 import type { User, Property } from '@/lib/definitions';
 import { MoreHorizontal, Users } from 'lucide-react';
 import Link from 'next/link';
+import { isPast, startOfMonth } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 // Mock current user
 const useUser = () => {
@@ -44,6 +47,10 @@ type TenantWithProperty = {
 
 export default function TenantsPage() {
   const { user: landlord } = useUser();
+  const today = new Date();
+  // A simple check to see if the 1st of the month has passed.
+  // In a real app, you'd check if a payment for the current month exists.
+  const isRentDue = isPast(startOfMonth(today));
 
   const landlordProperties = landlord
     ? getPropertiesByLandlord(landlord.id)
@@ -85,6 +92,7 @@ export default function TenantsPage() {
               <TableRow>
                 <TableHead>Tenant</TableHead>
                 <TableHead>Property</TableHead>
+                <TableHead>Rent Status</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
@@ -114,6 +122,11 @@ export default function TenantsPage() {
                     >
                       {property.title}
                     </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={isRentDue ? 'destructive' : 'secondary'}>
+                        {isRentDue ? 'Due' : 'Paid'}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{tenant.email}</TableCell>
                   <TableCell>
