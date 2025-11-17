@@ -6,6 +6,8 @@ const users: User[] = [
   { id: 'user-2', name: 'Michael Chen', email: 'michael@university.edu', avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'avatar-2')?.imageUrl || '', role: 'student' },
   { id: 'user-3', name: 'Emily Rodriguez', email: 'emily@university.edu', avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'avatar-3')?.imageUrl || '', role: 'student' },
   { id: 'user-4', name: 'David Smith', email: 'david@university.edu', avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'avatar-4')?.imageUrl || '', role: 'landlord' },
+  { id: 'user-5', name: 'Jessica Williams', email: 'jessica@university.edu', avatarUrl: 'https://picsum.photos/seed/avatar5/200/200', role: 'student' },
+
 ];
 
 const properties: Property[] = [
@@ -22,8 +24,10 @@ const properties: Property[] = [
     amenities: ['Furnished', 'Wi-Fi', 'Rooftop Access', 'In-unit Laundry', 'Dishwasher'],
     imageIds: ['apartment-1-a', 'apartment-1-b', 'apartment-1-c'],
     landlordId: 'user-1',
-    status: 'available',
+    status: 'occupied',
     rules: ['No smoking', 'No pets', 'Quiet hours after 10 PM'],
+    currentTenantId: 'user-5',
+    leaseStartDate: '2023-09-01',
   },
   {
     id: 'prop-2',
@@ -57,6 +61,7 @@ const properties: Property[] = [
     status: 'occupied',
     rules: ['No smoking', 'Small pets considered with a fee'],
     currentTenantId: 'user-3',
+    leaseStartDate: '2024-01-15',
   },
   {
     id: 'prop-4',

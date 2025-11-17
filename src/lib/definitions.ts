@@ -27,6 +27,7 @@ export type Property = {
   status: 'available' | 'occupied';
   rules: string[];
   currentTenantId?: string;
+  leaseStartDate?: string; // YYYY-MM-DD
 };
 
 export type Review = {
