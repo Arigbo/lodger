@@ -14,10 +14,21 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Phone, Mail, FileText, CalendarDays, AlertTriangle } from 'lucide-react';
+import { Phone, Mail, FileText, CalendarDays, AlertTriangle, Coins } from 'lucide-react';
 import Link from 'next/link';
-import { add, format, differenceInDays } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { add, format, differenceInDays, differenceInMonths, startOfMonth, isPast } from 'date-fns';
+import { cn, formatPrice } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export default function TenantDetailPage({ params }: { params: { id: string } }) {
   const tenant = getUserById(params.id);
@@ -29,12 +40,15 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
 
   const property = rentedProperties[0]; // Assuming one tenant rents one property for this view
 
-  // Calculate lease end date (assuming 1 year lease)
+  // --- DATE & PAYMENT CALCULATIONS ---
+  const today = new Date();
   const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
   const leaseEndDate = add(leaseStartDate, { years: 1 });
+  
+  // Is rent for the current month "due"? (Assuming due on the 1st)
+  const isRentDue = isPast(startOfMonth(today)); 
 
   // Calculate next rent due date (assuming 1st of every month)
-  const today = new Date();
   let nextRentDueDate = new Date(today.getFullYear(), today.getMonth(), 1);
   if (today.getDate() > 1) {
     nextRentDueDate = add(nextRentDueDate, { months: 1 });
@@ -42,6 +56,12 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
 
   const leaseDaysRemaining = differenceInDays(leaseEndDate, today);
   const isLeaseEndingSoon = leaseDaysRemaining <= 90;
+
+  // Compassion Calculation
+  const monthsRemaining = differenceInMonths(leaseEndDate, today);
+  const monthsPaid = differenceInMonths(today, leaseStartDate);
+  const compassionFee = (property.price * monthsRemaining) + (property.price * 0.5 * monthsPaid);
+
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -131,7 +151,55 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
                         <Button variant="outline">
                             <Mail className="mr-2 h-4 w-4"/> Message Tenant
                         </Button>
-                        <Button variant="destructive">End Tenancy</Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive">End Tenancy</Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>End Tenancy Agreement?</AlertDialogTitle>
+                                {isRentDue ? (
+                                    <AlertDialogDescription>
+                                        The tenant's rent is currently due. You can end the tenancy immediately without penalty.
+                                    </AlertDialogDescription>
+                                ) : (
+                                    <AlertDialogDescription>
+                                        The tenant's rent is not due. Ending the lease early requires a compassion payment to the tenant. Please review the details below.
+                                    </AlertDialogDescription>
+                                )}
+                                </AlertDialogHeader>
+
+                                {!isRentDue && (
+                                    <div className="rounded-lg border bg-muted/20 p-4 space-y-4">
+                                        <h4 className="font-semibold text-center">Compassion Payment Calculation</h4>
+                                        <div className="flex justify-between items-center text-sm">
+                                            <p>Monthly Rent:</p>
+                                            <p>{formatPrice(property.price)}</p>
+                                        </div>
+                                         <div className="flex justify-between items-center text-sm">
+                                            <p>Remaining Months in Lease:</p>
+                                            <p>{monthsRemaining}</p>
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm">
+                                            <p>Months Paid (50% Rate):</p>
+                                            <p>{monthsPaid}</p>
+                                        </div>
+                                        <Separator/>
+                                        <div className="flex justify-between items-center font-bold text-lg">
+                                            <p className="flex items-center gap-2"><Coins className="h-5 w-5 text-primary"/>Total Fee:</p>
+                                            <p>{formatPrice(compassionFee)}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction className={cn(isRentDue && "bg-destructive hover:bg-destructive/90")}>
+                                    {isRentDue ? 'Proceed to End Tenancy' : 'Acknowledge & Continue'}
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     </CardContent>
                  </Card>
             </div>
