@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { notFound } from 'next/navigation';
@@ -14,7 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Phone, Mail, FileText, CalendarDays, AlertTriangle, Coins, Download, Pencil, Lock } from 'lucide-react';
+import { Phone, Mail, FileText, CalendarDays, AlertTriangle, Coins, Download, Pencil, Lock, QrCode } from 'lucide-react';
 import Link from 'next/link';
 import { add, format, differenceInDays, differenceInMonths, startOfMonth, isPast } from 'date-fns';
 import { cn, formatPrice } from '@/lib/utils';
@@ -40,6 +41,7 @@ import {
 } from "@/components/ui/dialog"
 import React, { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import Image from 'next/image';
 
 export default function TenantDetailPage({ params }: { params: { id: string } }) {
   const tenant = getUserById(params.id);
@@ -197,24 +199,31 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                                         ) : (
                                             <div className="whitespace-pre-wrap">{leaseText}</div>
                                         )}
-                                    </div>
-                                    <div className="mt-4 space-y-4">
-                                        <h3>9. SIGNATURES</h3>
-                                        <p>By signing below, the parties agree to the terms of this Lease Agreement.</p>
-                                        <div className="mt-4 grid grid-cols-2 gap-6 items-center font-serif italic">
-                                            <div>
-                                                {landlordSigned ? (
-                                                    <p className="text-green-600">✓ Signed by {landlord?.name}</p>
-                                                ) : (
-                                                    <Button size="sm" onClick={() => setLandlordSigned(true)} disabled={isEditing}>Sign as Landlord</Button>
-                                                )}
+                                        <div className="mt-8 pt-4 border-t">
+                                            <h3>9. SIGNATURES</h3>
+                                            <p>By signing below, the parties agree to the terms of this Lease Agreement.</p>
+                                            <div className="mt-4 grid grid-cols-2 gap-6 items-center font-serif italic">
+                                                <div>
+                                                    {landlordSigned ? (
+                                                        <p className="text-green-600">✓ Signed by {landlord?.name}</p>
+                                                    ) : (
+                                                        <Button size="sm" onClick={() => setLandlordSigned(true)} disabled={isEditing}>Sign as Landlord</Button>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                     {tenantSigned ? (
+                                                        <p className="text-green-600">✓ Signed by {tenant.name}</p>
+                                                    ) : (
+                                                        <Button size="sm" onClick={() => setTenantSigned(true)} disabled={isEditing}>Sign as Tenant</Button>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div>
-                                                 {tenantSigned ? (
-                                                    <p className="text-green-600">✓ Signed by {tenant.name}</p>
-                                                ) : (
-                                                    <Button size="sm" onClick={() => setTenantSigned(true)} disabled={isEditing}>Sign as Tenant</Button>
-                                                )}
+                                        </div>
+                                        <div className="mt-8 pt-4 border-t flex flex-col items-center text-center">
+                                            <h4 className="font-semibold text-base flex items-center gap-2"><QrCode/> Document Verification</h4>
+                                            <p className="text-xs text-muted-foreground mt-1">Scan this QR code to verify the authenticity of this document.</p>
+                                            <div className="mt-2 p-2 border rounded-md">
+                                                <Image src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=lease-agreement-${property.id}`} alt="Lease Agreement QR Code" width={120} height={120} />
                                             </div>
                                         </div>
                                     </div>
