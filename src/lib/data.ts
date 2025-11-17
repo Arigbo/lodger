@@ -1,4 +1,4 @@
-import type { User, Property, Review, RentalRequest } from './definitions';
+import type { User, Property, Review, RentalRequest, Transaction } from './definitions';
 import placeholderImages from './placeholder-images.json';
 
 const users: User[] = [
@@ -89,7 +89,16 @@ const reviews: Review[] = [
 const rentalRequests: RentalRequest[] = [
     { id: 'req-1', propertyId: 'prop-1', userId: 'user-2', status: 'pending', message: 'I am very interested in this loft! I am a quiet and responsible graduate student.', requestDate: '2024-05-20T11:00:00Z'},
     { id: 'req-2', propertyId: 'prop-2', userId: 'user-3', status: 'accepted', message: 'This studio looks perfect for my needs.', requestDate: '2024-05-18T18:00:00Z'},
-]
+];
+
+const transactions: Transaction[] = [
+  { id: 'trans-1', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 1800, date: '2024-05-01', type: 'Rent', status: 'Completed' },
+  { id: 'trans-2', landlordId: 'user-1', tenantId: 'user-5', propertyId: 'prop-1', amount: 1200, date: '2024-05-01', type: 'Rent', status: 'Completed' },
+  { id: 'trans-3', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 1800, date: '2024-04-01', type: 'Rent', status: 'Completed' },
+  { id: 'trans-4', landlordId: 'user-1', tenantId: 'user-5', propertyId: 'prop-1', amount: 1200, date: '2024-04-01', type: 'Rent', status: 'Completed' },
+  { id: 'trans-5', landlordId: 'user-4', tenantId: 'user-2', propertyId: 'prop-2', amount: 850, date: '2024-05-05', type: 'Deposit', status: 'Pending' },
+  { id: 'trans-6', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 75, date: '2024-03-15', type: 'Late Fee', status: 'Completed' },
+];
 
 
 // Data fetching functions
@@ -119,6 +128,10 @@ export function getReviewsByPropertyId(propertyId: string) {
 
 export function getRentalRequestsByPropertyId(propertyId: string) {
     return rentalRequests.filter(r => r.propertyId === propertyId);
+}
+
+export function getTransactionsByLandlord(landlordId: string) {
+  return transactions.filter(t => t.landlordId === landlordId);
 }
 
 export function getImagesByIds(ids: string[]) {

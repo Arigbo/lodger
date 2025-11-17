@@ -14,7 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Phone, Mail, FileText, CalendarDays, AlertTriangle, Coins } from 'lucide-react';
+import { Phone, Mail, FileText, CalendarDays, AlertTriangle, Coins, Download } from 'lucide-react';
 import Link from 'next/link';
 import { add, format, differenceInDays, differenceInMonths, startOfMonth, isPast } from 'date-fns';
 import { cn, formatPrice } from '@/lib/utils';
@@ -33,6 +33,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -172,17 +173,20 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
 
                                     <h3>9. SIGNATURES</h3>
                                     <p>By signing below, the parties agree to the terms of this Lease Agreement.</p>
-                                    <div className="mt-8 flex justify-between">
+                                    <div className="mt-8 flex justify-between font-serif italic">
                                         <div>
-                                            <p>_________________________</p>
+                                            <p>{landlord?.name}</p>
                                             <p>Landlord: {landlord?.name}</p>
                                         </div>
                                         <div>
-                                            <p>_________________________</p>
+                                            <p>{tenant.name}</p>
                                             <p>Tenant: {tenant.name}</p>
                                         </div>
                                     </div>
                                 </div>
+                                <DialogFooter>
+                                    <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Download</Button>
+                                </DialogFooter>
                             </DialogContent>
                         </Dialog>
                     </div>

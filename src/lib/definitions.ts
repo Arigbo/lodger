@@ -48,6 +48,17 @@ export type RentalRequest = {
   requestDate: string; // ISO 8601 date string
 };
 
+export type Transaction = {
+    id: string;
+    landlordId: string;
+    tenantId: string;
+    propertyId: string;
+    amount: number;
+    date: string; // YYYY-MM-DD
+    type: 'Rent' | 'Deposit' | 'Late Fee' | 'Other';
+    status: 'Completed' | 'Pending' | 'Failed';
+}
+
 export type ImagePlaceholder = {
   id: string;
   description: string;
