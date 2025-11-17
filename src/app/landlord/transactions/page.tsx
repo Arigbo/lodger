@@ -38,7 +38,7 @@ import { Separator } from '@/components/ui/separator';
 import { getTransactionsByLandlord, getUserById, getPropertyById } from '@/lib/data';
 import type { Transaction } from '@/lib/definitions';
 import { formatPrice, cn } from '@/lib/utils';
-import { DollarSign, ExternalLink, MoreHorizontal, Download, Calendar as CalendarIcon } from 'lucide-react';
+import { DollarSign, ExternalLink, MoreHorizontal, Download, Calendar as CalendarIcon, X as ClearIcon } from 'lucide-react';
 import Link from 'next/link';
 import { DateRange } from 'react-day-picker';
 import { addDays, format } from 'date-fns';
@@ -70,7 +70,12 @@ export default function TransactionsPage() {
     if (date?.from && date?.to) {
         transactions = transactions.filter(t => {
             const tDate = new Date(t.date);
-            return tDate >= date.from! && tDate <= date.to!;
+            // Ensure the range is inclusive
+            const from = new Date(date.from!);
+            from.setHours(0, 0, 0, 0);
+            const to = new Date(date.to!);
+            to.setHours(23, 59, 59, 999);
+            return tDate >= from && tDate <= to;
         });
     }
     if (type !== 'all') {
@@ -96,6 +101,12 @@ export default function TransactionsPage() {
     console.log("Downloading receipt for:", transactionId);
     alert(`Generating receipt for transaction ${transactionId}...`);
   }
+  
+  const resetFilters = () => {
+      setDate(undefined);
+      setType('all');
+      setStatus('all');
+  }
 
   return (
     <div>
@@ -115,7 +126,7 @@ export default function TransactionsPage() {
 
        {/* Filter Controls */}
       <div className="mb-6 rounded-lg border bg-card p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="grid gap-2">
             <label className="text-sm font-medium">Date Range</label>
              <Popover>
@@ -152,6 +163,9 @@ export default function TransactionsPage() {
                     onSelect={setDate}
                     numberOfMonths={2}
                   />
+                  <div className="p-2 border-t">
+                      <Button variant="ghost" size="sm" className="w-full justify-center" onClick={() => setDate(undefined)}>Clear</Button>
+                  </div>
                 </PopoverContent>
               </Popover>
           </div>
@@ -184,6 +198,11 @@ export default function TransactionsPage() {
                 </SelectContent>
             </Select>
           </div>
+           <div className="grid gap-2 items-end">
+              <Button onClick={resetFilters} variant="ghost">
+                <ClearIcon className="mr-2 h-4 w-4" /> Reset Filters
+              </Button>
+            </div>
         </div>
       </div>
 
