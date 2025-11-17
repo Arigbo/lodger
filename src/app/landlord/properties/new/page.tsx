@@ -363,13 +363,13 @@ export default function AddPropertyPage() {
                 </div>
             </div>
             
-            <div className={cn(currentstep === 5 ? "block" : "hidden")}>
+            <div className={cn(currentStep === 5 ? "block" : "hidden")}>
                 <h3 className="font-headline text-xl font-semibold">Review Your Listing</h3>
                 <p className="text-muted-foreground">Please review all the information below before submitting.</p>
                 <div className="mt-6 space-y-6 rounded-lg border bg-secondary/50 p-6">
                     <div className="space-y-2">
                         <h4 className="font-semibold">{form.getValues('title')}</h4>
-                        <p className="text-muted-foreground">{form.getValues('location.address')}, {form.getValues('location.city')}</p>
+                        <p className="text-muted-foreground">{form.getValues('address')}, {form.getValues('city')}</p>
                     </div>
                     <Separator/>
                     <p className="text-sm">{form.getValues('description')}</p>
@@ -429,5 +429,3 @@ export default function AddPropertyPage() {
     </Card>
   );
 }
-
-    
