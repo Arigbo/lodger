@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,11 +28,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { amenities as allAmenities } from '@/lib/definitions';
 import { useEffect } from 'react';
 import type { Property } from '@/lib/definitions';
+import { UploadCloud } from 'lucide-react';
 
 const formSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -99,6 +101,7 @@ export default function EditPropertyPage() {
     <Card>
       <CardHeader>
         <CardTitle className="font-headline text-3xl font-bold">Edit Property</CardTitle>
+        <CardDescription>Make changes to your property listing.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -151,7 +154,7 @@ export default function EditPropertyPage() {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Property Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a property type" />
@@ -273,6 +276,15 @@ export default function EditPropertyPage() {
                 />
             </div>
 
+            <Separator />
+            {/* Photos */}
+            <h3 className="font-headline text-xl font-semibold">Photos</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <p className="text-sm text-muted-foreground md:col-span-2">To update photos, please create a new listing. Photo editing is not currently supported.</p>
+                {/* Future photo editing UI could go here */}
+            </div>
+
+
              <Separator />
             {/* Amenities & Rules */}
              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -354,3 +366,5 @@ export default function EditPropertyPage() {
     </Card>
   );
 }
+
+    

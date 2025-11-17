@@ -30,7 +30,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { amenities as allAmenities } from '@/lib/definitions';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, ArrowRight, UploadCloud } from 'lucide-react';
+import { ArrowLeft, ArrowRight, UploadCloud, FileImage } from 'lucide-react';
 
 const formSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -444,6 +444,9 @@ export default function AddPropertyPage() {
                                             <p className="pl-1">or drag and drop</p>
                                         </div>
                                         <p className="text-xs leading-5 text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
+                                        {field.value?.length > 0 && Array.from(field.value as FileList).map((file: File) => (
+                                            <p key={file.name} className="text-sm text-green-600 mt-2">{file.name}</p>
+                                        ))}
                                     </div>
                                 </div>
                             </FormControl>
@@ -457,13 +460,16 @@ export default function AddPropertyPage() {
                 <h3 className="font-headline text-xl font-semibold">Review Your Listing</h3>
                 <p className="text-muted-foreground">Please review all the information below before submitting.</p>
                 <div className="mt-6 space-y-6 rounded-lg border bg-secondary/50 p-6">
+                    {/* Basic Info & Location */}
                     <div className="space-y-2">
                         <h4 className="font-semibold">{form.getValues('title')}</h4>
-                        <p className="text-muted-foreground">{form.getValues('address')}, {form.getValues('city')}</p>
+                        <p className="text-muted-foreground">{form.getValues('address')}, {form.getValues('city')}, {form.getValues('state')} {form.getValues('zip')}</p>
                     </div>
                     <Separator/>
+                    {/* Description */}
                     <p className="text-sm">{form.getValues('description')}</p>
                     <Separator/>
+                     {/* Details Grid */}
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                         <div>
                             <p className="text-sm font-medium">Price</p>
@@ -481,15 +487,42 @@ export default function AddPropertyPage() {
                             <p className="text-sm font-medium">Bathrooms</p>
                             <p className="text-muted-foreground">{form.getValues('bathrooms')}</p>
                         </div>
+                         <div>
+                            <p className="text-sm font-medium">Area</p>
+                            <p className="text-muted-foreground">{form.getValues('area')} sqft</p>
+                        </div>
                     </div>
                     <Separator/>
-                     <div>
-                        <p className="text-sm font-medium">Amenities</p>
-                        <p className="text-muted-foreground">{form.getValues('amenities').join(', ')}</p>
+                    {/* Amenities & Rules */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <p className="text-sm font-medium mb-2">Amenities</p>
+                            <p className="text-sm text-muted-foreground">{form.getValues('amenities').join(', ')}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium mb-2">Rules</p>
+                            <p className="text-sm text-muted-foreground">{form.getValues('rules')}</p>
+                        </div>
                     </div>
-                     <div>
-                        <p className="text-sm font-medium">Rules</p>
-                        <p className="text-muted-foreground">{form.getValues('rules')}</p>
+                    <Separator/>
+                     {/* Images */}
+                    <div>
+                        <p className="text-sm font-medium mb-2">Uploaded Images</p>
+                        <div className="space-y-2 text-sm text-muted-foreground">
+                            {form.getValues('kitchenImage')?.[0] && <div className="flex items-center gap-2"><FileImage className="h-4 w-4"/><span>Kitchen: {form.getValues('kitchenImage')[0].name}</span></div>}
+                            {form.getValues('livingRoomImage')?.[0] && <div className="flex items-center gap-2"><FileImage className="h-4 w-4"/><span>Living Room: {form.getValues('livingRoomImage')[0].name}</span></div>}
+                            {form.getValues('bathroomImage')?.[0] && <div className="flex items-center gap-2"><FileImage className="h-4 w-4"/><span>Bathroom: {form.getValues('bathroomImage')[0].name}</span></div>}
+                            {form.getValues('otherImages')?.length > 0 && (
+                                <div>
+                                    <p className="flex items-center gap-2"><FileImage className="h-4 w-4"/>Additional Images:</p>
+                                    <ul className="list-disc pl-8">
+                                    {Array.from(form.getValues('otherImages') as FileList).map((file: File) => (
+                                        <li key={file.name}>{file.name}</li>
+                                    ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                 </div>
