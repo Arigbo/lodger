@@ -29,11 +29,11 @@ export default function PropertyCard({ property }: PropertyCardProps) {
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             )}
-            <Badge className="absolute right-3 top-3 bg-accent text-accent-foreground">
+            <Badge className="absolute right-3 top-3 bg-primary text-primary-foreground">
               {formatPrice(property.price)}/mo
             </Badge>
             {property.status === 'occupied' && (
-                <Badge variant="secondary" className="absolute left-3 top-3">Occupied</Badge>
+                <Badge variant="destructive" className="absolute left-3 top-3">Occupied</Badge>
             )}
           </div>
         </CardHeader>

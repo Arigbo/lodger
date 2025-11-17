@@ -1,4 +1,5 @@
 
+
 import type { User, Property, Review, RentalRequest, Transaction, LeaseAgreement, Conversation, Message, MaintenanceRequest } from './definitions';
 import placeholderImages from './placeholder-images.json';
 import { add, format } from 'date-fns';
@@ -226,8 +227,11 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
 
 
 // Data fetching functions
-export function getProperties() {
-  return properties;
+export function getProperties(includeOccupied = false) {
+  if (includeOccupied) {
+    return properties;
+  }
+  return properties.filter(p => p.status === 'available');
 }
 
 export function getPropertyById(id: string) {
