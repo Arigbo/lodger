@@ -141,11 +141,10 @@ export default function LandlordPropertyDetailPage({
             <CardHeader>
               <CardTitle>Status</CardTitle>
             </CardHeader>
-            <CardContent className="flex justify-between items-center">
+            <CardContent>
                <Badge variant={property.status === 'occupied' ? 'secondary' : 'default'} className="text-base">
                 {property.status}
               </Badge>
-              <Button variant="outline">Edit Listing</Button>
             </CardContent>
           </Card>
           
