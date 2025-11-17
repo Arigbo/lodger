@@ -26,7 +26,6 @@ const useUser = () => {
 export default function MessagesPage() {
   const { user: landlord } = useUser();
   const searchParams = useSearchParams();
-  const conversationIdFromUrl = searchParams.get('conversationId');
   
   const conversations: Conversation[] = useMemo(() => {
     return landlord ? getConversationsByLandlord(landlord.id) : [];
@@ -35,14 +34,16 @@ export default function MessagesPage() {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
 
   useEffect(() => {
+    const conversationIdFromUrl = searchParams.get('conversationId');
     const conversationToSelect = conversations.find(c => c.id === conversationIdFromUrl);
 
     if (conversationToSelect) {
       setSelectedConversation(conversationToSelect);
-    } else if (!selectedConversation && conversations.length > 0) {
+    } else if (conversations.length > 0) {
+      // Default to first conversation if none selected or found in URL
       setSelectedConversation(conversations[0]);
     }
-  }, [conversationIdFromUrl, conversations]);
+  }, [searchParams, conversations]);
 
 
   const messages = selectedConversation ? getMessagesByConversationId(selectedConversation.id) : [];
