@@ -8,6 +8,7 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Toaster } from "@/components/ui/toaster";
 import { usePathname } from "next/navigation";
+import { HeaderAndFooterProvider } from "@/components/header-and-footer-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const spaceGrotesk = Space_Grotesk({
@@ -24,9 +25,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname();
-  const showHeaderAndFooter = pathname === '/';
-
   return (
     <html lang="en" className="h-full">
       <head>
@@ -46,11 +44,7 @@ export default function RootLayout({
           spaceGrotesk.variable
         )}
       >
-        <div className="flex min-h-screen flex-col">
-          {showHeaderAndFooter && <Header />}
-          <main className="flex-grow">{children}</main>
-          {showHeaderAndFooter && <Footer />}
-        </div>
+        <HeaderAndFooterProvider>{children}</HeaderAndFooterProvider>
         <Toaster />
       </body>
     </html>
