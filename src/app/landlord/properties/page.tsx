@@ -82,7 +82,7 @@ export default function LandlordPropertiesPage() {
                 return (
                 <TableRow key={property.id}>
                   <TableCell className="font-medium">
-                    <Link href={`/properties/${property.id}`} className="hover:underline">
+                    <Link href={`/landlord/properties/${property.id}`} className="hover:underline">
                         {property.title}
                     </Link>
                   </TableCell>

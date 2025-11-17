@@ -1,0 +1,177 @@
+'use client';
+
+import { notFound } from 'next/navigation';
+import {
+  getPropertyById,
+  getUserById,
+  getRentalRequestsByPropertyId,
+} from '@/lib/data';
+import { formatPrice } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { BedDouble, Bath, Ruler, Check, X } from 'lucide-react';
+import type { Property, User, RentalRequest } from '@/lib/definitions';
+
+// Mock current user - landlords only for this page
+const useUser = () => {
+  const user = getUserById('user-1');
+  return { user };
+};
+
+export default function LandlordPropertyDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const { user: landlord } = useUser();
+  const property = getPropertyById(params.id);
+
+  if (!property || !landlord || property.landlordId !== landlord.id) {
+    notFound();
+  }
+
+  const tenant = property.currentTenantId
+    ? getUserById(property.currentTenantId)
+    : null;
+  const rentalRequests = getRentalRequestsByPropertyId(property.id);
+
+  return (
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="lg:col-span-2">
+        <h1 className="font-headline text-3xl font-bold">{property.title}</h1>
+        <p className="mt-1 text-muted-foreground">
+          {property.location.address}, {property.location.city}
+        </p>
+
+        <Card className="my-6">
+          <CardContent className="flex items-center justify-around p-6 text-center">
+            <div>
+              <BedDouble className="mx-auto mb-2 h-7 w-7 text-primary" />
+              <p>{property.bedrooms} Beds</p>
+            </div>
+            <div>
+              <Bath className="mx-auto mb-2 h-7 w-7 text-primary" />
+              <p>{property.bathrooms} Baths</p>
+            </div>
+            <div>
+              <Ruler className="mx-auto mb-2 h-7 w-7 text-primary" />
+              <p>{property.area} sqft</p>
+            </div>
+             <div>
+              <p className="text-2xl font-bold text-primary">{formatPrice(property.price)}</p>
+              <p className="text-sm text-muted-foreground">/month</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Rental Requests</CardTitle>
+                <CardDescription>Review and respond to rental applications for this property.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Applicant</TableHead>
+                            <TableHead>Message</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {rentalRequests.length > 0 ? (
+                            rentalRequests.map(request => {
+                                const applicant = getUserById(request.userId);
+                                return (
+                                    <TableRow key={request.id}>
+                                        <TableCell className="flex items-center gap-2">
+                                            <Avatar className="h-8 w-8">
+                                                {applicant && <AvatarImage src={applicant.avatarUrl} />}
+                                                <AvatarFallback>{applicant?.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <span className='font-medium'>{applicant?.name}</span>
+                                        </TableCell>
+                                        <TableCell className="max-w-xs truncate text-muted-foreground">{request.message}</TableCell>
+                                        <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
+                                        <TableCell className="text-right">
+                                            {request.status === 'pending' ? (
+                                                <div className='flex justify-end gap-2'>
+                                                    <Button size="sm" variant="outline"><Check className='h-4 w-4'/></Button>
+                                                    <Button size="sm" variant="destructive"><X className='h-4 w-4'/></Button>
+                                                </div>
+                                            ): (
+                                                <Badge variant={request.status === 'accepted' ? 'secondary' : 'destructive'}>{request.status}</Badge>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={4} className="text-center h-24">No pending requests.</TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+
+      </div>
+      <div className="lg:col-span-1">
+        <div className="sticky top-24 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Status</CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-between items-center">
+               <Badge variant={property.status === 'occupied' ? 'secondary' : 'default'} className="text-base">
+                {property.status}
+              </Badge>
+              <Button variant="outline">Edit Listing</Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+             <CardHeader>
+                <CardTitle>Current Tenant</CardTitle>
+             </CardHeader>
+             <CardContent>
+                {tenant ? (
+                     <div className="flex items-center gap-4">
+                        <Avatar className="h-16 w-16">
+                            <AvatarImage src={tenant.avatarUrl} />
+                            <AvatarFallback>{tenant.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-semibold">{tenant.name}</p>
+                            <p className="text-sm text-muted-foreground">{tenant.email}</p>
+                        </div>
+                    </div>
+                ): (
+                    <p className="text-muted-foreground">This property is currently vacant.</p>
+                )}
+             </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
