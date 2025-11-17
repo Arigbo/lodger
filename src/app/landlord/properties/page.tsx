@@ -50,9 +50,11 @@ export default function LandlordPropertiesPage() {
             View and manage all your listings.
           </p>
         </div>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add New Property
+        <Button asChild>
+            <Link href="/landlord/properties/new">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Property
+            </Link>
         </Button>
       </div>
       <Separator className="my-6" />
@@ -103,8 +105,12 @@ export default function LandlordPropertiesPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>View Requests</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/landlord/properties/edit/${property.id}`}>Edit</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/landlord/properties/${property.id}`}>View Requests</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">
                           Delete
                         </DropdownMenuItem>

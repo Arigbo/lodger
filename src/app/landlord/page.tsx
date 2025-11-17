@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { getPropertiesByLandlord, getPropertiesByTenant, getUserById } from "@/lib/data";
 import { PlusCircle, Building, Home } from "lucide-react";
+import Link from "next/link";
 
 // Mock current user - replace with real auth
 const useUser = () => {
@@ -43,9 +44,11 @@ function LandlordOverview() {
                 <h1 className="font-headline text-3xl font-bold">Overview</h1>
                 <p className="text-muted-foreground">Welcome back, {landlord?.name}.</p>
             </div>
-            <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add New Property
+            <Button asChild>
+                <Link href="/landlord/properties/new">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add New Property
+                </Link>
             </Button>
         </div>
         <Separator className="my-6" />
@@ -68,9 +71,11 @@ function LandlordOverview() {
                     <CardDescription className="text-center">Get started by listing your first property.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex justify-center">
-                     <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        List a Property
+                     <Button asChild>
+                        <Link href="/landlord/properties/new">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            List a Property
+                        </Link>
                     </Button>
                 </CardContent>
             </Card>

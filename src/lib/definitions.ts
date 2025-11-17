@@ -54,4 +54,4 @@ export type ImagePlaceholder = {
   imageHint: string;
 };
 
-    
+export const amenities = ["Furnished", "Wi-Fi", "In-unit Laundry", "Pet Friendly", "Parking Spot", "Gym Access", "Rooftop Access", "Dishwasher", "All Utilities Included", "Secure Entry", "Private Yard"];

@@ -26,8 +26,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { BedDouble, Bath, Ruler, Check, X } from 'lucide-react';
+import { BedDouble, Bath, Ruler, Check, X, Pencil } from 'lucide-react';
 import type { Property, User, RentalRequest } from '@/lib/definitions';
+import Link from 'next/link';
 
 // Mock current user - landlords only for this page
 const useUser = () => {
@@ -55,10 +56,20 @@ export default function LandlordPropertyDetailPage({
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <h1 className="font-headline text-3xl font-bold">{property.title}</h1>
-        <p className="mt-1 text-muted-foreground">
-          {property.location.address}, {property.location.city}
-        </p>
+        <div className="flex items-center justify-between">
+            <div>
+                <h1 className="font-headline text-3xl font-bold">{property.title}</h1>
+                <p className="mt-1 text-muted-foreground">
+                {property.location.address}, {property.location.city}
+                </p>
+            </div>
+            <Button variant="outline" asChild>
+                <Link href={`/landlord/properties/edit/${property.id}`}>
+                    <Pencil className="mr-2 h-4 w-4" /> Edit Listing
+                </Link>
+            </Button>
+        </div>
+
 
         <Card className="my-6">
           <CardContent className="flex items-center justify-around p-6 text-center">
