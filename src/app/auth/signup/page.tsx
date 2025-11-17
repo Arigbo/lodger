@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,21 @@ export default function SignupPage() {
   const [userType, setUserType] = useState<UserType>('student');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const router = useRouter();
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    // Here you would typically handle the actual account creation logic
+    // (e.g., calling an API).
+    
+    if (userType === 'landlord') {
+      router.push('/landlord');
+    } else {
+        // Redirect students to the main properties page or their own dashboard
+        router.push('/properties');
+    }
+  };
+
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center bg-background px-4 py-12">
@@ -25,7 +41,7 @@ export default function SignupPage() {
           <CardDescription>Join our community of students and landlords.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="grid gap-3">
               <Label>I am a...</Label>
               <RadioGroup
