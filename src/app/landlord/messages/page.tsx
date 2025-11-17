@@ -2,8 +2,8 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +25,8 @@ const useUser = () => {
 
 export default function MessagesPage() {
   const { user: landlord } = useUser();
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   
   const conversations: Conversation[] = useMemo(() => {
@@ -35,18 +37,25 @@ export default function MessagesPage() {
 
   useEffect(() => {
     const conversationIdFromUrl = searchParams.get('conversationId');
-    const conversationToSelect = conversations.find(c => c.id === conversationIdFromUrl);
-
-    if (conversationToSelect) {
-      setSelectedConversation(conversationToSelect);
-    } else if (conversations.length > 0) {
-      // Default to first conversation if none selected or found in URL
-      setSelectedConversation(conversations[0]);
+    if (conversationIdFromUrl) {
+      const conversationToSelect = conversations.find(c => c.id === conversationIdFromUrl);
+      setSelectedConversation(conversationToSelect || null);
+    } else if (conversations.length > 0 && !selectedConversation) {
+        // If no conversation is selected (e.g. on initial load without a query param)
+        // default to the first one and update the URL.
+        const firstConvo = conversations[0];
+        setSelectedConversation(firstConvo);
+        router.replace(`${pathname}?conversationId=${firstConvo.id}`);
     }
-  }, [searchParams, conversations]);
-
+  }, [searchParams, conversations, selectedConversation, router, pathname]);
 
   const messages = selectedConversation ? getMessagesByConversationId(selectedConversation.id) : [];
+
+  const handleConversationSelect = (convo: Conversation) => {
+    setSelectedConversation(convo);
+    router.push(`${pathname}?conversationId=${convo.id}`);
+  };
+
 
   return (
     <div>
@@ -65,7 +74,7 @@ export default function MessagesPage() {
                     <ScrollArea className="flex-grow">
                         <CardContent className="p-0">
                             {conversations.map(convo => (
-                                <button key={convo.id} onClick={() => setSelectedConversation(convo)} className={cn("flex w-full items-center gap-4 p-4 text-left hover:bg-accent", selectedConversation?.id === convo.id && 'bg-secondary')}>
+                                <button key={convo.id} onClick={() => handleConversationSelect(convo)} className={cn("flex w-full items-center gap-4 p-4 text-left hover:bg-accent", selectedConversation?.id === convo.id && 'bg-secondary')}>
                                     <Avatar>
                                         <AvatarImage src={convo.participant.avatarUrl} />
                                         <AvatarFallback>{convo.participant.name.charAt(0)}</AvatarFallback>
