@@ -1,3 +1,6 @@
+
+'use client';
+
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { getPropertyById, getUserById, getReviewsByPropertyId, getImagesByIds } from "@/lib/data";
@@ -9,6 +12,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
 
 type amenityIcon = {
     [key: string]: React.ReactNode;
@@ -22,8 +28,18 @@ const amenityIcons: amenityIcon = {
     'Parking Spot': <ParkingCircle className="h-5 w-5 text-primary" />,
 }
 
+// Mock current user - replace with real auth
+const useUser = () => {
+  // To test a landlord, use 'user-1'. 
+  // To test a student tenant, use 'user-3'.
+  // To test a student non-tenant, use 'user-2'.
+  const user = getUserById('user-3'); 
+  return { user };
+}
+
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const property = getPropertyById(params.id);
+  const { user } = useUser();
 
   if (!property) {
     notFound();
@@ -33,6 +49,8 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const reviews = getReviewsByPropertyId(property.id);
   const images = getImagesByIds(property.imageIds);
   const averageRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
+  
+  const isTenant = user?.id === property.currentTenantId;
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-12">
@@ -103,10 +121,12 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                 </ul>
             </TabsContent>
             <TabsContent value="reviews" className="py-4 space-y-6">
+                <h3 className="font-headline text-2xl font-semibold">Comments & Reviews</h3>
+                {isTenant && <AddReviewForm />}
                 {reviews.map(review => {
                     const reviewer = getUserById(review.userId);
                     return (
-                        <div key={review.id} className="flex gap-4">
+                        <div key={review.id} className="flex gap-4 pt-6 border-t">
                             <Avatar>
                                 {reviewer && <AvatarImage src={reviewer.avatarUrl} />}
                                 <AvatarFallback>{reviewer?.name.charAt(0)}</AvatarFallback>
@@ -124,7 +144,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                         </div>
                     )
                 })}
-                {reviews.length === 0 && <p className="text-muted-foreground">No reviews yet.</p>}
+                {reviews.length === 0 && <p className="text-muted-foreground pt-6 border-t">No reviews yet.</p>}
             </TabsContent>
           </Tabs>
         </div>
@@ -177,3 +197,36 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
     </div>
   );
 }
+
+
+function AddReviewForm() {
+    const [rating, setRating] = useState(0);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Write a Review</CardTitle>
+                <CardDescription>Share your experience with this property.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label>Rating</Label>
+                    <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                            <button key={i} onClick={() => setRating(i + 1)}>
+                                <Star className={cn("h-6 w-6", i < rating ? "text-accent fill-current" : "text-muted-foreground")}/>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="comment">Comment</Label>
+                    <Textarea id="comment" placeholder="Describe your experience..." />
+                </div>
+                <Button>Submit Review</Button>
+            </CardContent>
+        </Card>
+    );
+}
+
+    
