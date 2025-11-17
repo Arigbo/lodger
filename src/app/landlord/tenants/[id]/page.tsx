@@ -14,7 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Phone, Mail, FileText, CalendarDays, AlertTriangle, Coins, Download } from 'lucide-react';
+import { Phone, Mail, FileText, CalendarDays, AlertTriangle, Coins, Download, Pencil, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { add, format, differenceInDays, differenceInMonths, startOfMonth, isPast } from 'date-fns';
 import { cn, formatPrice } from '@/lib/utils';
@@ -38,6 +38,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import React, { useState } from 'react';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function TenantDetailPage({ params }: { params: { id: string } }) {
   const tenant = getUserById(params.id);
@@ -72,6 +74,37 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
   const monthsRemaining = differenceInMonths(leaseEndDate, today);
   const monthsPaid = differenceInMonths(today, leaseStartDate);
   const compassionFee = (property.price * monthsRemaining) + (property.price * 0.5 * monthsPaid);
+  
+  // State for lease modal
+  const initialLeaseText = `1. PARTIES
+This Residential Lease Agreement ("Agreement") is made between ${landlord?.name} ("Landlord") and ${tenant.name} ("Tenant").
+
+2. PROPERTY
+Landlord agrees to lease to Tenant the property located at ${property.location.address}, ${property.location.city}, ${property.location.state} ${property.location.zip}.
+
+3. TERM
+The term of this lease is for one year, beginning on ${format(leaseStartDate, 'MMMM do, yyyy')} and ending on ${format(leaseEndDate, 'MMMM do, yyyy')}.
+                                    
+4. RENT
+Tenant agrees to pay Landlord the sum of ${formatPrice(property.price)} per month as rent, due on the 1st day of each month.
+
+5. SECURITY DEPOSIT
+Upon execution of this Agreement, Tenant shall deposit with Landlord the sum of ${formatPrice(property.price)} as security for the faithful performance of the terms of this lease.
+
+6. UTILITIES
+Tenant is responsible for all utilities and services for the property, unless otherwise specified in the property amenities list.
+
+7. USE OF PREMISES
+The premises shall be used and occupied by Tenant and Tenant's immediate family, exclusively, as a private single-family dwelling, and no part of the premises shall be used at any time during the term of this Agreement for the purpose of carrying on any business, profession, or trade of any kind, or for any purpose other than as a private single-family dwelling.
+                                    
+8. HOUSE RULES
+Tenant agrees to abide by the house rules, which are attached as an addendum to this lease. The current rules include: ${property.rules.join(', ')}.`;
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [leaseText, setLeaseText] = useState(initialLeaseText);
+  const [landlordSigned, setLandlordSigned] = useState(false);
+  const [tenantSigned, setTenantSigned] = useState(false);
+  const isDocLocked = landlordSigned && tenantSigned;
 
 
   return (
@@ -146,45 +179,50 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
                                         This is a legally binding document. Dated: {format(leaseStartDate, 'MMMM do, yyyy')}
                                     </DialogDescription>
                                 </DialogHeader>
-                                <div className="prose max-h-[60vh] overflow-y-auto pr-6 text-sm">
-                                    <h3>1. PARTIES</h3>
-                                    <p>This Residential Lease Agreement ("Agreement") is made between <strong>{landlord?.name}</strong> ("Landlord") and <strong>{tenant.name}</strong> ("Tenant").</p>
-
-                                    <h3>2. PROPERTY</h3>
-                                    <p>Landlord agrees to lease to Tenant the property located at <strong>{property.location.address}, {property.location.city}, {property.location.state} {property.location.zip}</strong>.</p>
-
-                                    <h3>3. TERM</h3>
-                                    <p>The term of this lease is for one year, beginning on <strong>{format(leaseStartDate, 'MMMM do, yyyy')}</strong> and ending on <strong>{format(leaseEndDate, 'MMMM do, yyyy')}</strong>.</p>
-                                    
-                                    <h3>4. RENT</h3>
-                                    <p>Tenant agrees to pay Landlord the sum of <strong>{formatPrice(property.price)}</strong> per month as rent, due on the 1st day of each month.</p>
-
-                                    <h3>5. SECURITY DEPOSIT</h3>
-                                    <p>Upon execution of this Agreement, Tenant shall deposit with Landlord the sum of {formatPrice(property.price)} as security for the faithful performance of the terms of this lease.</p>
-
-                                    <h3>6. UTILITIES</h3>
-                                    <p>Tenant is responsible for all utilities and services for the property, unless otherwise specified in the property amenities list.</p>
-
-                                    <h3>7. USE OF PREMISES</h3>
-                                    <p>The premises shall be used and occupied by Tenant and Tenant's immediate family, exclusively, as a private single-family dwelling, and no part of the premises shall be used at any time during the term of this Agreement for the purpose of carrying on any business, profession, or trade of any kind, or for any purpose other than as a private single-family dwelling.</p>
-                                    
-                                    <h3>8. HOUSE RULES</h3>
-                                    <p>Tenant agrees to abide by the house rules, which are attached as an addendum to this lease. The current rules include: {property.rules.join(', ')}.</p>
-
-                                    <h3>9. SIGNATURES</h3>
-                                    <p>By signing below, the parties agree to the terms of this Lease Agreement.</p>
-                                    <div className="mt-8 flex justify-between font-serif italic">
-                                        <div>
-                                            <p>{landlord?.name}</p>
-                                            <p>Landlord: {landlord?.name}</p>
+                                <div className="relative">
+                                    {isDocLocked && (
+                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                                            <div className="text-9xl font-bold text-red-500/10 rotate-[-30deg] select-none">
+                                                RentU
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p>{tenant.name}</p>
-                                            <p>Tenant: {tenant.name}</p>
+                                    )}
+                                    <div className="prose max-h-[60vh] overflow-y-auto pr-6 text-sm border rounded-md p-4 bg-background">
+                                        {isEditing ? (
+                                            <Textarea 
+                                                value={leaseText} 
+                                                onChange={(e) => setLeaseText(e.target.value)}
+                                                className="w-full h-[50vh] prose-sm"
+                                            />
+                                        ) : (
+                                            <div className="whitespace-pre-wrap">{leaseText}</div>
+                                        )}
+                                    </div>
+                                    <div className="mt-4 space-y-4">
+                                        <h3>9. SIGNATURES</h3>
+                                        <p>By signing below, the parties agree to the terms of this Lease Agreement.</p>
+                                        <div className="mt-4 grid grid-cols-2 gap-6 items-center font-serif italic">
+                                            <div>
+                                                {landlordSigned ? (
+                                                    <p className="text-green-600">✓ Signed by {landlord?.name}</p>
+                                                ) : (
+                                                    <Button size="sm" onClick={() => setLandlordSigned(true)} disabled={isEditing}>Sign as Landlord</Button>
+                                                )}
+                                            </div>
+                                            <div>
+                                                 {tenantSigned ? (
+                                                    <p className="text-green-600">✓ Signed by {tenant.name}</p>
+                                                ) : (
+                                                    <Button size="sm" onClick={() => setTenantSigned(true)} disabled={isEditing}>Sign as Tenant</Button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <DialogFooter>
+                                <DialogFooter className="mt-4">
+                                    <Button variant="ghost" onClick={() => setIsEditing(!isEditing)} disabled={isDocLocked}>
+                                        {isEditing ? <><Lock className="mr-2 h-4 w-4" /> Save & Lock</> : <><Pencil className="mr-2 h-4 w-4" /> Edit</>}
+                                    </Button>
                                     <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Download</Button>
                                 </DialogFooter>
                             </DialogContent>
@@ -271,3 +309,5 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
     </div>
   );
 }
+
+    
