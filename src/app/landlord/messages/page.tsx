@@ -34,6 +34,11 @@ export default function MessagesPage() {
   }, [landlord]);
 
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     const conversationIdFromUrl = searchParams.get('conversationId');
@@ -41,13 +46,10 @@ export default function MessagesPage() {
       const conversationToSelect = conversations.find(c => c.id === conversationIdFromUrl);
       setSelectedConversation(conversationToSelect || null);
     } else if (conversations.length > 0 && !selectedConversation) {
-        // If no conversation is selected (e.g. on initial load without a query param)
-        // default to the first one and update the URL.
         const firstConvo = conversations[0];
         setSelectedConversation(firstConvo);
-        router.replace(`${pathname}?conversationId=${firstConvo.id}`);
     }
-  }, [searchParams, conversations, selectedConversation, router, pathname]);
+  }, [searchParams, conversations, selectedConversation]);
 
   const messages = selectedConversation ? getMessagesByConversationId(selectedConversation.id) : [];
 
@@ -82,7 +84,7 @@ export default function MessagesPage() {
                                     <div className="flex-grow overflow-hidden">
                                         <div className="flex justify-between items-center">
                                             <p className="font-semibold truncate">{convo.participant.name}</p>
-                                            <p className="text-xs text-muted-foreground whitespace-nowrap">{convo.lastMessageTimestamp ? format(new Date(convo.lastMessageTimestamp), "p") : ''}</p>
+                                            <p className="text-xs text-muted-foreground whitespace-nowrap">{isClient && convo.lastMessageTimestamp ? format(new Date(convo.lastMessageTimestamp), "p") : ''}</p>
                                         </div>
                                         <div className="flex justify-between items-start">
                                             <p className="text-sm text-muted-foreground truncate">{convo.lastMessage}</p>
@@ -139,7 +141,7 @@ export default function MessagesPage() {
                                             )}
                                         </div>
                                          <p className="text-xs text-muted-foreground px-12">
-                                            {format(new Date(msg.timestamp), 'MMM d, yyyy, h:mm a')}
+                                            {isClient ? format(new Date(msg.timestamp), 'MMM d, yyyy, h:mm a') : '...'}
                                         </p>
                                     </div>
                                 ))}
