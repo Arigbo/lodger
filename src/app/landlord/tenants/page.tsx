@@ -95,15 +95,17 @@ export default function TenantsPage() {
               {tenants.map(({ tenant, property }) => (
                 <TableRow key={tenant.id}>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={tenant.avatarUrl} />
-                        <AvatarFallback>
-                          {tenant.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">{tenant.name}</span>
-                    </div>
+                     <Link href={`/landlord/tenants/${tenant.id}`} className="hover:underline">
+                        <div className="flex items-center gap-3">
+                        <Avatar>
+                            <AvatarImage src={tenant.avatarUrl} />
+                            <AvatarFallback>
+                            {tenant.name.charAt(0)}
+                            </AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{tenant.name}</span>
+                        </div>
+                    </Link>
                   </TableCell>
                   <TableCell>
                     <Link
@@ -128,6 +130,9 @@ export default function TenantsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/landlord/tenants/${tenant.id}`}>View Details</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem>Message Tenant</DropdownMenuItem>
                         <DropdownMenuItem>View Lease</DropdownMenuItem>
                       </DropdownMenuContent>
@@ -153,4 +158,3 @@ export default function TenantsPage() {
     </div>
   );
 }
-
