@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { getPropertiesByLandlord, getUserById } from '@/lib/data';
-import type { User, Property } from '@/lib/definitions';
+import { getConversationsByLandlord, getMessagesByConversationId, getUserById } from '@/lib/data';
+import type { User, Property, Conversation, Message } from '@/lib/definitions';
 import { Send, Phone, Video } from 'lucide-react';
 import Link from 'next/link';
 
@@ -20,57 +20,14 @@ const useUser = () => {
   return { user };
 };
 
-type Conversation = {
-  id: string;
-  participant: User;
-  lastMessage: string;
-  lastMessageTimestamp: string;
-  unreadCount: number;
-};
-
-type Message = {
-    id: string;
-    senderId: string;
-    text: string;
-    timestamp: string;
-}
-
-const mockMessages: { [key: string]: Message[] } = {
-    'user-3': [
-        {id: 'msg1', senderId: 'user-3', text: "Hey! Just wanted to confirm if someone can take a look at the leaky faucet in the kitchen.", timestamp: "10:30 AM"},
-        {id: 'msg2', senderId: 'user-1', text: "Hi Emily, of course. I've scheduled a plumber to come by tomorrow afternoon. Does that work for you?", timestamp: "10:32 AM"},
-        {id: 'msg3', senderId: 'user-3', text: "Yes, that's perfect! Thank you so much for the quick response.", timestamp: "10:33 AM"},
-    ],
-    'user-5': [
-        {id: 'msg4', senderId: 'user-5', text: "Good morning! I was wondering what the policy is for overnight guests.", timestamp: "Yesterday"},
-        {id: 'msg5', senderId: 'user-1', text: "Hi Jessica, occasional overnight guests are fine for a night or two. For anything longer, please just give me a heads up.", timestamp: "Yesterday"},
-    ]
-}
-
-
 export default function MessagesPage() {
   const { user: landlord } = useUser();
-
-  const landlordProperties = landlord
-    ? getPropertiesByLandlord(landlord.id)
-    : [];
-
-  const tenants = landlordProperties
-    .filter(
-      (property) => property.status === 'occupied' && property.currentTenantId
-    )
-    .map((property) => getUserById(property.currentTenantId!))
-    .filter((item): item is User => item !== undefined);
   
-  const conversations: Conversation[] = tenants.map((tenant, index) => ({
-      id: tenant.id,
-      participant: tenant,
-      lastMessage: index === 0 ? "Yes, that's perfect! Thank you..." : "Hi Jessica, occasional overnight...",
-      lastMessageTimestamp: index === 0 ? "10:33 AM" : "Yesterday",
-      unreadCount: index === 0 ? 0 : 1,
-  }));
+  const conversations: Conversation[] = landlord ? getConversationsByLandlord(landlord.id) : [];
 
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(conversations[0] || null);
+
+  const messages = selectedConversation ? getMessagesByConversationId(selectedConversation.id) : [];
 
 
   return (
@@ -135,7 +92,7 @@ export default function MessagesPage() {
                         {/* Messages Area */}
                         <ScrollArea className="flex-grow p-6">
                             <div className="space-y-6">
-                                {(mockMessages[selectedConversation.id] || []).map(msg => (
+                                {messages.map(msg => (
                                     <div key={msg.id} className={cn("flex items-end gap-3", msg.senderId === landlord.id ? "justify-end" : "justify-start")}>
                                          {msg.senderId !== landlord.id && (
                                             <Avatar className="h-8 w-8">

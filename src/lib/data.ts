@@ -1,4 +1,4 @@
-import type { User, Property, Review, RentalRequest, Transaction, LeaseAgreement } from './definitions';
+import type { User, Property, Review, RentalRequest, Transaction, LeaseAgreement, Conversation, Message } from './definitions';
 import placeholderImages from './placeholder-images.json';
 import { add, format } from 'date-fns';
 
@@ -101,6 +101,18 @@ const transactions: Transaction[] = [
   { id: 'trans-6', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 75, date: '2024-03-15', type: 'Late Fee', status: 'Completed' },
 ];
 
+const messages: { [key: string]: Message[] } = {
+    'user-3': [
+        {id: 'msg1', senderId: 'user-3', text: "Hey! Just wanted to confirm if someone can take a look at the leaky faucet in the kitchen.", timestamp: "10:30 AM"},
+        {id: 'msg2', senderId: 'user-1', text: "Hi Emily, of course. I've scheduled a plumber to come by tomorrow afternoon. Does that work for you?", timestamp: "10:32 AM"},
+        {id: 'msg3', senderId: 'user-3', text: "Yes, that's perfect! Thank you so much for the quick response.", timestamp: "10:33 AM"},
+    ],
+    'user-5': [
+        {id: 'msg4', senderId: 'user-5', text: "Good morning! I was wondering what the policy is for overnight guests.", timestamp: "Yesterday"},
+        {id: 'msg5', senderId: 'user-1', text: "Hi Jessica, occasional overnight guests are fine for a night or two. For anything longer, please just give me a heads up.", timestamp: "Yesterday"},
+    ]
+};
+
 const generateLeaseText = (landlord: User, tenant: User, property: Property) => {
   const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
   const leaseEndDate = add(leaseStartDate, { years: 1 });
@@ -188,4 +200,31 @@ export function getLeaseAgreementByPropertyId(propertyId: string) {
 
 export function getImagesByIds(ids: string[]) {
     return placeholderImages.placeholderImages.filter(p => ids.includes(p.id));
+}
+
+export function getConversationsByLandlord(landlordId: string): Conversation[] {
+    const landlordProperties = getPropertiesByLandlord(landlordId);
+    const tenants = landlordProperties
+        .filter(p => p.status === 'occupied' && p.currentTenantId)
+        .map(p => getUserById(p.currentTenantId!))
+        .filter((item): item is User => item !== undefined);
+    
+    // Create mock conversation data from tenants
+    return tenants.map((tenant, index) => {
+        const lastMessageList = messages[tenant.id] || [];
+        const lastMessage = lastMessageList.length > 0 ? lastMessageList[lastMessageList.length - 1] : { text: 'No messages yet', timestamp: '' };
+
+        return {
+            id: tenant.id,
+            participant: tenant,
+            lastMessage: lastMessage.text,
+            lastMessageTimestamp: lastMessage.timestamp,
+            // Mock unread count
+            unreadCount: tenant.id === 'user-5' ? 1 : 0,
+        };
+    });
+}
+
+export function getMessagesByConversationId(conversationId: string): Message[] {
+    return messages[conversationId] || [];
 }

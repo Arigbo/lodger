@@ -76,4 +76,20 @@ export type LeaseAgreement = {
   tenantSigned: boolean;
 };
 
+export type Conversation = {
+  id: string; // Corresponds to the participant's user ID
+  participant: User;
+  lastMessage: string;
+  lastMessageTimestamp: string;
+  unreadCount: number;
+};
+
+export type Message = {
+  id: string;
+  senderId: string;
+  text: string;
+  timestamp: string;
+};
+
+
 export const amenities = ["Furnished", "Wi-Fi", "In-unit Laundry", "Pet Friendly", "Parking Spot", "Gym Access", "Rooftop Access", "Dishwasher", "All Utilities Included", "Secure Entry", "Private Yard"];
