@@ -1,3 +1,4 @@
+
 import type { User, Property, Review, RentalRequest, Transaction, LeaseAgreement, Conversation, Message, MaintenanceRequest } from './definitions';
 import placeholderImages from './placeholder-images.json';
 import { add, format } from 'date-fns';
@@ -62,7 +63,7 @@ const properties: Property[] = [
     status: 'occupied',
     rules: ['No smoking', 'Small pets considered with a fee'],
     currentTenantId: 'user-3',
-    leaseStartDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+    leaseStartDate: '2025-11-01',
   },
   {
     id: 'prop-4',
@@ -230,6 +231,10 @@ export function getRentalRequestsByPropertyId(propertyId: string) {
 
 export function getTransactionsByLandlord(landlordId: string) {
   return transactions.filter(t => t.landlordId === landlordId);
+}
+
+export function getTransactionsByTenantId(tenantId: string) {
+  return transactions.filter(t => t.tenantId === tenantId);
 }
 
 export function getMaintenanceRequestsByLandlord(landlordId: string) {

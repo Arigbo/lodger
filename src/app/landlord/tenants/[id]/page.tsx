@@ -3,7 +3,7 @@
 'use client';
 
 import { notFound, useParams } from 'next/navigation';
-import { getUserById, getPropertiesByTenant } from '@/lib/data';
+import { getUserById, getPropertiesByTenant, getTransactionsByTenantId } from '@/lib/data';
 import type { User, Property } from '@/lib/definitions';
 import {
   Card,
@@ -61,17 +61,30 @@ export default function TenantDetailPage() {
   const today = new Date();
   const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
   const leaseEndDate = add(leaseStartDate, { years: 1 });
-  
-  // Rent is due if today is past the 1st of the month AND the lease is active.
+
+  const tenantTransactions = getTransactionsByTenantId(tenant.id);
+  const lastRentPayment = tenantTransactions
+    .filter(t => t.type === 'Rent')
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+  let nextRentDueDate: Date;
+  let isRentDue = false;
+
+  if (lastRentPayment) {
+    nextRentDueDate = add(new Date(lastRentPayment.date), { months: 1 });
+    isRentDue = isPast(nextRentDueDate);
+  } else if (property.leaseStartDate) {
+    // New tenant, rent is due if today is past the lease start date
+    nextRentDueDate = new Date(property.leaseStartDate);
+    isRentDue = isPast(nextRentDueDate);
+  } else {
+    // Fallback, should not happen with good data
+    nextRentDueDate = add(startOfMonth(today), { months: 1 });
+  }
+
   const isLeaseActive = isPast(leaseStartDate) && isBefore(today, leaseEndDate);
-  const isRentDueForCurrentMonth = today.getDate() > 1;
-  const isRentDue = isLeaseActive && isRentDueForCurrentMonth;
-
-  // Calculate next rent due date (assuming 1st of every month)
-  const nextRentDueDate = add(startOfMonth(today), { months: 1 });
-
   const leaseDaysRemaining = differenceInDays(leaseEndDate, today);
-  const isLeaseEndingSoon = leaseDaysRemaining <= 90 && leaseDaysRemaining > 0;
+  const isLeaseEndingSoon = isLeaseActive && leaseDaysRemaining <= 90;
 
   // Compassion Calculation
   const monthsRemaining = differenceInMonths(leaseEndDate, today);
@@ -151,7 +164,7 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="rounded-lg border bg-secondary/50 p-4">
                             <p className="text-sm font-medium text-muted-foreground">Next Rent Due</p>
-                            <p className={cn("text-xl font-bold text-primary")}>
+                            <p className={cn("text-xl font-bold", isRentDue ? "text-destructive" : "text-primary")}>
                                 {isLeaseActive ? format(nextRentDueDate, 'MMMM do, yyyy') : 'N/A'}
                             </p>
                         </div>
@@ -267,7 +280,7 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                         </Button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="destructive">End Tenancy</Button>
+                                <Button variant="destructive" disabled={!isLeaseActive}>End Tenancy</Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
@@ -283,7 +296,7 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                                 )}
                                 </AlertDialogHeader>
 
-                                {!isRentDue && (
+                                {!isRentDue && isLeaseActive && (
                                     <div className="rounded-lg border bg-muted/20 p-4 space-y-4">
                                         <h4 className="font-semibold text-center">Compassion Payment Calculation</h4>
                                         <div className="flex justify-between items-center text-sm">
