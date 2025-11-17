@@ -251,21 +251,21 @@ export default function AccountPage() {
                         <CardContent className="space-y-6">
                             <div className="flex items-center justify-between rounded-lg border p-4">
                                 <div className="space-y-0.5">
-                                    <FormLabel className="text-base">New Rental Requests</FormLabel>
-                                    <FormDescription>
+                                    <label htmlFor="rental-requests-switch" className="text-base font-medium">New Rental Requests</label>
+                                    <p className="text-sm text-muted-foreground">
                                         Receive an email when a student applies to one of your properties.
-                                    </FormDescription>
+                                    </p>
                                 </div>
-                                <Switch defaultChecked />
+                                <Switch id="rental-requests-switch" defaultChecked />
                             </div>
                             <div className="flex items-center justify-between rounded-lg border p-4">
                                 <div className="space-y-0.5">
-                                    <FormLabel className="text-base">New Messages</FormLabel>
-                                    <FormDescription>
+                                    <label htmlFor="new-messages-switch" className="text-base font-medium">New Messages</label>
+                                    <p className="text-sm text-muted-foreground">
                                         Get notified when a student or tenant sends you a message.
-                                    </FormDescription>
+                                    </p>
                                 </div>
-                                <Switch defaultChecked />
+                                <Switch id="new-messages-switch" defaultChecked />
                             </div>
                         </CardContent>
                     </Card>
@@ -302,5 +302,3 @@ export default function AccountPage() {
     </div>
   );
 }
-
-    
