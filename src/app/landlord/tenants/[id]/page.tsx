@@ -28,7 +28,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 export default function TenantDetailPage({ params }: { params: { id: string } }) {
   const tenant = getUserById(params.id);
@@ -39,6 +47,8 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
   }
 
   const property = rentedProperties[0]; // Assuming one tenant rents one property for this view
+  const landlord = getUserById(property.landlordId);
+
 
   // --- DATE & PAYMENT CALCULATIONS ---
   const today = new Date();
@@ -124,7 +134,57 @@ export default function TenantDetailPage({ params }: { params: { id: string } })
                              <p className="text-sm font-medium text-muted-foreground">Lease Started</p>
                             <p>{format(leaseStartDate, 'MMMM do, yyyy')}</p>
                         </div>
-                         <Button variant="outline"><FileText className="mr-2 h-4 w-4"/> View Lease Agreement</Button>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline"><FileText className="mr-2 h-4 w-4"/> View Lease Agreement</Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl">
+                                <DialogHeader>
+                                    <DialogTitle>Lease Agreement: {property.title}</DialogTitle>
+                                    <DialogDescription>
+                                        This is a legally binding document. Dated: {format(leaseStartDate, 'MMMM do, yyyy')}
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="prose max-h-[60vh] overflow-y-auto pr-6 text-sm">
+                                    <h3>1. PARTIES</h3>
+                                    <p>This Residential Lease Agreement ("Agreement") is made between <strong>{landlord?.name}</strong> ("Landlord") and <strong>{tenant.name}</strong> ("Tenant").</p>
+
+                                    <h3>2. PROPERTY</h3>
+                                    <p>Landlord agrees to lease to Tenant the property located at <strong>{property.location.address}, {property.location.city}, {property.location.state} {property.location.zip}</strong>.</p>
+
+                                    <h3>3. TERM</h3>
+                                    <p>The term of this lease is for one year, beginning on <strong>{format(leaseStartDate, 'MMMM do, yyyy')}</strong> and ending on <strong>{format(leaseEndDate, 'MMMM do, yyyy')}</strong>.</p>
+                                    
+                                    <h3>4. RENT</h3>
+                                    <p>Tenant agrees to pay Landlord the sum of <strong>{formatPrice(property.price)}</strong> per month as rent, due on the 1st day of each month.</p>
+
+                                    <h3>5. SECURITY DEPOSIT</h3>
+                                    <p>Upon execution of this Agreement, Tenant shall deposit with Landlord the sum of {formatPrice(property.price)} as security for the faithful performance of the terms of this lease.</p>
+
+                                    <h3>6. UTILITIES</h3>
+                                    <p>Tenant is responsible for all utilities and services for the property, unless otherwise specified in the property amenities list.</p>
+
+                                    <h3>7. USE OF PREMISES</h3>
+                                    <p>The premises shall be used and occupied by Tenant and Tenant's immediate family, exclusively, as a private single-family dwelling, and no part of the premises shall be used at any time during the term of this Agreement for the purpose of carrying on any business, profession, or trade of any kind, or for any purpose other than as a private single-family dwelling.</p>
+                                    
+                                    <h3>8. HOUSE RULES</h3>
+                                    <p>Tenant agrees to abide by the house rules, which are attached as an addendum to this lease. The current rules include: {property.rules.join(', ')}.</p>
+
+                                    <h3>9. SIGNATURES</h3>
+                                    <p>By signing below, the parties agree to the terms of this Lease Agreement.</p>
+                                    <div className="mt-8 flex justify-between">
+                                        <div>
+                                            <p>_________________________</p>
+                                            <p>Landlord: {landlord?.name}</p>
+                                        </div>
+                                        <div>
+                                            <p>_________________________</p>
+                                            <p>Tenant: {tenant.name}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </CardContent>
              </Card>
