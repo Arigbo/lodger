@@ -13,8 +13,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "ProjectFlow",
-  description: "Streamline Your Workflow.",
+  title: "RentU - Student Housing Made Easy",
+  description: "Find and book your perfect student rental.",
 };
 
 export default function RootLayout({

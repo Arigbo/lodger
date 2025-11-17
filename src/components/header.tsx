@@ -18,9 +18,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import placeholderImages from '@/lib/placeholder-images.json';
 
 const navLinks = [
-  { href: "/#features", label: "Features" },
-  { href: "/#pricing", label: "Pricing" },
-  { href: "/about", label: "About" },
+  { href: "/properties", label: "All Properties" },
+  { href: "/#how-it-works", label: "How It Works" },
+  { href: "/dashboard", label: "For Landlords" },
 ];
 
 export default function Header() {

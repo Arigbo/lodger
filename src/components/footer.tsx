@@ -10,22 +10,21 @@ export default function Footer() {
           <div className="md:col-span-4">
             <Logo />
             <p className="mt-4 text-sm text-muted-foreground">
-              Streamline your workflow and boost your team's productivity.
+              Find and book your perfect student rental.
             </p>
           </div>
           <div className="md:col-span-2">
-            <h4 className="font-headline text-lg font-semibold">Product</h4>
+            <h4 className="font-headline text-lg font-semibold">Properties</h4>
             <ul className="mt-4 space-y-2">
-              <li><Link href="/#features" className="text-sm text-muted-foreground hover:text-foreground">Features</Link></li>
-              <li><Link href="/#pricing" className="text-sm text-muted-foreground hover:text-foreground">Pricing</Link></li>
-              <li><Link href="/integrations" className="text-sm text-muted-foreground hover:text-foreground">Integrations</Link></li>
+              <li><Link href="/properties" className="text-sm text-muted-foreground hover:text-foreground">Browse All</Link></li>
+              <li><Link href="/#featured" className="text-sm text-muted-foreground hover:text-foreground">Featured</Link></li>
+              <li><Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">List a Property</Link></li>
             </ul>
           </div>
           <div className="md:col-span-2">
             <h4 className="font-headline text-lg font-semibold">Company</h4>
             <ul className="mt-4 space-y-2">
               <li><Link href="/about" className="text-sm text-muted-foreground hover:text-foreground">About Us</Link></li>
-              <li><Link href="/careers" className="text-sm text-muted-foreground hover:text-foreground">Careers</Link></li>
               <li><Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground">Blog</Link></li>
             </ul>
           </div>
@@ -39,7 +38,7 @@ export default function Footer() {
         </div>
         <div className="mt-12 flex flex-col items-center justify-between border-t pt-8 sm:flex-row">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} ProjectFlow. All rights reserved.
+            &copy; {new Date().getFullYear()} RentU. All rights reserved.
           </p>
           <div className="mt-4 flex items-center space-x-4 sm:mt-0">
             <Link href="#" className="text-muted-foreground hover:text-foreground">

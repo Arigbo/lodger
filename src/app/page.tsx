@@ -1,97 +1,142 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { ArrowRight, Check, Zap, Users, BarChart } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ArrowRight, Search, Building, UserCheck } from "lucide-react";
 import placeholderImages from '@/lib/placeholder-images.json';
+import { getProperties } from "@/lib/data";
+import PropertyCard from "@/components/property-card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Home() {
-  const heroImage = placeholderImages.placeholderImages.find(p => p.id === 'hero-image');
+  const heroImage = placeholderImages.placeholderImages.find(p => p.id === 'apartment-1-a');
+  const featuredProperties = getProperties().slice(0, 3);
 
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="bg-background py-20 md:py-32">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="font-headline text-5xl font-bold md:text-7xl">
-            Streamline Your Workflow
-          </h1>
-          <p className="mt-4 max-w-3xl mx-auto text-lg text-muted-foreground">
-            A powerful and intuitive project management tool designed to help teams collaborate, organize, and deliver projects on time.
-          </p>
-          <div className="mt-8 flex justify-center gap-4">
-            <Button asChild size="lg">
-              <Link href="/auth/signup">Get Started for Free</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="#features">Learn More</Link>
-            </Button>
-          </div>
-          {heroImage && (
-            <div className="relative mt-12 shadow-2xl rounded-lg">
+      <section className="relative bg-background pt-20 pb-48 md:pt-32">
+         {heroImage && (
+            <div className="absolute inset-0">
                 <Image
                     src={heroImage.imageUrl}
                     alt={heroImage.description}
-                    width={1200}
-                    height={675}
-                    className="object-cover rounded-lg"
+                    fill
+                    className="object-cover"
                     data-ai-hint={heroImage.imageHint}
                     priority
                 />
-                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+                 <div className="absolute inset-0 bg-black/60" />
             </div>
            )}
+        <div className="relative container mx-auto px-4 text-center text-primary-foreground">
+          <h1 className="font-headline text-5xl font-bold md:text-7xl">
+            Find Your Perfect Student Home
+          </h1>
+          <p className="mt-4 max-w-3xl mx-auto text-lg text-primary-foreground/90">
+            The easiest way for university students to find and book their next rental property.
+          </p>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20">
+        {/* Search Bar Section */}
+        <div className="-mt-32">
+            <div className="container mx-auto px-4">
+                <Card className="shadow-2xl max-w-4xl mx-auto">
+                    <CardContent className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4 items-center">
+                            <div className="md:col-span-2 lg:col-span-2">
+                                <label htmlFor="search" className="sr-only">Search</label>
+                                <Input id="search" placeholder="Enter a city, address, or school..." />
+                            </div>
+                            <div>
+                                <label htmlFor="type" className="sr-only">Property Type</label>
+                                <Select>
+                                    <SelectTrigger id="type">
+                                        <SelectValue placeholder="Property Type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="any">Any Type</SelectItem>
+                                        <SelectItem value="apartment">Apartment</SelectItem>
+                                        <SelectItem value="house">House</SelectItem>
+                                        <SelectItem value="studio">Studio</SelectItem>
+                                        <SelectItem value="loft">Loft</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                             <div>
+                                <label htmlFor="price" className="sr-only">Price Range</label>
+                                <Select>
+                                    <SelectTrigger id="price">
+                                        <SelectValue placeholder="Price Range" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="any">Any Price</SelectItem>
+                                        <SelectItem value="<1000">{'< $1,000'}</SelectItem>
+                                        <SelectItem value="1000-1500">$1,000 - $1,500</SelectItem>
+                                        <SelectItem value="1500-2000">$1,500 - $2,000</SelectItem>
+                                        <SelectItem value=">2000">{'> $2,000'}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <Button className="md:col-span-4 lg:col-span-1 w-full">
+                                <Search className="mr-2 h-4 w-4" /> Search
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+
+      {/* How it works Section */}
+      <section id="how-it-works" className="py-20 bg-secondary/50 mt-20">
         <div className="container mx-auto px-4">
           <div className="text-center">
             <h2 className="font-headline text-4xl font-bold">
-              Everything You Need in One Place
+              Finding Your Next Home is Easy
             </h2>
             <p className="mx-auto mt-2 max-w-2xl text-muted-foreground">
-              Discover the features that make our tool the best choice for your team.
+              Follow these simple steps to secure your perfect student rental.
             </p>
           </div>
-          <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
+          <div className="mt-12 grid gap-8 md:grid-cols-3">
+            <Card className="bg-background">
               <CardHeader className="flex flex-row items-center gap-4">
                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    <Zap className="h-6 w-6 text-primary" />
+                    <Search className="h-6 w-6 text-primary" />
                  </div>
-                <CardTitle>Task Management</CardTitle>
+                <CardTitle>Search & Discover</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Organize tasks, set deadlines, and assign them to team members. Track progress and ensure nothing falls through the cracks.
+                    Browse thousands of verified listings near your university with powerful search filters.
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-background">
               <CardHeader className="flex flex-row items-center gap-4">
                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    <Users className="h-6 w-6 text-primary" />
+                    <Building className="h-6 w-6 text-primary" />
                  </div>
-                <CardTitle>Team Collaboration</CardTitle>
+                <CardTitle>View Properties</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Communicate with your team in real-time, share files, and keep everyone in the loop with project updates.
+                    Look at detailed photos, read descriptions, and even take virtual tours to find the right fit.
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-background">
               <CardHeader className="flex flex-row items-center gap-4">
                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    <BarChart className="h-6 w-6 text-primary" />
+                    <UserCheck className="h-6 w-6 text-primary" />
                  </div>
-                <CardTitle>Reporting & Analytics</CardTitle>
+                <CardTitle>Request to Rent</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Gain insights into your team's performance with customizable dashboards and detailed reports.
+                  Easily connect with landlords and submit your rental requests directly through our platform.
                 </p>
               </CardContent>
             </Card>
@@ -99,83 +144,39 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="bg-background py-20">
+      {/* Featured Properties Section */}
+      <section id="featured" className="py-20">
         <div className="container mx-auto px-4">
-          <div className="text-center">
+           <div className="text-center">
             <h2 className="font-headline text-4xl font-bold">
-              Choose the Right Plan for You
+              Featured Properties
             </h2>
             <p className="mx-auto mt-2 max-w-2xl text-muted-foreground">
-              Simple, transparent pricing that scales with your needs.
+              Check out some of the top-rated student homes available right now.
             </p>
           </div>
-          <div className="mt-12 grid gap-8 md:grid-cols-3 md:items-center">
-             <Card>
-                <CardHeader className="text-center">
-                    <CardTitle className="text-2xl font-headline">Free</CardTitle>
-                    <CardDescription>For individuals and small teams just getting started.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <p className="text-center text-5xl font-bold">$0<span className="text-base font-normal text-muted-foreground">/month</span></p>
-                    <ul className="space-y-3 text-muted-foreground">
-                        <li className="flex items-center gap-2"><Check className="h-5 w-5 text-primary" /> Up to 3 projects</li>
-                        <li className="flex items-center gap-2"><Check className="h-5 w-5 text-primary" /> Basic task management</li>
-                        <li className="flex items-center gap-2"><Check className="h-5 w-5 text-primary" /> 5GB file storage</li>
-                    </ul>
-                </CardContent>
-                <CardFooter>
-                    <Button variant="outline" className="w-full">Choose Plan</Button>
-                </CardFooter>
-            </Card>
-             <Card className="border-2 border-primary shadow-lg">
-                <CardHeader className="text-center">
-                    <CardTitle className="text-2xl font-headline">Pro</CardTitle>
-                    <CardDescription>For growing teams that need more power and collaboration.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <p className="text-center text-5xl font-bold">$20<span className="text-base font-normal text-muted-foreground">/user/month</span></p>
-                    <ul className="space-y-3 text-muted-foreground">
-                        <li className="flex items-center gap-2"><Check className="h-5 w-5 text-primary" /> Unlimited projects</li>
-                        <li className="flex items-center gap-2"><Check className="h-5 w-5 text-primary" /> Advanced task management</li>
-                        <li className="flex items-center gap-2"><Check className="h-5 w-5 text-primary" /> Team collaboration tools</li>
-                        <li className="flex items-center gap-2"><Check className="h-5 w-5 text-primary" /> 50GB file storage</li>
-                    </ul>
-                </CardContent>
-                <CardFooter>
-                    <Button className="w-full">Choose Plan</Button>
-                </CardFooter>
-            </Card>
-             <Card>
-                <CardHeader className="text-center">
-                    <CardTitle className="text-2xl font-headline">Enterprise</CardTitle>
-                    <CardDescription>For large organizations with advanced security and support needs.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <p className="text-center text-5xl font-bold">Contact</p>
-                    <ul className="space-y-3 text-muted-foreground">
-                        <li className="flex items-center gap-2"><Check className="h-5 w-5 text-primary" /> Everything in Pro</li>
-                        <li className="flex items-center gap-2"><Check className="h-5 w-5 text-primary" /> SSO and advanced security</li>
-                        <li className="flex items-center gap-2"><Check className="h-5 w-5 text-primary" /> Dedicated support</li>
-                    </ul>
-                </CardContent>
-                <CardFooter>
-                    <Button variant="outline" className="w-full">Contact Sales</Button>
-                </CardFooter>
-            </Card>
-          </div>
+           <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {featuredProperties.map(property => (
+                    <PropertyCard key={property.id} property={property} />
+                ))}
+            </div>
+            <div className="mt-12 text-center">
+                <Button asChild size="lg" variant="outline">
+                    <Link href="/properties">View All Properties <ArrowRight className="ml-2 h-5 w-5"/></Link>
+                </Button>
+            </div>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="py-20">
-        <div className="container mx-auto px-4 text-center">
-            <div className="bg-primary text-primary-foreground p-12 rounded-lg">
+        <div className="container mx-auto px-4">
+            <div className="bg-primary text-primary-foreground p-12 rounded-lg text-center">
                 <h2 className="font-headline text-4xl font-bold">
-                Ready to Get Started?
+                Are You a Landlord?
                 </h2>
                 <p className="mt-2 max-w-2xl mx-auto">
-                Join thousands of teams who are already building better, faster.
+                List your property on our platform and connect with thousands of qualified student tenants.
                 </p>
                 <Button
                     asChild
@@ -183,7 +184,7 @@ export default function Home() {
                     variant="secondary"
                     className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90"
                 >
-                    <Link href="/auth/signup">Sign Up Now <ArrowRight className="ml-2 h-5 w-5" /></Link>
+                    <Link href="/dashboard">List Your Property <ArrowRight className="ml-2 h-5 w-5" /></Link>
                 </Button>
             </div>
         </div>
