@@ -22,7 +22,7 @@ import type { User } from "@/lib/definitions";
 const navLinks = [
   { href: "/properties", label: "All Properties" },
   { href: "/#how-it-works", label: "How It Works" },
-  { href: "/dashboard", label: "For Landlords" },
+  { href: "/landlord", label: "For Landlords" },
 ];
 
 // Mock current user - replace with real auth
@@ -81,7 +81,7 @@ export default function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {canViewDashboard && <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>}
+                {canViewDashboard && <DropdownMenuItem asChild><Link href="/landlord">Dashboard</Link></DropdownMenuItem>}
                 <DropdownMenuItem asChild><Link href="/account">Profile</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Log out</DropdownMenuItem>
@@ -130,7 +130,7 @@ export default function Header() {
             <div className="mt-4 flex w-full flex-col gap-2">
               {isAuthenticated ? (
                  <>
-                  {canViewDashboard && <Button variant="ghost" asChild className="w-full"><Link href="/dashboard">Dashboard</Link></Button>}
+                  {canViewDashboard && <Button variant="ghost" asChild className="w-full"><Link href="/landlord">Dashboard</Link></Button>}
                   <Button variant="ghost" asChild className="w-full">
                     <Link href="/account">My Account</Link>
                   </Button>

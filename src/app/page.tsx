@@ -184,7 +184,7 @@ export default function Home() {
                     variant="secondary"
                     className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90"
                 >
-                    <Link href="/dashboard">List Your Property <ArrowRight className="ml-2 h-5 w-5" /></Link>
+                    <Link href="/landlord">List Your Property <ArrowRight className="ml-2 h-5 w-5" /></Link>
                 </Button>
             </div>
         </div>
