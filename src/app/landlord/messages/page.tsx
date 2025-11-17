@@ -15,6 +15,7 @@ import { getConversationsByLandlord, getMessagesByConversationId, getUserById } 
 import type { User, Conversation, Message } from '@/lib/definitions';
 import { Send, Phone, Video } from 'lucide-react';
 import Link from 'next/link';
+import { format } from 'date-fns';
 
 // Mock current user
 const useUser = () => {
@@ -41,7 +42,7 @@ export default function MessagesPage() {
     } else if (!selectedConversation && conversations.length > 0) {
       setSelectedConversation(conversations[0]);
     }
-  }, [conversationIdFromUrl, conversations, selectedConversation]);
+  }, [conversationIdFromUrl, conversations]);
 
 
   const messages = selectedConversation ? getMessagesByConversationId(selectedConversation.id) : [];
@@ -71,7 +72,7 @@ export default function MessagesPage() {
                                     <div className="flex-grow overflow-hidden">
                                         <div className="flex justify-between items-center">
                                             <p className="font-semibold truncate">{convo.participant.name}</p>
-                                            <p className="text-xs text-muted-foreground whitespace-nowrap">{convo.lastMessageTimestamp}</p>
+                                            <p className="text-xs text-muted-foreground whitespace-nowrap">{convo.lastMessageTimestamp ? format(new Date(convo.lastMessageTimestamp), "p") : ''}</p>
                                         </div>
                                         <div className="flex justify-between items-start">
                                             <p className="text-sm text-muted-foreground truncate">{convo.lastMessage}</p>
@@ -109,22 +110,27 @@ export default function MessagesPage() {
                         <ScrollArea className="flex-grow p-6">
                             <div className="space-y-6">
                                 {messages.map(msg => (
-                                    <div key={msg.id} className={cn("flex items-end gap-3", msg.senderId === landlord.id ? "justify-end" : "justify-start")}>
-                                         {msg.senderId !== landlord.id && (
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarImage src={selectedConversation.participant.avatarUrl} />
-                                                <AvatarFallback>{selectedConversation.participant.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                         )}
-                                        <div className={cn("max-w-xs rounded-xl p-3 md:max-w-md", msg.senderId === landlord.id ? "bg-primary text-primary-foreground" : "bg-secondary")}>
-                                            <p className="text-sm">{msg.text}</p>
+                                    <div key={msg.id} className={cn("flex flex-col gap-1", msg.senderId === landlord.id ? "items-end" : "items-start")}>
+                                        <div className={cn("flex items-end gap-3", msg.senderId === landlord.id ? "justify-end" : "justify-start")}>
+                                            {msg.senderId !== landlord.id && (
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarImage src={selectedConversation.participant.avatarUrl} />
+                                                    <AvatarFallback>{selectedConversation.participant.name.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                            )}
+                                            <div className={cn("max-w-xs rounded-xl p-3 md:max-w-md", msg.senderId === landlord.id ? "bg-primary text-primary-foreground" : "bg-secondary")}>
+                                                <p className="text-sm">{msg.text}</p>
+                                            </div>
+                                            {msg.senderId === landlord.id && (
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarImage src={landlord.avatarUrl} />
+                                                    <AvatarFallback>{landlord.name.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                            )}
                                         </div>
-                                         {msg.senderId === landlord.id && (
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarImage src={landlord.avatarUrl} />
-                                                <AvatarFallback>{landlord.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                         )}
+                                         <p className="text-xs text-muted-foreground px-12">
+                                            {format(new Date(msg.timestamp), 'MMM d, yyyy, h:mm a')}
+                                        </p>
                                     </div>
                                 ))}
                             </div>

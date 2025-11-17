@@ -103,13 +103,13 @@ const transactions: Transaction[] = [
 
 const messages: { [key: string]: Message[] } = {
     'user-3': [
-        {id: 'msg1', senderId: 'user-3', text: "Hey! Just wanted to confirm if someone can take a look at the leaky faucet in the kitchen.", timestamp: "10:30 AM"},
-        {id: 'msg2', senderId: 'user-1', text: "Hi Emily, of course. I've scheduled a plumber to come by tomorrow afternoon. Does that work for you?", timestamp: "10:32 AM"},
-        {id: 'msg3', senderId: 'user-3', text: "Yes, that's perfect! Thank you so much for the quick response.", timestamp: "10:33 AM"},
+        {id: 'msg1', senderId: 'user-3', text: "Hey! Just wanted to confirm if someone can take a look at the leaky faucet in the kitchen.", timestamp: "2024-05-28T10:30:00Z"},
+        {id: 'msg2', senderId: 'user-1', text: "Hi Emily, of course. I've scheduled a plumber to come by tomorrow afternoon. Does that work for you?", timestamp: "2024-05-28T10:32:00Z"},
+        {id: 'msg3', senderId: 'user-3', text: "Yes, that's perfect! Thank you so much for the quick response.", timestamp: "2024-05-28T10:33:00Z"},
     ],
     'user-5': [
-        {id: 'msg4', senderId: 'user-5', text: "Good morning! I was wondering what the policy is for overnight guests.", timestamp: "Yesterday"},
-        {id: 'msg5', senderId: 'user-1', text: "Hi Jessica, occasional overnight guests are fine for a night or two. For anything longer, please just give me a heads up.", timestamp: "Yesterday"},
+        {id: 'msg4', senderId: 'user-5', text: "Good morning! I was wondering what the policy is for overnight guests.", timestamp: "2024-05-27T09:00:00Z"},
+        {id: 'msg5', senderId: 'user-1', text: "Hi Jessica, occasional overnight guests are fine for a night or two. For anything longer, please just give me a heads up.", timestamp: "2024-05-27T09:05:00Z"},
     ]
 };
 
