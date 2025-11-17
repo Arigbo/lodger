@@ -28,7 +28,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getPropertiesByLandlord, getUserById } from '@/lib/data';
 import type { User, Property } from '@/lib/definitions';
-import { MoreHorizontal, Users } from 'lucide-react';
+import { MoreHorizontal, Users, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { isPast, startOfMonth } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
@@ -146,7 +146,11 @@ export default function TenantsPage() {
                         <DropdownMenuItem asChild>
                             <Link href={`/landlord/tenants/${tenant.id}`}>View Details</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Message Tenant</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/landlord/messages?conversationId=${tenant.id}`} className="flex items-center">
+                            <Mail className="mr-2 h-4 w-4" /> Message Tenant
+                          </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem>View Lease</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

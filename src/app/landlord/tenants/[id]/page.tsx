@@ -261,8 +261,10 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                         <CardTitle>Actions</CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-2">
-                        <Button variant="outline">
-                            <Mail className="mr-2 h-4 w-4"/> Message Tenant
+                        <Button variant="outline" asChild>
+                           <Link href={`/landlord/messages?conversationId=${tenant.id}`}>
+                             <Mail className="mr-2 h-4 w-4"/> Message Tenant
+                           </Link>
                         </Button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -322,4 +324,5 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
 }
 
     
+
 

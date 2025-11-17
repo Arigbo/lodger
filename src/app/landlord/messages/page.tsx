@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { getConversationsByLandlord, getMessagesByConversationId, getUserById } from '@/lib/data';
-import type { User, Property, Conversation, Message } from '@/lib/definitions';
+import type { User, Conversation, Message } from '@/lib/definitions';
 import { Send, Phone, Video } from 'lucide-react';
 import Link from 'next/link';
 
@@ -22,13 +23,23 @@ const useUser = () => {
 
 export default function MessagesPage() {
   const { user: landlord } = useUser();
+  const searchParams = useSearchParams();
+  const conversationId = searchParams.get('conversationId');
   
   const conversations: Conversation[] = landlord ? getConversationsByLandlord(landlord.id) : [];
 
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(conversations[0] || null);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+
+  useEffect(() => {
+    if (conversationId) {
+      const conversationToSelect = conversations.find(c => c.id === conversationId);
+      setSelectedConversation(conversationToSelect || null);
+    } else if (conversations.length > 0 && !selectedConversation) {
+        setSelectedConversation(conversations[0]);
+    }
+  }, [conversationId, conversations, selectedConversation]);
 
   const messages = selectedConversation ? getMessagesByConversationId(selectedConversation.id) : [];
-
 
   return (
     <div>
