@@ -22,23 +22,26 @@ export default function DashboardPage() {
     return <div className="container py-12">Please log in to view your dashboard.</div>;
   }
 
+  // The layout will only show for landlords as per sidebar logic.
+  // Students who are not tenants will not see the dashboard link.
+  // Students who are tenants will see a different dashboard.
   if (user.role === 'student') {
     return <StudentDashboard />;
   }
   
-  return <LandlordDashboard />;
+  return <LandlordOverview />;
 }
 
-function LandlordDashboard() {
+function LandlordOverview() {
   const landlord = getUserById('user-1'); // mock
   const properties = landlord ? getPropertiesByLandlord(landlord.id) : [];
 
   return (
-    <div className="container mx-auto max-w-7xl py-12 px-4">
+    <div>
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-                <h1 className="font-headline text-3xl font-bold">Landlord Dashboard</h1>
-                <p className="text-muted-foreground">Manage your properties and rental requests.</p>
+                <h1 className="font-headline text-3xl font-bold">Overview</h1>
+                <p className="text-muted-foreground">Welcome back, {landlord?.name}.</p>
             </div>
             <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -50,7 +53,7 @@ function LandlordDashboard() {
         <h2 className="text-2xl font-headline font-semibold">My Properties ({properties.length})</h2>
         
         {properties.length > 0 ? (
-            <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-2">
                 {properties.map(property => (
                     <PropertyCard key={property.id} property={property} />
                 ))}
