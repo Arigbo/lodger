@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -24,20 +25,25 @@ const useUser = () => {
 export default function MessagesPage() {
   const { user: landlord } = useUser();
   const searchParams = useSearchParams();
-  const conversationId = searchParams.get('conversationId');
+  const conversationIdFromUrl = searchParams.get('conversationId');
   
   const conversations: Conversation[] = landlord ? getConversationsByLandlord(landlord.id) : [];
 
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
 
   useEffect(() => {
-    if (conversationId) {
-      const conversationToSelect = conversations.find(c => c.id === conversationId);
-      setSelectedConversation(conversationToSelect || null);
-    } else if (conversations.length > 0 && !selectedConversation) {
-        setSelectedConversation(conversations[0]);
+    // If a conversation ID is in the URL, find and select that conversation.
+    if (conversationIdFromUrl) {
+      const conversationToSelect = conversations.find(c => c.id === conversationIdFromUrl);
+      if (conversationToSelect) {
+        setSelectedConversation(conversationToSelect);
+      }
+    // If no conversation is selected yet and there are available conversations, select the first one.
+    } else if (!selectedConversation && conversations.length > 0) {
+      setSelectedConversation(conversations[0]);
     }
-  }, [conversationId, conversations, selectedConversation]);
+  }, [conversationIdFromUrl, conversations]); // Rerun only when URL or conversations list change
+
 
   const messages = selectedConversation ? getMessagesByConversationId(selectedConversation.id) : [];
 
