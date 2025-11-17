@@ -1,5 +1,6 @@
-import type { User, Property, Review, RentalRequest, Transaction } from './definitions';
+import type { User, Property, Review, RentalRequest, Transaction, LeaseAgreement } from './definitions';
 import placeholderImages from './placeholder-images.json';
+import { add, format } from 'date-fns';
 
 const users: User[] = [
   { id: 'user-1', name: 'Sarah Johnson', email: 'sarah@university.edu', avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'avatar-1')?.imageUrl || '', role: 'landlord' },
@@ -100,6 +101,53 @@ const transactions: Transaction[] = [
   { id: 'trans-6', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 75, date: '2024-03-15', type: 'Late Fee', status: 'Completed' },
 ];
 
+const generateLeaseText = (landlord: User, tenant: User, property: Property) => {
+  const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
+  const leaseEndDate = add(leaseStartDate, { years: 1 });
+
+  return `1. PARTIES
+This Residential Lease Agreement ("Agreement") is made between ${landlord.name} ("Landlord") and ${tenant.name} ("Tenant").
+
+2. PROPERTY
+Landlord agrees to lease to Tenant the property located at ${property.location.address}, ${property.location.city}, ${property.location.state} ${property.location.zip}.
+
+3. TERM
+The term of this lease is for one year, beginning on ${format(leaseStartDate, 'MMMM do, yyyy')} and ending on ${format(leaseEndDate, 'MMMM do, yyyy')}.
+                                    
+4. RENT
+Tenant agrees to pay Landlord the sum of ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(property.price)} per month as rent, due on the 1st day of each month.
+
+5. SECURITY DEPOSIT
+Upon execution of this Agreement, Tenant shall deposit with Landlord the sum of ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(property.price)} as security for the faithful performance of the terms of this lease.
+
+6. UTILITIES
+Tenant is responsible for all utilities and services for the property, unless otherwise specified in the property amenities list.
+
+7. USE OF PREMISES
+The premises shall be used and occupied by Tenant and Tenant's immediate family, exclusively, as a private single-family dwelling, and no part of the premises shall be used at any time during the term of this Agreement for the purpose of carrying on any business, profession, or trade of any kind, or for any purpose other than as a private single-family dwelling.
+                                    
+8. HOUSE RULES
+Tenant agrees to abide by the house rules, which are attached as an addendum to this lease. The current rules include: ${property.rules.join(', ')}.`;
+}
+
+const leaseAgreements: LeaseAgreement[] = [
+    ...properties
+    .filter(p => p.currentTenantId && p.landlordId)
+    .map(p => {
+        const landlord = getUserById(p.landlordId)!;
+        const tenant = getUserById(p.currentTenantId!)!;
+        return {
+            id: `lease-${p.id}`,
+            propertyId: p.id,
+            landlordId: p.landlordId,
+            tenantId: p.currentTenantId!,
+            leaseText: generateLeaseText(landlord, tenant, p),
+            landlordSigned: false,
+            tenantSigned: false,
+        }
+    })
+];
+
 
 // Data fetching functions
 export function getProperties() {
@@ -132,6 +180,10 @@ export function getRentalRequestsByPropertyId(propertyId: string) {
 
 export function getTransactionsByLandlord(landlordId: string) {
   return transactions.filter(t => t.landlordId === landlordId);
+}
+
+export function getLeaseAgreementByPropertyId(propertyId: string) {
+    return leaseAgreements.find(l => l.propertyId === propertyId);
 }
 
 export function getImagesByIds(ids: string[]) {

@@ -66,4 +66,14 @@ export type ImagePlaceholder = {
   imageHint: string;
 };
 
+export type LeaseAgreement = {
+  id: string;
+  propertyId: string;
+  landlordId: string;
+  tenantId: string;
+  leaseText: string;
+  landlordSigned: boolean;
+  tenantSigned: boolean;
+};
+
 export const amenities = ["Furnished", "Wi-Fi", "In-unit Laundry", "Pet Friendly", "Parking Spot", "Gym Access", "Rooftop Access", "Dishwasher", "All Utilities Included", "Secure Entry", "Private Yard"];
