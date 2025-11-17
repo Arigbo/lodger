@@ -1,3 +1,5 @@
+'use client';
+
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
@@ -5,6 +7,7 @@ import { cn } from "@/lib/utils";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Toaster } from "@/components/ui/toaster";
+import { usePathname } from "next/navigation";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const spaceGrotesk = Space_Grotesk({
@@ -12,19 +15,23 @@ const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
 });
 
-export const metadata: Metadata = {
-  title: "RentU - Student Housing Made Easy",
-  description: "Find and book your perfect student rental.",
-};
+// Since we are using a client component, we can't export metadata directly.
+// This would typically be handled in a parent server component or on a per-page basis.
+// For now, we'll manage the title in the <head> tag directly.
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const isDashboard = pathname.startsWith('/dashboard');
+
   return (
     <html lang="en" className="h-full">
       <head>
+        <title>RentU - Student Housing Made Easy</title>
+        <meta name="description" content="Find and book your perfect student rental." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -40,9 +47,9 @@ export default function RootLayout({
         )}
       >
         <div className="flex min-h-screen flex-col">
-          <Header />
+          {!isDashboard && <Header />}
           <main className="flex-grow">{children}</main>
-          <Footer />
+          {!isDashboard && <Footer />}
         </div>
         <Toaster />
       </body>
