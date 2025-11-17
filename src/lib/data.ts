@@ -1,4 +1,4 @@
-import type { User, Property, Review, RentalRequest, Transaction, LeaseAgreement, Conversation, Message } from './definitions';
+import type { User, Property, Review, RentalRequest, Transaction, LeaseAgreement, Conversation, Message, MaintenanceRequest } from './definitions';
 import placeholderImages from './placeholder-images.json';
 import { add, format } from 'date-fns';
 
@@ -101,6 +101,44 @@ const transactions: Transaction[] = [
   { id: 'trans-6', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 75, date: '2024-03-15', type: 'Late Fee', status: 'Completed' },
 ];
 
+const maintenanceRequests: MaintenanceRequest[] = [
+  {
+    id: 'maint-1',
+    propertyId: 'prop-3',
+    tenantId: 'user-3',
+    title: 'Leaky Kitchen Faucet',
+    description: 'The faucet in the kitchen sink has been dripping constantly for the past two days. It\'s a steady drip, and I\'m concerned about the water waste.',
+    category: 'Plumbing',
+    status: 'In Progress',
+    priority: 'Medium',
+    requestDate: '2024-05-28T10:30:00Z',
+  },
+  {
+    id: 'maint-2',
+    propertyId: 'prop-1',
+    tenantId: 'user-5',
+    title: 'Oven not heating',
+    description: 'The oven is not heating up at all. The stovetop works fine, but the oven won\'t get warm. I tried preheating it to 350°F and it was still cold after 20 minutes.',
+    category: 'Appliance',
+    status: 'Pending',
+    priority: 'High',
+    requestDate: '2024-05-29T09:00:00Z',
+  },
+  {
+    id: 'maint-3',
+    propertyId: 'prop-3',
+    tenantId: 'user-3',
+    title: 'Front door lock is stiff',
+    description: 'The lock on the front door has become very difficult to turn. It takes a lot of jiggling to get the key in and to lock/unlock it.',
+    category: 'General',
+    status: 'Completed',
+    priority: 'Low',
+    requestDate: '2024-05-15T14:00:00Z',
+    completedDate: '2024-05-17T11:00:00Z',
+  },
+];
+
+
 const messages: { [key: string]: Message[] } = {
     'user-3': [
         {id: 'msg1', senderId: 'user-3', text: "Hey! Just wanted to confirm if someone can take a look at the leaky faucet in the kitchen.", timestamp: "2024-05-28T10:30:00Z"},
@@ -192,6 +230,12 @@ export function getRentalRequestsByPropertyId(propertyId: string) {
 
 export function getTransactionsByLandlord(landlordId: string) {
   return transactions.filter(t => t.landlordId === landlordId);
+}
+
+export function getMaintenanceRequestsByLandlord(landlordId: string) {
+  const landlordProperties = getPropertiesByLandlord(landlordId);
+  const propertyIds = landlordProperties.map(p => p.id);
+  return maintenanceRequests.filter(req => propertyIds.includes(req.propertyId));
 }
 
 export function getLeaseAgreementByPropertyId(propertyId: string) {
