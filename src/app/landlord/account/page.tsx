@@ -22,7 +22,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Upload } from 'lucide-react';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebaseApp } from '@/firebase';
 import { Switch } from '@/components/ui/switch';
 import {
   AlertDialog,
@@ -67,6 +67,7 @@ export default function AccountPage() {
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const firestore = useFirestore();
+  const firebaseApp = useFirebaseApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -135,7 +136,7 @@ export default function AccountPage() {
     
     setIsUploading(true);
     try {
-        const storage = getStorage();
+        const storage = getStorage(firebaseApp);
         const downloadURL = await uploadProfileImage(storage, user.uid, file);
         updateDocumentNonBlocking(userDocRef, { avatarUrl: downloadURL });
         toast({
