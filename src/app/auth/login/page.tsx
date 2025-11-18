@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState } from 'react';
@@ -33,14 +32,11 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
 
     const { isSubmitting } = form.formState;
 
-    const onSubmit = (values: LoginFormValues) => {
-        return new Promise<void>((resolve) => {
-            initiateEmailSignIn(auth, values.email, values.password);
-            // Since initiateEmailSignIn is non-blocking, we don't know exactly when it finishes.
-            // We'll resolve after a short delay to allow the auth state change to begin processing.
-            // A more robust solution might involve a global loading state managed by the auth provider.
-            setTimeout(() => resolve(), 1000);
-        });
+    // Correctly handle form submission as an async function
+    const onSubmit = async (values: LoginFormValues) => {
+        // initiateEmailSignIn is non-blocking, so we don't await it.
+        // react-hook-form handles the isSubmitting state automatically.
+        initiateEmailSignIn(auth, values.email, values.password);
     };
 
     return (
