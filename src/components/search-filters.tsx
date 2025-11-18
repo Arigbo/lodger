@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
 import { amenities as allAmenities } from "@/lib/definitions";
+import { MapPin } from "lucide-react";
 
 export type FilterState = {
   country?: string;
@@ -20,6 +21,7 @@ export type FilterState = {
   bedrooms?: string;
   bathrooms?: string;
   amenities?: string[];
+  useCurrentLocation?: boolean;
 };
 
 type SearchFiltersProps = {
@@ -43,16 +45,13 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
   }, [initialFilters]);
   
   const handleInputChange = (field: keyof FilterState, value: any) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
+    setFilters(prev => ({ ...prev, [field]: value, useCurrentLocation: false })); // Disable current location if manual filters are used
   };
   
   const handleAmenityChange = (amenity: string, checked: boolean) => {
     const currentAmenities = filters.amenities || [];
-    if (checked) {
-      handleInputChange('amenities', [...currentAmenities, amenity]);
-    } else {
-      handleInputChange('amenities', currentAmenities.filter(a => a !== amenity));
-    }
+    const newAmenities = checked ? [...currentAmenities, amenity] : currentAmenities.filter(a => a !== amenity);
+    handleInputChange('amenities', newAmenities);
   }
 
   const handleApplyFilters = () => {
@@ -63,6 +62,14 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
       setFilters(initialFilters || {});
       setPrice(initialFilters?.price || 3000);
       onReset();
+  }
+
+  const handleCurrentLocation = () => {
+    // In a real app, you'd use navigator.geolocation here.
+    // For this prototype, we'll simulate it by setting a predefined school.
+    const newFilters = { ...initialFilters, useCurrentLocation: true, school: 'Urbanville University' };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
   }
 
   return (
@@ -95,16 +102,23 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
           </Select>
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="school">School</Label>
-          <Select value={filters.school} onValueChange={(value) => handleInputChange('school', value)}>
-            <SelectTrigger id="school">
-              <SelectValue placeholder="Select School" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Urbanville University">Urbanville University</SelectItem>
-              <SelectItem value="Metropolis University">Metropolis University</SelectItem>
-            </SelectContent>
-          </Select>
+            <Label htmlFor="school">School</Label>
+            <div className="flex gap-2">
+                <Select value={filters.school} onValueChange={(value) => handleInputChange('school', value)}>
+                    <SelectTrigger id="school">
+                    <SelectValue placeholder="Select School" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    <SelectItem value="Urbanville University">Urbanville University</SelectItem>
+                    <SelectItem value="Metropolis University">Metropolis University</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Button variant="outline" size="icon" onClick={handleCurrentLocation}>
+                    <MapPin className="h-4 w-4" />
+                    <span className="sr-only">Use current location</span>
+                </Button>
+            </div>
+             {filters.useCurrentLocation && <p className="text-xs text-muted-foreground">Showing properties near you.</p>}
         </div>
         <div className="grid gap-2">
           <Label>Max Price: ${price.toLocaleString()}</Label>
@@ -181,3 +195,5 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
     </Card>
   );
 }
+
+    
