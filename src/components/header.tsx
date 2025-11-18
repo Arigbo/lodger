@@ -24,30 +24,7 @@ import { useAuth } from "@/firebase/provider";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, isUserLoading } = useUser();
-  const auth = useAuth();
   
-  const isAuthenticated = !!user && !isUserLoading;
-
-  const handleLogout = () => {
-    if (auth) {
-        signOut(auth);
-    }
-  };
-
-  const getDashboardLink = () => {
-      if (!user?.role) return "/auth/login";
-      if (user.role === 'landlord') return "/landlord";
-      return "/student";
-  }
-
-  const getAccountLink = () => {
-      if (!user?.role) return "/auth/login";
-      if (user.role === 'landlord') return "/landlord/account";
-      return "/student/account";
-  }
-
-
   return (
     <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur">
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
@@ -66,44 +43,14 @@ export default function Header() {
           ))}
         </nav>
         <div className="hidden items-center gap-2 md:flex">
-          {isAuthenticated && user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.profileImageUrl} alt="User Avatar" />
-                    <AvatarFallback>
-                        <User className="h-5 w-5" />
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><Link href={getDashboardLink()}>Dashboard</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><Link href={getAccountLink()}>Profile</Link></DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <>
-              <Button variant="ghost" asChild>
-                <Link href="/auth/login">Sign In</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/auth/signup">Sign Up</Link>
-              </Button>
-            </>
-          )}
+          <>
+            <Button variant="ghost" asChild>
+              <Link href="/auth/login">Sign In</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/auth/signup">Sign Up</Link>
+            </Button>
+          </>
         </div>
         <div className="md:hidden">
           <Button
@@ -135,24 +82,14 @@ export default function Header() {
               </Link>
             ))}
             <div className="mt-4 flex w-full flex-col gap-2">
-              {isAuthenticated ? (
-                 <>
-                  <Button variant="ghost" asChild className="w-full"><Link href={getDashboardLink()}>Dashboard</Link></Button>
-                  <Button variant="ghost" asChild className="w-full">
-                    <Link href={getAccountLink()}>My Account</Link>
-                  </Button>
-                  <Button variant="outline" className="w-full" onClick={handleLogout}>Log out</Button>
-                 </>
-              ) : (
-                <>
-                <Button variant="ghost" asChild className="w-full">
-                    <Link href="/auth/login">Sign In</Link>
-                </Button>
-                <Button asChild className="w-full">
-                    <Link href="/auth/signup">Sign Up</Link>
-                </Button>
-                </>
-              )}
+              <>
+              <Button variant="ghost" asChild className="w-full">
+                  <Link href="/auth/login">Sign In</Link>
+              </Button>
+              <Button asChild className="w-full">
+                  <Link href="/auth/signup">Sign Up</Link>
+              </Button>
+              </>
             </div>
           </div>
         </div>
@@ -166,5 +103,3 @@ const navLinks = [
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/landlord", label: "For Landlords" },
 ];
-
-    
