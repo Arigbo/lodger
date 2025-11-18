@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -80,8 +81,10 @@ export default function Home() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <Button className="md:col-span-4 lg:col-span-1 w-full">
-                                <Search className="mr-2 h-4 w-4" /> Search
+                            <Button className="md:col-span-4 lg:col-span-1 w-full" asChild>
+                                <Link href="/student/properties">
+                                  <Search className="mr-2 h-4 w-4" /> Search
+                                </Link>
                             </Button>
                         </div>
                     </CardContent>
@@ -162,7 +165,7 @@ export default function Home() {
             </div>
             <div className="mt-12 text-center">
                 <Button asChild size="lg" variant="outline">
-                    <Link href="/properties">View All Properties <ArrowRight className="ml-2 h-5 w-5"/></Link>
+                    <Link href="/student/properties">View All Properties <ArrowRight className="ml-2 h-5 w-5"/></Link>
                 </Button>
             </div>
         </div>

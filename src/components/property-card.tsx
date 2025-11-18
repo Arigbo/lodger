@@ -1,3 +1,6 @@
+
+'use client';
+
 import Image from "next/image";
 import Link from "next/link";
 import type { Property } from "@/lib/definitions";
@@ -6,6 +9,7 @@ import { formatPrice } from "@/lib/utils";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BedDouble, Bath, Ruler, MapPin } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 type PropertyCardProps = {
   property: Property;
@@ -13,9 +17,14 @@ type PropertyCardProps = {
 
 export default function PropertyCard({ property }: PropertyCardProps) {
   const image = getImagesByIds([property.imageIds[0]])[0];
+  const pathname = usePathname();
   
   // Decide the link based on context (public or student-specific)
-  const linkHref = `/properties/${property.id}`;
+  let linkHref = `/student/properties/${property.id}`;
+  if (pathname.startsWith('/landlord')) {
+    linkHref = `/landlord/properties/${property.id}`;
+  }
+
 
   return (
     <Link href={linkHref} className="group block">

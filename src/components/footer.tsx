@@ -17,7 +17,7 @@ export default function Footer() {
           <div className="md:col-span-2">
             <h4 className="font-headline text-lg font-semibold">Properties</h4>
             <ul className="mt-4 space-y-2">
-              <li><Link href="/properties" className="text-sm text-muted-foreground hover:text-foreground">Browse All</Link></li>
+              <li><Link href="/student/properties" className="text-sm text-muted-foreground hover:text-foreground">Browse All</Link></li>
               <li><Link href="/#featured" className="text-sm text-muted-foreground hover:text-foreground">Featured</Link></li>
               <li><Link href="/landlord" className="text-sm text-muted-foreground hover:text-foreground">List a Property</Link></li>
             </ul>

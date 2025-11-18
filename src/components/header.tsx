@@ -21,7 +21,7 @@ import { getUserById } from "@/lib/data";
 import { getPropertiesByTenant } from "@/lib/data";
 
 const navLinks = [
-  { href: "/properties", label: "All Properties" },
+  { href: "/student/properties", label: "All Properties" },
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/landlord", label: "For Landlords" },
 ];
@@ -168,5 +168,3 @@ export default function Header() {
     </header>
   );
 }
-
-    
