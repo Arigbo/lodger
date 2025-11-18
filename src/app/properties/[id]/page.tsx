@@ -1,6 +1,5 @@
 
 
-"use client"
 import { notFound, usePathname } from "next/navigation";
 import Image from "next/image";
 import { getPropertyById, getUserById, getReviewsByPropertyId, getImagesByIds } from "@/lib/data";
