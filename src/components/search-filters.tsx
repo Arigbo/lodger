@@ -9,22 +9,56 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { amenities as allAmenities } from "@/lib/definitions";
 
-const amenities = ["Furnished", "Wi-Fi", "In-unit Laundry", "Pet Friendly", "Parking Spot", "Gym Access"];
+export type FilterState = {
+  location?: {
+    searchTerm?: string;
+    lat?: number;
+    lng?: number;
+  };
+  price?: number;
+  propertyType?: string;
+  bedrooms?: string;
+  bathrooms?: string;
+  amenities?: string[];
+};
 
-export default function SearchFilters() {
-  const [location, setLocation] = useState("");
+type SearchFiltersProps = {
+    onFilterChange: (filters: FilterState) => void;
+    onReset: () => void;
+};
+
+
+export default function SearchFilters({ onFilterChange, onReset }: SearchFiltersProps) {
+  const [filters, setFilters] = useState<FilterState>({});
+  const [price, setPrice] = useState(3000);
+  
+  const handleInputChange = (field: keyof FilterState, value: any) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+  };
+  
+  const handleLocationSearch = (term: string) => {
+    setFilters(prev => ({ ...prev, location: { searchTerm: term } }));
+  }
+  
+  const handleAmenityChange = (amenity: string, checked: boolean) => {
+    const currentAmenities = filters.amenities || [];
+    if (checked) {
+      handleInputChange('amenities', [...currentAmenities, amenity]);
+    } else {
+      handleInputChange('amenities', currentAmenities.filter(a => a !== amenity));
+    }
+  }
 
   const handleLocationClick = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          // In a real app, you'd use position.coords.latitude and position.coords.longitude
-          // to query a reverse geocoding API and get the city/address.
-          console.log("Lat:", position.coords.latitude, "Lon:", position.coords.longitude);
-          setLocation("Current Location");
-          alert("Location set to your current position!");
+          const { latitude, longitude } = position.coords;
+          console.log("Lat:", latitude, "Lon:", longitude);
+          setFilters(prev => ({ ...prev, location: { lat: latitude, lng: longitude, searchTerm: 'Current Location' } }));
         },
         (error) => {
           console.error("Error getting location: ", error);
@@ -35,6 +69,16 @@ export default function SearchFilters() {
       alert("Geolocation is not supported by this browser.");
     }
   };
+
+  const handleApplyFilters = () => {
+    onFilterChange({...filters, price});
+  };
+
+  const handleReset = () => {
+      setFilters({});
+      setPrice(3000);
+      onReset();
+  }
 
   return (
     <Card className="sticky top-24">
@@ -48,8 +92,8 @@ export default function SearchFilters() {
             <Input 
               id="location" 
               placeholder="e.g. Urbanville" 
-              value={location} 
-              onChange={(e) => setLocation(e.target.value)}
+              value={filters.location?.searchTerm || ""} 
+              onChange={(e) => handleLocationSearch(e.target.value)}
               className="pr-10"
             />
             <Button 
@@ -65,32 +109,34 @@ export default function SearchFilters() {
           </div>
         </div>
         <div className="grid gap-2">
-          <Label>Price Range</Label>
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>$500</span>
-            <span>$3000+</span>
-          </div>
-          <Slider defaultValue={[1500]} max={3000} min={500} step={50} />
+          <Label>Max Price: ${price.toLocaleString()}</Label>
+          <Slider 
+            value={[price]} 
+            onValueChange={(value) => setPrice(value[0])}
+            max={5000} 
+            min={500} 
+            step={50} 
+           />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="property-type">Property Type</Label>
-          <Select>
+          <Select value={filters.propertyType} onValueChange={(value) => handleInputChange('propertyType', value)}>
             <SelectTrigger id="property-type">
               <SelectValue placeholder="Any" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="any">Any</SelectItem>
-              <SelectItem value="apartment">Apartment</SelectItem>
-              <SelectItem value="house">House</SelectItem>
-              <SelectItem value="studio">Studio</SelectItem>
-              <SelectItem value="loft">Loft</SelectItem>
+              <SelectItem value="Apartment">Apartment</SelectItem>
+              <SelectItem value="House">House</SelectItem>
+              <SelectItem value="Studio">Studio</SelectItem>
+              <SelectItem value="Loft">Loft</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="grid grid-cols-2 gap-2">
              <div className="grid gap-2">
                 <Label htmlFor="bedrooms">Beds</Label>
-                <Select>
+                <Select value={filters.bedrooms} onValueChange={(value) => handleInputChange('bedrooms', value)}>
                     <SelectTrigger id="bedrooms"><SelectValue placeholder="Any" /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="any">Any</SelectItem>
@@ -103,7 +149,7 @@ export default function SearchFilters() {
             </div>
              <div className="grid gap-2">
                 <Label htmlFor="bathrooms">Baths</Label>
-                <Select>
+                <Select value={filters.bathrooms} onValueChange={(value) => handleInputChange('bathrooms', value)}>
                     <SelectTrigger id="bathrooms"><SelectValue placeholder="Any" /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="any">Any</SelectItem>
@@ -117,18 +163,22 @@ export default function SearchFilters() {
         <div className="grid gap-2">
           <Label>Amenities</Label>
           <div className="grid grid-cols-2 gap-2">
-            {amenities.map(amenity => (
+            {allAmenities.slice(0, 6).map(amenity => (
               <div key={amenity} className="flex items-center space-x-2">
-                <Checkbox id={amenity.toLowerCase().replace(' ', '-')}/>
-                <Label htmlFor={amenity.toLowerCase().replace(' ', '-')} className="text-sm font-normal">{amenity}</Label>
+                <Checkbox 
+                    id={amenity.toLowerCase().replace(/[\s-]/g, '')}
+                    checked={filters.amenities?.includes(amenity)}
+                    onCheckedChange={(checked) => handleAmenityChange(amenity, !!checked)}
+                />
+                <Label htmlFor={amenity.toLowerCase().replace(/[\s-]/g, '')} className="text-sm font-normal">{amenity}</Label>
               </div>
             ))}
           </div>
         </div>
       </CardContent>
       <CardFooter className="flex-col gap-2">
-        <Button className="w-full">Apply Filters</Button>
-        <Button variant="ghost" className="w-full">Reset</Button>
+        <Button className="w-full" onClick={handleApplyFilters}>Apply Filters</Button>
+        <Button variant="ghost" className="w-full" onClick={handleReset}>Reset</Button>
       </CardFooter>
     </Card>
   );

@@ -1,3 +1,4 @@
+
 export type User = {
   id: string;
   name: string;
@@ -17,6 +18,8 @@ export type Property = {
     city: string;
     state: string;
     zip: string;
+    lat?: number;
+    lng?: number;
   };
   bedrooms: number;
   bathrooms: number;
