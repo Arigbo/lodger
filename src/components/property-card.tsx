@@ -1,10 +1,10 @@
 
+
 'use client';
 
 import Image from "next/image";
 import Link from "next/link";
 import type { Property } from "@/lib/definitions";
-import { getImagesByIds } from "@/lib/data";
 import { formatPrice } from "@/lib/utils";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,10 +16,9 @@ type PropertyCardProps = {
 };
 
 export default function PropertyCard({ property }: PropertyCardProps) {
-  const image = getImagesByIds([property.imageIds[0]])[0];
+  const image = property.images?.[0];
   const pathname = usePathname();
   
-  // Decide the link based on context (public or student-specific)
   let linkHref = `/student/properties/${property.id}`;
   if (pathname.startsWith('/landlord')) {
     linkHref = `/landlord/properties/${property.id}`;
@@ -33,11 +32,10 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           <div className="relative h-56 w-full">
             {image && (
               <Image
-                src={image.imageUrl}
+                src={image}
                 alt={property.title}
                 fill
                 className="object-cover"
-                data-ai-hint={image.imageHint}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             )}

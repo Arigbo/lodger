@@ -1,15 +1,5 @@
 
 import StudentSidebar from "@/components/student-sidebar";
-import { getUserById } from "@/lib/data";
-
-// Mock current user
-const useUser = () => {
-    // To test landlord view: 'user-1'
-    // To test tenant view: 'user-3'
-    const user = getUserById('user-3');
-    return { user };
-}
-
 
 export default function StudentLayout({
   children,

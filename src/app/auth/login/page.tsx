@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -10,25 +11,68 @@ import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { Chrome } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { initiateEmailSignIn } from '@/firebase';
+import { useAuth } from '@/firebase/provider';
+
+const loginSchema = z.object({
+    email: z.string().email("Please enter a valid email address."),
+    password: z.string().min(1, "Password is required."),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
+    const auth = useAuth();
+    const form = useForm<LoginFormValues>({
+        resolver: zodResolver(loginSchema),
+        defaultValues: { email: '', password: '' }
+    });
+
+    const onSubmit = (values: LoginFormValues) => {
+        initiateEmailSignIn(auth, values.email, values.password);
+    };
+
     return (
-        <div className="space-y-4">
-            <div className="grid gap-2">
-                <Label htmlFor={`${userType}-email`}>Email</Label>
-                <Input id={`${userType}-email`} type="email" placeholder="name@example.com" required />
-            </div>
-            <div className="grid gap-2">
-                <div className="flex items-center">
-                    <Label htmlFor={`${userType}-password`}>Password</Label>
-                    <Link href="/auth/forgot-password" className="ml-auto inline-block text-sm underline">
-                        Forgot your password?
-                    </Link>
-                </div>
-                <Input id={`${userType}-password`} type="password" required />
-            </div>
-            <Button type="submit" className="w-full">Sign In as {userType.charAt(0).toUpperCase() + userType.slice(1)}</Button>
-        </div>
+         <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                 <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                        <FormItem>
+                            <Label htmlFor={`${userType}-email`}>Email</Label>
+                            <FormControl>
+                                <Input id={`${userType}-email`} type="email" placeholder="name@example.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                        <FormItem>
+                            <div className="flex items-center">
+                                <Label htmlFor={`${userType}-password`}>Password</Label>
+                                <Link href="/auth/forgot-password" className="ml-auto inline-block text-sm underline">
+                                    Forgot your password?
+                                </Link>
+                            </div>
+                            <FormControl>
+                                <Input id={`${userType}-password`} type="password" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <Button type="submit" className="w-full">Sign In as {userType.charAt(0).toUpperCase() + userType.slice(1)}</Button>
+            </form>
+        </Form>
     );
 }
 

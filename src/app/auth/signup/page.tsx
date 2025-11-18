@@ -19,6 +19,10 @@ import { Eye, EyeOff, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { useAuth, useFirestore } from '@/firebase/provider';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+
 
 const formSchema = z.object({
     userType: z.enum(['student', 'landlord']),
@@ -60,6 +64,8 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
+  const auth = useAuth();
+  const firestore = useFirestore();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -105,13 +111,37 @@ export default function SignupPage() {
      }
   }
 
-  const onSubmit = (values: FormValues) => {
-    console.log("Form submitted", values);
-    if (values.userType === 'landlord') {
-      router.push('/landlord');
-    } else {
-        // Redirect students to the main properties page or their own dashboard
-        router.push('/student/properties');
+  const onSubmit = async (values: FormValues) => {
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+        const user = userCredential.user;
+
+        const userData = {
+            id: user.uid,
+            name: values.name,
+            email: values.email,
+            role: values.userType,
+            avatarUrl: `https://i.pravatar.cc/150?u=${user.uid}`, // Placeholder avatar
+            country: values.country,
+            state: values.state,
+            school: values.school,
+            phone: values.phone,
+            whatsappUrl: values.whatsappUrl,
+            twitterUrl: values.twitterUrl,
+        };
+
+        await setDoc(doc(firestore, "users", user.uid), userData);
+
+        console.log("User created and data stored in Firestore");
+
+        if (values.userType === 'landlord') {
+            router.push('/landlord');
+        } else {
+            router.push('/student/properties');
+        }
+    } catch (error) {
+        console.error("Error signing up:", error);
+        // Handle error, e.g., show a toast message
     }
   };
 

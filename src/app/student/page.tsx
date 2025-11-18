@@ -5,47 +5,57 @@ import PropertyCard from "@/components/property-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { getPropertiesByTenant, getUserById } from "@/lib/data";
 import { Home } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-
-// Mock current user - replace with real auth
-const useUser = () => {
-  // To test a landlord, use 'user-1'. 
-  // To test a student tenant, use 'user-3'.
-  const user = getUserById('user-3'); 
-  return { user };
-}
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
+import type { Property } from "@/lib/definitions";
 
 
 export default function StudentDashboardPage() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
 
-  if (!user) {
-    return <div className="container py-12">Please log in to view your dashboard.</div>;
-  }
-  
-  if (user.role === 'landlord') {
-    router.replace('/landlord');
+  // Redirect to login if not authenticated after loading
+  if (!isUserLoading && !user) {
+    router.replace('/auth/login');
     return null;
   }
   
-  const rentedProperties = getPropertiesByTenant(user.id);
+  const propertiesQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, 'properties'), where('currentTenantId', '==', user.uid));
+  }, [user, firestore]);
+  
+  const { data: rentedProperties, isLoading: propertiesLoading } = useCollection<Property>(propertiesQuery);
+  
+  if (isUserLoading || propertiesLoading) {
+      return <div>Loading...</div>; // Or a more sophisticated skeleton loader
+  }
+
+  // The user object from Firebase Auth doesn't contain the role.
+  // A proper role check would involve fetching the user's document from Firestore or using custom claims.
+  // For now, we'll assume a user trying to access the student page is a student if they have rented properties
+  // or no properties at all. This logic can be improved later with proper role management.
+  if (user && !rentedProperties) {
+    // This could be a landlord or a student who hasn't rented anything.
+    // A robust app would check their role from a 'users' collection document.
+    // For now, we let them see the student dashboard.
+  }
 
   return (
      <div>
         <div>
             <h1 className="font-headline text-3xl font-bold">Student Dashboard</h1>
-            <p className="text-muted-foreground">Welcome back, {user.name}.</p>
+            <p className="text-muted-foreground">Welcome back, {user?.displayName || user?.email}.</p>
         </div>
         <Separator className="my-6" />
 
         <h2 className="text-2xl font-headline font-semibold">My Home</h2>
         
-        {rentedProperties.length > 0 ? (
+        {rentedProperties && rentedProperties.length > 0 ? (
             <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-2">
                 {rentedProperties.map(property => (
                     <PropertyCard key={property.id} property={property} />

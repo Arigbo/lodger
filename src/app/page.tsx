@@ -1,18 +1,36 @@
 
+
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowRight, Search, Building, UserCheck } from "lucide-react";
-import placeholderImages from '@/lib/placeholder-images.json';
-import { getProperties } from "@/lib/data";
 import PropertyCard from "@/components/property-card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { collection, getDocs, limit, query, where } from "firebase/firestore";
+import { firestore } from "@/firebase/server";
+import type { Property } from "@/lib/definitions";
 
-export default function Home() {
-  const heroImage = placeholderImages.placeholderImages.find(p => p.id === 'apartment-1-a');
-  const featuredProperties = getProperties().slice(0, 3);
+async function getFeaturedProperties() {
+  const propertiesRef = collection(firestore, 'properties');
+  const q = query(propertiesRef, where('isAvailable', '==', true), limit(3));
+  const querySnapshot = await getDocs(q);
+  const properties: Property[] = [];
+  querySnapshot.forEach((doc) => {
+    properties.push({ id: doc.id, ...doc.data() } as Property);
+  });
+  return properties;
+}
+
+export default async function Home() {
+  const featuredProperties = await getFeaturedProperties();
+  const heroImage = {
+      imageUrl: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      description: "Modern apartment living room",
+      imageHint: "apartment living room"
+  }
+
 
   return (
     <div className="flex flex-col">

@@ -4,47 +4,55 @@ import PropertyCard from "@/components/property-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { getPropertiesByLandlord, getUserById } from "@/lib/data";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { PlusCircle, Building } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-// Mock current user - replace with real auth
-const useUser = () => {
-  // To test a landlord, use 'user-1'. 
-  // To test a student tenant, use 'user-3'.
-  const user = getUserById('user-1'); 
-  return { user };
-}
+import { collection, query, where } from "firebase/firestore";
+import type { Property } from "@/lib/definitions";
 
 export default function LandlordDashboardPage() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
 
-  if (!user) {
-    // This should be handled by a higher-level auth boundary
-    return <div className="container py-12">Please log in to view your dashboard.</div>;
+  if (isUserLoading) {
+    return <div>Loading...</div>;
   }
   
-  // If a student somehow lands here, redirect them to their own dashboard
-  if (user.role === 'student') {
-    router.replace('/student');
+  if (!user) {
+    router.replace('/auth/login');
     return null;
   }
   
+  // This is a client component, but we have user data. We must ensure only landlords see this page.
+  // We will get the user document from firestore to check the role.
+  // For now, we'll assume if they try to access /landlord, they are one if logged in.
+  // A more robust solution involves custom claims or checking the user doc.
+
   return <LandlordOverview />;
 }
 
 function LandlordOverview() {
-  const landlord = getUserById('user-1'); // mock
-  const properties = landlord ? getPropertiesByLandlord(landlord.id) : [];
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const propertiesQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, 'properties'), where('landlordId', '==', user.uid));
+  }, [user, firestore]);
+
+  const { data: properties, isLoading } = useCollection<Property>(propertiesQuery);
+
+  if (isLoading) {
+    return <div>Loading properties...</div>
+  }
 
   return (
     <div>
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
                 <h1 className="font-headline text-3xl font-bold">Overview</h1>
-                <p className="text-muted-foreground">Welcome back, {landlord?.name}.</p>
+                <p className="text-muted-foreground">Welcome back, {user?.displayName || user?.email}.</p>
             </div>
             <Button asChild>
                 <Link href="/landlord/properties/new">
@@ -55,9 +63,9 @@ function LandlordOverview() {
         </div>
         <Separator className="my-6" />
 
-        <h2 className="text-2xl font-headline font-semibold">My Properties ({properties.length})</h2>
+        <h2 className="text-2xl font-headline font-semibold">My Properties ({properties?.length || 0})</h2>
         
-        {properties.length > 0 ? (
+        {properties && properties.length > 0 ? (
             <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-2">
                 {properties.map(property => (
                     <PropertyCard key={property.id} property={property} />

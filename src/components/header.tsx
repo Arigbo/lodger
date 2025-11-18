@@ -17,33 +17,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getUserById } from "@/lib/data";
-import { getPropertiesByTenant } from "@/lib/data";
-
-const navLinks = [
-  { href: "/student/properties", label: "All Properties" },
-  { href: "/#how-it-works", label: "How It Works" },
-  { href: "/landlord", label: "For Landlords" },
-];
-
-// Mock current user - replace with real auth
-const useUser = () => {
-  // To test a landlord, use 'user-1'. 
-  // To test a student tenant, use 'user-3'.
-  // To test a student non-tenant, use 'user-2'.
-  // Set user to null to simulate logged-out state on landing page
-  const user = getUserById('user-3'); 
-  const rentedProperties = user ? getPropertiesByTenant(user.id) : [];
-  const isTenant = user?.role === 'student' && rentedProperties.length > 0;
-  
-  return { user, isTenant, isAuthenticated: !!user };
-}
+import { useUser } from "@/firebase";
+import { signOut } from "firebase/auth";
+import { useAuth } from "@/firebase/provider";
 
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, isTenant, isAuthenticated } = useUser();
-  const userAvatar = user?.avatarUrl;
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
+  
+  const isAuthenticated = !!user && !isUserLoading;
+
+  const handleLogout = () => {
+    signOut(auth);
+  };
 
   const getDashboardLink = () => {
       if (!user) return "/auth/login";
@@ -81,7 +69,7 @@ export default function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={userAvatar} alt="User Avatar" />
+                    <AvatarImage src={user.avatarUrl} alt="User Avatar" />
                     <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                 </Button>
@@ -99,7 +87,7 @@ export default function Header() {
                 <DropdownMenuItem asChild><Link href={getDashboardLink()}>Dashboard</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href={getAccountLink()}>Profile</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Log out</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
@@ -149,7 +137,7 @@ export default function Header() {
                   <Button variant="ghost" asChild className="w-full">
                     <Link href={getAccountLink()}>My Account</Link>
                   </Button>
-                  <Button variant="outline" className="w-full">Log out</Button>
+                  <Button variant="outline" className="w-full" onClick={handleLogout}>Log out</Button>
                  </>
               ) : (
                 <>
@@ -168,3 +156,9 @@ export default function Header() {
     </header>
   );
 }
+
+const navLinks = [
+  { href: "/student/properties", label: "All Properties" },
+  { href: "/#how-it-works", label: "How It Works" },
+  { href: "/landlord", label: "For Landlords" },
+];
