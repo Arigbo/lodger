@@ -48,9 +48,15 @@ export default function Header() {
   const getDashboardLink = () => {
       if (!user) return "/auth/login";
       if (user.role === 'landlord') return "/landlord";
-      if (isTenant) return "/student";
-      return "/student/properties";
+      return "/student";
   }
+
+  const getAccountLink = () => {
+      if (!user) return "/auth/login";
+      if (user.role === 'landlord') return "/landlord/account";
+      return "/student/account";
+  }
+
 
   return (
     <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur">
@@ -91,7 +97,7 @@ export default function Header() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild><Link href={getDashboardLink()}>Dashboard</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><Link href="/landlord/account">Profile</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href={getAccountLink()}>Profile</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Log out</DropdownMenuItem>
               </DropdownMenuContent>
@@ -141,7 +147,7 @@ export default function Header() {
                  <>
                   <Button variant="ghost" asChild className="w-full"><Link href={getDashboardLink()}>Dashboard</Link></Button>
                   <Button variant="ghost" asChild className="w-full">
-                    <Link href="/landlord/account">My Account</Link>
+                    <Link href={getAccountLink()}>My Account</Link>
                   </Button>
                   <Button variant="outline" className="w-full">Log out</Button>
                  </>
@@ -162,3 +168,5 @@ export default function Header() {
     </header>
   );
 }
+
+    

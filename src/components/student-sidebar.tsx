@@ -22,7 +22,7 @@ const studentNavLinks = [
     { href: "/student/tenancy", label: "My Tenancy", icon: Building2 },
     { href: "/student/properties", label: "Find a Property", icon: Search },
     { href: "/student/messages", label: "Messages", icon: MessageSquare },
-    { href: "/landlord/account", label: "Account", icon: UserCog }, // Shared for now
+    { href: "/student/account", label: "Account", icon: UserCog },
 ]
 
 export default function StudentSidebar() {
@@ -40,7 +40,7 @@ export default function StudentSidebar() {
   return (
     <nav className="sticky top-24 flex flex-col gap-2">
       {filteredNavLinks.map((link) => {
-        const isActive = pathname === link.href;
+        const isActive = pathname.startsWith(link.href) && link.href !== '/student' || pathname === '/student' && link.href === '/student';
 
         return (
             <Button
@@ -62,3 +62,5 @@ export default function StudentSidebar() {
     </nav>
   );
 }
+
+    
