@@ -26,10 +26,8 @@ const properties: Property[] = [
     amenities: ['Furnished', 'Wi-Fi', 'Rooftop Access', 'In-unit Laundry', 'Dishwasher'],
     imageIds: ['apartment-1-a', 'apartment-1-b', 'apartment-1-c'],
     landlordId: 'user-1',
-    status: 'occupied',
+    status: 'available',
     rules: ['No smoking', 'No pets', 'Quiet hours after 10 PM'],
-    currentTenantId: 'user-5',
-    leaseStartDate: '2023-09-01',
   },
   {
     id: 'prop-2',
@@ -65,7 +63,7 @@ const properties: Property[] = [
     status: 'occupied',
     rules: ['No smoking', 'Small pets considered with a fee'],
     currentTenantId: 'user-3',
-    leaseStartDate: '2025-11-01',
+    leaseStartDate: new Date(new Date().setMonth(new Date().getMonth() - 2)).toISOString().split('T')[0],
   },
   {
     id: 'prop-4',
@@ -96,9 +94,9 @@ let rentalRequests: RentalRequest[] = [
 ];
 
 let transactions: Transaction[] = [
-  { id: 'trans-1', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 1800, date: '2024-05-01', type: 'Rent', status: 'Completed' },
+  { id: 'trans-1', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 1800, date: new Date(new Date().setMonth(new Date().getMonth() - 2)).toISOString().split('T')[0], type: 'Rent', status: 'Completed' },
   { id: 'trans-2', landlordId: 'user-1', tenantId: 'user-5', propertyId: 'prop-1', amount: 1200, date: '2024-05-01', type: 'Rent', status: 'Completed' },
-  { id: 'trans-3', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 1800, date: '2024-04-01', type: 'Rent', status: 'Completed' },
+  { id: 'trans-3', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 1800, date: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0], type: 'Rent', status: 'Pending' },
   { id: 'trans-4', landlordId: 'user-1', tenantId: 'user-5', propertyId: 'prop-1', amount: 1200, date: '2024-04-01', type: 'Rent', status: 'Completed' },
   { id: 'trans-5', landlordId: 'user-4', tenantId: 'user-2', propertyId: 'prop-2', amount: 850, date: '2024-06-01', type: 'Deposit', status: 'Pending' },
   { id: 'trans-6', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 75, date: '2024-03-15', type: 'Late Fee', status: 'Completed' },
