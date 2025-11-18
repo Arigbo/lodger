@@ -15,7 +15,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { initiateEmailSignIn } from '@/firebase';
+import { initiateEmailSignIn, initiateGoogleSignIn } from '@/firebase';
 import { useAuth } from '@/firebase/provider';
 
 const loginSchema = z.object({
@@ -77,7 +77,12 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
 }
 
 export default function LoginPage() {
-  const [userType, setUserType] = useState('student');
+  const [userType, setUserType] = useState<'student' | 'landlord'>('student');
+  const auth = useAuth();
+
+  const handleGoogleSignIn = () => {
+      initiateGoogleSignIn(auth, userType);
+  }
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center bg-background px-4">
@@ -87,7 +92,7 @@ export default function LoginPage() {
           <CardDescription>Sign in to continue to RentU</CardDescription>
         </CardHeader>
         <CardContent>
-            <Tabs defaultValue="student" onValueChange={(value) => setUserType(value)} className="w-full">
+            <Tabs defaultValue="student" onValueChange={(value) => setUserType(value as 'student' | 'landlord')} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="student">Student</TabsTrigger>
                     <TabsTrigger value="landlord">Landlord</TabsTrigger>
@@ -101,7 +106,7 @@ export default function LoginPage() {
             </Tabs>
           <Separator className="my-6" />
           <div className="space-y-4">
-             <Button variant="outline" className="w-full">
+             <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
                 <Chrome className="mr-2 h-4 w-4" />
                 Sign in with Google
             </Button>
@@ -119,3 +124,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
