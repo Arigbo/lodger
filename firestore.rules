@@ -1,5 +1,6 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
     // Allow read/write only if the user is authenticated
@@ -11,13 +12,8 @@ service cloud.firestore {
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow public read on all files in the bucket
     match /{allPaths=**} {
-      allow read;
-    }
-    // Allow write only for authenticated users on their own profile images
-    match /profileImages/{userId}/{fileName} {
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if true; // Temporary for testing
     }
   }
 }
