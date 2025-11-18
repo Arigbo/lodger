@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { notFound, usePathname } from "next/navigation";
@@ -24,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
 
+// This is the new Server Component that fetches data.
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const property = getPropertyById(params.id);
 
@@ -35,10 +35,9 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const reviews = getReviewsByPropertyId(property.id);
   const images = getImagesByIds(property.imageIds);
   
-  const { user } = useUser();
-  const isTenant = user?.id === property.currentTenantId;
-
-  return <PropertyDetailView property={property} landlord={landlord} reviews={reviews} images={images} isTenant={isTenant} />;
+  // A mock user is fetched inside the client component, so we determine `isTenant` there.
+  
+  return <PropertyDetailView property={property} landlord={landlord} reviews={reviews} images={images} />;
 }
 
 // This is the Client Component for rendering UI.
@@ -46,14 +45,12 @@ function PropertyDetailView({
     property,
     landlord,
     reviews: initialReviews,
-    images: initialImages,
-    isTenant
+    images: initialImages
 }: {
     property: Property;
     landlord: User | undefined;
     reviews: Review[];
     images: ImagePlaceholder[];
-    isTenant: boolean;
 }) {
   const pathname = usePathname();
   const { toast } = useToast();
@@ -63,6 +60,9 @@ function PropertyDetailView({
   const [requestMessage, setRequestMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
   
+  const { user } = useUser();
+  const isTenant = user?.id === property.currentTenantId;
+
   useEffect(() => {
     setIsClient(true);
   }, []);
