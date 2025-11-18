@@ -1,4 +1,5 @@
-import LandlordSidebar from "@/components/landlord-sidebar";
+
+import StudentSidebar from "@/components/student-sidebar";
 import { getUserById } from "@/lib/data";
 
 // Mock current user
@@ -22,7 +23,7 @@ export default function StudentLayout({
           <div className="mx-auto grid w-full max-w-6xl gap-2">
               <div className="grid grid-cols-1 gap-12 lg:grid-cols-4">
                 <aside className="lg:col-span-1">
-                  <LandlordSidebar />
+                  <StudentSidebar />
                 </aside>
                 <main className="lg:col-span-3">{children}</main>
               </div>

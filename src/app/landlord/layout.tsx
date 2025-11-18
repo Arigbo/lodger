@@ -1,27 +1,12 @@
+
 import LandlordSidebar from "@/components/landlord-sidebar";
-import { getUserById, getPropertiesByTenant } from "@/lib/data";
-import { cn } from "@/lib/utils";
-
-// Mock current user
-const useUser = () => {
-    // To test landlord view: 'user-1'
-    // To test tenant view: 'user-3'
-    const user = getUserById('user-1');
-    return { user };
-}
-
 
 export default function LandlordLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = useUser();
-  const rentedProperties = user ? getPropertiesByTenant(user.id) : [];
-  const isTenant = user?.role === 'student' && rentedProperties.length > 0;
-
-  // This layout is now shared, but sidebar logic controls what is shown
-  // The main dashboard pages are now split between /landlord and /student
+  
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
        <main className="flex min-h-screen flex-1 flex-col gap-4 p-4 md:gap-8 md:p-10">
