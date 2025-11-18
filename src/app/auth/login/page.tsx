@@ -7,15 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-import { Chrome } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { initiateEmailSignIn, initiateGoogleSignIn } from '@/firebase';
+import { initiateEmailSignIn } from '@/firebase';
 import { useAuth } from '@/firebase/provider';
 
 const loginSchema = z.object({
@@ -32,8 +31,16 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
         defaultValues: { email: '', password: '' }
     });
 
+    const { isSubmitting } = form.formState;
+
     const onSubmit = (values: LoginFormValues) => {
-        initiateEmailSignIn(auth, values.email, values.password);
+        return new Promise<void>((resolve) => {
+            initiateEmailSignIn(auth, values.email, values.password);
+            // Since initiateEmailSignIn is non-blocking, we don't know exactly when it finishes.
+            // We'll resolve after a short delay to allow the auth state change to begin processing.
+            // A more robust solution might involve a global loading state managed by the auth provider.
+            setTimeout(() => resolve(), 1000);
+        });
     };
 
     return (
@@ -70,7 +77,10 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
                         </FormItem>
                     )}
                 />
-                <Button type="submit" className="w-full">Sign In as {userType.charAt(0).toUpperCase() + userType.slice(1)}</Button>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Sign In as {userType.charAt(0).toUpperCase() + userType.slice(1)}
+                </Button>
             </form>
         </Form>
     );
@@ -79,10 +89,6 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
 export default function LoginPage() {
   const [userType, setUserType] = useState<'student' | 'landlord'>('student');
   const auth = useAuth();
-
-  const handleGoogleSignIn = () => {
-      initiateGoogleSignIn(auth, userType);
-  }
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center bg-background px-4">
@@ -104,13 +110,6 @@ export default function LoginPage() {
                     <LoginForm userType="landlord" />
                 </TabsContent>
             </Tabs>
-          <Separator className="my-6" />
-          <div className="space-y-4">
-             <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
-                <Chrome className="mr-2 h-4 w-4" />
-                Sign in with Google
-            </Button>
-          </div>
         </CardContent>
         <CardFooter className="justify-center">
             <p className="text-sm text-muted-foreground">
@@ -124,5 +123,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
