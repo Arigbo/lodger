@@ -1,13 +1,7 @@
 
 'use client';
 
-import { notFound } from 'next/navigation';
-import {
-  getPropertyById,
-  getUserById,
-  getRentalRequestsByPropertyId,
-  updateRentalRequest
-} from '@/lib/data';
+import { notFound, useParams } from 'next/navigation';
 import { formatPrice } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +13,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import {
   Table,
   TableBody,
@@ -33,67 +26,83 @@ import type { Property, User, RentalRequest } from '@/lib/definitions';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import LeaseGenerationDialog from '@/components/lease-generation-dialog';
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
+import { doc, collection, query, where } from 'firebase/firestore';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { addDoc } from 'firebase/firestore';
+
 
 // Mock current user - landlords only for this page
-const useUser = () => {
-  const user = getUserById('user-1');
-  return { user };
-};
+// const useUser = () => {
+//   const user = getUserById('user-1');
+//   return { user };
+// };
 
-export default function LandlordPropertyDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const { user: landlord } = useUser();
-  const initialProperty = getPropertyById(params.id);
+export default function LandlordPropertyDetailPage() {
+  const { user: landlord, isUserLoading } = useUser();
+  const params = useParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const firestore = useFirestore();
 
-  const [property, setProperty] = useState(initialProperty);
-  const [tenant, setTenant] = useState(property?.currentTenantId ? getUserById(property.currentTenantId) : null);
-  const [rentalRequests, setRentalRequests] = useState(property ? getRentalRequestsByPropertyId(property.id) : []);
+  const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
+  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
+  
+  const tenantRef = useMemoFirebase(() => property?.currentTenantId ? doc(firestore, 'users', property.currentTenantId) : null, [firestore, property]);
+  const { data: tenant } = useDoc<User>(tenantRef);
+
+  const rentalRequestsQuery = useMemoFirebase(() => query(collection(firestore, 'rentalApplications'), where('propertyId', '==', id)), [firestore, id]);
+  const { data: rentalRequests } = useCollection<RentalRequest>(rentalRequestsQuery);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<RentalRequest | null>(null);
 
-  useEffect(() => {
-    // This effect ensures that if the underlying data changes (e.g. through mock data updates),
-    // the component's state is re-synchronized.
-    const updatedProperty = getPropertyById(params.id);
-    setProperty(updatedProperty);
-    setTenant(updatedProperty?.currentTenantId ? getUserById(updatedProperty.currentTenantId) : null);
-    setRentalRequests(updatedProperty ? getRentalRequestsByPropertyId(updatedProperty.id) : []);
-  }, [params.id]);
+  if (isUserLoading || isPropertyLoading) {
+    return <div>Loading...</div>
+  }
 
-
-  if (!property || !landlord || property.landlordId !== landlord.id) {
+  if (!property || !landlord || property.landlordId !== landlord.uid) {
     notFound();
   }
 
   const handleAcceptClick = (request: RentalRequest) => {
-    const applicant = getUserById(request.userId);
-    if (applicant) {
-        setSelectedRequest(request);
-        setDialogOpen(true);
-    }
+      setSelectedRequest(request);
+      setDialogOpen(true);
   };
 
-  const handleLeaseSigned = () => {
-      if(selectedRequest) {
-        updateRentalRequest(selectedRequest.id, 'accepted', selectedRequest.userId);
+  const handleLeaseSigned = async () => {
+      if(selectedRequest && property.leaseTemplate) {
+        // Here you would:
+        // 1. Update the rental request to 'accepted'
+        const requestRef = doc(firestore, 'rentalApplications', selectedRequest.id);
+        updateDocumentNonBlocking(requestRef, { status: 'accepted' });
         
-        // Optimistically update the UI state
-        const applicant = getUserById(selectedRequest.userId);
-        setProperty(prev => prev ? { ...prev, status: 'occupied', currentTenantId: selectedRequest.userId } : prev);
-        setTenant(applicant || null);
-        setRentalRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, status: 'accepted' } : r));
+        // 2. Update the property to 'occupied' and set the tenant ID
+        const propRef = doc(firestore, 'properties', property.id);
+        const leaseStartDate = new Date().toISOString();
+        updateDocumentNonBlocking(propRef, { status: 'occupied', currentTenantId: selectedRequest.userId, leaseStartDate });
+
+        // 3. Create a new lease agreement document
+        const leaseCollectionRef = collection(firestore, 'leaseAgreements');
+        await addDoc(leaseCollectionRef, {
+            propertyId: property.id,
+            landlordId: landlord.uid,
+            tenantId: selectedRequest.userId,
+            leaseText: property.leaseTemplate,
+            landlordSigned: true,
+            tenantSigned: false,
+            startDate: leaseStartDate,
+            endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+            status: 'pending' // Pending tenant signature
+        });
       }
   };
 
   const handleDeclineClick = (requestId: string) => {
-     updateRentalRequest(requestId, 'declined');
-     setRentalRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'declined' } : r));
+     const requestRef = doc(firestore, 'rentalApplications', requestId);
+     updateDocumentNonBlocking(requestRef, { status: 'declined' });
   }
   
-  const applicantForDialog = selectedRequest ? getUserById(selectedRequest.userId) : null;
+  const applicantForDialog = selectedRequest ? rentalRequests?.find(r => r.id === selectedRequest.id) : null;
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -150,20 +159,19 @@ export default function LandlordPropertyDetailPage({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {rentalRequests.length > 0 ? (
+                        {rentalRequests && rentalRequests.length > 0 ? (
                             rentalRequests.map(request => {
-                                const applicant = getUserById(request.userId);
+                                // Can't show applicant name without another query, so just showing ID for now
                                 return (
                                     <TableRow key={request.id}>
                                         <TableCell className="flex items-center gap-2">
                                             <Avatar className="h-8 w-8">
-                                                {applicant && <AvatarImage src={applicant.avatarUrl} />}
-                                                <AvatarFallback>{applicant?.name.charAt(0)}</AvatarFallback>
+                                                <AvatarFallback>{request.userId.charAt(0)}</AvatarFallback>
                                             </Avatar>
-                                            <span className='font-medium'>{applicant?.name}</span>
+                                            <span className='font-medium'>{request.userId.substring(0, 8)}...</span>
                                         </TableCell>
-                                        <TableCell className="max-w-xs truncate text-muted-foreground">{request.message}</TableCell>
-                                        <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
+                                        <TableCell className="max-w-xs truncate text-muted-foreground">{request.messageToLandlord}</TableCell>
+                                        <TableCell>{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
                                         <TableCell className="text-right">
                                             {request.status === 'pending' ? (
                                                 <div className='flex justify-end gap-2'>
@@ -171,7 +179,7 @@ export default function LandlordPropertyDetailPage({
                                                     <Button size="sm" variant="destructive" onClick={() => handleDeclineClick(request.id)}><X className='h-4 w-4'/></Button>
                                                 </div>
                                             ): (
-                                                <Badge variant={request.status === 'accepted' ? 'secondary' : 'destructive'}>{request.status}</Badge>
+                                                <Badge variant={request.status === 'approved' ? 'secondary' : 'destructive'}>{request.status}</Badge>
                                             )}
                                         </TableCell>
                                     </TableRow>
@@ -224,14 +232,13 @@ export default function LandlordPropertyDetailPage({
           </Card>
         </div>
       </div>
-      {selectedRequest && applicantForDialog && (
+      {selectedRequest && applicantForDialog && landlord && property.leaseTemplate && (
          <LeaseGenerationDialog
             isOpen={dialogOpen}
             onClose={() => setDialogOpen(false)}
             onLeaseSigned={handleLeaseSigned}
             landlord={landlord}
-            tenant={applicantForDialog}
-            property={property}
+            leaseText={property.leaseTemplate}
         />
       )}
     </div>

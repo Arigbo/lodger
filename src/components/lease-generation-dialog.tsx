@@ -11,9 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import type { User, Property } from '@/lib/definitions';
-import { generateLeaseText } from '@/lib/data';
 import { ScrollArea } from './ui/scroll-area';
 import { Signature, Send } from 'lucide-react';
 
@@ -22,8 +20,7 @@ interface LeaseGenerationDialogProps {
   onClose: () => void;
   onLeaseSigned: () => void;
   landlord: User;
-  tenant: User;
-  property: Property;
+  leaseText: string;
 }
 
 export default function LeaseGenerationDialog({
@@ -31,10 +28,8 @@ export default function LeaseGenerationDialog({
   onClose,
   onLeaseSigned,
   landlord,
-  tenant,
-  property,
+  leaseText,
 }: LeaseGenerationDialogProps) {
-  const [leaseText] = useState(generateLeaseText(landlord, tenant, property));
   const [isSigned, setIsSigned] = useState(false);
 
   const handleSign = () => {
@@ -52,7 +47,7 @@ export default function LeaseGenerationDialog({
         <DialogHeader>
           <DialogTitle>Review and Sign Lease Agreement</DialogTitle>
           <DialogDescription>
-            A lease agreement has been generated for {tenant.name} for the property: {property.title}. Please review the document below and provide your digital signature before sending it to the tenant.
+            A lease agreement has been generated. Please review the document below and provide your digital signature before sending it to the tenant.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[60vh] rounded-md border p-4">

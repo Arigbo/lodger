@@ -29,9 +29,57 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { amenities as allAmenities } from '@/lib/definitions';
-import { cn } from '@/lib/utils';
+import { cn, formatPrice } from '@/lib/utils';
 import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText } from 'lucide-react';
-import { generateLeaseTextForTemplate } from '@/lib/data';
+import type { Property, User } from '@/lib/definitions';
+import { User as FirebaseUser } from 'firebase/auth';
+import { format, add } from 'date-fns';
+
+
+function generateLeaseTextForTemplate(propertyData: Partial<FormValues>): string {
+    const leaseStartDate = new Date();
+    const leaseEndDate = add(leaseStartDate, { years: 1 });
+
+    const landlordName = "[Landlord Name]"; // Placeholder
+    const tenantName = "[Tenant Name]"; // Placeholder
+
+    const rules = typeof propertyData.rules === 'string' 
+      ? propertyData.rules.split(',').map(r => r.trim()).filter(Boolean) 
+      : [];
+
+    return `
+    LEASE AGREEMENT
+
+    This Lease Agreement (the "Agreement") is made and entered into on ${format(new Date(), 'MMMM do, yyyy')}, by and between:
+
+    Landlord: ${landlordName}
+    Tenant: ${tenantName}
+
+    1. PROPERTY. Landlord agrees to lease to Tenant the property located at:
+       ${propertyData.address || '[Address]'}, ${propertyData.city || '[City]'}, ${propertyData.state || '[State]'} ${propertyData.zip || '[ZIP]'}
+
+    2. TERM. The lease term will begin on ${format(leaseStartDate, 'MMMM do, yyyy')} and will terminate on ${format(leaseEndDate, 'MMMM do, yyyy')}.
+
+    3. RENT. Tenant agrees to pay Landlord the sum of ${formatPrice(propertyData.price || 0)} per month, due on the 1st day of each month.
+
+    4. SECURITY DEPOSIT. Upon execution of this Agreement, Tenant shall deposit with Landlord the sum of ${formatPrice(propertyData.price || 0)} as security for the faithful performance by Tenant of the terms hereof.
+
+    5. UTILITIES. Tenant is responsible for the payment of all utilities and services for the Property.
+
+    6. AMENITIES. The following amenities are included: ${(propertyData.amenities || []).join(', ')}.
+
+    7. RULES. Tenant agrees to abide by the following rules: ${rules.join(', ')}.
+
+    8. SIGNATURES. By signing below, the parties agree to the terms and conditions of this Lease Agreement.
+
+    Landlord: _________________________
+    Date: _________________________
+
+    Tenant: _________________________
+    Date: _________________________
+  `;
+}
+
 
 const formSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -142,7 +190,7 @@ export default function AddPropertyPage() {
 
   const prevStep = () => {
      if (currentStep > 1) {
-        setCurrentStep(step => step - 1);
+        setCurrentStep(step => step + 1);
      }
   }
 
