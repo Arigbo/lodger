@@ -30,7 +30,8 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { amenities as allAmenities } from '@/lib/definitions';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, ArrowRight, UploadCloud, FileImage } from 'lucide-react';
+import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText } from 'lucide-react';
+import { generateLeaseTextForTemplate } from '@/lib/data';
 
 const formSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -48,6 +49,7 @@ const formSchema = z.object({
     message: 'You have to select at least one amenity.',
   }),
   rules: z.string().optional(),
+  leaseTemplate: z.string().min(100, 'Lease template must not be empty.'),
   kitchenImage: z.any().refine((files) => files?.length == 1, 'Kitchen image is required.'),
   livingRoomImage: z.any().refine((files) => files?.length == 1, 'Living room image is required.'),
   bathroomImage: z.any().refine((files) => files?.length == 1, 'Bathroom image is required.'),
@@ -61,8 +63,9 @@ const steps = [
     { id: 2, name: 'Location', fields: ['address', 'city', 'state', 'zip'] },
     { id: 3, name: 'Property Details', fields: ['bedrooms', 'bathrooms', 'area'] },
     { id: 4, name: 'Amenities & Rules', fields: ['amenities', 'rules'] },
-    { id: 5, name: 'Upload Photos', fields: ['kitchenImage', 'livingRoomImage', 'bathroomImage'] },
-    { id: 6, name: 'Review' }
+    { id: 5, name: 'Lease Template', fields: ['leaseTemplate'] },
+    { id: 6, name: 'Upload Photos', fields: ['kitchenImage', 'livingRoomImage', 'bathroomImage'] },
+    { id: 7, name: 'Review' }
 ];
 
 const FileUpload = ({ field, label, description }: { field: any, label: string, description: string }) => (
@@ -114,11 +117,20 @@ export default function AddPropertyPage() {
       area: 0,
       amenities: [],
       rules: '',
+      leaseTemplate: '',
     },
   });
 
   const nextStep = async () => {
     const fields = steps[currentStep - 1].fields;
+    
+    // When moving to the lease step, generate the template text
+    if (currentStep === 4) {
+        const propertyData = form.getValues();
+        const leaseText = generateLeaseTextForTemplate(propertyData);
+        form.setValue('leaseTemplate', leaseText);
+    }
+    
     const output = await form.trigger(fields as (keyof FormValues)[], { shouldFocus: true });
 
     if (!output) return;
@@ -397,8 +409,27 @@ export default function AddPropertyPage() {
                     />
                 </div>
             </div>
-
+            
             <div className={cn(currentStep === 5 ? "block space-y-8" : "hidden")}>
+                 <FormField
+                    control={form.control}
+                    name="leaseTemplate"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Lease Document Template</FormLabel>
+                            <FormDescription>
+                                This is a standard lease template. Review and edit the text as needed. This document will be used to generate lease agreements for this property. Once you proceed, this text will be locked for any future leases for this property.
+                            </FormDescription>
+                            <FormControl>
+                                <Textarea {...field} rows={20} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+
+            <div className={cn(currentStep === 6 ? "block space-y-8" : "hidden")}>
                 <FormField
                     control={form.control}
                     name="kitchenImage"
@@ -456,7 +487,7 @@ export default function AddPropertyPage() {
                 />
             </div>
             
-            <div className={cn(currentStep === 6 ? "block" : "hidden")}>
+            <div className={cn(currentStep === 7 ? "block" : "hidden")}>
                 <h3 className="font-headline text-xl font-semibold">Review Your Listing</h3>
                 <p className="text-muted-foreground">Please review all the information below before submitting.</p>
                 <div className="mt-6 space-y-6 rounded-lg border bg-secondary/50 p-6">
@@ -524,7 +555,15 @@ export default function AddPropertyPage() {
                             )}
                         </div>
                     </div>
-
+                    <Separator/>
+                    {/* Lease Template */}
+                     <div>
+                        <p className="text-sm font-medium mb-2">Lease Template</p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <FileText className="h-4 w-4"/>
+                            <span>Lease document template has been configured.</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -28,6 +28,7 @@ const properties: Property[] = [
     landlordId: 'user-1',
     status: 'available',
     rules: ['No smoking', 'No pets', 'Quiet hours after 10 PM'],
+    leaseTemplate: `1. PARTIES\nThis Residential Lease Agreement ("Agreement") is made between [Landlord Name] and [Tenant Name].\n\n2. PROPERTY\nLandlord agrees to lease to Tenant the property located at 123 University Ave, Urbanville, CA 90210.\n\n3. TERM\nThe term of this lease is for one year, beginning on [Start Date] and ending on [End Date].\n\n4. RENT\nTenant agrees to pay Landlord the sum of $1200 per month as rent, due on the 1st day of each month.\n\n5. HOUSE RULES\nTenant agrees to abide by the house rules: No smoking, No pets, Quiet hours after 10 PM.`
   },
   {
     id: 'prop-2',
@@ -153,7 +154,16 @@ const messages: { [key: string]: Message[] } = {
     ]
 };
 
-export const generateLeaseText = (landlord: User, tenant: User, property: Property) => {
+export function generateLeaseText(landlord: User, tenant: User, property: Property) {
+  if (property.leaseTemplate) {
+    return property.leaseTemplate
+      .replace(/\[Landlord Name\]/g, landlord.name)
+      .replace(/\[Tenant Name\]/g, tenant.name)
+      .replace(/\[Start Date\]/g, format(new Date(), 'MMMM do, yyyy'))
+      .replace(/\[End Date\]/g, format(add(new Date(), { years: 1 }), 'MMMM do, yyyy'));
+  }
+  
+  // Fallback to generic template if one doesn't exist on the property
   const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
   const leaseEndDate = add(leaseStartDate, { years: 1 });
 
@@ -180,6 +190,33 @@ The premises shall be used and occupied by Tenant and Tenant's immediate family,
                                     
 8. HOUSE RULES
 Tenant agrees to abide by the house rules, which are attached as an addendum to this lease. The current rules include: ${property.rules.join(', ')}.`;
+}
+
+export function generateLeaseTextForTemplate(propertyData: Partial<Property>) {
+  const { location, price, rules } = propertyData;
+  return `1. PARTIES
+This Residential Lease Agreement ("Agreement") is made between [Landlord Name] and [Tenant Name].
+
+2. PROPERTY
+Landlord agrees to lease to Tenant the property located at ${location?.address || '[Address]'}, ${location?.city || '[City]'}, ${location?.state || '[State]'} ${location?.zip || '[ZIP]'}.
+
+3. TERM
+The term of this lease is for one year, beginning on [Start Date] and ending on [End Date].
+                                    
+4. RENT
+Tenant agrees to pay Landlord the sum of ${price ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price) : '$[Price]'} per month as rent, due on the 1st day of each month.
+
+5. SECURITY DEPOSIT
+Upon execution of this Agreement, Tenant shall deposit with Landlord the sum of ${price ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price) : '$[Price]'} as security for the faithful performance of the terms of this lease.
+
+6. UTILITIES
+Tenant is responsible for all utilities and services for the property, unless otherwise specified in the property amenities list.
+
+7. USE OF PREMISES
+The premises shall be used and occupied by Tenant and Tenant's immediate family, exclusively, as a private single-family dwelling.
+                                    
+8. HOUSE RULES
+Tenant agrees to abide by the house rules. The current rules include: ${rules || '[Rules, e.g., No smoking, No pets]'}.`;
 }
 
 const activeLeases = properties

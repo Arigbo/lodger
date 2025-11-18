@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Signature, CheckCircle2, FileClock, Hourglass } from 'lucide-react';
+import { Signature, CheckCircle2, FileClock, Hourglass, Circle, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -104,6 +104,30 @@ export default function ViewLeasePage() {
                         </ScrollArea>
 
                         {/* Signature Section */}
+                        <div className="mt-6 rounded-lg border p-4">
+                            <h3 className="font-semibold mb-4 text-center">Signatures</h3>
+                            <div className="flex justify-around text-sm">
+                                <div className="flex flex-col items-center gap-2">
+                                    <span className="font-semibold">Landlord</span>
+                                     {lease.landlordSigned ? (
+                                        <span className="font-serif italic text-green-600 flex items-center gap-1"><Check className="h-4 w-4"/> Digitally Signed</span>
+                                    ) : (
+                                         <span className="font-serif italic text-amber-600 flex items-center gap-1"><Hourglass className="h-4 w-4"/> Pending Signature</span>
+                                    )}
+                                    <span className="text-xs text-muted-foreground">{landlord?.name}</span>
+                                </div>
+                                <div className="flex flex-col items-center gap-2">
+                                    <span className="font-semibold">Tenant</span>
+                                     {lease.tenantSigned ? (
+                                        <span className="font-serif italic text-green-600 flex items-center gap-1"><Check className="h-4 w-4"/> Digitally Signed</span>
+                                    ) : (
+                                         <span className="font-serif italic text-amber-600 flex items-center gap-1"><Hourglass className="h-4 w-4"/> Pending Signature</span>
+                                    )}
+                                    <span className="text-xs text-muted-foreground">{tenant?.name}</span>
+                                </div>
+                            </div>
+                        </div>
+
                         {lease.status === 'pending' && isCurrentUserTenant && (
                             <div className="mt-6 flex flex-col items-center gap-4 rounded-lg border border-primary/50 bg-primary/5 p-6">
                                 <h3 className="font-bold">Action Required</h3>
@@ -121,20 +145,6 @@ export default function ViewLeasePage() {
                             </div>
                         )}
                         
-                         {(lease.status === 'active' || lease.status === 'expired') && (
-                            <div className="mt-6 flex justify-around rounded-lg border p-4 text-sm">
-                                <div className="flex flex-col items-center">
-                                    <span className="font-semibold">Landlord Signature</span>
-                                    <span className="font-serif italic text-green-600">✓ Digitally Signed</span>
-                                    <span className="text-xs text-muted-foreground">{landlord?.name}</span>
-                                </div>
-                                <div className="flex flex-col items-center">
-                                    <span className="font-semibold">Tenant Signature</span>
-                                    <span className="font-serif italic text-green-600">✓ Digitally Signed</span>
-                                    <span className="text-xs text-muted-foreground">{tenant?.name}</span>
-                                </div>
-                            </div>
-                        )}
                     </CardContent>
                 </Card>
                  <div className="mt-4 text-center">

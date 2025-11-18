@@ -39,6 +39,7 @@ export type Property = {
   rules: string[];
   currentTenantId?: string | null;
   leaseStartDate?: string; // YYYY-MM-DD
+  leaseTemplate?: string;
 };
 
 export type Review = {
