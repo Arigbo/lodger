@@ -1,6 +1,6 @@
 
 
-import { notFound, usePathname } from "next/navigation";
+import { notFound } from "next/navigation";
 import Image from "next/image";
 import { getPropertyById, getUserById, getReviewsByPropertyId, getImagesByIds } from "@/lib/data";
 import { formatPrice, cn } from "@/lib/utils";
@@ -50,6 +50,7 @@ function PropertyDetailView({
   'use client';
   
   const { useState, useEffect } = React;
+  const { usePathname } = require("next/navigation");
   const { Textarea } = require("@/components/ui/textarea");
   const { Label } = require("@/components/ui/label");
 
@@ -411,3 +412,5 @@ function AddReviewForm() {
         </Card>
     );
 }
+
+    
