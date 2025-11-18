@@ -40,7 +40,9 @@ export default function ViewLeasePage() {
     const isCurrentUserTenant = currentUser.id === lease.tenantId;
 
     const handleSignLease = () => {
+        if (!isCurrentUserTenant) return;
         signAndActivateLease(lease.id, currentUser.id);
+        // After signing, redirect the student to their new tenancy page
         router.push(`/student/properties/${lease.propertyId}`);
     };
 
@@ -77,7 +79,7 @@ export default function ViewLeasePage() {
                                 <CardTitle>{property?.title}</CardTitle>
                                 <CardDescription>{property?.location.address}, {property?.location.city}, {property?.location.state}</CardDescription>
                             </div>
-                            <Badge variant={getStatusVariant(lease.status)} className="text-base">{lease.status}</Badge>
+                            <Badge variant={getStatusVariant(lease.status)} className="text-base capitalize">{lease.status}</Badge>
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -98,7 +100,7 @@ export default function ViewLeasePage() {
                         <Separator className="my-6"/>
                         <h3 className="font-semibold mb-2">Lease Document</h3>
                         <ScrollArea className="h-96 rounded-md border bg-secondary/30 p-4">
-                             <div className="prose prose-sm whitespace-pre-wrap">{lease.leaseText}</div>
+                             <div className="prose prose-sm max-w-none whitespace-pre-wrap">{lease.leaseText}</div>
                         </ScrollArea>
 
                         {/* Signature Section */}
@@ -115,7 +117,22 @@ export default function ViewLeasePage() {
 
                         {lease.status === 'pending' && isCurrentUserLandlord && (
                             <div className="mt-6 text-center text-sm text-muted-foreground italic rounded-lg border p-4">
-                                This lease has been sent to {tenant?.name} for their signature.
+                                This lease has been sent to {tenant?.name} for their signature and is awaiting action.
+                            </div>
+                        )}
+                        
+                         {(lease.status === 'active' || lease.status === 'expired') && (
+                            <div className="mt-6 flex justify-around rounded-lg border p-4 text-sm">
+                                <div className="flex flex-col items-center">
+                                    <span className="font-semibold">Landlord Signature</span>
+                                    <span className="font-serif italic text-green-600">✓ Digitally Signed</span>
+                                    <span className="text-xs text-muted-foreground">{landlord?.name}</span>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <span className="font-semibold">Tenant Signature</span>
+                                    <span className="font-serif italic text-green-600">✓ Digitally Signed</span>
+                                    <span className="text-xs text-muted-foreground">{tenant?.name}</span>
+                                </div>
                             </div>
                         )}
                     </CardContent>
@@ -131,4 +148,3 @@ export default function ViewLeasePage() {
         </main>
     );
 }
-
