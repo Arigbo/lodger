@@ -89,18 +89,18 @@ const reviews: Review[] = [
 ];
 
 let rentalRequests: RentalRequest[] = [
-    { id: 'req-1', propertyId: 'prop-2', userId: 'user-2', status: 'accepted', message: 'I am very interested in this studio! I am a quiet and responsible graduate student.', requestDate: '2024-05-20T11:00:00Z'},
+    { id: 'req-1', propertyId: 'prop-1', userId: 'user-5', status: 'accepted', message: 'Hi Sarah, I would love to rent this loft. It looks amazing!', requestDate: '2024-05-20T11:00:00Z'},
     { id: 'req-2', propertyId: 'prop-4', userId: 'user-3', status: 'pending', message: 'This house looks perfect for me and my two roommates.', requestDate: '2024-05-18T18:00:00Z'},
+    { id: 'req-3', propertyId: 'prop-1', userId: 'user-2', status: 'pending', message: 'I am a quiet student looking for a place near campus.', requestDate: '2024-06-01T10:00:00Z'},
 ];
 
 let transactions: Transaction[] = [
   { id: 'trans-1', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 1800, date: new Date(new Date().setMonth(new Date().getMonth() - 2)).toISOString().split('T')[0], type: 'Rent', status: 'Completed' },
-  { id: 'trans-2', landlordId: 'user-1', tenantId: 'user-5', propertyId: 'prop-1', amount: 1200, date: '2024-05-01', type: 'Rent', status: 'Completed' },
-  { id: 'trans-3', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 1800, date: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0], type: 'Rent', status: 'Pending' },
-  { id: 'trans-4', landlordId: 'user-1', tenantId: 'user-5', propertyId: 'prop-1', amount: 1200, date: '2024-04-01', type: 'Rent', status: 'Completed' },
-  { id: 'trans-5', landlordId: 'user-4', tenantId: 'user-2', propertyId: 'prop-2', amount: 850, date: '2023-08-01', type: 'Deposit', status: 'Completed' },
-  { id: 'trans-6', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 75, date: '2024-03-15', type: 'Late Fee', status: 'Completed' },
-  { id: 'trans-7', landlordId: 'user-4', tenantId: 'user-2', propertyId: 'prop-2', amount: 850, date: '2024-06-01', type: 'Rent', status: 'Completed' },
+  { id: 'trans-2', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 1800, date: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0], type: 'Rent', status: 'Completed' },
+  { id: 'trans-3', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 1800, date: new Date().toISOString().split('T')[0], type: 'Rent', status: 'Pending' },
+  { id: 'trans-4', landlordId: 'user-4', tenantId: 'user-2', propertyId: 'prop-2', amount: 850, date: '2023-08-01', type: 'Deposit', status: 'Completed' },
+  { id: 'trans-5', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 75, date: '2024-03-15', type: 'Late Fee', status: 'Completed' },
+  { id: 'trans-6', landlordId: 'user-4', tenantId: 'user-2', propertyId: 'prop-2', amount: 850, date: '2024-06-01', type: 'Rent', status: 'Completed' },
 ];
 
 const maintenanceRequests: MaintenanceRequest[] = [
@@ -182,7 +182,7 @@ The premises shall be used and occupied by Tenant and Tenant's immediate family,
 Tenant agrees to abide by the house rules, which are attached as an addendum to this lease. The current rules include: ${property.rules.join(', ')}.`;
 }
 
-const leaseAgreements: LeaseAgreement[] = properties
+const activeLeases = properties
     .filter(p => p.currentTenantId && p.landlordId && p.leaseStartDate)
     .map(p => {
         const landlord = getUserById(p.landlordId)!;
@@ -201,8 +201,34 @@ const leaseAgreements: LeaseAgreement[] = properties
             startDate: startDate.toISOString(),
             endDate: endDate.toISOString(),
             status: isPast(endDate) ? 'expired' : 'active',
-        }
+        } as LeaseAgreement
     });
+
+// Add a pending lease for user-5 on prop-1
+const pendingLease: LeaseAgreement = (() => {
+    const property = getPropertyById('prop-1')!;
+    const landlord = getUserById(property.landlordId)!;
+    const tenant = getUserById('user-5')!;
+    const startDate = new Date();
+    startDate.setDate(1);
+    startDate.setMonth(startDate.getMonth() + 1);
+    const endDate = add(startDate, { years: 1 });
+
+    return {
+      id: 'lease-pending-1',
+      propertyId: property.id,
+      landlordId: landlord.id,
+      tenantId: tenant.id,
+      leaseText: generateLeaseText(landlord, tenant, property),
+      landlordSigned: true,
+      tenantSigned: false,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      status: 'pending',
+    };
+})();
+
+let leaseAgreements: LeaseAgreement[] = [...activeLeases, pendingLease];
 
 
 // Data fetching functions
@@ -242,44 +268,82 @@ export function updateRentalRequest(requestId: string, status: 'accepted' | 'dec
   if (requestIndex === -1) return;
 
   const request = rentalRequests[requestIndex];
+  const property = getPropertyById(request.propertyId);
+  const landlord = property ? getUserById(property.landlordId) : undefined;
+  const tenant = tenantId ? getUserById(tenantId) : undefined;
+  
+  if (!property || !landlord || !tenant) return;
+
   request.status = status;
   
-  if (status === 'accepted' && tenantId) {
-      const propertyIndex = properties.findIndex(p => p.id === request.propertyId);
-      if (propertyIndex === -1) return;
+  // If request is accepted, create a PENDING lease agreement.
+  // The property status is NOT changed yet.
+  if (status === 'accepted') {
+      const leaseStartDate = new Date();
+      leaseStartDate.setDate(1); // Set to the first of the next month
+      leaseStartDate.setMonth(leaseStartDate.getMonth() + 1);
 
-      const property = properties[propertyIndex];
-      property.status = 'occupied';
-      property.currentTenantId = tenantId;
-      const leaseStartDate = new Date().toISOString().split('T')[0];
-      property.leaseStartDate = leaseStartDate;
+      const leaseEndDate = add(leaseStartDate, { years: 1 });
 
-      // Create initial transactions for deposit and first month's rent
-      const newTransactions: Transaction[] = [
-          {
-              id: `trans-${Date.now()}-deposit`,
-              landlordId: property.landlordId,
-              tenantId: tenantId,
-              propertyId: property.id,
-              amount: property.price,
-              date: leaseStartDate,
-              type: 'Deposit',
-              status: 'Pending',
-          },
-          {
-              id: `trans-${Date.now()}-rent`,
-              landlordId: property.landlordId,
-              tenantId: tenantId,
-              propertyId: property.id,
-              amount: property.price,
-              date: leaseStartDate,
-              type: 'Rent',
-              status: 'Pending',
-          },
-      ];
-      
-      transactions.push(...newTransactions);
+      const newLease: LeaseAgreement = {
+        id: `lease-req-${request.id}`,
+        propertyId: property.id,
+        landlordId: landlord.id,
+        tenantId: tenant.id,
+        leaseText: generateLeaseText(landlord, tenant, property),
+        landlordSigned: true,
+        tenantSigned: false,
+        startDate: leaseStartDate.toISOString(),
+        endDate: leaseEndDate.toISOString(),
+        status: 'pending',
+      };
+      leaseAgreements.push(newLease);
   }
+}
+
+export function signAndActivateLease(leaseId: string, signingUserId: string) {
+    const leaseIndex = leaseAgreements.findIndex(l => l.id === leaseId);
+    if (leaseIndex === -1) return;
+
+    const lease = leaseAgreements[leaseIndex];
+    if (lease.tenantId !== signingUserId || lease.status !== 'pending') return;
+
+    lease.tenantSigned = true;
+    lease.status = 'active';
+
+    // Now, update the property and create transactions
+    const propertyIndex = properties.findIndex(p => p.id === lease.propertyId);
+    if (propertyIndex === -1) return;
+    
+    const property = properties[propertyIndex];
+    property.status = 'occupied';
+    property.currentTenantId = lease.tenantId;
+    property.leaseStartDate = lease.startDate;
+
+    const newTransactions: Transaction[] = [
+        {
+            id: `trans-${Date.now()}-deposit`,
+            landlordId: property.landlordId,
+            tenantId: lease.tenantId,
+            propertyId: property.id,
+            amount: property.price,
+            date: lease.startDate,
+            type: 'Deposit',
+            status: 'Pending',
+        },
+        {
+            id: `trans-${Date.now()}-rent`,
+            landlordId: property.landlordId,
+            tenantId: lease.tenantId,
+            propertyId: property.id,
+            amount: property.price,
+            date: lease.startDate,
+            type: 'Rent',
+            status: 'Pending',
+        },
+    ];
+    
+    transactions.push(...newTransactions);
 }
 
 export function getTransactionsByLandlord(landlordId: string) {

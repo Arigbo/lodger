@@ -44,6 +44,8 @@ export default function LandlordLeasesPage() {
         return 'secondary';
       case 'expired':
         return 'outline';
+      case 'pending':
+        return 'default';
       default:
         return 'default';
     }
@@ -100,7 +102,9 @@ export default function LandlordLeasesPage() {
                       <TableCell>{new Date(lease.startDate).toLocaleDateString()}</TableCell>
                       <TableCell>{new Date(lease.endDate).toLocaleDateString()}</TableCell>
                       <TableCell>
-                         <Badge variant={getStatusVariant(lease.status)}>{lease.status}</Badge>
+                         <Badge variant={getStatusVariant(lease.status)}>
+                            {lease.status === 'pending' ? 'Pending Signature' : lease.status}
+                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Button variant="outline" size="sm" asChild>

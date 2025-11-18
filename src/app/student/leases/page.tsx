@@ -20,23 +20,39 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { getLeasesByStudentId, getUserById, getPropertyById } from '@/lib/data';
+import { getLeasesByStudentId, getUserById, getPropertyById, signAndActivateLease } from '@/lib/data';
 import type { LeaseAgreement } from '@/lib/definitions';
-import { FileText } from 'lucide-react';
+import { FileText, Signature } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 // Mock current user
 const useUser = () => {
-  const user = getUserById('user-3');
+  const user = getUserById('user-5'); // Use user-5 to test pending lease
   return { user };
 };
 
 export default function StudentLeasesPage() {
   const { user: student } = useUser();
-  
-  const leases = React.useMemo(() => {
-    return student ? getLeasesByStudentId(student.id) : [];
+  const router = useRouter();
+
+  const [leases, setLeases] = React.useState<LeaseAgreement[]>([]);
+
+  React.useEffect(() => {
+    if (student) {
+      setLeases(getLeasesByStudentId(student.id));
+    }
   }, [student]);
+
+  const handleSignLease = (leaseId: string) => {
+    if (student) {
+      signAndActivateLease(leaseId, student.id);
+      // Optimistically update UI or refetch
+      setLeases(getLeasesByStudentId(student.id));
+      router.push(`/student/properties/${leases.find(l => l.id === leaseId)?.propertyId}`);
+    }
+  };
+
 
   const getStatusVariant = (status: LeaseAgreement['status']) => {
     switch (status) {
@@ -44,6 +60,8 @@ export default function StudentLeasesPage() {
         return 'secondary';
       case 'expired':
         return 'outline';
+      case 'pending':
+        return 'default';
       default:
         return 'default';
     }
@@ -101,11 +119,17 @@ export default function StudentLeasesPage() {
                          <Badge variant={getStatusVariant(lease.status)}>{lease.status}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Button variant="outline" size="sm" asChild>
+                        {lease.status === 'pending' ? (
+                            <Button variant="default" size="sm" onClick={() => handleSignLease(lease.id)}>
+                                <Signature className="mr-2 h-4 w-4" /> View & Sign
+                            </Button>
+                        ) : (
+                           <Button variant="outline" size="sm" asChild>
                            <Link href={`/student/properties/${property?.id}`}>
                                 <FileText className="mr-2 h-4 w-4" /> View
                             </Link>
                         </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   );

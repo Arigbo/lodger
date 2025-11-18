@@ -100,7 +100,7 @@ export type LeaseAgreement = {
   tenantSigned: boolean;
   startDate: string;
   endDate: string;
-  status: 'active' | 'expired';
+  status: 'active' | 'expired' | 'pending';
 };
 
 export type Conversation = {
