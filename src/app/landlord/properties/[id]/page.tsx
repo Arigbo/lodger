@@ -1,3 +1,4 @@
+
 'use client';
 
 import { notFound } from 'next/navigation';
@@ -5,6 +6,7 @@ import {
   getPropertyById,
   getUserById,
   getRentalRequestsByPropertyId,
+  updateRentalRequest
 } from '@/lib/data';
 import { formatPrice } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +31,8 @@ import {
 import { BedDouble, Bath, Ruler, Check, X, Pencil } from 'lucide-react';
 import type { Property, User, RentalRequest } from '@/lib/definitions';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import LeaseGenerationDialog from '@/components/lease-generation-dialog';
 
 // Mock current user - landlords only for this page
 const useUser = () => {
@@ -42,16 +46,54 @@ export default function LandlordPropertyDetailPage({
   params: { id: string };
 }) {
   const { user: landlord } = useUser();
-  const property = getPropertyById(params.id);
+  const initialProperty = getPropertyById(params.id);
+
+  const [property, setProperty] = useState(initialProperty);
+  const [tenant, setTenant] = useState(property?.currentTenantId ? getUserById(property.currentTenantId) : null);
+  const [rentalRequests, setRentalRequests] = useState(property ? getRentalRequestsByPropertyId(property.id) : []);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<RentalRequest | null>(null);
+
+  useEffect(() => {
+    // This effect ensures that if the underlying data changes (e.g. through mock data updates),
+    // the component's state is re-synchronized.
+    const updatedProperty = getPropertyById(params.id);
+    setProperty(updatedProperty);
+    setTenant(updatedProperty?.currentTenantId ? getUserById(updatedProperty.currentTenantId) : null);
+    setRentalRequests(updatedProperty ? getRentalRequestsByPropertyId(updatedProperty.id) : []);
+  }, [params.id]);
+
 
   if (!property || !landlord || property.landlordId !== landlord.id) {
     notFound();
   }
 
-  const tenant = property.currentTenantId
-    ? getUserById(property.currentTenantId)
-    : null;
-  const rentalRequests = getRentalRequestsByPropertyId(property.id);
+  const handleAcceptClick = (request: RentalRequest) => {
+    const applicant = getUserById(request.userId);
+    if (applicant) {
+        setSelectedRequest(request);
+        setDialogOpen(true);
+    }
+  };
+
+  const handleLeaseSigned = () => {
+      if(selectedRequest) {
+        updateRentalRequest(selectedRequest.id, 'accepted', selectedRequest.userId);
+        
+        // Optimistically update the UI state
+        const applicant = getUserById(selectedRequest.userId);
+        setProperty(prev => prev ? { ...prev, status: 'occupied', currentTenantId: selectedRequest.userId } : prev);
+        setTenant(applicant || null);
+        setRentalRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, status: 'accepted' } : r));
+      }
+  };
+
+  const handleDeclineClick = (requestId: string) => {
+     updateRentalRequest(requestId, 'declined');
+     setRentalRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'declined' } : r));
+  }
+  
+  const applicantForDialog = selectedRequest ? getUserById(selectedRequest.userId) : null;
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -125,8 +167,8 @@ export default function LandlordPropertyDetailPage({
                                         <TableCell className="text-right">
                                             {request.status === 'pending' ? (
                                                 <div className='flex justify-end gap-2'>
-                                                    <Button size="sm" variant="outline"><Check className='h-4 w-4'/></Button>
-                                                    <Button size="sm" variant="destructive"><X className='h-4 w-4'/></Button>
+                                                    <Button size="sm" variant="outline" onClick={() => handleAcceptClick(request)}><Check className='h-4 w-4'/></Button>
+                                                    <Button size="sm" variant="destructive" onClick={() => handleDeclineClick(request.id)}><X className='h-4 w-4'/></Button>
                                                 </div>
                                             ): (
                                                 <Badge variant={request.status === 'accepted' ? 'secondary' : 'destructive'}>{request.status}</Badge>
@@ -182,6 +224,16 @@ export default function LandlordPropertyDetailPage({
           </Card>
         </div>
       </div>
+      {selectedRequest && applicantForDialog && (
+         <LeaseGenerationDialog
+            isOpen={dialogOpen}
+            onClose={() => setDialogOpen(false)}
+            onLeaseSigned={handleLeaseSigned}
+            landlord={landlord}
+            tenant={applicantForDialog}
+            property={property}
+        />
+      )}
     </div>
   );
 }
