@@ -3,21 +3,17 @@
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { MapPin } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { amenities as allAmenities } from "@/lib/definitions";
 
 export type FilterState = {
-  location?: {
-    searchTerm?: string;
-    lat?: number;
-    lng?: number;
-  };
+  country?: string;
+  state?: string;
+  school?: string;
   price?: number;
   propertyType?: string;
   bedrooms?: string;
@@ -39,10 +35,6 @@ export default function SearchFilters({ onFilterChange, onReset }: SearchFilters
     setFilters(prev => ({ ...prev, [field]: value }));
   };
   
-  const handleLocationSearch = (term: string) => {
-    setFilters(prev => ({ ...prev, location: { searchTerm: term } }));
-  }
-  
   const handleAmenityChange = (amenity: string, checked: boolean) => {
     const currentAmenities = filters.amenities || [];
     if (checked) {
@@ -51,24 +43,6 @@ export default function SearchFilters({ onFilterChange, onReset }: SearchFilters
       handleInputChange('amenities', currentAmenities.filter(a => a !== amenity));
     }
   }
-
-  const handleLocationClick = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          console.log("Lat:", latitude, "Lon:", longitude);
-          setFilters(prev => ({ ...prev, location: { lat: latitude, lng: longitude, searchTerm: 'Current Location' } }));
-        },
-        (error) => {
-          console.error("Error getting location: ", error);
-          alert("Could not get your location. Please ensure you've enabled location services for this site.");
-        }
-      );
-    } else {
-      alert("Geolocation is not supported by this browser.");
-    }
-  };
 
   const handleApplyFilters = () => {
     onFilterChange({...filters, price});
@@ -87,26 +61,39 @@ export default function SearchFilters({ onFilterChange, onReset }: SearchFilters
       </CardHeader>
       <CardContent className="grid gap-6">
         <div className="grid gap-2">
-          <Label htmlFor="location">Location</Label>
-          <div className="relative">
-            <Input 
-              id="location" 
-              placeholder="e.g. Urbanville" 
-              value={filters.location?.searchTerm || ""} 
-              onChange={(e) => handleLocationSearch(e.target.value)}
-              className="pr-10"
-            />
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="icon" 
-              className="absolute inset-y-0 right-0 h-full px-3"
-              onClick={handleLocationClick}
-            >
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span className="sr-only">Use current location</span>
-            </Button>
-          </div>
+          <Label htmlFor="country">Country</Label>
+          <Select value={filters.country} onValueChange={(value) => handleInputChange('country', value)}>
+            <SelectTrigger id="country">
+              <SelectValue placeholder="Select Country" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="USA">United States</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="state">State</Label>
+          <Select value={filters.state} onValueChange={(value) => handleInputChange('state', value)}>
+            <SelectTrigger id="state">
+              <SelectValue placeholder="Select State" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="CA">California</SelectItem>
+              <SelectItem value="NY">New York</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="school">School</Label>
+          <Select value={filters.school} onValueChange={(value) => handleInputChange('school', value)}>
+            <SelectTrigger id="school">
+              <SelectValue placeholder="Select School" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Urbanville University">Urbanville University</SelectItem>
+              <SelectItem value="Metropolis University">Metropolis University</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="grid gap-2">
           <Label>Max Price: ${price.toLocaleString()}</Label>

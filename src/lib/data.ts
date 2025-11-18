@@ -20,7 +20,7 @@ const properties: Property[] = [
     description: 'A spacious and sunny loft apartment perfect for students. Comes fully furnished with high-speed internet. Just a 10-minute walk from the main university campus. Features a rooftop terrace with city views.',
     price: 1200,
     type: 'Loft',
-    location: { address: '123 University Ave', city: 'Urbanville', state: 'CA', zip: '90210', lat: 34.0736, lng: -118.4004 },
+    location: { address: '123 University Ave', city: 'Urbanville', state: 'CA', zip: '90210', lat: 34.0736, lng: -118.4004, school: 'Urbanville University' },
     bedrooms: 1,
     bathrooms: 1,
     area: 800,
@@ -38,7 +38,7 @@ const properties: Property[] = [
     description: 'This cozy studio is ideal for a student looking for a quiet place to study and relax. It is located in a safe neighborhood with plenty of cafes and shops nearby. All utilities are included in the rent.',
     price: 850,
     type: 'Studio',
-    location: { address: '456 College Rd', city: 'Urbanville', state: 'CA', zip: '90211', lat: 34.075, lng: -118.402 },
+    location: { address: '456 College Rd', city: 'Urbanville', state: 'CA', zip: '90211', lat: 34.075, lng: -118.402, school: 'Urbanville University' },
     bedrooms: 1,
     bathrooms: 1,
     area: 450,
@@ -54,7 +54,7 @@ const properties: Property[] = [
     description: 'Perfect for sharing with a roommate! This two-bedroom apartment has a large living area, a modern kitchen, and two equal-sized bedrooms. Located on the university shuttle route.',
     price: 1800,
     type: 'Apartment',
-    location: { address: '789 Library Walk', city: 'Urbanville', state: 'CA', zip: '90212', lat: 34.070, lng: -118.390 },
+    location: { address: '789 Library Walk', city: 'Urbanville', state: 'CA', zip: '90212', lat: 34.070, lng: -118.390, school: 'Urbanville University' },
     bedrooms: 2,
     bathrooms: 2,
     area: 1100,
@@ -72,7 +72,7 @@ const properties: Property[] = [
     description: 'A beautiful three-bedroom house with a private yard, great for students who want more space. The house has hardwood floors, a large kitchen, and a comfortable living room.',
     price: 2500,
     type: 'House',
-    location: { address: '101 Faculty Dr', city: 'Urbanville', state: 'CA', zip: '90213', lat: 34.080, lng: -118.410 },
+    location: { address: '101 Faculty Dr', city: 'Metropolis', state: 'NY', zip: '10001', lat: 40.7128, lng: -74.0060, school: 'Metropolis University' },
     bedrooms: 3,
     bathrooms: 2,
     area: 1500,
@@ -322,3 +322,4 @@ export function getConversationsByLandlord(landlordId: string): Conversation[] {
 export function getMessagesByConversationId(conversationId: string): Message[] {
     return messages[conversationId] || [];
 }
+

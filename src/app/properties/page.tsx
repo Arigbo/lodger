@@ -1,13 +1,12 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import PropertyCard from "@/components/property-card";
 import SearchFilters from "@/components/search-filters";
 import { getProperties } from "@/lib/data";
 import type { Property } from '@/lib/definitions';
 import type { FilterState } from '@/components/search-filters';
-import { haversineDistance } from '@/lib/utils';
 import { Home } from 'lucide-react';
 
 export default function PropertiesPage() {
@@ -19,26 +18,16 @@ export default function PropertiesPage() {
   const handleFilterChange = (filters: FilterState) => {
     let properties = allProperties.filter(p => p.status === 'available');
 
-    if (filters.location) {
-      if (filters.location.lat && filters.location.lng) {
-        properties = properties.filter(p => {
-          if (p.location.lat && p.location.lng) {
-            const distance = haversineDistance(
-              { lat: filters.location.lat!, lng: filters.location.lng! },
-              { lat: p.location.lat, lng: p.location.lng }
-            );
-            return distance <= 10; // 10km radius for "nearby"
-          }
-          return false;
-        });
-      } else if (filters.location.searchTerm) {
-        const searchTerm = filters.location.searchTerm.toLowerCase();
-        properties = properties.filter(p => 
-            p.title.toLowerCase().includes(searchTerm) ||
-            p.location.address.toLowerCase().includes(searchTerm) ||
-            p.location.city.toLowerCase().includes(searchTerm)
-        );
-      }
+    if (filters.country) {
+        // Mocking country filtering as all properties are in USA
+    }
+
+    if (filters.state) {
+        properties = properties.filter(p => p.location.state === filters.state);
+    }
+
+    if (filters.school) {
+        properties = properties.filter(p => p.location.school === filters.school);
     }
 
     if (filters.price) {

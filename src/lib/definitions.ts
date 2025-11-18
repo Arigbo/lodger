@@ -1,4 +1,5 @@
 
+
 export type User = {
   id: string;
   name: string;
@@ -20,6 +21,7 @@ export type Property = {
     zip: string;
     lat?: number;
     lng?: number;
+    school?: string;
   };
   bedrooms: number;
   bathrooms: number;
@@ -109,3 +111,4 @@ export type Message = {
 
 
 export const amenities = ["Furnished", "Wi-Fi", "In-unit Laundry", "Pet Friendly", "Parking Spot", "Gym Access", "Rooftop Access", "Dishwasher", "All Utilities Included", "Secure Entry", "Private Yard"];
+
