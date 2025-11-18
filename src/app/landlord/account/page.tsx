@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -33,7 +32,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import type { User as UserProfile } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
@@ -69,11 +68,16 @@ export default function AccountPage() {
   const firebaseApp = useFirebaseApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [refetchKey, setRefetchKey] = useState(0);
+
+  const refetchProfile = useCallback(() => {
+    setRefetchKey(prev => prev + 1);
+  }, []);
   
   const userDocRef = useMemoFirebase(() => {
     if (!user) return null;
     return doc(firestore, 'users', user.uid);
-  }, [user, firestore]);
+  }, [user, firestore, refetchKey]);
 
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
 
@@ -110,19 +114,22 @@ export default function AccountPage() {
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !user || !firebaseApp) return;
+    if (!file || !user || !userDocRef) return;
 
     setIsUploading(true);
     try {
         const storage = getStorage(firebaseApp);
         const downloadURL = await uploadProfileImage(storage, user.uid, file);
-        if (userDocRef) {
-            await updateDoc(userDocRef, { profileImageUrl: downloadURL });
-            toast({
-                title: "Profile Picture Updated",
-                description: "Your new profile picture has been saved.",
-            });
-        }
+        
+        await updateDoc(userDocRef, { profileImageUrl: downloadURL });
+        
+        toast({
+            title: "Profile Picture Updated",
+            description: "Your new profile picture has been saved.",
+        });
+        
+        refetchProfile(); // Manually trigger a refetch
+
     } catch (error) {
         console.error("Error uploading image: ", error);
         toast({
@@ -192,7 +199,7 @@ export default function AccountPage() {
                                     </Avatar>
                                     <div className="grid gap-2">
                                         <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                                            <Pencil className="mr-2 h-4 w-4"/> Edit DP
+                                            {isUploading ? 'Uploading...' : <><Pencil className="mr-2 h-4 w-4"/> Edit DP</>}
                                         </Button>
                                         <p className="text-xs text-muted-foreground">Upload a real photo to build trust.</p>
                                         <input
@@ -377,11 +384,5 @@ export default function AccountPage() {
         </Tabs>
     </div>
   );
-
-    
-
-    
-
-
 
     
