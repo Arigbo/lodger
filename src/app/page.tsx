@@ -14,6 +14,8 @@ import type { Property } from "@/lib/definitions";
 
 async function getFeaturedProperties(): Promise<Property[]> {
   try {
+    // The firestore object from "@/firebase/server" will throw an error if not initialized,
+    // which we can catch here.
     const propertiesRef = collection(firestore, 'properties');
     const q = query(propertiesRef, where('isAvailable', '==', true), limit(3));
     const querySnapshot = await getDocs(q);
@@ -23,7 +25,7 @@ async function getFeaturedProperties(): Promise<Property[]> {
     });
     return properties;
   } catch (error) {
-    console.error("Could not fetch featured properties:", error);
+    console.error("Could not fetch featured properties (server-side):", error);
     // In a real app, you might want to have a more robust error handling or fallback.
     // This could be due to missing service account credentials on the server.
     return [];
