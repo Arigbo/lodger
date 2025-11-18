@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -158,8 +159,8 @@ export default function AccountPage() {
                                         <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="grid gap-2">
-                                        <p className="text-sm text-muted-foreground">Update your profile picture.</p>
                                         <Button type="button" variant="outline"><Upload className="mr-2 h-4 w-4"/> Upload Image</Button>
+                                        <p className="text-xs text-muted-foreground">For best results, upload a clear, friendly photo of yourself.</p>
                                     </div>
                                 </div>
                                 
