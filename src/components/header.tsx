@@ -71,7 +71,7 @@ export default function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.avatarUrl} alt="User Avatar" />
+                    <AvatarImage src={user.profileImageUrl} alt="User Avatar" />
                     <AvatarFallback>
                         <User className="h-5 w-5" />
                     </AvatarFallback>
@@ -166,3 +166,5 @@ const navLinks = [
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/landlord", label: "For Landlords" },
 ];
+
+    

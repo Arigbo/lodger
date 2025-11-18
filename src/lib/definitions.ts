@@ -4,7 +4,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  avatarUrl: string;
+  profileImageUrl: string;
   role: 'landlord' | 'student';
   country?: string;
   state?: string;
@@ -127,4 +127,6 @@ export type Message = {
 export const amenities = ["Furnished", "Wi-Fi", "In-unit Laundry", "Pet Friendly", "Parking Spot", "Gym Access", "Rooftop Access", "Dishwasher", "All Utilities Included", "Secure Entry", "Private Yard"];
 
     
+    
+
     

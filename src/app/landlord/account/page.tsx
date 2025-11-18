@@ -117,7 +117,7 @@ export default function AccountPage() {
         const storage = getStorage(firebaseApp);
         const downloadURL = await uploadProfileImage(storage, user.uid, file);
         if (userDocRef) {
-            await updateDoc(userDocRef, { avatarUrl: downloadURL });
+            await updateDoc(userDocRef, { profileImageUrl: downloadURL });
             toast({
                 title: "Profile Picture Updated",
                 description: "Your new profile picture has been saved.",
@@ -185,7 +185,7 @@ export default function AccountPage() {
                             <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
                                 <div className="flex items-center gap-6">
                                     <Avatar className="h-24 w-24">
-                                        <AvatarImage src={userProfile.avatarUrl} />
+                                        <AvatarImage src={userProfile.profileImageUrl} />
                                         <AvatarFallback>
                                             <User className="h-12 w-12 text-muted-foreground" />
                                         </AvatarFallback>
@@ -382,3 +382,6 @@ export default function AccountPage() {
 
     
 
+
+
+    

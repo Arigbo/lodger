@@ -124,7 +124,7 @@ export default function SignupPage() {
             name: values.name,
             email: values.email,
             role: values.userType,
-            avatarUrl: `https://i.pravatar.cc/150?u=${user.uid}`, // Placeholder avatar
+            profileImageUrl: `https://i.pravatar.cc/150?u=${user.uid}`, // Placeholder avatar
             country: values.country || null,
             state: values.state || null,
             school: values.school || null,
@@ -381,5 +381,7 @@ export default function SignupPage() {
   );
 }
 
+
+    
 
     

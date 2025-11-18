@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -176,7 +177,7 @@ export default function MessagesPage() {
                                         scroll={false}
                                     >
                                         <Avatar>
-                                            <AvatarImage src={convo.participant.avatarUrl} />
+                                            <AvatarImage src={convo.participant.profileImageUrl} />
                                             <AvatarFallback>
                                                 <UserIcon className="h-4 w-4" />
                                             </AvatarFallback>
@@ -205,7 +206,7 @@ export default function MessagesPage() {
                                 <div className="flex items-center justify-between border-b p-4">
                                     <Link href={`/landlord/tenants/${selectedParticipant.id}`} className="flex items-center gap-4 group">
                                         <Avatar>
-                                            <AvatarImage src={selectedParticipant.avatarUrl} />
+                                            <AvatarImage src={selectedParticipant.profileImageUrl} />
                                             <AvatarFallback>
                                                 <UserIcon className="h-4 w-4" />
                                             </AvatarFallback>
@@ -228,7 +229,7 @@ export default function MessagesPage() {
                                                 <div className={cn("flex items-end gap-3", msg.senderId === landlord.uid ? "justify-end" : "justify-start")}>
                                                     {msg.senderId !== landlord.uid && (
                                                         <Avatar className="h-8 w-8">
-                                                            <AvatarImage src={selectedParticipant.avatarUrl} />
+                                                            <AvatarImage src={selectedParticipant.profileImageUrl} />
                                                             <AvatarFallback>
                                                                 <UserIcon className="h-4 w-4" />
                                                             </AvatarFallback>
@@ -283,3 +284,5 @@ export default function MessagesPage() {
         </div>
     );
 }
+
+    

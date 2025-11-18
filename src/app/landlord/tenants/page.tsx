@@ -174,7 +174,7 @@ export default function TenantsPage() {
                      <Link href={`/landlord/tenants/${tenant.id}`} className="hover:underline">
                         <div className="flex items-center gap-3">
                         <Avatar>
-                            <AvatarImage src={tenant.avatarUrl} />
+                            <AvatarImage src={tenant.profileImageUrl} />
                             <AvatarFallback>
                                 <UserIcon className="h-4 w-4" />
                             </AvatarFallback>
@@ -245,3 +245,5 @@ export default function TenantsPage() {
     </div>
   );
 }
+
+    

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -80,7 +81,7 @@ export default function MessagesPage() {
                                     scroll={false}
                                 >
                                     <Avatar>
-                                        <AvatarImage src={convo.participant.avatarUrl} />
+                                        <AvatarImage src={convo.participant.profileImageUrl} />
                                         <AvatarFallback>
                                             <UserIcon className="h-4 w-4" />
                                         </AvatarFallback>
@@ -109,7 +110,7 @@ export default function MessagesPage() {
                          <div className="flex items-center justify-between border-b p-4">
                             <div className="flex items-center gap-4 group">
                                 <Avatar>
-                                    <AvatarImage src={selectedConversation.participant.avatarUrl} />
+                                    <AvatarImage src={selectedConversation.participant.profileImageUrl} />
                                     <AvatarFallback>
                                         <UserIcon className="h-4 w-4" />
                                     </AvatarFallback>
@@ -132,7 +133,7 @@ export default function MessagesPage() {
                                         <div className={cn("flex items-end gap-3", msg.senderId === student.id ? "justify-end" : "justify-start")}>
                                             {msg.senderId !== student.id && (
                                                 <Avatar className="h-8 w-8">
-                                                    <AvatarImage src={selectedConversation.participant.avatarUrl} />
+                                                    <AvatarImage src={selectedConversation.participant.profileImageUrl} />
                                                     <AvatarFallback>
                                                         <UserIcon className="h-4 w-4" />
                                                     </AvatarFallback>
@@ -143,7 +144,7 @@ export default function MessagesPage() {
                                             </div>
                                             {msg.senderId === student.id && (
                                                 <Avatar className="h-8 w-8">
-                                                    <AvatarImage src={student.avatarUrl} />
+                                                    <AvatarImage src={student.profileImageUrl} />
                                                     <AvatarFallback>
                                                         <UserIcon className="h-4 w-4" />
                                                     </AvatarFallback>
@@ -182,3 +183,5 @@ export default function MessagesPage() {
     </div>
   );
 }
+
+    

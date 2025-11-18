@@ -117,7 +117,7 @@ export default function TenantDetailPage() {
             <CardContent>
                     <div className="flex items-center gap-6">
                     <Avatar className="h-24 w-24">
-                        <AvatarImage src={tenant.avatarUrl} alt={tenant.name} />
+                        <AvatarImage src={tenant.profileImageUrl} alt={tenant.name} />
                         <AvatarFallback>
                             <UserIcon className="h-12 w-12 text-muted-foreground" />
                         </AvatarFallback>
@@ -221,3 +221,5 @@ export default function TenantDetailPage() {
     </div>
   );
 }
+
+    

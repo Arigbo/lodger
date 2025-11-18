@@ -212,7 +212,7 @@ export default function RentalRequestsPage() {
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar>
-                                                <AvatarImage src={applicant?.avatarUrl} />
+                                                <AvatarImage src={applicant?.profileImageUrl} />
                                                 <AvatarFallback>
                                                     <UserIcon className="h-4 w-4" />
                                                 </AvatarFallback>
@@ -258,3 +258,5 @@ export default function RentalRequestsPage() {
     </div>
   );
 }
+
+    

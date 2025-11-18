@@ -120,7 +120,7 @@ export default function AccountPage() {
                             <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
                                 <div className="flex items-center gap-6">
                                     <Avatar className="h-24 w-24">
-                                        <AvatarImage src={user.avatarUrl} />
+                                        <AvatarImage src={user.profileImageUrl} />
                                         <AvatarFallback>
                                             <User className="h-12 w-12 text-muted-foreground" />
                                         </AvatarFallback>
@@ -319,5 +319,7 @@ export default function AccountPage() {
     </div>
   );
 }
+
+    
 
     

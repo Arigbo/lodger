@@ -321,7 +321,7 @@ function ProspectiveTenantView({
                 </CardHeader>
                 <CardContent className="text-center">
                   <Avatar className="h-24 w-24 mx-auto mb-4">
-                    <AvatarImage src={landlord.avatarUrl} />
+                    <AvatarImage src={landlord.profileImageUrl} />
                     <AvatarFallback>
                         <UserIcon className="h-12 w-12 text-muted-foreground" />
                     </AvatarFallback>
@@ -685,5 +685,7 @@ function AddReviewForm() {
 }
 
 
+
+    
 
     
