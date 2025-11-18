@@ -27,6 +27,7 @@ import { add, format, isPast, isBefore } from 'date-fns';
 import PaymentDialog from '@/components/payment-dialog';
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import TenancySkeleton from "@/components/tenancy-skeleton";
 
 // Mock current user - replace with real auth
 const useUser = () => {
@@ -460,6 +461,10 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
     console.log("Payment successful!");
     window.location.reload();
   };
+  
+  if (!tenancyState) {
+    return <TenancySkeleton />;
+  }
 
   return (
     <div className="space-y-8">
@@ -482,8 +487,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                             <CardTitle>Payment History</CardTitle>
                             <CardDescription>Review your past transactions.</CardDescription>
                         </div>
-                        {!tenancyState && <Skeleton className="h-10 w-32" />}
-                        {tenancyState?.showPayButton && tenancyState.paymentAmount > 0 && (
+                        {tenancyState.showPayButton && tenancyState.paymentAmount > 0 && (
                             <Button onClick={() => setIsPaymentDialogOpen(true)}>Pay Now {formatPrice(tenancyState.paymentAmount)}</Button>
                         )}
                         </div>
@@ -499,7 +503,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {tenancyState && tenancyState.transactions.length > 0 ? tenancyState.transactions.map(t => (
+                                {tenancyState.transactions.length > 0 ? tenancyState.transactions.map(t => (
                                     <TableRow key={t.id}>
                                         <TableCell>{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
                                         <TableCell>{t.type}</TableCell>
@@ -514,13 +518,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                                             </Badge>
                                         </TableCell>
                                     </TableRow>
-                                )) : !tenancyState ? (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="h-24 text-center">
-                                            <Skeleton className="h-4 w-full" />
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
+                                )) : (
                                     <TableRow>
                                         <TableCell colSpan={4} className="text-center h-24">No transactions found.</TableCell>
                                     </TableRow>
@@ -533,17 +531,12 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
              <TabsContent value="lease">
                 <Card className="mt-2">
                     <CardHeader>
-                        <CardTitle>Lease Information</CardTitle>
-                        <CardDescription>Key dates and details about your tenancy.</CardDescription>
+                        <DialogHeader>
+                            <DialogTitle>Lease Information</DialogTitle>
+                            <DialogDescription>Key dates and details about your tenancy.</DialogDescription>
+                        </DialogHeader>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        {!tenancyState ? (
-                             <div className="space-y-6">
-                                <Skeleton className="h-20 w-full" />
-                                <Skeleton className="h-16 w-full" />
-                            </div>
-                        ) : (
-                        <>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="rounded-lg border bg-secondary/50 p-4">
                                 <p className="text-sm font-medium text-muted-foreground">{tenancyState.rentStatusText}</p>
@@ -590,8 +583,6 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                                 </Dialog>
                             )}
                         </div>
-                        </>
-                        )}
                     </CardContent>
                 </Card>
             </TabsContent>
@@ -640,3 +631,6 @@ function AddReviewForm() {
     );
 }
 
+
+
+    
