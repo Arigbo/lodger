@@ -77,7 +77,7 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
         school: undefined,
     };
     setFilters(newFilters);
-    onFilterChange(newFilters);
+    onFilterChange(newFilters); // Directly trigger the filter change
   }
 
   return (
@@ -203,5 +203,3 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
     </Card>
   );
 }
-
-    
