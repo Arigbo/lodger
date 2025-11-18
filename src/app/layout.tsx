@@ -9,6 +9,7 @@ import Footer from "@/components/footer";
 import { Toaster } from "@/components/ui/toaster";
 import { usePathname } from "next/navigation";
 import { HeaderAndFooterProvider } from "@/components/header-and-footer-provider";
+import { FirebaseClientProvider } from "@/firebase";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const spaceGrotesk = Space_Grotesk({
@@ -44,7 +45,9 @@ export default function RootLayout({
           spaceGrotesk.variable
         )}
       >
-        <HeaderAndFooterProvider>{children}</HeaderAndFooterProvider>
+        <FirebaseClientProvider>
+          <HeaderAndFooterProvider>{children}</HeaderAndFooterProvider>
+        </FirebaseClientProvider>
         <Toaster />
       </body>
     </html>
