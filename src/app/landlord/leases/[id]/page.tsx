@@ -1,0 +1,134 @@
+
+'use client';
+
+import { notFound, useParams } from 'next/navigation';
+import { getLeaseAgreementById, getUserById, getPropertyById } from '@/lib/data';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import { CheckCircle2, FileClock, Hourglass, Check } from 'lucide-react';
+import Link from 'next/link';
+
+// Mock current user
+const useUser = () => {
+    // This is the landlord view
+    const user = getUserById('user-1');
+    return { user };
+};
+
+export default function ViewLandlordLeasePage() {
+    const params = useParams();
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const { user: currentUser } = useUser();
+
+    const lease = getLeaseAgreementById(id);
+
+    if (!lease || !currentUser || (currentUser.id !== lease.landlordId)) {
+        notFound();
+    }
+    
+    const landlord = getUserById(lease.landlordId);
+    const tenant = getUserById(lease.tenantId);
+    const property = getPropertyById(lease.propertyId);
+
+    const getStatusVariant = (status: 'active' | 'expired' | 'pending') => {
+        switch (status) {
+            case 'active': return 'secondary';
+            case 'expired': return 'outline';
+            case 'pending': return 'default';
+        }
+    };
+     const getStatusIcon = (status: 'active' | 'expired' | 'pending') => {
+        switch (status) {
+            case 'active': return <CheckCircle2 className="h-5 w-5 text-green-600" />;
+            case 'expired': return <FileClock className="h-5 w-5 text-muted-foreground" />;
+            case 'pending': return <Hourglass className="h-5 w-5 text-primary" />;
+        }
+    };
+
+    return (
+        <div>
+            <div className="flex items-center gap-4">
+                {getStatusIcon(lease.status)}
+                <h1 className="font-headline text-3xl font-bold">Lease Agreement</h1>
+            </div>
+            <p className="text-muted-foreground">
+                Review the details of the lease for <Link href={`/landlord/properties/${property?.id}`} className="font-medium text-primary hover:underline">{property?.title}</Link>.
+            </p>
+            <Separator className="my-4" />
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle>{property?.title}</CardTitle>
+                            <CardDescription>{property?.location.address}, {property?.location.city}, {property?.location.state}</CardDescription>
+                        </div>
+                        <Badge variant={getStatusVariant(lease.status)} className="text-base capitalize">{lease.status}</Badge>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+                        <div>
+                            <h3 className="font-semibold text-muted-foreground">Landlord</h3>
+                            <p>{landlord?.name}</p>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-muted-foreground">Tenant</h3>
+                            <p>{tenant?.name}</p>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-muted-foreground">Term</h3>
+                            <p>{format(new Date(lease.startDate), 'MMM dd, yyyy')} - {format(new Date(lease.endDate), 'MMM dd, yyyy')}</p>
+                        </div>
+                    </div>
+                    <Separator className="my-6"/>
+                    <h3 className="font-semibold mb-2">Lease Document</h3>
+                    <ScrollArea className="h-96 rounded-md border bg-secondary/30 p-4">
+                        <div className="prose prose-sm max-w-none whitespace-pre-wrap">{lease.leaseText}</div>
+                    </ScrollArea>
+
+                    {/* Signature Section */}
+                    <div className="mt-6 rounded-lg border p-4">
+                        <h3 className="font-semibold mb-4 text-center">Signatures</h3>
+                        <div className="flex justify-around text-sm">
+                            <div className="flex flex-col items-center gap-2">
+                                <span className="font-semibold">Landlord</span>
+                                {lease.landlordSigned ? (
+                                    <span className="font-serif italic text-green-600 flex items-center gap-1"><Check className="h-4 w-4"/> Digitally Signed</span>
+                                ) : (
+                                    <span className="font-serif italic text-amber-600 flex items-center gap-1"><Hourglass className="h-4 w-4"/> Pending Signature</span>
+                                )}
+                                <span className="text-xs text-muted-foreground">{landlord?.name}</span>
+                            </div>
+                            <div className="flex flex-col items-center gap-2">
+                                <span className="font-semibold">Tenant</span>
+                                {lease.tenantSigned ? (
+                                    <span className="font-serif italic text-green-600 flex items-center gap-1"><Check className="h-4 w-4"/> Digitally Signed</span>
+                                ) : (
+                                    <span className="font-serif italic text-amber-600 flex items-center gap-1"><Hourglass className="h-4 w-4"/> Pending Signature</span>
+                                )}
+                                <span className="text-xs text-muted-foreground">{tenant?.name}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {lease.status === 'pending' && (
+                        <div className="mt-6 text-center text-sm text-muted-foreground italic rounded-lg border p-4">
+                            This lease has been sent to {tenant?.name} for their signature and is awaiting action.
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+            <div className="mt-4 text-center">
+                <Button variant="outline" asChild>
+                    <Link href="/landlord/leases">
+                        Back to All Leases
+                    </Link>
+                </Button>
+            </div>
+        </div>
+    );
+}

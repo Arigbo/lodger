@@ -121,13 +121,13 @@ export default function StudentLeasesPage() {
                       <TableCell>
                         {lease.status === 'pending' ? (
                             <Button variant="default" size="sm" asChild>
-                              <Link href={`/leases/${lease.id}`}>
+                              <Link href={`/student/leases/${lease.id}`}>
                                 <Signature className="mr-2 h-4 w-4" /> View & Sign
                               </Link>
                             </Button>
                         ) : (
                            <Button variant="outline" size="sm" asChild>
-                           <Link href={`/leases/${lease.id}`}>
+                           <Link href={`/student/leases/${lease.id}`}>
                                 <FileText className="mr-2 h-4 w-4" /> View
                             </Link>
                         </Button>

@@ -108,7 +108,7 @@ export default function LandlordLeasesPage() {
                       </TableCell>
                       <TableCell>
                         <Button variant="outline" size="sm" asChild>
-                            <Link href={`/leases/${lease.id}`}>
+                            <Link href={`/landlord/leases/${lease.id}`}>
                                 <FileText className="mr-2 h-4 w-4" /> View
                             </Link>
                         </Button>
