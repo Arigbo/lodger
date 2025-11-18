@@ -11,10 +11,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2 } from "lucide-react";
+import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter } from "lucide-react";
 import type { Property, User, Review, ImagePlaceholder } from "@/lib/definitions";
 import React from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import Link from "next/link";
+import { FaWhatsapp } from 'react-icons/fa';
 
 // This is the new Server Component that fetches data.
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
@@ -225,9 +227,49 @@ function PropertyDetailView({
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
-                     <Button variant="outline" size="icon">
-                        <Phone className="h-4 w-4"/>
-                    </Button>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="icon">
+                                <Phone className="h-4 w-4"/>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-sm">
+                            <DialogHeader>
+                                <DialogTitle>Contact {landlord.name}</DialogTitle>
+                                <DialogDescription>
+                                    Use the methods below to get in touch. In-app messages are available after a request is accepted.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <Button variant="outline" className="w-full justify-start" asChild>
+                                    <a href={`mailto:${landlord.email}`}>
+                                        <Mail className="mr-2"/> {landlord.email}
+                                    </a>
+                                </Button>
+                                {landlord.phone && (
+                                     <Button variant="outline" className="w-full justify-start" asChild>
+                                        <a href={`tel:${landlord.phone}`}>
+                                            <Phone className="mr-2"/> {landlord.phone}
+                                        </a>
+                                    </Button>
+                                )}
+                                {landlord.whatsappUrl && (
+                                    <Button variant="outline" className="w-full justify-start" asChild>
+                                        <Link href={landlord.whatsappUrl} target="_blank">
+                                            <FaWhatsapp className="mr-2 text-xl" /> Chat on WhatsApp
+                                        </Link>
+                                    </Button>
+                                )}
+                                {landlord.twitterUrl && (
+                                    <Button variant="outline" className="w-full justify-start" asChild>
+                                        <Link href={landlord.twitterUrl} target="_blank">
+                                            <Twitter className="mr-2"/> View X (Twitter) Profile
+                                        </Link>
+                                    </Button>
+                                )}
+                            </div>
+                        </DialogContent>
+                     </Dialog>
                   </div>
                 </CardContent>
               </Card>

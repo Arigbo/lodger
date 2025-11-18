@@ -5,10 +5,10 @@ import placeholderImages from './placeholder-images.json';
 import { add, format } from 'date-fns';
 
 const users: User[] = [
-  { id: 'user-1', name: 'Sarah Johnson', email: 'sarah@university.edu', avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'avatar-1')?.imageUrl || '', role: 'landlord' },
+  { id: 'user-1', name: 'Sarah Johnson', email: 'sarah@university.edu', avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'avatar-1')?.imageUrl || '', role: 'landlord', phone: '111-222-3333', whatsappUrl: 'https://wa.me/11112223333', twitterUrl: 'https://x.com/sarahjohnson' },
   { id: 'user-2', name: 'Michael Chen', email: 'michael@university.edu', avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'avatar-2')?.imageUrl || '', role: 'student', country: 'USA', state: 'CA', school: 'Urbanville University' },
   { id: 'user-3', name: 'Emily Rodriguez', email: 'emily@university.edu', avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'avatar-3')?.imageUrl || '', role: 'student', country: 'USA', state: 'CA', school: 'Urbanville University' },
-  { id: 'user-4', name: 'David Smith', email: 'david@university.edu', avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'avatar-4')?.imageUrl || '', role: 'landlord' },
+  { id: 'user-4', name: 'David Smith', email: 'david@university.edu', avatarUrl: placeholderImages.placeholderImages.find(p => p.id === 'avatar-4')?.imageUrl || '', role: 'landlord', phone: '444-555-6666' },
   { id: 'user-5', name: 'Jessica Williams', email: 'jessica@university.edu', avatarUrl: 'https://picsum.photos/seed/avatar5/200/200', role: 'student', country: 'USA', state: 'NY', school: 'Metropolis University' },
 ];
 
@@ -321,4 +321,3 @@ export function getConversationsByLandlord(landlordId: string): Conversation[] {
 export function getMessagesByConversationId(conversationId: string): Message[] {
     return messages[conversationId] || [];
 }
-

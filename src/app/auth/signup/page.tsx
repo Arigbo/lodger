@@ -27,6 +27,8 @@ const formSchema = z.object({
     password: z.string().min(8, "Password must be at least 8 characters."),
     confirmPassword: z.string(),
     phone: z.string().optional(),
+    whatsappUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
+    twitterUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
     country: z.string().optional(),
     state: z.string().optional(),
     school: z.string().optional(),
@@ -81,7 +83,7 @@ export default function SignupPage() {
     [
         { id: 1, name: 'Choose Account Type', fields: ['userType']},
         { id: 2, name: 'Account Details', fields: ['name', 'email', 'password', 'confirmPassword']},
-        { id: 3, name: 'Contact Information', fields: ['phone']},
+        { id: 3, name: 'Contact Methods', fields: ['phone', 'whatsappUrl', 'twitterUrl']},
     ];
   const totalSteps = steps.length;
 
@@ -220,13 +222,30 @@ export default function SignupPage() {
                 {/* Step 3: Conditional Fields */}
                 <div className={cn("space-y-6", currentStep === 3 ? "block" : "hidden")}>
                     {userType === 'landlord' && (
-                        <FormField control={form.control} name="phone" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Phone Number</FormLabel>
-                                <FormControl><Input type="tel" placeholder="(123) 456-7890" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}/>
+                        <>
+                            <p className="text-sm text-muted-foreground">How can tenants contact you? Your email is already included.</p>
+                             <FormField control={form.control} name="phone" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Phone Number (Required)</FormLabel>
+                                    <FormControl><Input type="tel" placeholder="(123) 456-7890" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                             <FormField control={form.control} name="whatsappUrl" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>WhatsApp URL (Optional)</FormLabel>
+                                    <FormControl><Input type="url" placeholder="https://wa.me/11234567890" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="twitterUrl" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>X (Twitter) Profile URL (Optional)</FormLabel>
+                                    <FormControl><Input type="url" placeholder="https://x.com/yourprofile" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                        </>
                     )}
                     {userType === 'student' && (
                         <>

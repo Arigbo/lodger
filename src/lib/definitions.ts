@@ -9,6 +9,9 @@ export type User = {
   country?: string;
   state?: string;
   school?: string;
+  phone?: string;
+  whatsappUrl?: string;
+  twitterUrl?: string;
 };
 
 export type Property = {
@@ -114,4 +117,3 @@ export type Message = {
 
 
 export const amenities = ["Furnished", "Wi-Fi", "In-unit Laundry", "Pet Friendly", "Parking Spot", "Gym Access", "Rooftop Access", "Dishwasher", "All Utilities Included", "Secure Entry", "Private Yard"];
-
