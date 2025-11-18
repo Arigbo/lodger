@@ -21,10 +21,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { BedDouble, Bath, Ruler, Check, X, Pencil } from 'lucide-react';
-import type { Property, User, RentalRequest } from '@/lib/definitions';
+import { BedDouble, Bath, Ruler, Check, X, Pencil, User } from 'lucide-react';
+import type { Property, User as UserProfile, RentalRequest } from '@/lib/definitions';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import LeaseGenerationDialog from '@/components/lease-generation-dialog';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, where } from 'firebase/firestore';
@@ -48,7 +48,7 @@ export default function LandlordPropertyDetailPage() {
   const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
   
   const tenantRef = useMemoFirebase(() => property?.currentTenantId ? doc(firestore, 'users', property.currentTenantId) : null, [firestore, property]);
-  const { data: tenant } = useDoc<User>(tenantRef);
+  const { data: tenant } = useDoc<UserProfile>(tenantRef);
 
   const rentalRequestsQuery = useMemoFirebase(() => query(collection(firestore, 'rentalApplications'), where('propertyId', '==', id)), [firestore, id]);
   const { data: rentalRequests } = useCollection<RentalRequest>(rentalRequestsQuery);
@@ -166,7 +166,9 @@ export default function LandlordPropertyDetailPage() {
                                     <TableRow key={request.id}>
                                         <TableCell className="flex items-center gap-2">
                                             <Avatar className="h-8 w-8">
-                                                <AvatarFallback>{request.userId.charAt(0)}</AvatarFallback>
+                                                <AvatarFallback>
+                                                    <User className="h-4 w-4" />
+                                                </AvatarFallback>
                                             </Avatar>
                                             <span className='font-medium'>{request.userId.substring(0, 8)}...</span>
                                         </TableCell>
@@ -218,7 +220,9 @@ export default function LandlordPropertyDetailPage() {
                      <div className="flex items-center gap-4">
                         <Avatar className="h-16 w-16">
                             <AvatarImage src={tenant.avatarUrl} />
-                            <AvatarFallback>{tenant.name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback>
+                                <User className="h-8 w-8 text-muted-foreground" />
+                            </AvatarFallback>
                         </Avatar>
                         <div>
                             <p className="font-semibold">{tenant.name}</p>

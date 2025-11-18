@@ -186,11 +186,13 @@ export default function AccountPage() {
                                 <div className="flex items-center gap-6">
                                     <Avatar className="h-24 w-24">
                                         <AvatarImage src={userProfile.avatarUrl} />
-                                        <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
+                                        <AvatarFallback>
+                                            <User className="h-12 w-12 text-muted-foreground" />
+                                        </AvatarFallback>
                                     </Avatar>
                                     <div className="grid gap-2">
                                         <Button type="button" variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                                            <User/> 
+                                            <Pencil/> 
                                         </Button>
                                         <p className="text-xs text-muted-foreground">Upload a real photo to build trust.</p>
                                         <input

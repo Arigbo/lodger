@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { getConversationsByStudent, getMessagesByConversationId, getUserById } from '@/lib/data';
 import type { User, Conversation, Message } from '@/lib/definitions';
-import { Send, Phone, Video } from 'lucide-react';
+import { Send, Phone, Video, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
 // Mock current user
@@ -81,7 +81,9 @@ export default function MessagesPage() {
                                 >
                                     <Avatar>
                                         <AvatarImage src={convo.participant.avatarUrl} />
-                                        <AvatarFallback>{convo.participant.name.charAt(0)}</AvatarFallback>
+                                        <AvatarFallback>
+                                            <UserIcon className="h-4 w-4" />
+                                        </AvatarFallback>
                                     </Avatar>
                                     <div className="flex-grow overflow-hidden">
                                         <div className="flex justify-between items-center">
@@ -108,7 +110,9 @@ export default function MessagesPage() {
                             <div className="flex items-center gap-4 group">
                                 <Avatar>
                                     <AvatarImage src={selectedConversation.participant.avatarUrl} />
-                                    <AvatarFallback>{selectedConversation.participant.name.charAt(0)}</AvatarFallback>
+                                    <AvatarFallback>
+                                        <UserIcon className="h-4 w-4" />
+                                    </AvatarFallback>
                                 </Avatar>
                                 <div>
                                     <p className="font-semibold">{selectedConversation.participant.name}</p>
@@ -129,7 +133,9 @@ export default function MessagesPage() {
                                             {msg.senderId !== student.id && (
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarImage src={selectedConversation.participant.avatarUrl} />
-                                                    <AvatarFallback>{selectedConversation.participant.name.charAt(0)}</AvatarFallback>
+                                                    <AvatarFallback>
+                                                        <UserIcon className="h-4 w-4" />
+                                                    </AvatarFallback>
                                                 </Avatar>
                                             )}
                                             <div className={cn("max-w-xs rounded-xl p-3 md:max-w-md", msg.senderId === student.id ? "bg-primary text-primary-foreground" : "bg-secondary")}>
@@ -138,7 +144,9 @@ export default function MessagesPage() {
                                             {msg.senderId === student.id && (
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarImage src={student.avatarUrl} />
-                                                    <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                                                    <AvatarFallback>
+                                                        <UserIcon className="h-4 w-4" />
+                                                    </AvatarFallback>
                                                 </Avatar>
                                             )}
                                         </div>

@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, FileText, RefreshCcw } from "lucide-react";
+import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, FileText, RefreshCcw, User as UserIcon } from "lucide-react";
 import type { Property, User, Review, ImagePlaceholder, Transaction } from "@/lib/definitions";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
@@ -240,7 +240,9 @@ function ProspectiveTenantView({
                     return (
                         <div key={review.id} className="flex gap-4 pt-6 border-t">
                             <Avatar>
-                                <AvatarFallback>{review.userId.charAt(0)}</AvatarFallback>
+                                <AvatarFallback>
+                                    <UserIcon className="h-4 w-4" />
+                                </AvatarFallback>
                             </Avatar>
                             <div>
                                 <div className="flex items-center gap-2">
@@ -320,7 +322,9 @@ function ProspectiveTenantView({
                 <CardContent className="text-center">
                   <Avatar className="h-24 w-24 mx-auto mb-4">
                     <AvatarImage src={landlord.avatarUrl} />
-                    <AvatarFallback>{landlord.name?.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>
+                        <UserIcon className="h-12 w-12 text-muted-foreground" />
+                    </AvatarFallback>
                   </Avatar>
                   <p className="font-semibold">{landlord.name}</p>
                   <p className="text-sm text-muted-foreground">Joined {new Date().getFullYear()}</p>

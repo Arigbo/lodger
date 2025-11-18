@@ -27,7 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { User, Property, Transaction } from '@/lib/definitions';
-import { MoreHorizontal, Users, Mail } from 'lucide-react';
+import { MoreHorizontal, Users, Mail, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { add, isPast, isBefore } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
@@ -176,7 +176,7 @@ export default function TenantsPage() {
                         <Avatar>
                             <AvatarImage src={tenant.avatarUrl} />
                             <AvatarFallback>
-                            {tenant.name.charAt(0)}
+                                <UserIcon className="h-4 w-4" />
                             </AvatarFallback>
                         </Avatar>
                         <span className="font-medium">{tenant.name}</span>

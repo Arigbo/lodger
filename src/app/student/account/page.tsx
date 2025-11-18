@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload } from 'lucide-react';
+import { Upload, User } from 'lucide-react';
 import { getUserById } from '@/lib/data';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -120,7 +121,9 @@ export default function AccountPage() {
                                 <div className="flex items-center gap-6">
                                     <Avatar className="h-24 w-24">
                                         <AvatarImage src={user.avatarUrl} />
-                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                        <AvatarFallback>
+                                            <User className="h-12 w-12 text-muted-foreground" />
+                                        </AvatarFallback>
                                     </Avatar>
                                     <div className="grid gap-2">
                                         <p className="text-sm text-muted-foreground">Update your profile picture.</p>

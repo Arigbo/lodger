@@ -3,7 +3,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/logo";
@@ -30,17 +30,19 @@ export default function Header() {
   const isAuthenticated = !!user && !isUserLoading;
 
   const handleLogout = () => {
-    signOut(auth);
+    if (auth) {
+        signOut(auth);
+    }
   };
 
   const getDashboardLink = () => {
-      if (!user) return "/auth/login";
+      if (!user?.role) return "/auth/login";
       if (user.role === 'landlord') return "/landlord";
       return "/student";
   }
 
   const getAccountLink = () => {
-      if (!user) return "/auth/login";
+      if (!user?.role) return "/auth/login";
       if (user.role === 'landlord') return "/landlord/account";
       return "/student/account";
   }
@@ -70,7 +72,9 @@ export default function Header() {
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={user.avatarUrl} alt="User Avatar" />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>
+                        <User className="h-5 w-5" />
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>

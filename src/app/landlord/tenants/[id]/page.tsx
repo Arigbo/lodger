@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Phone, Mail, AlertTriangle, Coins, RefreshCcw, Pencil } from 'lucide-react';
+import { Phone, Mail, AlertTriangle, Coins, RefreshCcw, Pencil, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { add, format, differenceInDays, isPast, isBefore } from 'date-fns';
 import { cn, formatPrice } from '@/lib/utils';
@@ -118,7 +118,9 @@ export default function TenantDetailPage() {
                     <div className="flex items-center gap-6">
                     <Avatar className="h-24 w-24">
                         <AvatarImage src={tenant.avatarUrl} alt={tenant.name} />
-                        <AvatarFallback>{tenant.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>
+                            <UserIcon className="h-12 w-12 text-muted-foreground" />
+                        </AvatarFallback>
                     </Avatar>
                     <div>
                         <h2 className="text-2xl font-bold">{tenant.name}</h2>

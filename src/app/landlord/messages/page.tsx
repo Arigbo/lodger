@@ -12,7 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import type { User, Message } from '@/lib/definitions';
-import { Send, Phone, Video } from 'lucide-react';
+import { Send, Phone, Video, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp, limit } from 'firebase/firestore';
@@ -177,7 +177,9 @@ export default function MessagesPage() {
                                     >
                                         <Avatar>
                                             <AvatarImage src={convo.participant.avatarUrl} />
-                                            <AvatarFallback>{convo.participant.name.charAt(0)}</AvatarFallback>
+                                            <AvatarFallback>
+                                                <UserIcon className="h-4 w-4" />
+                                            </AvatarFallback>
                                         </Avatar>
                                         <div className="flex-grow overflow-hidden">
                                             <div className="flex justify-between items-center">
@@ -204,7 +206,9 @@ export default function MessagesPage() {
                                     <Link href={`/landlord/tenants/${selectedParticipant.id}`} className="flex items-center gap-4 group">
                                         <Avatar>
                                             <AvatarImage src={selectedParticipant.avatarUrl} />
-                                            <AvatarFallback>{selectedParticipant.name.charAt(0)}</AvatarFallback>
+                                            <AvatarFallback>
+                                                <UserIcon className="h-4 w-4" />
+                                            </AvatarFallback>
                                         </Avatar>
                                         <div>
                                             <p className="font-semibold group-hover:underline">{selectedParticipant.name}</p>
@@ -225,7 +229,9 @@ export default function MessagesPage() {
                                                     {msg.senderId !== landlord.uid && (
                                                         <Avatar className="h-8 w-8">
                                                             <AvatarImage src={selectedParticipant.avatarUrl} />
-                                                            <AvatarFallback>{selectedParticipant.name.charAt(0)}</AvatarFallback>
+                                                            <AvatarFallback>
+                                                                <UserIcon className="h-4 w-4" />
+                                                            </AvatarFallback>
                                                         </Avatar>
                                                     )}
                                                     <div className={cn("max-w-xs rounded-xl p-3 md:max-w-md", msg.senderId === landlord.uid ? "bg-primary text-primary-foreground" : "bg-secondary")}>
@@ -234,7 +240,9 @@ export default function MessagesPage() {
                                                     {msg.senderId === landlord.uid && (
                                                         <Avatar className="h-8 w-8">
                                                             <AvatarImage src={landlord.photoURL || undefined} />
-                                                            <AvatarFallback>{landlord.displayName?.charAt(0)}</AvatarFallback>
+                                                            <AvatarFallback>
+                                                                <UserIcon className="h-4 w-4" />
+                                                            </AvatarFallback>
                                                         </Avatar>
                                                     )}
                                                 </div>

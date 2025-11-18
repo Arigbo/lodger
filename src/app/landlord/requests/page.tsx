@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { User, Property, RentalRequest } from '@/lib/definitions';
-import { Check, X, Bell } from 'lucide-react';
+import { Check, X, Bell, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import React, { useState } from 'react';
@@ -213,7 +213,9 @@ export default function RentalRequestsPage() {
                                         <div className="flex items-center gap-3">
                                             <Avatar>
                                                 <AvatarImage src={applicant?.avatarUrl} />
-                                                <AvatarFallback>{applicant?.name.charAt(0)}</AvatarFallback>
+                                                <AvatarFallback>
+                                                    <UserIcon className="h-4 w-4" />
+                                                </AvatarFallback>
                                             </Avatar>
                                             <span className="font-medium">{applicant?.name}</span>
                                         </div>
