@@ -12,6 +12,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getSdks } from '.';
+import type { Toast } from '@/hooks/use-toast';
 
 /** Initiate anonymous sign-in (non-blocking). */
 export function initiateAnonymousSignIn(authInstance: Auth): void {
@@ -28,10 +29,33 @@ export function initiateEmailSignUp(authInstance: Auth, email: string, password:
 }
 
 /** Initiate email/password sign-in (non-blocking). */
-export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
-  // CRITICAL: Call signInWithEmailAndPassword directly. Do NOT use 'await signInWithEmailAndPassword(...)'.
-  signInWithEmailAndPassword(authInstance, email, password);
-  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
+export function initiateEmailSignIn(authInstance: Auth, email: string, password: string, toast: (options: Toast) => void): void {
+  signInWithEmailAndPassword(authInstance, email, password)
+    .catch((error) => {
+      console.error("Sign-in error:", error);
+      let errorMessage = "An unknown error occurred. Please try again.";
+      switch (error.code) {
+        case 'auth/invalid-email':
+          errorMessage = "Please enter a valid email address.";
+          break;
+        case 'auth/user-disabled':
+          errorMessage = "This user account has been disabled.";
+          break;
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+          errorMessage = "Invalid email or password. Please try again.";
+          break;
+        default:
+          errorMessage = error.message;
+          break;
+      }
+      toast({
+        variant: "destructive",
+        title: "Sign In Failed",
+        description: errorMessage,
+      });
+    });
 }
 
 /** Initiate Google sign-in (non-blocking). */
@@ -70,5 +94,3 @@ export function initiateGoogleSignIn(auth: Auth, userType: 'student' | 'landlord
       // ...
     });
 }
-
-    

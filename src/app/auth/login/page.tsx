@@ -15,6 +15,7 @@ import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { initiateEmailSignIn } from '@/firebase';
 import { useAuth } from '@/firebase/provider';
+import { useToast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
     email: z.string().email("Please enter a valid email address."),
@@ -25,6 +26,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
     const auth = useAuth();
+    const { toast } = useToast();
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
         defaultValues: { email: '', password: '' }
@@ -32,11 +34,8 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
 
     const { isSubmitting } = form.formState;
 
-    // Correctly handle form submission as an async function
     const onSubmit = async (values: LoginFormValues) => {
-        // initiateEmailSignIn is non-blocking, so we don't await it.
-        // react-hook-form handles the isSubmitting state automatically.
-        initiateEmailSignIn(auth, values.email, values.password);
+        initiateEmailSignIn(auth, values.email, values.password, toast);
     };
 
     return (
