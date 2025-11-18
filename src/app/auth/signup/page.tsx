@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -8,8 +9,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 type UserType = 'student' | 'landlord';
 
@@ -86,6 +89,49 @@ export default function SignupPage() {
                   <Input id="phone" type="tel" placeholder="(123) 456-7890" required />
                 </div>
               )}
+
+              {userType === 'student' && (
+                <>
+                  <Separator />
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Location Information</p>
+                    <p className="text-sm text-muted-foreground">Help us find properties near your school.</p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="country">Country</Label>
+                    <Select required>
+                      <SelectTrigger id="country"><SelectValue placeholder="Select Country" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USA">United States</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="state">State</Label>
+                      <Select required>
+                        <SelectTrigger id="state"><SelectValue placeholder="Select State" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CA">California</SelectItem>
+                          <SelectItem value="NY">New York</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="school">School</Label>
+                      <Select required>
+                        <SelectTrigger id="school"><SelectValue placeholder="Select School" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Urbanville University">Urbanville University</SelectItem>
+                          <SelectItem value="Metropolis University">Metropolis University</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <Separator />
+                </>
+              )}
+
 
               <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>

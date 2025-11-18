@@ -1,22 +1,36 @@
 
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PropertyCard from "@/components/property-card";
 import SearchFilters from "@/components/search-filters";
-import { getProperties } from "@/lib/data";
-import type { Property } from '@/lib/definitions';
+import { getProperties, getUserById } from "@/lib/data";
+import type { Property, User } from '@/lib/definitions';
 import type { FilterState } from '@/components/search-filters';
 import { Home } from 'lucide-react';
 
-export default function PropertiesPage() {
-  const allProperties = getProperties(true); // Get all properties including occupied
-  const [filteredProperties, setFilteredProperties] = useState<Property[]>(
-    allProperties.filter(p => p.status === 'available')
-  );
+// Mock current user - replace with real auth
+const useUser = () => {
+  // To test, use 'user-2' who is a student with location data
+  const user = getUserById('user-2'); 
+  return { user };
+}
 
-  const handleFilterChange = (filters: FilterState) => {
-    let properties = allProperties.filter(p => p.status === 'available');
+
+export default function PropertiesPage() {
+  const allProperties = getProperties(); // Get only available properties
+  const { user } = useUser();
+  
+  const [filters, setFilters] = useState<FilterState>({
+      country: user?.country,
+      state: user?.state,
+      school: user?.school,
+  });
+  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
+
+  useEffect(() => {
+    let properties = allProperties;
 
     if (filters.country) {
         // Mocking country filtering as all properties are in USA
@@ -60,12 +74,21 @@ export default function PropertiesPage() {
         );
     }
 
-
     setFilteredProperties(properties);
+  }, [filters, allProperties]);
+
+
+  const handleFilterChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
   };
 
   const resetFilters = () => {
-    setFilteredProperties(allProperties.filter(p => p.status === 'available'));
+    // Reset to user's default location or empty if no user
+     setFilters({
+      country: user?.country,
+      state: user?.state,
+      school: user?.school,
+    });
   }
 
   return (
@@ -76,7 +99,11 @@ export default function PropertiesPage() {
       </div>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         <aside className="lg:col-span-1">
-          <SearchFilters onFilterChange={handleFilterChange} onReset={resetFilters} />
+          <SearchFilters 
+            onFilterChange={handleFilterChange} 
+            onReset={resetFilters} 
+            initialFilters={filters}
+          />
         </aside>
         <main className="lg:col-span-3">
             <div className="mb-4">

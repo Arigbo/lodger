@@ -6,6 +6,9 @@ export type User = {
   email: string;
   avatarUrl: string;
   role: 'landlord' | 'student';
+  country?: string;
+  state?: string;
+  school?: string;
 };
 
 export type Property = {

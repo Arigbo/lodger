@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { amenities as allAmenities } from "@/lib/definitions";
 
 export type FilterState = {
@@ -24,12 +25,22 @@ export type FilterState = {
 type SearchFiltersProps = {
     onFilterChange: (filters: FilterState) => void;
     onReset: () => void;
+    initialFilters?: FilterState;
 };
 
 
-export default function SearchFilters({ onFilterChange, onReset }: SearchFiltersProps) {
-  const [filters, setFilters] = useState<FilterState>({});
-  const [price, setPrice] = useState(3000);
+export default function SearchFilters({ onFilterChange, onReset, initialFilters }: SearchFiltersProps) {
+  const [filters, setFilters] = useState<FilterState>(initialFilters || {});
+  const [price, setPrice] = useState(initialFilters?.price || 3000);
+
+  useEffect(() => {
+    if (initialFilters) {
+        setFilters(initialFilters);
+        if (initialFilters.price) {
+            setPrice(initialFilters.price);
+        }
+    }
+  }, [initialFilters]);
   
   const handleInputChange = (field: keyof FilterState, value: any) => {
     setFilters(prev => ({ ...prev, [field]: value }));
@@ -49,8 +60,8 @@ export default function SearchFilters({ onFilterChange, onReset }: SearchFilters
   };
 
   const handleReset = () => {
-      setFilters({});
-      setPrice(3000);
+      setFilters(initialFilters || {});
+      setPrice(initialFilters?.price || 3000);
       onReset();
   }
 
