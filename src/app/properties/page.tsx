@@ -17,9 +17,9 @@ const useUser = () => {
   return { user };
 }
 
+const allProperties = getProperties(); // Get all available properties once.
 
 export default function PropertiesPage() {
-  const allProperties = getProperties(); // Get only available properties
   const { user } = useUser();
   
   const [filters, setFilters] = useState<FilterState>({
@@ -75,7 +75,7 @@ export default function PropertiesPage() {
     }
 
     setFilteredProperties(properties);
-  }, [filters, allProperties]);
+  }, [filters]);
 
 
   const handleFilterChange = (newFilters: FilterState) => {
