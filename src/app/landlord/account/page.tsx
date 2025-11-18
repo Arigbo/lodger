@@ -191,8 +191,8 @@ export default function AccountPage() {
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="grid gap-2">
-                                        <Button type="button" variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                                            <Pencil/> 
+                                        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                                            <Pencil className="mr-2 h-4 w-4"/> Edit DP
                                         </Button>
                                         <p className="text-xs text-muted-foreground">Upload a real photo to build trust.</p>
                                         <input
@@ -381,3 +381,4 @@ export default function AccountPage() {
     
 
     
+
