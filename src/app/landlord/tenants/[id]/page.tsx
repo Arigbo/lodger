@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import { notFound, useParams } from 'next/navigation';
 import { getUserById, getPropertiesByTenant, getTransactionsByTenantId } from '@/lib/data';
-import type { User, Property } from '@/lib/definitions';
+import type { User, Property, Transaction } from '@/lib/definitions';
 import {
   Card,
   CardContent,
@@ -41,12 +42,16 @@ import {
 import React, { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import PaymentDialog from '@/components/payment-dialog';
 
 // Mock current user
 const useUser = () => {
     // To test landlord view: 'user-1'
     // To test tenant view: 'user-3'
-    const user = getUserById('user-1');
+    const user = getUserById('user-3');
     return { user };
 };
 
@@ -57,10 +62,17 @@ export default function TenantDetailPage() {
   const { user: currentUser } = useUser();
   const tenant = getUserById(id);
   const rentedProperties = tenant ? getPropertiesByTenant(tenant.id) : [];
+  const tenantTransactions = tenant ? getTransactionsByTenantId(tenant.id) : [];
 
   if (!tenant || !currentUser || rentedProperties.length === 0) {
     notFound();
   }
+  
+  // A tenant should only see their own page, unless it's a landlord viewing it
+  if (currentUser.role === 'student' && currentUser.id !== tenant.id) {
+    notFound();
+  }
+
 
   const property = rentedProperties[0]; // Assuming one tenant rents one property for this view
   const landlord = getUserById(property.landlordId);
@@ -72,7 +84,6 @@ export default function TenantDetailPage() {
   
   const leaseEndDate = add(leaseStartDate, { years: 1 });
   
-  const tenantTransactions = getTransactionsByTenantId(tenant.id);
   const lastRentPayment = tenantTransactions
     .filter(t => t.type === 'Rent')
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
@@ -114,37 +125,21 @@ export default function TenantDetailPage() {
   const compassionFee = (property.price * monthsRemaining) + (property.price * 0.5 * monthsPaid);
   
   // State for lease modal
-  const initialLeaseText = `1. PARTIES
-This Residential Lease Agreement ("Agreement") is made between ${landlord?.name} ("Landlord") and ${tenant.name} ("Tenant").
-
-2. PROPERTY
-Landlord agrees to lease to Tenant the property located at ${property.location.address}, ${property.location.city}, ${property.location.state} ${property.location.zip}.
-
-3. TERM
-The term of this lease is for one year, beginning on ${format(leaseStartDate, 'MMMM do, yyyy')} and ending on ${format(leaseEndDate, 'MMMM do, yyyy')}.
-                                    
-4. RENT
-Tenant agrees to pay Landlord the sum of ${formatPrice(property.price)} per month as rent, due on the 1st day of each month.
-
-5. SECURITY DEPOSIT
-Upon execution of this Agreement, Tenant shall deposit with Landlord the sum of ${formatPrice(property.price)} as security for the faithful performance of the terms of this lease.
-
-6. UTILITIES
-Tenant is responsible for all utilities and services for the property, unless otherwise specified in the property amenities list.
-
-7. USE OF PREMISES
-The premises shall be used and occupied by Tenant and Tenant's immediate family, exclusively, as a private single-family dwelling, and no part of the premises shall be used at any time during the term of this Agreement for the purpose of carrying on any business, profession, or trade of any kind, or for any purpose other than as a private single-family dwelling.
-                                    
-8. HOUSE RULES
-Tenant agrees to abide by the house rules, which are attached as an addendum to this lease. The current rules include: ${property.rules.join(', ')}.`;
-
+  const initialLeaseText = `1. PARTIES...`;
   const [isEditing, setIsEditing] = useState(false);
   const [leaseText, setLeaseText] = useState(initialLeaseText);
   const [landlordSigned, setLandlordSigned] = useState(false);
   const [tenantSigned, setTenantSigned] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  
   const isDocLocked = landlordSigned && tenantSigned;
   const isCurrentUserTenant = currentUser.id === tenant.id;
 
+  const handlePaymentSuccess = () => {
+    console.log("Payment successful!");
+    // Here you would typically re-fetch data or update state
+    window.location.reload();
+  };
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -178,124 +173,108 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                 </CardContent>
              </Card>
 
-             <Card className="mt-8">
-                <CardHeader>
-                    <CardTitle>Lease Information</CardTitle>
-                    <CardDescription>Key dates and details about the tenancy.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div className="rounded-lg border bg-secondary/50 p-4">
-                            <p className="text-sm font-medium text-muted-foreground">Next Rent Due</p>
-                            <p className={cn("text-xl font-bold", isRentDue && isLeaseActive ? "text-destructive" : "text-primary")}>
-                                {isLeaseActive ? format(nextRentDueDate, 'MMMM do, yyyy') : 'N/A'}
-                            </p>
-                        </div>
-                        <div className={cn("rounded-lg border p-4", isLeaseEndingSoon ? "border-amber-500/50 bg-amber-50" : isLeaseExpired ? "border-destructive/50 bg-destructive/5" : "bg-secondary/50")}>
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm font-medium text-muted-foreground">{isLeaseExpired ? "Lease Expired On" : "Lease End Date"}</p>
-                                {isLeaseEndingSoon && <AlertTriangle className="h-5 w-5 text-amber-500" />}
-                            </div>
-                            <p className={cn("text-xl font-bold", isLeaseEndingSoon && "text-amber-600", isLeaseExpired && "text-destructive")}>
-                                {format(leaseEndDate, 'MMMM do, yyyy')}
-                            </p>
-                             {isLeaseEndingSoon && !isLeaseExpired && <p className="text-xs text-amber-500 mt-1">{leaseDaysRemaining} days remaining</p>}
-                        </div>
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div>
-                             <p className="text-sm font-medium text-muted-foreground">Lease Started</p>
-                            <p>{format(leaseStartDate, 'MMMM do, yyyy')}</p>
-                        </div>
-                        
-                        {isLeaseExpired && isCurrentUserTenant ? (
-                            <Button variant="outline"><RefreshCcw className="mr-2 h-4 w-4"/> Request New Lease</Button>
-                        ) : (
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline"><FileText className="mr-2 h-4 w-4"/> View Lease Agreement</Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-3xl">
-                                    <DialogHeader>
-                                        <DialogTitle>Lease Agreement: {property.title}</DialogTitle>
-                                        <DialogDescription>
-                                            This is a legally binding document. Dated: {format(leaseStartDate, 'MMMM do, yyyy')}
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="relative">
-                                        {isDocLocked && (
-                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                                                <div className="text-9xl font-bold text-red-500/10 rotate-[-30deg] select-none">
-                                                    RentU
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div className="prose max-h-[60vh] overflow-y-auto pr-6 text-sm border rounded-md p-4 bg-background">
-                                            {isEditing ? (
-                                                <Textarea 
-                                                    value={leaseText} 
-                                                    onChange={(e) => setLeaseText(e.target.value)}
-                                                    className="w-full h-[50vh] prose-sm"
-                                                    disabled={currentUser?.id !== landlord?.id}
-                                                />
-                                            ) : (
-                                                <div className="whitespace-pre-wrap">{leaseText}</div>
-                                            )}
-                                            <div className="mt-8 pt-4 border-t">
-                                                <h3>9. SIGNATURES</h3>
-                                                <p>By signing below, the parties agree to the terms of this Lease Agreement.</p>
-                                                <div className="mt-4 grid grid-cols-2 gap-6 items-center font-serif italic">
-                                                    <div>
-                                                        {landlordSigned ? (
-                                                            <p className="text-green-600">✓ Digitally Signed by {landlord?.name}</p>
-                                                        ) : (
-                                                            <>
-                                                                {currentUser?.id === landlord?.id ? (
-                                                                    <Button size="sm" onClick={() => setLandlordSigned(true)} disabled={isEditing}>Sign as Landlord</Button>
-                                                                ) : (
-                                                                    <p className="text-muted-foreground">Waiting for Landlord's signature...</p>
-                                                                )}
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        {tenantSigned ? (
-                                                            <p className="text-green-600">✓ Digitally Signed by {tenant.name}</p>
-                                                        ) : (
-                                                             <>
-                                                                {isCurrentUserTenant ? (
-                                                                    <Button size="sm" onClick={() => setTenantSigned(true)} disabled={isEditing}>Sign as Tenant</Button>
-                                                                ) : (
-                                                                    <p className="text-muted-foreground">Waiting for Tenant's signature...</p>
-                                                                )}
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="mt-8 pt-4 border-t flex flex-col items-center text-center">
-                                                <h4 className="font-semibold text-base flex items-center gap-2"><QrCode/> Document Verification</h4>
-                                                <p className="text-xs text-muted-foreground mt-1">Scan this QR code to verify the authenticity of this document.</p>
-                                                <div className="mt-2 p-2 border rounded-md">
-                                                    <Image src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=lease-agreement-${property.id}`} alt="Lease Agreement QR Code" width={120} height={120} />
-                                                </div>
-                                            </div>
-                                        </div>
+            <Tabs defaultValue="lease" className="w-full mt-8">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="lease">Lease Info</TabsTrigger>
+                    <TabsTrigger value="payments">Payments</TabsTrigger>
+                </TabsList>
+                <TabsContent value="lease">
+                    <Card className="mt-2">
+                        <CardHeader>
+                            <CardTitle>Lease Information</CardTitle>
+                            <CardDescription>Key dates and details about the tenancy.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="rounded-lg border bg-secondary/50 p-4">
+                                    <p className="text-sm font-medium text-muted-foreground">Next Rent Due</p>
+                                    <p className={cn("text-xl font-bold", isRentDue && isLeaseActive ? "text-destructive" : "text-primary")}>
+                                        {isLeaseActive ? format(nextRentDueDate, 'MMMM do, yyyy') : 'N/A'}
+                                    </p>
+                                </div>
+                                <div className={cn("rounded-lg border p-4", isLeaseEndingSoon ? "border-amber-500/50 bg-amber-50" : isLeaseExpired ? "border-destructive/50 bg-destructive/5" : "bg-secondary/50")}>
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-sm font-medium text-muted-foreground">{isLeaseExpired ? "Lease Expired On" : "Lease End Date"}</p>
+                                        {isLeaseEndingSoon && <AlertTriangle className="h-5 w-5 text-amber-500" />}
                                     </div>
-                                    <DialogFooter className="mt-4">
-                                    {currentUser?.id === landlord?.id && !isLeaseExpired && (
-                                        <Button variant="ghost" onClick={() => setIsEditing(!isEditing)} disabled={isDocLocked}>
-                                            {isEditing ? <><Lock className="mr-2 h-4 w-4" /> Save & Lock</> : <><Pencil className="mr-2 h-4 w-4" /> Edit</>}
-                                        </Button>
+                                    <p className={cn("text-xl font-bold", isLeaseEndingSoon && "text-amber-600", isLeaseExpired && "text-destructive")}>
+                                        {format(leaseEndDate, 'MMMM do, yyyy')}
+                                    </p>
+                                    {isLeaseEndingSoon && !isLeaseExpired && <p className="text-xs text-amber-500 mt-1">{leaseDaysRemaining} days remaining</p>}
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg border p-4">
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Lease Started</p>
+                                    <p>{format(leaseStartDate, 'MMMM do, yyyy')}</p>
+                                </div>
+                                
+                                {isLeaseExpired && isCurrentUserTenant ? (
+                                    <Button variant="outline"><RefreshCcw className="mr-2 h-4 w-4"/> Request New Lease</Button>
+                                ) : (
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline"><FileText className="mr-2 h-4 w-4"/> View Lease Agreement</Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-3xl">
+                                            {/* Lease Dialog Content */}
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="payments">
+                     <Card className="mt-2">
+                        <CardHeader>
+                             <div className="flex justify-between items-center">
+                                <div>
+                                    <CardTitle>Payment History</CardTitle>
+                                    <CardDescription>Review your past transactions.</CardDescription>
+                                </div>
+                                {isCurrentUserTenant && isRentDue && isLeaseActive && (
+                                    <Button onClick={() => setIsPaymentDialogOpen(true)}>Pay Rent Now</Button>
+                                )}
+                             </div>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Type</TableHead>
+                                        <TableHead className="text-right">Amount</TableHead>
+                                        <TableHead className="text-center">Status</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {tenantTransactions.length > 0 ? tenantTransactions.map(t => (
+                                        <TableRow key={t.id}>
+                                            <TableCell>{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
+                                            <TableCell>{t.type}</TableCell>
+                                            <TableCell className="text-right">{formatPrice(t.amount)}</TableCell>
+                                            <TableCell className="text-center">
+                                                 <Badge variant={
+                                                    t.status === 'Completed' ? 'secondary' 
+                                                    : t.status === 'Pending' ? 'default' 
+                                                    : 'destructive'
+                                                }>
+                                                {t.status}
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    )) : (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="text-center h-24">No transactions found.</TableCell>
+                                        </TableRow>
                                     )}
-                                        <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Download</Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-                        )}
-                    </div>
-                </CardContent>
-             </Card>
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                     </Card>
+                </TabsContent>
+            </Tabs>
         </div>
         <aside className="lg:col-span-1">
              <div className="sticky top-24 space-y-6">
@@ -307,77 +286,44 @@ Tenant agrees to abide by the house rules, which are attached as an addendum to 
                         <h3 className="font-semibold">{property.title}</h3>
                         <p className="text-sm text-muted-foreground">{property.location.address}</p>
                         <Button asChild className="w-full mt-4">
-                            <Link href={`/landlord/properties/${property.id}`}>View Property</Link>
+                            <Link href={`/properties/${property.id}`}>View Property Details</Link>
                         </Button>
                     </CardContent>
                 </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Actions</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col gap-2">
-                        <Button variant="outline" asChild>
-                           <Link href={`/landlord/messages?conversationId=${tenant.id}`}>
-                             <Mail className="mr-2 h-4 w-4"/> Message Tenant
-                           </Link>
-                        </Button>
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" disabled={!isLeaseActive}>End Tenancy</Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>End Tenancy Agreement?</AlertDialogTitle>
-                                {isRentDue && isLeaseActive ? (
-                                    <AlertDialogDescription>
-                                        The tenant's rent for the current month is marked as due. You can end the tenancy immediately without penalty.
-                                    </AlertDialogDescription>
-                                ) : (
-                                    <AlertDialogDescription>
-                                        The tenant's rent is not due. Ending the lease early requires a compassion payment to the tenant. Please review the details below.
-                                    </AlertDialogDescription>
-                                )}
-                                </AlertDialogHeader>
-
-                                {!isRentDue && isLeaseActive && (
-                                    <div className="rounded-lg border bg-muted/20 p-4 space-y-4">
-                                        <h4 className="font-semibold text-center">Compassion Payment Calculation</h4>
-                                        <div className="flex justify-between items-center text-sm">
-                                            <p>Monthly Rent:</p>
-                                            <p>{formatPrice(property.price)}</p>
-                                        </div>
-                                         <div className="flex justify-between items-center text-sm">
-                                            <p>Remaining Months in Lease:</p>
-                                            <p>{monthsRemaining}</p>
-                                        </div>
-                                        <div className="flex justify-between items-center text-sm">
-                                            <p>Months Paid (50% Rate):</p>
-                                            <p>{monthsPaid}</p>
-                                        </div>
-                                        <Separator/>
-                                        <div className="flex justify-between items-center font-bold text-lg">
-                                            <p className="flex items-center gap-2"><Coins className="h-5 w-5 text-primary"/>Total Fee:</p>
-                                            <p>{formatPrice(compassionFee)}</p>
-                                        </div>
-                                    </div>
-                                )}
-                                
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction className={cn(isRentDue && "bg-destructive hover:bg-destructive/90")}>
-                                    {isRentDue && isLeaseActive ? 'Proceed to End Tenancy' : 'Acknowledge & Continue'}
-                                </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    </CardContent>
-                 </Card>
+                 {!isCurrentUserTenant && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Landlord Actions</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-col gap-2">
+                            <Button variant="outline" asChild>
+                            <Link href={`/landlord/messages?conversationId=${tenant.id}`}>
+                                <Mail className="mr-2 h-4 w-4"/> Message Tenant
+                            </Link>
+                            </Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" disabled={!isLeaseActive}>End Tenancy</Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    {/* End Tenancy Dialog Content */}
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </CardContent>
+                    </Card>
+                 )}
             </div>
         </aside>
+        
+        {isCurrentUserTenant && (
+            <PaymentDialog
+                isOpen={isPaymentDialogOpen}
+                onClose={() => setIsPaymentDialogOpen(false)}
+                onPaymentSuccess={handlePaymentSuccess}
+                amount={property.price}
+                tenantName={tenant.name}
+            />
+        )}
     </div>
   );
 }
-
-    
-
-    

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -38,7 +39,7 @@ import { Separator } from '@/components/ui/separator';
 import { getTransactionsByLandlord, getUserById, getPropertyById } from '@/lib/data';
 import type { Transaction } from '@/lib/definitions';
 import { formatPrice, cn } from '@/lib/utils';
-import { DollarSign, ExternalLink, MoreHorizontal, Download, Calendar as CalendarIcon, X as ClearIcon } from 'lucide-react';
+import { DollarSign, ExternalLink, MoreHorizontal, Download, Calendar as CalendarIcon, X as ClearIcon, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { DateRange } from 'react-day-picker';
 import { addDays, format } from 'date-fns';
@@ -108,6 +109,15 @@ export default function TransactionsPage() {
       setStatus('all');
   }
 
+  const totalRevenue = filteredTransactions
+    .filter(t => t.status === 'Completed')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const pendingAmount = filteredTransactions
+    .filter(t => t.status === 'Pending')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -123,6 +133,31 @@ export default function TransactionsPage() {
         </Button>
       </div>
       <Separator className="my-6" />
+
+       {/* Overview Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{formatPrice(totalRevenue)}</div>
+                    <p className="text-xs text-muted-foreground">From {filteredTransactions.length} completed transactions</p>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Pending</CardTitle>
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{formatPrice(pendingAmount)}</div>
+                    <p className="text-xs text-muted-foreground">From transactions currently processing</p>
+                </CardContent>
+            </Card>
+        </div>
+
 
        {/* Filter Controls */}
       <div className="mb-6 rounded-lg border bg-card p-4">
