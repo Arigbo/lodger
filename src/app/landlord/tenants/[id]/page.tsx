@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Phone, Mail, AlertTriangle, Coins, RefreshCcw } from 'lucide-react';
+import { Phone, Mail, AlertTriangle, Coins, RefreshCcw, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { add, format, differenceInDays, isPast, isBefore } from 'date-fns';
 import { cn, formatPrice } from '@/lib/utils';
@@ -67,15 +67,19 @@ export default function TenantDetailPage() {
   const isLeaseActive = isPast(leaseStartDate) && isBefore(today, leaseEndDate);
   
   let nextRentDueDate: Date;
-  let isRentDue = false;
+  let rentStatus: 'Paid' | 'Due' | 'Inactive' = 'Inactive';
 
   if (isLeaseActive) {
     if (lastRentPayment) {
         nextRentDueDate = add(new Date(lastRentPayment.date), { months: 1 });
-        isRentDue = isPast(nextRentDueDate);
+        if (isPast(nextRentDueDate)) {
+            rentStatus = 'Due';
+        } else {
+            rentStatus = 'Paid';
+        }
     } else {
         nextRentDueDate = leaseStartDate;
-        isRentDue = isPast(leaseStartDate);
+        rentStatus = isPast(leaseStartDate) ? 'Due' : 'Paid';
     }
   } else {
     nextRentDueDate = leaseStartDate;
@@ -141,9 +145,9 @@ export default function TenantDetailPage() {
                     <div className="rounded-lg border bg-secondary/50 p-4">
                         <p className="text-sm font-medium text-muted-foreground">Rent Status</p>
                         <div className="flex items-center gap-2">
-                             <Badge variant={isRentDue ? 'destructive' : 'secondary'}>{isRentDue ? 'Due' : 'Paid'}</Badge>
+                             <Badge variant={rentStatus === 'Due' ? 'destructive' : rentStatus === 'Paid' ? 'secondary' : 'outline'}>{rentStatus}</Badge>
                              <p className="text-sm">
-                                {isLeaseActive ? `Next due on ${format(nextRentDueDate, 'MMM do, yyyy')}` : 'Lease Inactive'}
+                                {rentStatus !== 'Inactive' ? `Next due on ${format(nextRentDueDate, 'MMM do, yyyy')}` : 'Lease Inactive'}
                             </p>
                         </div>
                     </div>
@@ -156,7 +160,7 @@ export default function TenantDetailPage() {
                             </div>
                             <div className="flex items-center gap-2">
                                 {isLeaseEndingSoon && <AlertTriangle className="h-5 w-5 text-amber-500" />}
-                                <Button variant="outline"><RefreshCcw className="mr-2 h-4 w-4"/> Renew Lease</Button>
+                                <Button variant="outline" disabled><Pencil className="mr-2 h-4 w-4"/> Edit Lease</Button>
                             </div>
                         </div>
                     </div>

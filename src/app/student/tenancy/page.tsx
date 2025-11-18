@@ -140,7 +140,7 @@ export default function TenantDetailPage() {
                             <CardTitle>Payment History</CardTitle>
                             <CardDescription>Review your past transactions.</CardDescription>
                         </div>
-                        {showPayButton && (
+                        {showPayButton && paymentAmount > 0 && (
                             <Button onClick={() => setIsPaymentDialogOpen(true)}>Pay Now {formatPrice(paymentAmount)}</Button>
                         )}
                         </div>
@@ -209,7 +209,7 @@ export default function TenantDetailPage() {
                             </div>
                             
                             {isLeaseExpired ? (
-                                <Button variant="outline"><RefreshCcw className="mr-2 h-4 w-4"/> Request New Lease</Button>
+                                <Button variant="outline" disabled><RefreshCcw className="mr-2 h-4 w-4"/> Request New Lease</Button>
                             ) : (
                                 <Dialog>
                                     <DialogTrigger asChild>
