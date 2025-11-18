@@ -10,16 +10,7 @@
  * - /properties/{propertyId}/rentalApplications/{rentalApplicationId}: Stores rental applications. Only the landlord who owns the property can manage rental applications.
  * - /leaseAgreements/{leaseAgreementId}: Stores lease agreements.  Accessible to the landlord and tenant involved in the lease.
  * - /propertyReviews/{propertyReviewId}: Stores property reviews.  Anyone can read the reviews. Only the author can create/update/delete their review.
- *
- * Key Security Decisions:
- * - Users can only access their own data under /users/{userId}.
- * - Landlords control their properties and associated rental applications.
- * - Listing of users is disallowed.
- * - Public read access is granted to properties and property reviews.
- *
- * Denormalization for Authorization:
- * - Properties: `landlordId` is stored directly on the property document to avoid needing to query for the landlord's user document.
- * - LeaseAgreements: `tenantId` and `landlordId` are stored directly on the lease agreement to avoid needing to query for the user documents.
+ * - /messages/{messageId}: Stores chat messages. Only participants in the conversation can read/write messages.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -71,7 +62,7 @@ service cloud.firestore {
 
       allow get, list: if true;
 
-      allow create: if isOwner(request.resource.data.landlordId) && request.resource.data.id == propertyId;
+      allow create: if isOwner(request.resource.data.landlordId);
       allow update: if isExistingOwner(resource.data.landlordId);
       allow delete: if isExistingOwner(resource.data.landlordId);
     }
@@ -158,5 +149,47 @@ service cloud.firestore {
       allow update: if isExistingOwner(resource.data.tenantId);
       allow delete: if isExistingOwner(resource.data.tenantId);
     }
+    
+    /**
+     * @description Manages chat messages. Only participants in the conversation can read or write messages.
+     * @path /messages/{messageId}
+     * @allow (list): A user can list messages if their UID is in the `participantIds` array.
+     *   Request: { auth: { uid: 'user123' } }, query constraints check `participantIds`.
+     * @allow (create): A user can create a message if their UID is the sender.
+     *   Request: { auth: { uid: 'user123' }, resource.data.senderId: 'user123' }
+     * @deny (get, list, create): An unauthenticated user or non-participant attempts to access messages.
+     * @principle Enforces participant-only access for reading and writing messages.
+     */
+    match /messages/{messageId} {
+        function isParticipant() {
+            return request.auth.uid in request.resource.data.participantIds;
+        }
+
+        allow list: if request.auth.uid in query.get().participantIds;
+        allow get: if request.auth.uid in resource.data.participantIds;
+        allow create: if isParticipant() && request.auth.uid == request.resource.data.senderId;
+    }
+
+    /**
+     * @description Manages financial transactions. Accessible to the landlord and tenant involved.
+     * @path /transactions/{transactionId}
+     * @allow (list): A user can list their own transactions by landlordId or tenantId.
+     *   Request: { auth: { uid: 'user123' } } with query where('landlordId', '==', 'user123') or where('tenantId', '==', 'user123')
+     * @allow (get): A user can get a transaction if they are the landlord or tenant.
+     *   Request: { auth: { uid: 'landlord123' } } for transaction where landlordId is 'landlord123'
+     * @deny (create, update, delete): These actions are server-side only for security.
+     * @principle Restricts access to transactions to participating parties.
+     */
+    match /transactions/{transactionId} {
+      function isParticipant() {
+        return request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
+      }
+
+      allow get: if isParticipant();
+      allow list: if request.auth.uid == request.query.get('landlordId') || request.auth.uid == request.query.get('tenantId');
+      allow create, update, delete: if false; // Server-side only
+    }
   }
 }
+
+    

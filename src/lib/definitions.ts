@@ -33,7 +33,7 @@ export type Property = {
   bathrooms: number;
   area: number; // in sqft
   amenities: string[];
-  imageIds: string[];
+  images: string[];
   landlordId: string;
   status: 'available' | 'occupied';
   rules: string[];
@@ -56,8 +56,8 @@ export type RentalRequest = {
   propertyId: string;
   userId: string;
   status: 'pending' | 'accepted' | 'declined';
-  message: string;
-  requestDate: string; // ISO 8601 date string
+  messageToLandlord: string;
+  applicationDate: string; // ISO 8601 date string
 };
 
 export type Transaction = {
@@ -115,9 +115,14 @@ export type Conversation = {
 export type Message = {
   id: string;
   senderId: string;
+  recipientId: string;
   text: string;
-  timestamp: string;
+  timestamp: any;
+  read: boolean;
+  participantIds: string[];
 };
 
 
 export const amenities = ["Furnished", "Wi-Fi", "In-unit Laundry", "Pet Friendly", "Parking Spot", "Gym Access", "Rooftop Access", "Dishwasher", "All Utilities Included", "Secure Entry", "Private Yard"];
+
+    

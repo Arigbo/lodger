@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -36,42 +35,91 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { getTransactionsByLandlord, getUserById, getPropertyById } from '@/lib/data';
-import type { Transaction } from '@/lib/definitions';
+import type { Transaction, User, Property } from '@/lib/definitions';
 import { formatPrice, cn } from '@/lib/utils';
 import { DollarSign, ExternalLink, MoreHorizontal, Download, Calendar as CalendarIcon, X as ClearIcon, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { DateRange } from 'react-day-picker';
 import { addDays, format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
-// Mock current user
-const useUser = () => {
-  const user = getUserById('user-1');
-  return { user };
-};
+
+type AggregatedTransaction = {
+  transaction: Transaction;
+  tenant: User;
+  property: Property;
+}
 
 export default function TransactionsPage() {
-  const { user: landlord } = useUser();
-  
-  const allTransactions = React.useMemo(() => {
-    return landlord ? getTransactionsByLandlord(landlord.id) : [];
-  }, [landlord]);
+  const { user: landlord, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const [aggregatedTransactions, setAggregatedTransactions] = React.useState<AggregatedTransaction[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  const [filteredTransactions, setFilteredTransactions] = React.useState<Transaction[]>(allTransactions);
+  const [filteredTransactions, setFilteredTransactions] = React.useState<AggregatedTransaction[]>([]);
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: addDays(new Date(), -30),
     to: new Date(),
   });
   const [type, setType] = React.useState('all');
   const [status, setStatus] = React.useState('all');
+  
+  React.useEffect(() => {
+    if (!landlord || !firestore) return;
+
+    const fetchTransactions = async () => {
+      setIsLoading(true);
+      // 1. Get all transactions for the landlord
+      const transactionsQuery = query(collection(firestore, 'transactions'), where('landlordId', '==', landlord.uid));
+      const transactionsSnapshot = await getDocs(transactionsQuery);
+      const allTransactions = transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[];
+      
+      if (allTransactions.length === 0) {
+        setAggregatedTransactions([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      // 2. Get unique tenant and property IDs
+      const tenantIds = [...new Set(allTransactions.map(t => t.tenantId))];
+      const propertyIds = [...new Set(allTransactions.map(t => t.propertyId))];
+
+      // 3. Fetch all related documents
+      const usersQuery = query(collection(firestore, 'users'), where('id', 'in', tenantIds));
+      const propertiesQuery = query(collection(firestore, 'properties'), where('id', 'in', propertyIds));
+
+      const [usersSnapshot, propertiesSnapshot] = await Promise.all([
+        getDocs(usersQuery),
+        getDocs(propertiesQuery)
+      ]);
+
+      const usersMap = new Map<string, User>();
+      usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+
+      const propertiesMap = new Map<string, Property>();
+      propertiesSnapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+      
+      // 4. Aggregate data
+      const finalTransactions = allTransactions.map(t => ({
+        transaction: t,
+        tenant: usersMap.get(t.tenantId)!,
+        property: propertiesMap.get(t.propertyId)!
+      })).filter(at => at.tenant && at.property);
+
+      setAggregatedTransactions(finalTransactions.sort((a, b) => new Date(b.transaction.date).getTime() - new Date(a.transaction.date).getTime()));
+      setIsLoading(false);
+    }
+
+    fetchTransactions();
+  }, [landlord, firestore]);
 
   React.useEffect(() => {
-    let transactions = allTransactions;
+    let transactions = aggregatedTransactions;
     if (date?.from && date?.to) {
         transactions = transactions.filter(t => {
-            const tDate = new Date(t.date);
-            // Ensure the range is inclusive
+            const tDate = new Date(t.transaction.date);
             const from = new Date(date.from!);
             from.setHours(0, 0, 0, 0);
             const to = new Date(date.to!);
@@ -80,15 +128,15 @@ export default function TransactionsPage() {
         });
     }
     if (type !== 'all') {
-        transactions = transactions.filter(t => t.type === type);
+        transactions = transactions.filter(t => t.transaction.type === type);
     }
     if (status !== 'all') {
-        transactions = transactions.filter(t => t.status === status);
+        transactions = transactions.filter(t => t.transaction.status === status);
     }
 
     setFilteredTransactions(transactions);
 
-  }, [date, type, status, allTransactions]);
+  }, [date, type, status, aggregatedTransactions]);
 
 
   const handleDownloadReport = () => {
@@ -110,13 +158,17 @@ export default function TransactionsPage() {
   }
 
   const totalRevenue = filteredTransactions
-    .filter(t => t.status === 'Completed')
-    .reduce((sum, t) => sum + t.amount, 0);
+    .filter(t => t.transaction.status === 'Completed')
+    .reduce((sum, t) => sum + t.transaction.amount, 0);
 
   const pendingAmount = filteredTransactions
-    .filter(t => t.status === 'Pending')
-    .reduce((sum, t) => sum + t.amount, 0);
+    .filter(t => t.transaction.status === 'Pending')
+    .reduce((sum, t) => sum + t.transaction.amount, 0);
 
+
+  if (isLoading || isUserLoading) {
+      return <div>Loading transactions...</div>
+  }
 
   return (
     <div>
@@ -143,7 +195,7 @@ export default function TransactionsPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{formatPrice(totalRevenue)}</div>
-                    <p className="text-xs text-muted-foreground">From {filteredTransactions.length} completed transactions</p>
+                    <p className="text-xs text-muted-foreground">From {filteredTransactions.filter(t => t.transaction.status === 'Completed').length} completed transactions</p>
                 </CardContent>
             </Card>
              <Card>
@@ -245,7 +297,7 @@ export default function TransactionsPage() {
         <CardHeader>
           <CardTitle>Payment History</CardTitle>
           <CardDescription>
-            Showing {filteredTransactions.length} of {allTransactions.length} total transactions.
+            Showing {filteredTransactions.length} of {aggregatedTransactions.length} total transactions.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -263,9 +315,7 @@ export default function TransactionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTransactions.map((transaction) => {
-                  const tenant = getUserById(transaction.tenantId);
-                  const property = getPropertyById(transaction.propertyId);
+                {filteredTransactions.map(({ transaction, tenant, property }) => {
                   return (
                     <TableRow key={transaction.id}>
                       <TableCell>
@@ -328,3 +378,5 @@ export default function TransactionsPage() {
     </div>
   );
 }
+
+    
