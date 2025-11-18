@@ -1,8 +1,6 @@
 
 
-'use client';
-
-import { notFound, usePathname } from "next/navigation";
+import { notFound } from "next/navigation";
 import Image from "next/image";
 import { getPropertyById, getUserById, getReviewsByPropertyId, getImagesByIds } from "@/lib/data";
 import { formatPrice, cn } from "@/lib/utils";
@@ -14,16 +12,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin } from "lucide-react";
 import type { Property, User, Review, ImagePlaceholder } from "@/lib/definitions";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import Link from "next/link";
 import { FaWhatsapp } from 'react-icons/fa';
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 
 
+// This is the new Server Component that fetches data.
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const property = getPropertyById(params.id);
 
@@ -34,11 +31,8 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const landlord = getUserById(property.landlordId);
   const reviews = getReviewsByPropertyId(property.id);
   const images = getImagesByIds(property.imageIds);
-  
-  const { user } = useUser();
-  const isTenant = user?.id === property.currentTenantId;
 
-  return <PropertyDetailView property={property} landlord={landlord} reviews={reviews} images={images} isTenant={isTenant} />;
+  return <PropertyDetailView property={property} landlord={landlord} reviews={reviews} images={images} />;
 }
 
 // This is the Client Component for rendering UI.
@@ -46,18 +40,23 @@ function PropertyDetailView({
     property,
     landlord,
     reviews: initialReviews,
-    images: initialImages,
-    isTenant
+    images: initialImages
 }: {
     property: Property;
     landlord: User | undefined;
     reviews: Review[];
     images: ImagePlaceholder[];
-    isTenant: boolean;
 }) {
+  'use client';
+  
+  const { useState, useEffect } = React;
+  const { usePathname } = require("next/navigation");
+  const { Textarea } = require("@/components/ui/textarea");
+  const { Label } = require("@/components/ui/label");
+
   const pathname = usePathname();
   const { toast } = useToast();
-  
+  const { user } = useUser();
   const [reviews] = useState(initialReviews);
   const [images] = useState(initialImages);
   const [requestMessage, setRequestMessage] = useState("");
@@ -69,6 +68,7 @@ function PropertyDetailView({
 
   const averageRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
   
+  const isTenant = user?.id === property.currentTenantId;
   const propertyUrl = isClient ? `${window.location.origin}${pathname}` : '';
 
   const handleSendRequest = () => {
@@ -93,11 +93,13 @@ function PropertyDetailView({
           url: propertyUrl,
         });
       } catch (error) {
+        // We can safely ignore AbortError which is thrown when the user cancels the share action
         if ((error as Error).name !== 'AbortError') {
           console.error("Error sharing:", error);
         }
       }
     } else {
+        // This part is a fallback for the button, but the dialog itself provides better fallbacks.
         alert("Web Share API is not supported in your browser. Use the links below to share.");
     }
   };
@@ -365,7 +367,7 @@ type amenityIcon = {
 const amenityIcons: amenityIcon = {
     'Furnished': <Tv className="h-5 w-5 text-primary" />,
     'Wi-Fi': <Wifi className="h-5 w-5 text-primary" />,
-    'In-unit Laundry': <Wind className="h-5 w-5 text-primary" />,
+    'In-unit Laundry': <Wind className="h-5 w-5 text-primary" />, // Using Wind as a proxy for laundry/dryer
     'Pet Friendly': <Dog className="h-5 w-5 text-primary" />,
     'Parking Spot': <ParkingCircle className="h-5 w-5 text-primary" />,
 }
@@ -381,6 +383,8 @@ const useUser = () => {
 
 function AddReviewForm() {
     const [rating, setRating] = React.useState(0);
+    const { Textarea } = require("@/components/ui/textarea");
+    const { Label } = require("@/components/ui/label");
 
     return (
         <Card>
@@ -408,3 +412,5 @@ function AddReviewForm() {
         </Card>
     );
 }
+
+    

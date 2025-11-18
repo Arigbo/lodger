@@ -111,7 +111,7 @@ export default function SignupPage() {
       router.push('/landlord');
     } else {
         // Redirect students to the main properties page or their own dashboard
-        router.push('/properties');
+        router.push('/student/properties');
     }
   };
 

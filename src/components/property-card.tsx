@@ -13,9 +13,12 @@ type PropertyCardProps = {
 
 export default function PropertyCard({ property }: PropertyCardProps) {
   const image = getImagesByIds([property.imageIds[0]])[0];
+  
+  // Decide the link based on context (public or student-specific)
+  const linkHref = `/properties/${property.id}`;
 
   return (
-    <Link href={`/properties/${property.id}`} className="group block">
+    <Link href={linkHref} className="group block">
       <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
         <CardHeader className="p-0">
           <div className="relative h-56 w-full">

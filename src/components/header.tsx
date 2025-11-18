@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link";
@@ -16,9 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import placeholderImages from '@/lib/placeholder-images.json';
 import { getUserById } from "@/lib/data";
-import type { User } from "@/lib/definitions";
+import { getPropertiesByTenant } from "@/lib/data";
 
 const navLinks = [
   { href: "/properties", label: "All Properties" },
@@ -32,8 +32,10 @@ const useUser = () => {
   // To test a student tenant, use 'user-3'.
   // To test a student non-tenant, use 'user-2'.
   // Set user to null to simulate logged-out state on landing page
-  const user = null; 
-  const isTenant = user?.role === 'student' && user.id === 'user-3';
+  const user = getUserById('user-3'); 
+  const rentedProperties = user ? getPropertiesByTenant(user.id) : [];
+  const isTenant = user?.role === 'student' && rentedProperties.length > 0;
+  
   return { user, isTenant, isAuthenticated: !!user };
 }
 
@@ -43,7 +45,12 @@ export default function Header() {
   const { user, isTenant, isAuthenticated } = useUser();
   const userAvatar = user?.avatarUrl;
 
-  const canViewDashboard = user?.role === 'landlord' || isTenant;
+  const getDashboardLink = () => {
+      if (!user) return "/auth/login";
+      if (user.role === 'landlord') return "/landlord";
+      if (isTenant) return "/student";
+      return "/student/properties";
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur">
@@ -83,7 +90,7 @@ export default function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {canViewDashboard && <DropdownMenuItem asChild><Link href="/landlord">Dashboard</Link></DropdownMenuItem>}
+                <DropdownMenuItem asChild><Link href={getDashboardLink()}>Dashboard</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/landlord/account">Profile</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Log out</DropdownMenuItem>
@@ -132,7 +139,7 @@ export default function Header() {
             <div className="mt-4 flex w-full flex-col gap-2">
               {isAuthenticated ? (
                  <>
-                  {canViewDashboard && <Button variant="ghost" asChild className="w-full"><Link href="/landlord">Dashboard</Link></Button>}
+                  <Button variant="ghost" asChild className="w-full"><Link href={getDashboardLink()}>Dashboard</Link></Button>
                   <Button variant="ghost" asChild className="w-full">
                     <Link href="/landlord/account">My Account</Link>
                   </Button>

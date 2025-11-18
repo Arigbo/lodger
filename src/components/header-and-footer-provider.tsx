@@ -10,12 +10,7 @@ const nonLandingPages = [
     "/auth/signup",
     "/auth/forgot-password",
     "/landlord",
-    "/landlord/properties",
-    "/landlord/tenants",
-    "/landlord/messages",
-    "/landlord/transactions",
-    "/landlord/account",
-    "/landlord/properties/new",
+    "/student",
     "/properties",
     "/terms",
     "/privacy"
@@ -23,17 +18,26 @@ const nonLandingPages = [
 
 export function HeaderAndFooterProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const showHeaderAndFooter = !nonLandingPages.some(p => pathname.startsWith(p)) && pathname === '/';
+    
+    // Show header and footer only on the exact homepage
+    const showHeaderAndFooter = pathname === '/';
 
-
+    // Show header only on these specific pages
     const showHeaderOnly = [
         "/properties",
         "/terms",
         "/privacy",
     ].some(p => pathname.startsWith(p));
 
+    // Show no header or footer for auth and dashboard pages
+    const noHeaderFooter = [
+        "/auth",
+        "/landlord",
+        "/student",
+    ].some(p => pathname.startsWith(p));
 
-    if (pathname.startsWith('/auth') || pathname.startsWith('/landlord')) {
+
+    if (noHeaderFooter) {
          return (
             <div className="flex min-h-screen flex-col">
                 <main className="flex-grow">{children}</main>
@@ -51,12 +55,12 @@ export function HeaderAndFooterProvider({ children }: { children: React.ReactNod
          )
     }
     
-
+    // Default for homepage
     return (
         <div className="flex min-h-screen flex-col">
-            {showHeaderAndFooter && <Header />}
+            <Header />
             <main className="flex-grow">{children}</main>
-            {showHeaderAndFooter && <Footer />}
+            <Footer />
         </div>
     );
 }
