@@ -85,7 +85,7 @@ export default function TenantDetailPage() {
   const leaseEndDate = add(leaseStartDate, { years: 1 });
   
   const lastRentPayment = tenantTransactions
-    .filter(t => t.type === 'Rent')
+    .filter(t => t.type === 'Rent' && t.status === 'Completed')
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
   
@@ -108,6 +108,9 @@ export default function TenantDetailPage() {
     nextRentDueDate = leaseStartDate;
   }
 
+  const hasPendingPayments = tenantTransactions.some(t => t.status === 'Pending');
+  const showPayButton = isCurrentUserTenant && (isRentDue || hasPendingPayments) && isLeaseActive;
+  const paymentAmount = property.price + (tenantTransactions.some(t => t.type === 'Deposit' && t.status === 'Pending') ? property.price : 0);
 
   const leaseDaysRemaining = differenceInDays(leaseEndDate, today);
   const isLeaseEndingSoon = isLeaseActive && leaseDaysRemaining <= 90;
@@ -233,8 +236,8 @@ export default function TenantDetailPage() {
                                     <CardTitle>Payment History</CardTitle>
                                     <CardDescription>Review your past transactions.</CardDescription>
                                 </div>
-                                {isCurrentUserTenant && isRentDue && isLeaseActive && (
-                                    <Button onClick={() => setIsPaymentDialogOpen(true)}>Pay Rent Now</Button>
+                                {showPayButton && (
+                                    <Button onClick={() => setIsPaymentDialogOpen(true)}>Pay Now</Button>
                                 )}
                              </div>
                         </CardHeader>
@@ -320,7 +323,7 @@ export default function TenantDetailPage() {
                 isOpen={isPaymentDialogOpen}
                 onClose={() => setIsPaymentDialogOpen(false)}
                 onPaymentSuccess={handlePaymentSuccess}
-                amount={property.price}
+                amount={paymentAmount}
                 tenantName={tenant.name}
             />
         )}

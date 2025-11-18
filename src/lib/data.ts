@@ -93,7 +93,7 @@ let rentalRequests: RentalRequest[] = [
     { id: 'req-2', propertyId: 'prop-4', userId: 'user-3', status: 'pending', message: 'This house looks perfect for me and my two roommates.', requestDate: '2024-05-18T18:00:00Z'},
 ];
 
-const transactions: Transaction[] = [
+let transactions: Transaction[] = [
   { id: 'trans-1', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 1800, date: '2024-05-01', type: 'Rent', status: 'Completed' },
   { id: 'trans-2', landlordId: 'user-1', tenantId: 'user-5', propertyId: 'prop-1', amount: 1200, date: '2024-05-01', type: 'Rent', status: 'Completed' },
   { id: 'trans-3', landlordId: 'user-1', tenantId: 'user-3', propertyId: 'prop-3', amount: 1800, date: '2024-04-01', type: 'Rent', status: 'Completed' },
@@ -259,17 +259,46 @@ export function getRentalRequestsByPropertyId(propertyId: string) {
 
 export function updateRentalRequest(requestId: string, status: 'accepted' | 'declined', tenantId?: string) {
   const requestIndex = rentalRequests.findIndex(r => r.id === requestId);
-  if (requestIndex !== -1) {
-    rentalRequests[requestIndex].status = status;
-    
-    if (status === 'accepted' && tenantId) {
-        const propertyIndex = properties.findIndex(p => p.id === rentalRequests[requestIndex].propertyId);
-        if (propertyIndex !== -1) {
-            properties[propertyIndex].status = 'occupied';
-            properties[propertyIndex].currentTenantId = tenantId;
-            properties[propertyIndex].leaseStartDate = new Date().toISOString().split('T')[0];
-        }
-    }
+  if (requestIndex === -1) return;
+
+  const request = rentalRequests[requestIndex];
+  request.status = status;
+  
+  if (status === 'accepted' && tenantId) {
+      const propertyIndex = properties.findIndex(p => p.id === request.propertyId);
+      if (propertyIndex === -1) return;
+
+      const property = properties[propertyIndex];
+      property.status = 'occupied';
+      property.currentTenantId = tenantId;
+      const leaseStartDate = new Date().toISOString().split('T')[0];
+      property.leaseStartDate = leaseStartDate;
+
+      // Create initial transactions for deposit and first month's rent
+      const newTransactions: Transaction[] = [
+          {
+              id: `trans-${Date.now()}-deposit`,
+              landlordId: property.landlordId,
+              tenantId: tenantId,
+              propertyId: property.id,
+              amount: property.price,
+              date: leaseStartDate,
+              type: 'Deposit',
+              status: 'Pending',
+          },
+          {
+              id: `trans-${Date.now()}-rent`,
+              landlordId: property.landlordId,
+              tenantId: tenantId,
+              propertyId: property.id,
+              amount: property.price,
+              date: leaseStartDate,
+              type: 'Rent',
+              status: 'Pending',
+          },
+      ];
+      
+      transactions.push(...newTransactions);
   }
 }
 
