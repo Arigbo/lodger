@@ -44,8 +44,10 @@ export default function PropertiesPage() {
     // Filter by availability first
     properties = properties.filter(p => p.status === 'available');
 
-    if (filters.useCurrentLocation && user?.school && schoolCoordinates[user.school]) {
-        const currentLocation = schoolCoordinates[user.school as keyof typeof schoolCoordinates];
+    if (filters.useCurrentLocation) {
+        // Simulate using browser geolocation by picking a default location.
+        // In a real app, you would use navigator.geolocation.getCurrentPosition
+        const currentLocation = schoolCoordinates['Urbanville University'];
         properties = properties.filter(p => {
              if (p.location.lat && p.location.lng) {
                 const distance = haversineDistance(currentLocation, { lat: p.location.lat, lng: p.location.lng });
@@ -99,7 +101,7 @@ export default function PropertiesPage() {
     }
 
     setFilteredProperties(properties);
-  }, [filters, user]);
+  }, [filters]);
 
 
   const handleFilterChange = (newFilters: FilterState) => {
