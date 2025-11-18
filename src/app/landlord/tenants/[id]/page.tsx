@@ -68,21 +68,28 @@ export default function TenantDetailPage() {
   
   let nextRentDueDate: Date;
   let rentStatus: 'Paid' | 'Due' | 'Inactive' = 'Inactive';
+  let rentStatusText = 'Lease Inactive';
 
   if (isLeaseActive) {
     if (lastRentPayment) {
         nextRentDueDate = add(new Date(lastRentPayment.date), { months: 1 });
         if (isPast(nextRentDueDate)) {
             rentStatus = 'Due';
+            rentStatusText = `Due on ${format(nextRentDueDate, 'MMM do, yyyy')}`;
         } else {
             rentStatus = 'Paid';
+            rentStatusText = `Next due on ${format(nextRentDueDate, 'MMM do, yyyy')}`;
         }
     } else {
         nextRentDueDate = leaseStartDate;
-        rentStatus = isPast(leaseStartDate) ? 'Due' : 'Paid';
+        if (isPast(leaseStartDate)) {
+            rentStatus = 'Due';
+            rentStatusText = `Due on ${format(nextRentDueDate, 'MMM do, yyyy')}`;
+        } else {
+            rentStatus = 'Paid';
+            rentStatusText = `Next due on ${format(nextRentDueDate, 'MMM do, yyyy')}`;
+        }
     }
-  } else {
-    nextRentDueDate = leaseStartDate;
   }
   
   const leaseDaysRemaining = differenceInDays(leaseEndDate, today);
@@ -147,7 +154,7 @@ export default function TenantDetailPage() {
                         <div className="flex items-center gap-2">
                              <Badge variant={rentStatus === 'Due' ? 'destructive' : rentStatus === 'Paid' ? 'secondary' : 'outline'}>{rentStatus}</Badge>
                              <p className="text-sm">
-                                {rentStatus !== 'Inactive' ? `Next due on ${format(nextRentDueDate, 'MMM do, yyyy')}` : 'Lease Inactive'}
+                                {rentStatusText}
                             </p>
                         </div>
                     </div>

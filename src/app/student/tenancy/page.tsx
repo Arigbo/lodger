@@ -78,6 +78,7 @@ export default function TenantDetailPage() {
   
   let nextRentDueDate: Date;
   let isRentDue = false;
+  let rentDueDateText = "N/A";
 
   if (isLeaseActive) {
     if (lastRentPayment) {
@@ -88,8 +89,7 @@ export default function TenantDetailPage() {
         nextRentDueDate = leaseStartDate;
         isRentDue = isPast(leaseStartDate);
     }
-  } else {
-    nextRentDueDate = leaseStartDate;
+     rentDueDateText = format(nextRentDueDate, 'MMMM do, yyyy');
   }
 
   const hasPendingPayments = tenantTransactions.some(t => t.status === 'Pending');
@@ -190,9 +190,9 @@ export default function TenantDetailPage() {
                     <CardContent className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="rounded-lg border bg-secondary/50 p-4">
-                                <p className="text-sm font-medium text-muted-foreground">Next Rent Due</p>
+                                <p className="text-sm font-medium text-muted-foreground">{isRentDue && isLeaseActive ? 'Rent Due On' : 'Next Rent Due'}</p>
                                 <p className={cn("text-xl font-bold", isRentDue && isLeaseActive ? "text-destructive" : "text-primary")}>
-                                    {isLeaseActive ? format(nextRentDueDate, 'MMMM do, yyyy') : 'N/A'}
+                                    {rentDueDateText}
                                 </p>
                             </div>
                             <div className={cn("rounded-lg border p-4", isLeaseExpired ? "border-destructive/50 bg-destructive/5" : "bg-secondary/50")}>
