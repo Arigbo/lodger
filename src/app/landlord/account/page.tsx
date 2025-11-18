@@ -70,6 +70,7 @@ export default function AccountPage() {
   const firebaseApp = useFirebaseApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [displayAvatarUrl, setDisplayAvatarUrl] = useState<string | undefined>(undefined);
 
   const userDocRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -98,7 +99,7 @@ export default function AccountPage() {
   })
 
   useEffect(() => {
-    // Populate form once both user and userProfile are loaded
+    // Populate form and avatar once both user and userProfile are loaded
     if (user && userProfile) {
         profileForm.reset({
             name: userProfile.name || user.displayName || '',
@@ -106,6 +107,7 @@ export default function AccountPage() {
             phone: userProfile.phone || '',
             bio: userProfile.bio || '',
         });
+        setDisplayAvatarUrl(userProfile.avatarUrl);
     }
   }, [user, userProfile, profileForm]);
 
@@ -139,6 +141,7 @@ export default function AccountPage() {
         const storage = getStorage(firebaseApp);
         const downloadURL = await uploadProfileImage(storage, user.uid, file);
         updateDocumentNonBlocking(userDocRef, { avatarUrl: downloadURL });
+        setDisplayAvatarUrl(downloadURL); // Immediately update the UI with the new URL
         toast({
             title: "Profile Picture Updated",
             description: "Your new picture has been saved.",
@@ -186,7 +189,7 @@ export default function AccountPage() {
                             <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
                                 <div className="flex items-center gap-6">
                                     <Avatar className="h-24 w-24">
-                                        <AvatarImage src={userProfile.avatarUrl || undefined} />
+                                        <AvatarImage src={displayAvatarUrl} />
                                         <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="grid gap-2">
