@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import PropertyCard from "@/components/property-card";
 import SearchFilters from "@/components/search-filters";
 import { getProperties, getUserById } from "@/lib/data";
@@ -20,12 +20,11 @@ const useUser = () => {
 
 const allProperties = getProperties(true); // Get all available properties once, including occupied.
 
-// Mock coordinates for the user's "current location" or a selected school
-const schoolCoordinates: { [key: string]: { lat: number; lng: number } } = {
-  'Urbanville University': { lat: 34.0722, lng: -118.4441 },
-  'Metropolis University': { lat: 40.7295, lng: -73.9965 },
+// Mock coordinates for major state centers to determine location
+const stateCoordinates: { [key: string]: { lat: number; lng: number } } = {
+  'CA': { lat: 36.7783, lng: -119.4179 },
+  'NY': { lat: 40.7128, lng: -74.0060 },
 };
-
 
 export default function PropertiesPage() {
   const { user } = useUser();
@@ -38,6 +37,7 @@ export default function PropertiesPage() {
   });
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
+  const [schoolsInArea, setSchoolsInArea] = useState<string[] | null>(null);
 
   useEffect(() => {
     let properties = allProperties;
@@ -105,17 +105,41 @@ export default function PropertiesPage() {
   const handleFilterChange = (newFilters: FilterState) => {
     if (newFilters.useCurrentLocation === false) {
       setCurrentLocation(null);
+      setSchoolsInArea(null);
     }
     setFilters(newFilters);
   };
   
   const handleLocationSuccess = (coords: {lat: number, lng: number}) => {
     setCurrentLocation(coords);
+
+    // Simulate reverse geocoding to find state and schools
+    let closestState: string | null = null;
+    let minDistance = Infinity;
+
+    for (const state in stateCoordinates) {
+        const distance = haversineDistance(coords, stateCoordinates[state]);
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestState = state;
+        }
+    }
+
+    let schools: string[] = [];
+    if (closestState) {
+        schools = [...new Set(allProperties
+            .filter(p => p.location.state === closestState && p.location.school)
+            .map(p => p.location.school!)
+        )];
+    }
+    
+    setSchoolsInArea(schools);
+    
     setFilters(prev => ({
         ...prev,
         useCurrentLocation: true,
-        country: undefined,
-        state: undefined,
+        country: 'USA',
+        state: closestState || undefined,
         school: undefined
     }));
   }
@@ -134,6 +158,7 @@ export default function PropertiesPage() {
       amenities: []
     });
     setCurrentLocation(null);
+    setSchoolsInArea(null);
   }
 
   return (
@@ -149,6 +174,7 @@ export default function PropertiesPage() {
             onReset={resetFilters} 
             initialFilters={filters}
             onLocationSuccess={handleLocationSuccess}
+            schoolsInArea={schoolsInArea}
           />
         </aside>
         <main className="lg:col-span-3">

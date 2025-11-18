@@ -29,10 +29,11 @@ type SearchFiltersProps = {
     onReset: () => void;
     initialFilters?: FilterState;
     onLocationSuccess: (coords: { lat: number; lng: number }) => void;
+    schoolsInArea?: string[] | null;
 };
 
 
-export default function SearchFilters({ onFilterChange, onReset, initialFilters, onLocationSuccess }: SearchFiltersProps) {
+export default function SearchFilters({ onFilterChange, onReset, initialFilters, onLocationSuccess, schoolsInArea }: SearchFiltersProps) {
   const [filters, setFilters] = useState<FilterState>(initialFilters || {});
   const [price, setPrice] = useState(initialFilters?.price || 3000);
 
@@ -98,7 +99,7 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters,
       <CardContent className="grid gap-6">
         <div className="grid gap-2">
           <Label htmlFor="country">Country</Label>
-          <Select value={filters.useCurrentLocation ? '' : filters.country} onValueChange={(value) => handleInputChange('country', value)} disabled={filters.useCurrentLocation}>
+          <Select value={filters.country} onValueChange={(value) => handleInputChange('country', value)} disabled={filters.useCurrentLocation}>
             <SelectTrigger id="country">
               <SelectValue placeholder="Select Country" />
             </SelectTrigger>
@@ -109,7 +110,7 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters,
         </div>
         <div className="grid gap-2">
           <Label htmlFor="state">State</Label>
-          <Select value={filters.useCurrentLocation ? '' : filters.state} onValueChange={(value) => handleInputChange('state', value)} disabled={filters.useCurrentLocation}>
+          <Select value={filters.state} onValueChange={(value) => handleInputChange('state', value)} disabled={filters.useCurrentLocation}>
             <SelectTrigger id="state">
               <SelectValue placeholder="Select State" />
             </SelectTrigger>
@@ -122,13 +123,23 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters,
         <div className="grid gap-2">
             <Label htmlFor="school">School</Label>
             <div className="flex gap-2">
-                <Select value={filters.useCurrentLocation ? '' : filters.school} onValueChange={(value) => handleInputChange('school', value)} disabled={filters.useCurrentLocation}>
+                <Select value={filters.school} onValueChange={(value) => handleInputChange('school', value)} disabled={filters.useCurrentLocation}>
                     <SelectTrigger id="school">
                     <SelectValue placeholder="Select School" />
                     </SelectTrigger>
                     <SelectContent>
-                    <SelectItem value="Urbanville University">Urbanville University</SelectItem>
-                    <SelectItem value="Metropolis University">Metropolis University</SelectItem>
+                      {schoolsInArea === null && (
+                        <>
+                          <SelectItem value="Urbanville University">Urbanville University</SelectItem>
+                          <SelectItem value="Metropolis University">Metropolis University</SelectItem>
+                        </>
+                      )}
+                      {schoolsInArea && schoolsInArea.length > 0 && schoolsInArea.map(school => (
+                        <SelectItem key={school} value={school}>{school}</SelectItem>
+                      ))}
+                      {schoolsInArea && schoolsInArea.length === 0 && (
+                        <div className="p-2 text-sm text-muted-foreground">No schools found in area.</div>
+                      )}
                     </SelectContent>
                 </Select>
                 <Button variant="outline" size="icon" onClick={handleCurrentLocation}>
