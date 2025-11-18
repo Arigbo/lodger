@@ -12,16 +12,24 @@ import { collection, getDocs, limit, query, where } from "firebase/firestore";
 import { firestore } from "@/firebase/server";
 import type { Property } from "@/lib/definitions";
 
-async function getFeaturedProperties() {
-  const propertiesRef = collection(firestore, 'properties');
-  const q = query(propertiesRef, where('isAvailable', '==', true), limit(3));
-  const querySnapshot = await getDocs(q);
-  const properties: Property[] = [];
-  querySnapshot.forEach((doc) => {
-    properties.push({ id: doc.id, ...doc.data() } as Property);
-  });
-  return properties;
+async function getFeaturedProperties(): Promise<Property[]> {
+  try {
+    const propertiesRef = collection(firestore, 'properties');
+    const q = query(propertiesRef, where('isAvailable', '==', true), limit(3));
+    const querySnapshot = await getDocs(q);
+    const properties: Property[] = [];
+    querySnapshot.forEach((doc) => {
+      properties.push({ id: doc.id, ...doc.data() } as Property);
+    });
+    return properties;
+  } catch (error) {
+    console.error("Could not fetch featured properties:", error);
+    // In a real app, you might want to have a more robust error handling or fallback.
+    // This could be due to missing service account credentials on the server.
+    return [];
+  }
 }
+
 
 export default async function Home() {
   const featuredProperties = await getFeaturedProperties();

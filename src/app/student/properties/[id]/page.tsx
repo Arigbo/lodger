@@ -4,7 +4,6 @@
 
 import { notFound, usePathname, useParams } from "next/navigation";
 import Image from "next/image";
-import { getPropertyById, getUserById, getReviewsByPropertyId, getImagesByIds, getTransactionsByTenantId, generateLeaseText } from "@/lib/data";
 import { formatPrice, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,41 +27,84 @@ import PaymentDialog from '@/components/payment-dialog';
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import TenancySkeleton from "@/components/tenancy-skeleton";
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
+import { doc, collection, query, where, User as FirebaseUser } from "firebase/firestore";
 
-// Mock current user - replace with real auth
-const useUser = () => {
-  // To test a landlord, use 'user-1'.
-  // To test a student tenant, use 'user-3'.
-  // To test a student non-tenant, use 'user-2'.
-  const user = getUserById('user-3');
-  return { user };
+function generateLeaseText(landlord: User, tenant: User | FirebaseUser, property: Property): string {
+  const leaseStartDate = new Date();
+  const leaseEndDate = add(leaseStartDate, { years: 1 });
+
+  return `
+    LEASE AGREEMENT
+
+    This Lease Agreement (the "Agreement") is made and entered into on ${format(new Date(), 'MMMM do, yyyy')}, by and between:
+
+    Landlord: ${landlord.name}
+    Tenant: ${'name' in tenant ? tenant.name : tenant.displayName}
+
+    1. PROPERTY. Landlord agrees to lease to Tenant the property located at:
+       ${property.location.address}, ${property.location.city}, ${property.location.state} ${property.location.zip}
+
+    2. TERM. The lease term will begin on ${format(leaseStartDate, 'MMMM do, yyyy')} and will terminate on ${format(leaseEndDate, 'MMMM do, yyyy')}.
+
+    3. RENT. Tenant agrees to pay Landlord the sum of ${formatPrice(property.price)} per month, due on the 1st day of each month.
+
+    4. SECURITY DEPOSIT. Upon execution of this Agreement, Tenant shall deposit with Landlord the sum of ${formatPrice(property.price)} as security for the faithful performance by Tenant of the terms hereof.
+
+    5. UTILITIES. Tenant is responsible for the payment of all utilities and services for the Property.
+
+    6. AMENITIES. The following amenities are included: ${property.amenities.join(', ')}.
+
+    7. RULES. Tenant agrees to abide by the following rules: ${property.rules.join(', ')}.
+
+    8. SIGNATURES. By signing below, the parties agree to the terms and conditions of this Lease Agreement.
+
+    Landlord: _________________________
+    Date: _________________________
+
+    Tenant: _________________________
+    Date: _________________________
+  `;
 }
 
 // This is the Client Component for rendering UI.
 export default function PropertyDetailView() {
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+
+  const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
+  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
   
-  const property = getPropertyById(id);
+  const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
+  const { data: landlord } = useDoc<User>(landlordRef);
+  
+  const reviewsQuery = useMemoFirebase(() => property ? query(collection(firestore, 'reviews'), where('propertyId', '==', property.id)) : null, [firestore, property]);
+  const { data: reviews } = useCollection<Review>(reviewsQuery);
+  
+  const images: ImagePlaceholder[] = property?.images?.map((url, i) => ({
+      id: `${property.id}-img-${i}`,
+      imageUrl: url,
+      description: property.title,
+      imageHint: 'apartment interior'
+  })) || [];
+
+  if (isUserLoading || isPropertyLoading) {
+    return <TenancySkeleton />; // Or a more generic skeleton
+  }
 
   if (!property) {
     notFound();
   }
 
-  const isTenant = user?.id === property.currentTenantId;
+  const isTenant = user?.uid === property.currentTenantId;
 
-  if (isTenant) {
-      return <TenantPropertyView property={property} tenant={user!} />;
+  if (isTenant && user) {
+      return <TenantPropertyView property={property} tenant={user} />;
   }
-  
-  // Data fetching for non-tenant view
-  const landlord = property ? getUserById(property.landlordId) : undefined;
-  const reviews = property ? getReviewsByPropertyId(property.id) : [];
-  const images = property ? getImagesByIds(property.imageIds) : [];
 
-
-  return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews} images={images} />;
+  return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews || []} images={images} />;
 }
 
 
@@ -73,7 +115,7 @@ function ProspectiveTenantView({
     images: initialImages
 }: {
     property: Property;
-    landlord: User | undefined;
+    landlord: User | undefined | null;
     reviews: Review[];
     images: ImagePlaceholder[];
 }) {
@@ -195,16 +237,14 @@ function ProspectiveTenantView({
             <TabsContent value="reviews" className="py-4 space-y-6">
                 <h3 className="font-headline text-2xl font-semibold">Comments & Reviews</h3>
                 {reviews.map(review => {
-                    const reviewer = getUserById(review.userId);
                     return (
                         <div key={review.id} className="flex gap-4 pt-6 border-t">
                             <Avatar>
-                                {reviewer && <AvatarImage src={reviewer.avatarUrl} />}
-                                <AvatarFallback>{reviewer?.name.charAt(0)}</AvatarFallback>
+                                <AvatarFallback>{review.userId.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <p className="font-semibold">{reviewer?.name}</p>
+                                    <p className="font-semibold">{review.userId}</p>
                                     <p className="text-xs text-muted-foreground">{new Date(review.date).toLocaleDateString()}</p>
                                 </div>
                                 <div className="flex items-center gap-0.5 mt-1">
@@ -280,7 +320,7 @@ function ProspectiveTenantView({
                 <CardContent className="text-center">
                   <Avatar className="h-24 w-24 mx-auto mb-4">
                     <AvatarImage src={landlord.avatarUrl} />
-                    <AvatarFallback>{landlord.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{landlord.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <p className="font-semibold">{landlord.name}</p>
                   <p className="text-sm text-muted-foreground">Joined {new Date().getFullYear()}</p>
@@ -387,12 +427,17 @@ const amenityIcons: amenityIcon = {
     'Parking Spot': <ParkingCircle className="h-5 w-5 text-primary" />,
 }
 
-function TenantPropertyView({ property, tenant }: { property: Property, tenant: User }) {
+function TenantPropertyView({ property, tenant }: { property: Property, tenant: FirebaseUser }) {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [landlord, setLandlord] = useState<User | undefined>(undefined);
+  const firestore = useFirestore();
   
+  const landlordRef = useMemoFirebase(() => doc(firestore, 'users', property.landlordId), [firestore, property.landlordId]);
+  const { data: landlord } = useDoc<User>(landlordRef);
+
+  const transactionsQuery = useMemoFirebase(() => query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.uid)), [firestore, tenant.uid]);
+  const { data: transactions } = useCollection<Transaction>(transactionsQuery);
+
   const [tenancyState, setTenancyState] = useState<{
-    transactions: Transaction[];
     showPayButton: boolean;
     paymentAmount: number;
     leaseEndDate: Date;
@@ -405,10 +450,10 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
   } | null>(null);
 
   useEffect(() => {
-    // Defer all date-sensitive calculations to the client
-    setLandlord(getUserById(property.landlordId));
+    if (!transactions) return;
 
-    const tenantTransactions = getTransactionsByTenantId(tenant.id);
+    // Defer all date-sensitive calculations to the client
+    const tenantTransactions = transactions;
     const today = new Date();
     const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
     const leaseEndDate = add(leaseStartDate, { years: 1 });
@@ -441,10 +486,14 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
     const hasPendingPayments = tenantTransactions.some(t => t.status === 'Pending');
     const showPayButton = (isRentDue || hasPendingPayments) && isLeaseActive;
     const pendingTransactions = tenantTransactions.filter(t => t.status === 'Pending');
-    const paymentAmount = pendingTransactions.reduce((acc, t) => acc + t.amount, 0);
+    let paymentAmount = 0;
+    if (isRentDue) {
+        paymentAmount = property.price;
+    }
+    paymentAmount += pendingTransactions.reduce((acc, t) => acc + t.amount, 0);
+
 
     setTenancyState({
-      transactions: tenantTransactions,
       showPayButton,
       paymentAmount,
       leaseEndDate,
@@ -455,11 +504,11 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
       rentStatusText,
       rentDueDateText,
     });
-  }, [tenant.id, property.leaseStartDate, property.landlordId]);
+  }, [transactions, tenant.uid, property.leaseStartDate, property.price]);
 
   const handlePaymentSuccess = () => {
     console.log("Payment successful!");
-    window.location.reload();
+    // You might want to refetch transactions here or just close the dialog
   };
   
   if (!tenancyState) {
@@ -503,7 +552,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {tenancyState.transactions.length > 0 ? tenancyState.transactions.map(t => (
+                                {transactions && transactions.length > 0 ? transactions.map(t => (
                                     <TableRow key={t.id}>
                                         <TableCell>{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
                                         <TableCell>{t.type}</TableCell>
@@ -594,7 +643,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                 onClose={() => setIsPaymentDialogOpen(false)}
                 onPaymentSuccess={handlePaymentSuccess}
                 amount={tenancyState.paymentAmount}
-                tenantName={tenant.name}
+                tenantName={tenant.displayName || tenant.email || ''}
             />
         )}
     </div>
