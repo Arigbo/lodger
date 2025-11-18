@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -36,7 +35,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useEffect, useRef, useState } from 'react';
-import { doc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import type { User as UserProfile } from '@/lib/definitions';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
@@ -140,7 +139,7 @@ export default function AccountPage() {
     try {
         const storage = getStorage(firebaseApp);
         const downloadURL = await uploadProfileImage(storage, user.uid, file);
-        updateDocumentNonBlocking(userDocRef, { avatarUrl: downloadURL });
+        await updateDoc(userDocRef, { avatarUrl: downloadURL });
         setDisplayAvatarUrl(downloadURL); // Immediately update the UI with the new URL
         toast({
             title: "Profile Picture Updated",
@@ -377,4 +376,5 @@ export default function AccountPage() {
         </Tabs>
     </div>
   );
-}
+
+    
