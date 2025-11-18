@@ -19,8 +19,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload } from 'lucide-react';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebaseApp } from '@/firebase';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -37,7 +35,6 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import type { User as UserProfile } from '@/lib/definitions';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { uploadProfileImage } from '@/firebase/storage';
 import { getStorage } from 'firebase/storage';
@@ -67,9 +64,7 @@ export default function AccountPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const firebaseApp = useFirebaseApp();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = useState(false);
-
+  
   const userDocRef = useMemoFirebase(() => {
     if (!user) return null;
     return doc(firestore, 'users', user.uid);
@@ -112,7 +107,7 @@ export default function AccountPage() {
   function onProfileSubmit(values: ProfileFormValues) {
     if (!userDocRef) return;
     const { name, phone, bio } = values;
-    updateDocumentNonBlocking(userDocRef, { name, phone, bio });
+    updateDoc(userDocRef, { name, phone, bio });
     toast({
         title: "Profile Updated",
         description: "Your public profile has been successfully updated.",
@@ -129,32 +124,6 @@ export default function AccountPage() {
     })
   }
   
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user || !userDocRef) return;
-    
-    setIsUploading(true);
-    try {
-        const storage = getStorage(firebaseApp);
-        const downloadURL = await uploadProfileImage(storage, user.uid, file);
-        await updateDoc(userDocRef, { avatarUrl: downloadURL });
-        toast({
-            title: "Profile Picture Updated",
-            description: "Your new picture has been saved.",
-        });
-    } catch (error) {
-        console.error("Error uploading image:", error);
-        toast({
-            variant: "destructive",
-            title: "Upload Failed",
-            description: "Could not upload your profile picture. Please try again.",
-        });
-    } finally {
-        setIsUploading(false);
-    }
-  }
-
-
   if (isUserLoading || isProfileLoading) {
     return <div>Loading...</div>;
   }
@@ -183,23 +152,6 @@ export default function AccountPage() {
                     <CardContent>
                         <Form {...profileForm}>
                             <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
-                                <div className="flex items-center gap-6">
-                                    <Avatar className="h-24 w-24">
-                                        <AvatarImage src={userProfile.avatarUrl} />
-                                        <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="grid gap-2">
-                                        <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden"/>
-                                        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                                            <Upload className="mr-2 h-4 w-4"/> 
-                                            {isUploading ? "Uploading..." : "Upload Image"}
-                                        </Button>
-                                        <p className="text-xs text-muted-foreground">For best results, upload a clear, friendly photo of yourself.</p>
-                                    </div>
-                                </div>
-                                
-                                <Separator />
-
                                 <FormField
                                     control={profileForm.control}
                                     name="name"
