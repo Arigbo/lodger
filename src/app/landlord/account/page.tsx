@@ -38,6 +38,8 @@ import type { User as UserProfile } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { uploadProfileImage } from '@/firebase/storage';
 import { getStorage } from 'firebase/storage';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Pencil } from 'lucide-react';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -64,6 +66,8 @@ export default function AccountPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const firebaseApp = useFirebaseApp();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
   
   const userDocRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -103,6 +107,32 @@ export default function AccountPage() {
     }
   }, [user, userProfile, profileForm]);
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user || !firebaseApp) return;
+
+    setIsUploading(true);
+    try {
+        const storage = getStorage(firebaseApp);
+        const downloadURL = await uploadProfileImage(storage, user.uid, file);
+        if (userDocRef) {
+            await updateDoc(userDocRef, { avatarUrl: downloadURL });
+            toast({
+                title: "Profile Picture Updated",
+                description: "Your new profile picture has been saved.",
+            });
+        }
+    } catch (error) {
+        console.error("Error uploading image: ", error);
+        toast({
+            variant: "destructive",
+            title: "Upload Failed",
+            description: "Could not upload your new profile picture.",
+        });
+    } finally {
+        setIsUploading(false);
+    }
+  };
 
   function onProfileSubmit(values: ProfileFormValues) {
     if (!userDocRef) return;
@@ -152,6 +182,26 @@ export default function AccountPage() {
                     <CardContent>
                         <Form {...profileForm}>
                             <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
+                                <div className="flex items-center gap-6">
+                                    <Avatar className="h-24 w-24">
+                                        <AvatarImage src={userProfile.avatarUrl} />
+                                        <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="grid gap-2">
+                                        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                                            <Pencil className="mr-2 h-4 w-4"/> 
+                                            {isUploading ? "Uploading..." : "Edit DP"}
+                                        </Button>
+                                        <p className="text-xs text-muted-foreground">Upload a real photo to build trust.</p>
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            onChange={handleImageUpload}
+                                            className="hidden"
+                                            accept="image/png, image/jpeg"
+                                        />
+                                    </div>
+                                </div>
                                 <FormField
                                     control={profileForm.control}
                                     name="name"
