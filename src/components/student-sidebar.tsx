@@ -21,7 +21,7 @@ const studentNavLinks = [
     { href: "/student", label: "Dashboard", icon: LayoutDashboard },
     { href: "/student/tenancy", label: "My Tenancy", icon: Building2 },
     { href: "/student/properties", label: "Find a Property", icon: Search },
-    { href: "/landlord/messages", label: "Messages", icon: MessageSquare }, // Shared for now
+    { href: "/student/messages", label: "Messages", icon: MessageSquare },
     { href: "/landlord/account", label: "Account", icon: UserCog }, // Shared for now
 ]
 

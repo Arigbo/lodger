@@ -347,6 +347,47 @@ export function getConversationsByLandlord(landlordId: string): Conversation[] {
     });
 }
 
+export function getConversationsByStudent(studentId: string): Conversation[] {
+  const studentProperties = getPropertiesByTenant(studentId);
+  const landlords = studentProperties
+    .map(p => getUserById(p.landlordId))
+    .filter((item): item is User => item !== undefined);
+
+  // Create a unique list of landlords
+  const uniqueLandlords = Array.from(new Map(landlords.map(item => [item.id, item])).values());
+
+  return uniqueLandlords.map((landlord) => {
+    // The conversation ID for a student is the *landlord's* ID in this context
+    const convoIdForStudent = studentId;
+    const lastMessageList = messages[convoIdForStudent] || [];
+    const lastMessage = lastMessageList.length > 0 ? lastMessageList[lastMessageList.length - 1] : { text: 'No messages yet', timestamp: '' };
+
+    return {
+      id: landlord.id, // The ID of the conversation is the landlord's ID
+      participant: landlord,
+      lastMessage: lastMessage.text,
+      lastMessageTimestamp: lastMessage.timestamp,
+      unreadCount: 0, // Mocked for now
+    };
+  });
+}
+
+
 export function getMessagesByConversationId(conversationId: string): Message[] {
+    // In our mock data, the conversation key is the tenant's ID.
+    // For students, the convo ID is the landlord ID, so we need to find which tenant conversation that landlord is in.
+    // This is a limitation of the mock data structure. A real DB would handle this better.
+    
+    // Find a tenant associated with this landlord (conversationId)
+    const landlord = getUserById(conversationId);
+    if (landlord && landlord.role === 'landlord') {
+        const properties = getPropertiesByLandlord(landlord.id);
+        const tenantProperty = properties.find(p => p.currentTenantId && messages[p.currentTenantId]);
+        if (tenantProperty && tenantProperty.currentTenantId) {
+            return messages[tenantProperty.currentTenantId] || [];
+        }
+    }
+    
+    // If the conversationId is a tenant ID, return it directly.
     return messages[conversationId] || [];
 }
