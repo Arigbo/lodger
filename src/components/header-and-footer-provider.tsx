@@ -5,35 +5,19 @@ import { usePathname } from "next/navigation";
 import Header from "./header";
 import Footer from "./footer";
 
-const nonLandingPages = [
-    "/auth/login",
-    "/auth/signup",
-    "/auth/forgot-password",
-    "/landlord",
-    "/student",
-    "/properties",
-    "/terms",
-    "/privacy"
-]
-
 export function HeaderAndFooterProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     
     // Show header and footer only on the exact homepage
-    const showHeaderAndFooter = pathname === '/';
+    const isHomepage = pathname === '/';
 
-    // Show header only on these specific pages
-    const showHeaderOnly = [
-        "/properties",
-        "/terms",
-        "/privacy",
-    ].some(p => pathname.startsWith(p));
-
-    // Show no header or footer for auth and dashboard pages
+    // Hide header and footer for auth and dashboard pages
     const noHeaderFooter = [
         "/auth",
         "/landlord",
         "/student",
+        "/terms",
+        "/privacy",
     ].some(p => pathname.startsWith(p));
 
 
@@ -45,7 +29,7 @@ export function HeaderAndFooterProvider({ children }: { children: React.ReactNod
          )
     }
 
-    if (showHeaderOnly) {
+    if (isHomepage) {
          return (
             <div className="flex min-h-screen flex-col">
                 <Header />
@@ -55,12 +39,10 @@ export function HeaderAndFooterProvider({ children }: { children: React.ReactNod
          )
     }
     
-    // Default for homepage
+    // Default for any other pages that might exist
     return (
         <div className="flex min-h-screen flex-col">
-            <Header />
             <main className="flex-grow">{children}</main>
-            <Footer />
         </div>
     );
 }

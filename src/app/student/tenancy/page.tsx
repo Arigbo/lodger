@@ -79,6 +79,7 @@ export default function TenantDetailPage() {
   let nextRentDueDate: Date;
   let isRentDue = false;
   let rentDueDateText = "N/A";
+  let rentStatusText = isLeaseActive ? `Due on` : 'Next due on';
 
   if (isLeaseActive) {
     if (lastRentPayment) {
@@ -90,7 +91,16 @@ export default function TenantDetailPage() {
         isRentDue = isPast(leaseStartDate);
     }
      rentDueDateText = format(nextRentDueDate, 'MMMM do, yyyy');
+  } else {
+      rentStatusText = 'Lease Inactive';
   }
+  
+  if(isRentDue) {
+      rentStatusText = 'Due on';
+  } else if (isLeaseActive) {
+      rentStatusText = 'Next due on';
+  }
+
 
   const hasPendingPayments = tenantTransactions.some(t => t.status === 'Pending');
   const showPayButton = (isRentDue || hasPendingPayments) && isLeaseActive;
@@ -122,7 +132,7 @@ export default function TenantDetailPage() {
                 <h3 className="font-semibold">{property.title}</h3>
                 <p className="text-sm text-muted-foreground">{property.location.address}</p>
                 <Button asChild className="w-full mt-4">
-                    <Link href={`/properties/${property.id}`}>View Property Details</Link>
+                    <Link href={`/student/properties/${property.id}`}>View Property Details</Link>
                 </Button>
             </CardContent>
         </Card>
@@ -190,7 +200,7 @@ export default function TenantDetailPage() {
                     <CardContent className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="rounded-lg border bg-secondary/50 p-4">
-                                <p className="text-sm font-medium text-muted-foreground">{isRentDue && isLeaseActive ? 'Rent Due On' : 'Next Rent Due'}</p>
+                                <p className="text-sm font-medium text-muted-foreground">{rentStatusText}</p>
                                 <p className={cn("text-xl font-bold", isRentDue && isLeaseActive ? "text-destructive" : "text-primary")}>
                                     {rentDueDateText}
                                 </p>
