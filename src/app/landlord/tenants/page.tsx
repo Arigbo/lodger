@@ -30,9 +30,8 @@ import { getPropertiesByLandlord, getUserById, getTransactionsByTenantId } from 
 import type { User, Property } from '@/lib/definitions';
 import { MoreHorizontal, Users, Mail } from 'lucide-react';
 import Link from 'next/link';
-import { add, isPast } from 'date-fns';
+import { add, isPast, isBefore } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 
 // Mock current user
 const useUser = () => {
@@ -56,7 +55,15 @@ export default function TenantsPage() {
 
   const tenants: TenantWithProperty[] = landlordProperties
     .filter(
-      (property) => property.status === 'occupied' && property.currentTenantId
+      (property) => {
+        if (!property.currentTenantId || property.status !== 'occupied' || !property.leaseStartDate) {
+          return false;
+        }
+        // Check if lease is active
+        const leaseStartDate = new Date(property.leaseStartDate);
+        const leaseEndDate = add(leaseStartDate, { years: 1 });
+        return isBefore(today, leaseEndDate);
+      }
     )
     .map((property) => {
       const tenant = getUserById(property.currentTenantId!);
@@ -64,16 +71,21 @@ export default function TenantsPage() {
 
       const tenantTransactions = getTransactionsByTenantId(tenant.id);
       const lastRentPayment = tenantTransactions
-        .filter(t => t.type === 'Rent')
+        .filter(t => t.type === 'Rent' && t.status === 'Completed')
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
       let isRentDue = false;
-      if (lastRentPayment) {
-        const nextDueDate = add(new Date(lastRentPayment.date), { months: 1 });
-        isRentDue = isPast(nextDueDate);
-      } else if (property.leaseStartDate) {
-        // New tenant, rent is due if today is past the lease start date
-        isRentDue = isPast(new Date(property.leaseStartDate));
+      const leaseStartDate = new Date(property.leaseStartDate!);
+      const leaseEndDate = add(leaseStartDate, { years: 1 });
+      const isLeaseActive = isBefore(today, leaseEndDate);
+
+      if (isLeaseActive) {
+        if (lastRentPayment) {
+          const nextDueDate = add(new Date(lastRentPayment.date), { months: 1 });
+          isRentDue = isPast(nextDueDate);
+        } else {
+          isRentDue = isPast(leaseStartDate);
+        }
       }
 
       return { tenant, property, isRentDue };
@@ -86,7 +98,7 @@ export default function TenantsPage() {
         <div>
           <h1 className="font-headline text-3xl font-bold">My Tenants</h1>
           <p className="text-muted-foreground">
-            Manage all your current tenants.
+            Manage all your current tenants with active leases.
           </p>
         </div>
       </div>
@@ -179,9 +191,9 @@ export default function TenantsPage() {
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
                 <Users className="h-10 w-10 text-muted-foreground" />
               </div>
-              <h3 className="mt-4 text-lg font-semibold">No Tenants Yet</h3>
+              <h3 className="mt-4 text-lg font-semibold">No Active Tenants</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                When a student occupies one of your properties, they will appear here.
+                When a student with an active lease occupies one of your properties, they will appear here.
               </p>
             </div>
           )}
