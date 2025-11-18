@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2 } from "lucide-react";
 import type { Property, User, Review, ImagePlaceholder } from "@/lib/definitions";
 import React from "react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 
 // This is the new Server Component that fetches data.
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
@@ -51,10 +52,16 @@ function PropertyDetailView({
   const { user } = useUser();
   const [reviews] = useState(initialReviews);
   const [images] = useState(initialImages);
+  const [requestMessage, setRequestMessage] = useState("");
 
   const averageRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
   
   const isTenant = user?.id === property.currentTenantId;
+
+  const handleSendRequest = () => {
+    console.log("Sending request for property", property.id, "with message:", requestMessage);
+    // Here you would typically call an API to create the rental request
+  }
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-12">
@@ -185,9 +192,39 @@ function PropertyDetailView({
                   <p className="text-sm text-muted-foreground">Joined {new Date().getFullYear()}</p>
                   <Separator className="my-4"/>
                   <div className="flex gap-2">
-                    <Button className="flex-1" disabled={property.status === 'occupied'}>
-                        <MessageSquare className="mr-2 h-4 w-4"/> Request to Rent
-                    </Button>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                             <Button className="flex-1" disabled={property.status === 'occupied'}>
+                                <MessageSquare className="mr-2 h-4 w-4"/> Request to Rent
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Request to Rent {property.title}</DialogTitle>
+                                <DialogDescription>
+                                    Send a message to the landlord, {landlord.name}, with your rental request. You can include any questions or offer a different price.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="message">Your Message</Label>
+                                    <Textarea 
+                                        id="message" 
+                                        placeholder="Hi, I'm very interested in this property. Would you consider a monthly rent of $1100?"
+                                        value={requestMessage}
+                                        onChange={(e) => setRequestMessage(e.target.value)}
+                                        rows={4}
+                                    />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button variant="ghost">Cancel</Button>
+                                </DialogClose>
+                                <Button onClick={handleSendRequest}>Send Request</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                      <Button variant="outline" size="icon">
                         <Phone className="h-4 w-4"/>
                     </Button>
@@ -254,7 +291,3 @@ function AddReviewForm() {
         </Card>
     );
 }
-
-    
-
-    
