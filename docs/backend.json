@@ -1,0 +1,371 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the Urban Nest platform, either a landlord or a tenant.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "userType": {
+          "type": "string",
+          "description": "The type of user. Can be 'landlord' or 'tenant'."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The phone number of the user."
+        },
+        "profilePicture": {
+          "type": "string",
+          "description": "URL of the user's profile picture.",
+          "format": "uri"
+        },
+        "bio": {
+          "type": "string",
+          "description": "A short biography or description of the user."
+        }
+      },
+      "required": [
+        "id",
+        "userType",
+        "firstName",
+        "lastName",
+        "email",
+        "phoneNumber"
+      ]
+    },
+    "Property": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Property",
+      "type": "object",
+      "description": "Represents a property listing on the Urban Nest platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Property entity."
+        },
+        "landlordId": {
+          "type": "string",
+          "description": "Reference to the User who owns the property. (Relationship: User 1:N Property)"
+        },
+        "address": {
+          "type": "string",
+          "description": "The full address of the property."
+        },
+        "propertyType": {
+          "type": "string",
+          "description": "The type of property (e.g., apartment, house, condo)."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the property."
+        },
+        "rent": {
+          "type": "number",
+          "description": "The monthly rent for the property."
+        },
+        "bedrooms": {
+          "type": "number",
+          "description": "The number of bedrooms in the property."
+        },
+        "bathrooms": {
+          "type": "number",
+          "description": "The number of bathrooms in the property."
+        },
+        "amenities": {
+          "type": "array",
+          "description": "A list of amenities offered by the property.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "images": {
+          "type": "array",
+          "description": "A list of URLs for images of the property.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "virtualTourUrl": {
+          "type": "string",
+          "description": "URL of the virtual tour of the property.",
+          "format": "uri"
+        },
+        "isAvailable": {
+          "type": "boolean",
+          "description": "Indicates whether the property is currently available for rent."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "The latitude coordinate of the property's location."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "The longitude coordinate of the property's location."
+        }
+      },
+      "required": [
+        "id",
+        "landlordId",
+        "address",
+        "propertyType",
+        "description",
+        "rent",
+        "bedrooms",
+        "bathrooms",
+        "isAvailable",
+        "latitude",
+        "longitude"
+      ]
+    },
+    "RentalApplication": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RentalApplication",
+      "type": "object",
+      "description": "Represents a rental application submitted by a tenant for a property.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the RentalApplication entity."
+        },
+        "tenantId": {
+          "type": "string",
+          "description": "Reference to the User who submitted the application. (Relationship: User 1:N RentalApplication)"
+        },
+        "propertyId": {
+          "type": "string",
+          "description": "Reference to the Property the application is for. (Relationship: Property 1:N RentalApplication)"
+        },
+        "applicationDate": {
+          "type": "string",
+          "description": "The date the application was submitted.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the application (e.g., pending, approved, rejected)."
+        },
+        "messageToLandlord": {
+          "type": "string",
+          "description": "Message the tenant may optionally include to the landlord when applying for a property."
+        }
+      },
+      "required": [
+        "id",
+        "tenantId",
+        "propertyId",
+        "applicationDate",
+        "status"
+      ]
+    },
+    "LeaseAgreement": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LeaseAgreement",
+      "type": "object",
+      "description": "Represents a lease agreement between a landlord and a tenant.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the LeaseAgreement entity."
+        },
+        "propertyId": {
+          "type": "string",
+          "description": "Reference to the Property that is being leased. (Relationship: Property 1:N LeaseAgreement)"
+        },
+        "tenantId": {
+          "type": "string",
+          "description": "Reference to the User (tenant) who is leasing the property. (Relationship: User 1:N LeaseAgreement where User is a tenant)"
+        },
+        "landlordId": {
+          "type": "string",
+          "description": "Reference to the User (landlord) who owns the property. (Relationship: User 1:N LeaseAgreement where User is a landlord)"
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The start date of the lease.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "The end date of the lease.",
+          "format": "date-time"
+        },
+        "rentAmount": {
+          "type": "number",
+          "description": "The monthly rent amount specified in the lease."
+        },
+        "securityDeposit": {
+          "type": "number",
+          "description": "The amount of the security deposit."
+        },
+        "termsAndConditions": {
+          "type": "string",
+          "description": "The terms and conditions of the lease agreement."
+        }
+      },
+      "required": [
+        "id",
+        "propertyId",
+        "tenantId",
+        "landlordId",
+        "startDate",
+        "endDate",
+        "rentAmount",
+        "securityDeposit",
+        "termsAndConditions"
+      ]
+    },
+    "PropertyReview": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PropertyReview",
+      "type": "object",
+      "description": "Represents a review of a property by a tenant.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PropertyReview entity."
+        },
+        "propertyId": {
+          "type": "string",
+          "description": "Reference to the Property being reviewed. (Relationship: Property 1:N PropertyReview)"
+        },
+        "tenantId": {
+          "type": "string",
+          "description": "Reference to the User (tenant) who wrote the review. (Relationship: User 1:N PropertyReview where User is a tenant)"
+        },
+        "rating": {
+          "type": "number",
+          "description": "The rating given by the tenant (e.g., 1-5 stars)."
+        },
+        "comment": {
+          "type": "string",
+          "description": "The text of the review."
+        },
+        "reviewDate": {
+          "type": "string",
+          "description": "The date the review was written.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "propertyId",
+        "tenantId",
+        "rating",
+        "comment",
+        "reviewDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Path-based ownership for user data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/properties/{propertyId}",
+        "definition": {
+          "entityName": "Property",
+          "schema": {
+            "$ref": "#/backend/entities/Property"
+          },
+          "description": "Stores property listings. Includes denormalized 'landlordId' for authorization independence.",
+          "params": [
+            {
+              "name": "propertyId",
+              "description": "The unique identifier for the property."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/properties/{propertyId}/rentalApplications/{rentalApplicationId}",
+        "definition": {
+          "entityName": "RentalApplication",
+          "schema": {
+            "$ref": "#/backend/entities/RentalApplication"
+          },
+          "description": "Stores rental applications for a specific property. Located as a subcollection to allow for filtering by property and restricting access to only the landlord.",
+          "params": [
+            {
+              "name": "propertyId",
+              "description": "The unique identifier for the property."
+            },
+            {
+              "name": "rentalApplicationId",
+              "description": "The unique identifier for the rental application."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/leaseAgreements/{leaseAgreementId}",
+        "definition": {
+          "entityName": "LeaseAgreement",
+          "schema": {
+            "$ref": "#/backend/entities/LeaseAgreement"
+          },
+          "description": "Stores lease agreements. Includes denormalized 'tenantId' and 'landlordId' for authorization independence.",
+          "params": [
+            {
+              "name": "leaseAgreementId",
+              "description": "The unique identifier for the lease agreement."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/propertyReviews/{propertyReviewId}",
+        "definition": {
+          "entityName": "PropertyReview",
+          "schema": {
+            "$ref": "#/backend/entities/PropertyReview"
+          },
+          "description": "Stores property reviews. Includes 'propertyId' to allow filtering reviews by property.",
+          "params": [
+            {
+              "name": "propertyReviewId",
+              "description": "The unique identifier for the property review."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support Urban Nest's core features while adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs.  \n\n**Authorization Independence:** Achieved through denormalization.  For example, the `Property` document stores the `landlordId`, eliminating the need to fetch user data for authorization. The `LeaseAgreement` stores both `tenantId` and `landlordId` for similar reasons.  RentalApplications are located as subcollections of Properties to allow for filtering RentalApplications by Property with only the landlord having access to these applications. The `PropertyReview` collection includes the `propertyId`, enabling the filtering of reviews by property without requiring complex rule logic.\n\n**Structural Segregation:** Each collection houses documents with similar security requirements. User data is stored in the `/users/{userId}` path (path-based ownership), properties are stored in a top-level `/properties` collection, applications as subcollections of properties, and reviews in a top-level `/propertyReviews` collection.\n\n**Access Modeling:**  We leverage path-based ownership for user data (`/users/{userId}`), enabling simple security rules.  Properties have `landlordId` and are located in the top-level `/properties` collection, the `RentalApplication` is located as a subcollection of the property and includes the `tenantId`, and LeaseAgreements include both `tenantId` and `landlordId`.  \n\n**QAPs:** The structure supports secure list operations. For example, listing properties can be secured by checking the `landlordId` against `request.auth.uid`. Since the `RentalApplication` collection is a subcollection of `Property`, listing RentalApplications would happen under the security context of the parent Property. The reviews can be filtered by property id, with the review documents containing the associated property id."
+  }
+}
