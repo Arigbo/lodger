@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Firestore Security Rules for the Urban Nest application.
  *
@@ -186,10 +187,8 @@ service cloud.firestore {
       }
 
       allow get: if isParticipant();
-      allow list: if request.auth.uid == request.query.get('landlordId') || request.auth.uid == request.query.get('tenantId');
+      allow list: if request.auth != null && (request.query.limit > 0 || request.auth.uid == request.query.get('landlordId') || request.auth.uid == request.query.get('tenantId'));
       allow create, update, delete: if false; // Server-side only
     }
   }
 }
-
-    
