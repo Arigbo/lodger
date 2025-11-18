@@ -20,8 +20,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, User, Mail, Phone } from 'lucide-react';
-import { getUserById } from '@/lib/data';
+import { Upload } from 'lucide-react';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Switch } from '@/components/ui/switch';
 import {
   AlertDialog,
@@ -34,17 +34,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-
-// Mock current user
-const useUser = () => {
-  const user = getUserById('user-1');
-  return { user };
-};
+import { useEffect } from 'react';
+import { doc } from 'firebase/firestore';
+import type { User as UserProfile } from '@/lib/definitions';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useToast } from '@/hooks/use-toast';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   email: z.string().email('Please enter a valid email address.'),
-  phone: z.string().min(10, 'Please enter a valid phone number.'),
+  phone: z.string().min(10, 'Please enter a valid phone number.').optional(),
   bio: z.string().max(200, 'Bio must be less than 200 characters.').optional(),
 });
 
@@ -62,15 +61,24 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 export default function AccountPage() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
+  const { toast } = useToast();
+  const firestore = useFirestore();
+
+  const userDocRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      name: user?.name || '',
-      email: user?.email || '',
-      phone: '(123) 456-7890', // mock phone
-      bio: 'Experienced landlord specializing in student housing near Urbanville University. Committed to providing safe, clean, and comfortable living environments for all tenants.',
+      name: '',
+      email: '',
+      phone: '',
+      bio: '',
     },
   });
 
@@ -83,16 +91,45 @@ export default function AccountPage() {
       }
   })
 
+  useEffect(() => {
+    // Populate form once both user and userProfile are loaded
+    if (user && userProfile) {
+        profileForm.reset({
+            name: userProfile.name || user.displayName || '',
+            email: userProfile.email || user.email || '',
+            phone: userProfile.phone || '',
+            bio: userProfile.bio || 'Experienced landlord specializing in student housing near Urbanville University. Committed to providing safe, clean, and comfortable living environments for all tenants.',
+        });
+    }
+  }, [user, userProfile, profileForm]);
+
+
   function onProfileSubmit(values: ProfileFormValues) {
-    console.log('Profile updated:', values);
+    if (!userDocRef) return;
+    const { name, phone, bio } = values;
+    updateDocumentNonBlocking(userDocRef, { name, phone, bio });
+    toast({
+        title: "Profile Updated",
+        description: "Your public profile has been successfully updated.",
+    })
   }
 
   function onPasswordSubmit(values: PasswordFormValues) {
     console.log('Password change request:', values);
+    // Add Firebase password change logic here
+    toast({
+        title: "Password Change Requested",
+        description: "This feature is not yet implemented.",
+        variant: "destructive"
+    })
   }
 
-  if (!user) {
+  if (isUserLoading || isProfileLoading) {
     return <div>Loading...</div>;
+  }
+
+  if (!user || !userProfile) {
+    return <div>Please log in to view your account settings.</div>;
   }
 
   return (
@@ -117,8 +154,8 @@ export default function AccountPage() {
                             <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
                                 <div className="flex items-center gap-6">
                                     <Avatar className="h-24 w-24">
-                                        <AvatarImage src={user.avatarUrl} />
-                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                        <AvatarImage src={userProfile.avatarUrl || undefined} />
+                                        <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="grid gap-2">
                                         <p className="text-sm text-muted-foreground">Update your profile picture.</p>
@@ -302,3 +339,5 @@ export default function AccountPage() {
     </div>
   );
 }
+
+    
