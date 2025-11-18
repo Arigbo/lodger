@@ -33,7 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import type { User as UserProfile } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { uploadProfileImage } from '@/firebase/storage';
@@ -121,7 +121,7 @@ export default function AccountPage() {
         const storage = getStorage(firebaseApp);
         const downloadURL = await uploadProfileImage(storage, user.uid, file);
         
-        await updateDoc(userDocRef, { profileImageUrl: downloadURL });
+        await setDoc(userDocRef, { profileImageUrl: downloadURL }, { merge: true });
         
         toast({
             title: "Profile Picture Updated",
@@ -145,7 +145,7 @@ export default function AccountPage() {
   function onProfileSubmit(values: ProfileFormValues) {
     if (!userDocRef) return;
     const { name, phone, bio } = values;
-    updateDoc(userDocRef, { name, phone, bio });
+    setDoc(userDocRef, { name, phone, bio }, { merge: true });
     toast({
         title: "Profile Updated",
         description: "Your public profile has been successfully updated.",
@@ -384,5 +384,6 @@ export default function AccountPage() {
         </Tabs>
     </div>
   );
+    
 
     
