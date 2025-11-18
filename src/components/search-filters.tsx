@@ -30,10 +30,20 @@ type SearchFiltersProps = {
     initialFilters?: FilterState;
     onLocationSuccess: (coords: { lat: number; lng: number }) => void;
     schoolsInArea?: string[] | null;
+    availableStates: string[];
+    availableSchools: string[];
 };
 
 
-export default function SearchFilters({ onFilterChange, onReset, initialFilters, onLocationSuccess, schoolsInArea }: SearchFiltersProps) {
+export default function SearchFilters({ 
+    onFilterChange, 
+    onReset, 
+    initialFilters, 
+    onLocationSuccess, 
+    schoolsInArea, 
+    availableStates,
+    availableSchools
+}: SearchFiltersProps) {
   const [filters, setFilters] = useState<FilterState>(initialFilters || {});
   const [price, setPrice] = useState(initialFilters?.price || 3000);
 
@@ -115,8 +125,9 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters,
               <SelectValue placeholder="Select State" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="CA">California</SelectItem>
-              <SelectItem value="NY">New York</SelectItem>
+              {availableStates.map(state => (
+                <SelectItem key={state} value={state}>{state}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -128,12 +139,9 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters,
                     <SelectValue placeholder="Select School" />
                     </SelectTrigger>
                     <SelectContent>
-                      {schoolsInArea === null && (
-                        <>
-                          <SelectItem value="Urbanville University">Urbanville University</SelectItem>
-                          <SelectItem value="Metropolis University">Metropolis University</SelectItem>
-                        </>
-                      )}
+                      {schoolsInArea === null && availableSchools.map(school => (
+                        <SelectItem key={school} value={school}>{school}</SelectItem>
+                      ))}
                       {schoolsInArea && schoolsInArea.length > 0 && schoolsInArea.map(school => (
                         <SelectItem key={school} value={school}>{school}</SelectItem>
                       ))}

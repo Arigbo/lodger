@@ -38,6 +38,10 @@ export default function PropertiesPage() {
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [schoolsInArea, setSchoolsInArea] = useState<string[] | null>(null);
+  
+  const availableStates = useMemo(() => [...new Set(allProperties.map(p => p.location.state))], []);
+  const availableSchools = useMemo(() => [...new Set(allProperties.map(p => p.location.school).filter(Boolean as any as (value: string | undefined) => value is string))], []);
+
 
   useEffect(() => {
     let properties = allProperties;
@@ -175,6 +179,8 @@ export default function PropertiesPage() {
             initialFilters={filters}
             onLocationSuccess={handleLocationSuccess}
             schoolsInArea={schoolsInArea}
+            availableStates={availableStates}
+            availableSchools={availableSchools}
           />
         </aside>
         <main className="lg:col-span-3">
