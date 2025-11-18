@@ -20,23 +20,69 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { getLeasesByLandlordId, getUserById, getPropertyById } from '@/lib/data';
-import type { LeaseAgreement } from '@/lib/definitions';
-import { FileText, Download } from 'lucide-react';
+import type { LeaseAgreement, User, Property } from '@/lib/definitions';
+import { FileText } from 'lucide-react';
 import Link from 'next/link';
+import { useUser, useFirestore } from '@/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
-// Mock current user
-const useUser = () => {
-  const user = getUserById('user-1');
-  return { user };
+type AggregatedLease = {
+  lease: LeaseAgreement;
+  tenant: User | null;
+  property: Property | null;
 };
 
 export default function LandlordLeasesPage() {
-  const { user: landlord } = useUser();
-  
-  const leases = React.useMemo(() => {
-    return landlord ? getLeasesByLandlordId(landlord.id) : [];
-  }, [landlord]);
+  const { user: landlord, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const [leases, setLeases] = React.useState<AggregatedLease[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!landlord || !firestore) return;
+
+    const fetchLeases = async () => {
+      setIsLoading(true);
+      
+      const leasesQuery = query(collection(firestore, 'leaseAgreements'), where('landlordId', '==', landlord.uid));
+      const leasesSnapshot = await getDocs(leasesQuery);
+      const landlordLeases = leasesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LeaseAgreement));
+
+      if (landlordLeases.length === 0) {
+        setLeases([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const tenantIds = [...new Set(landlordLeases.map(l => l.tenantId))];
+      const propertyIds = [...new Set(landlordLeases.map(l => l.propertyId))];
+
+      const usersQuery = query(collection(firestore, 'users'), where('id', 'in', tenantIds));
+      const propertiesQuery = query(collection(firestore, 'properties'), where('id', 'in', propertyIds));
+
+      const [usersSnapshot, propertiesSnapshot] = await Promise.all([
+        getDocs(usersQuery),
+        getDocs(propertiesQuery)
+      ]);
+
+      const usersMap = new Map<string, User>();
+      usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+
+      const propertiesMap = new Map<string, Property>();
+      propertiesSnapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+
+      const aggregatedData = landlordLeases.map(lease => ({
+        lease,
+        tenant: usersMap.get(lease.tenantId) || null,
+        property: propertiesMap.get(lease.propertyId) || null,
+      }));
+
+      setLeases(aggregatedData.sort((a,b) => new Date(b.lease.startDate).getTime() - new Date(a.lease.startDate).getTime()));
+      setIsLoading(false);
+    };
+
+    fetchLeases();
+  }, [landlord, firestore]);
 
   const getStatusVariant = (status: LeaseAgreement['status']) => {
     switch (status) {
@@ -50,6 +96,10 @@ export default function LandlordLeasesPage() {
         return 'default';
     }
   };
+
+  if (isLoading || isUserLoading) {
+    return <div>Loading leases...</div>;
+  }
 
   return (
     <div>
@@ -84,19 +134,17 @@ export default function LandlordLeasesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {leases.map((lease) => {
-                  const tenant = getUserById(lease.tenantId);
-                  const property = getPropertyById(lease.propertyId);
+                {leases.map(({lease, tenant, property}) => {
                   return (
                     <TableRow key={lease.id}>
                       <TableCell>
                         <Link href={`/landlord/properties/${property?.id}`} className="font-medium hover:underline">
-                          {property?.title}
+                          {property?.title || 'Unknown Property'}
                         </Link>
                       </TableCell>
                       <TableCell>
                         <Link href={`/landlord/tenants/${tenant?.id}`} className="text-muted-foreground hover:underline">
-                          {tenant?.name}
+                          {tenant?.name || 'Unknown Tenant'}
                         </Link>
                       </TableCell>
                       <TableCell>{new Date(lease.startDate).toLocaleDateString()}</TableCell>
