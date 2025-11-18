@@ -45,7 +45,12 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
   }, [initialFilters]);
   
   const handleInputChange = (field: keyof FilterState, value: any) => {
-    setFilters(prev => ({ ...prev, [field]: value, useCurrentLocation: false })); // Disable current location if manual filters are used
+    const newFilters = { ...filters, [field]: value };
+    // If a manual location filter is changed, turn off `useCurrentLocation`
+    if (['country', 'state', 'school'].includes(field)) {
+      newFilters.useCurrentLocation = false;
+    }
+    setFilters(newFilters);
   };
   
   const handleAmenityChange = (amenity: string, checked: boolean) => {
@@ -59,15 +64,14 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
   };
 
   const handleReset = () => {
-      setFilters(initialFilters || {});
-      setPrice(initialFilters?.price || 3000);
+      setPrice(3000);
       onReset();
   }
 
   const handleCurrentLocation = () => {
     // In a real app, you'd use navigator.geolocation here.
-    // For this prototype, we'll simulate it by setting a predefined school.
-    const newFilters = { ...initialFilters, useCurrentLocation: true, school: 'Urbanville University' };
+    // For this prototype, we'll simulate it by setting the useCurrentLocation flag.
+    const newFilters = { useCurrentLocation: true }; // Clear other location filters
     setFilters(newFilters);
     onFilterChange(newFilters);
   }
@@ -80,7 +84,7 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
       <CardContent className="grid gap-6">
         <div className="grid gap-2">
           <Label htmlFor="country">Country</Label>
-          <Select value={filters.country} onValueChange={(value) => handleInputChange('country', value)}>
+          <Select value={filters.useCurrentLocation ? '' : filters.country} onValueChange={(value) => handleInputChange('country', value)} disabled={filters.useCurrentLocation}>
             <SelectTrigger id="country">
               <SelectValue placeholder="Select Country" />
             </SelectTrigger>
@@ -91,7 +95,7 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
         </div>
         <div className="grid gap-2">
           <Label htmlFor="state">State</Label>
-          <Select value={filters.state} onValueChange={(value) => handleInputChange('state', value)}>
+          <Select value={filters.useCurrentLocation ? '' : filters.state} onValueChange={(value) => handleInputChange('state', value)} disabled={filters.useCurrentLocation}>
             <SelectTrigger id="state">
               <SelectValue placeholder="Select State" />
             </SelectTrigger>
@@ -104,7 +108,7 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
         <div className="grid gap-2">
             <Label htmlFor="school">School</Label>
             <div className="flex gap-2">
-                <Select value={filters.school} onValueChange={(value) => handleInputChange('school', value)}>
+                <Select value={filters.useCurrentLocation ? '' : filters.school} onValueChange={(value) => handleInputChange('school', value)} disabled={filters.useCurrentLocation}>
                     <SelectTrigger id="school">
                     <SelectValue placeholder="Select School" />
                     </SelectTrigger>
@@ -118,7 +122,7 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
                     <span className="sr-only">Use current location</span>
                 </Button>
             </div>
-             {filters.useCurrentLocation && <p className="text-xs text-muted-foreground">Showing properties near you.</p>}
+             {filters.useCurrentLocation && <p className="text-xs text-primary">Showing properties near you.</p>}
         </div>
         <div className="grid gap-2">
           <Label>Max Price: ${price.toLocaleString()}</Label>

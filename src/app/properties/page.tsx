@@ -9,6 +9,7 @@ import { getProperties, getUserById } from "@/lib/data";
 import type { Property, User } from '@/lib/definitions';
 import type { FilterState } from '@/components/search-filters';
 import { Home } from 'lucide-react';
+import { haversineDistance } from '@/lib/utils';
 
 // Mock current user - replace with real auth
 const useUser = () => {
@@ -17,7 +18,14 @@ const useUser = () => {
   return { user };
 }
 
-const allProperties = getProperties(); // Get all available properties once.
+const allProperties = getProperties(true); // Get all available properties once, including occupied.
+
+// Mock coordinates for the user's "current location" or a selected school
+const schoolCoordinates: { [key: string]: { lat: number; lng: number } } = {
+  'Urbanville University': { lat: 34.0722, lng: -118.4441 },
+  'Metropolis University': { lat: 40.7295, lng: -73.9965 },
+};
+
 
 export default function PropertiesPage() {
   const { user } = useUser();
@@ -26,23 +34,39 @@ export default function PropertiesPage() {
       country: user?.country,
       state: user?.state,
       school: user?.school,
+      useCurrentLocation: false,
   });
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
 
   useEffect(() => {
     let properties = allProperties;
 
-    if (filters.country) {
-        // Mocking country filtering as all properties are in USA
+    // Filter by availability first
+    properties = properties.filter(p => p.status === 'available');
+
+    if (filters.useCurrentLocation) {
+        const currentLocation = schoolCoordinates['Urbanville University']; // Simulate user is near this school
+        properties = properties.filter(p => {
+             if (p.location.lat && p.location.lng) {
+                const distance = haversineDistance(currentLocation, { lat: p.location.lat, lng: p.location.lng });
+                return distance < 10; // 10km radius
+            }
+            return false;
+        });
+    } else {
+        if (filters.country) {
+            // Mocking country filtering as all properties are in USA
+        }
+
+        if (filters.state) {
+            properties = properties.filter(p => p.location.state === filters.state);
+        }
+
+        if (filters.school) {
+            properties = properties.filter(p => p.location.school === filters.school);
+        }
     }
 
-    if (filters.state) {
-        properties = properties.filter(p => p.location.state === filters.state);
-    }
-
-    if (filters.school) {
-        properties = properties.filter(p => p.location.school === filters.school);
-    }
 
     if (filters.price) {
         properties = properties.filter(p => p.price <= filters.price!);
@@ -88,6 +112,7 @@ export default function PropertiesPage() {
       country: user?.country,
       state: user?.state,
       school: user?.school,
+      useCurrentLocation: false,
     });
   }
 
