@@ -25,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { add, format, isPast, isBefore } from 'date-fns';
 import PaymentDialog from '@/components/payment-dialog';
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Mock current user - replace with real auth
 const useUser = () => {
@@ -385,53 +386,74 @@ const amenityIcons: amenityIcon = {
 }
 
 function TenantPropertyView({ property, tenant }: { property: Property, tenant: User }) {
-  const tenantTransactions = getTransactionsByTenantId(tenant.id);
+  const [isClient, setIsClient] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  
+  const [tenancyState, setTenancyState] = useState<{
+    transactions: Transaction[];
+    showPayButton: boolean;
+    paymentAmount: number;
+    leaseEndDate: Date;
+    leaseStartDate: Date;
+    isLeaseActive: boolean;
+    isLeaseExpired: boolean;
+    isRentDue: boolean;
+    rentStatusText: string;
+    rentDueDateText: string;
+  } | null>(null);
 
-  // --- DATE & PAYMENT CALCULATIONS ---
-  const today = new Date();
-  const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
+  useEffect(() => {
+    setIsClient(true);
+    
+    // Defer all date-sensitive calculations to the client
+    const tenantTransactions = getTransactionsByTenantId(tenant.id);
+    const today = new Date();
+    const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
+    const leaseEndDate = add(leaseStartDate, { years: 1 });
+    const lastRentPayment = tenantTransactions
+      .filter(t => t.type === 'Rent' && t.status === 'Completed')
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
-  const leaseEndDate = add(leaseStartDate, { years: 1 });
+    const isLeaseActive = isPast(leaseStartDate) && isBefore(today, leaseEndDate);
+    const isLeaseExpired = isPast(leaseEndDate);
+    
+    let nextRentDueDate: Date;
+    let isRentDue = false;
+    let rentDueDateText = "N/A";
+    let rentStatusText: string;
 
-  const lastRentPayment = tenantTransactions
-    .filter(t => t.type === 'Rent' && t.status === 'Completed')
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-
-
-  const isLeaseActive = isPast(leaseStartDate) && isBefore(today, leaseEndDate);
-  const isLeaseExpired = isPast(leaseEndDate);
-
-  let nextRentDueDate: Date;
-  let isRentDue = false;
-  let rentDueDateText = "N/A";
-  let rentStatusText = isLeaseActive ? `Due on` : 'Next due on';
-
-  if (isLeaseActive) {
-    if (lastRentPayment) {
+    if (isLeaseActive) {
+      if (lastRentPayment) {
         nextRentDueDate = add(new Date(lastRentPayment.date), { months: 1 });
         isRentDue = isPast(nextRentDueDate);
-    } else {
+      } else {
         nextRentDueDate = leaseStartDate;
         isRentDue = isPast(leaseStartDate);
-    }
-     rentDueDateText = format(nextRentDueDate, 'MMMM do, yyyy');
-  } else {
+      }
+      rentDueDateText = format(nextRentDueDate, 'MMMM do, yyyy');
+      rentStatusText = isRentDue ? 'Due on' : 'Next due on';
+    } else {
       rentStatusText = 'Lease Inactive';
-  }
+    }
 
-  if(isRentDue) {
-      rentStatusText = 'Due on';
-  } else if (isLeaseActive) {
-      rentStatusText = 'Next due on';
-  }
+    const hasPendingPayments = tenantTransactions.some(t => t.status === 'Pending');
+    const showPayButton = (isRentDue || hasPendingPayments) && isLeaseActive;
+    const pendingTransactions = tenantTransactions.filter(t => t.status === 'Pending');
+    const paymentAmount = pendingTransactions.reduce((acc, t) => acc + t.amount, 0);
 
-  const hasPendingPayments = tenantTransactions.some(t => t.status === 'Pending');
-  const showPayButton = (isRentDue || hasPendingPayments) && isLeaseActive;
-
-  const pendingTransactions = tenantTransactions.filter(t => t.status === 'Pending');
-  const paymentAmount = pendingTransactions.reduce((acc, t) => acc + t.amount, 0);
-
-  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+    setTenancyState({
+      transactions: tenantTransactions,
+      showPayButton,
+      paymentAmount,
+      leaseEndDate,
+      leaseStartDate,
+      isLeaseActive,
+      isLeaseExpired,
+      isRentDue,
+      rentStatusText,
+      rentDueDateText,
+    });
+  }, [tenant.id, property.leaseStartDate]);
 
   const handlePaymentSuccess = () => {
     console.log("Payment successful!");
@@ -459,8 +481,9 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                             <CardTitle>Payment History</CardTitle>
                             <CardDescription>Review your past transactions.</CardDescription>
                         </div>
-                        {showPayButton && paymentAmount > 0 && (
-                            <Button onClick={() => setIsPaymentDialogOpen(true)}>Pay Now {formatPrice(paymentAmount)}</Button>
+                        {!tenancyState && <Skeleton className="h-10 w-32" />}
+                        {tenancyState?.showPayButton && tenancyState.paymentAmount > 0 && (
+                            <Button onClick={() => setIsPaymentDialogOpen(true)}>Pay Now {formatPrice(tenancyState.paymentAmount)}</Button>
                         )}
                         </div>
                     </CardHeader>
@@ -475,7 +498,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {tenantTransactions.length > 0 ? tenantTransactions.map(t => (
+                                {tenancyState && tenancyState.transactions.length > 0 ? tenancyState.transactions.map(t => (
                                     <TableRow key={t.id}>
                                         <TableCell>{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
                                         <TableCell>{t.type}</TableCell>
@@ -490,7 +513,13 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                                             </Badge>
                                         </TableCell>
                                     </TableRow>
-                                )) : (
+                                )) : !tenancyState ? (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="h-24 text-center">
+                                            <Skeleton className="h-4 w-full" />
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
                                     <TableRow>
                                         <TableCell colSpan={4} className="text-center h-24">No transactions found.</TableCell>
                                     </TableRow>
@@ -507,27 +536,34 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                         <CardDescription>Key dates and details about your tenancy.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
+                        {!tenancyState ? (
+                             <div className="space-y-6">
+                                <Skeleton className="h-20 w-full" />
+                                <Skeleton className="h-16 w-full" />
+                            </div>
+                        ) : (
+                        <>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="rounded-lg border bg-secondary/50 p-4">
-                                <p className="text-sm font-medium text-muted-foreground">{rentStatusText}</p>
-                                <p className={cn("text-xl font-bold", isRentDue && isLeaseActive ? "text-destructive" : "text-primary")}>
-                                    {rentDueDateText}
+                                <p className="text-sm font-medium text-muted-foreground">{tenancyState.rentStatusText}</p>
+                                <p className={cn("text-xl font-bold", tenancyState.isRentDue && tenancyState.isLeaseActive ? "text-destructive" : "text-primary")}>
+                                    {tenancyState.rentDueDateText}
                                 </p>
                             </div>
-                            <div className={cn("rounded-lg border p-4", isLeaseExpired ? "border-destructive/50 bg-destructive/5" : "bg-secondary/50")}>
-                                <p className="text-sm font-medium text-muted-foreground">{isLeaseExpired ? "Lease Expired On" : "Lease End Date"}</p>
-                                <p className={cn("text-xl font-bold", isLeaseExpired && "text-destructive")}>
-                                    {format(leaseEndDate, 'MMMM do, yyyy')}
+                            <div className={cn("rounded-lg border p-4", tenancyState.isLeaseExpired ? "border-destructive/50 bg-destructive/5" : "bg-secondary/50")}>
+                                <p className="text-sm font-medium text-muted-foreground">{tenancyState.isLeaseExpired ? "Lease Expired On" : "Lease End Date"}</p>
+                                <p className={cn("text-xl font-bold", tenancyState.isLeaseExpired && "text-destructive")}>
+                                    {format(tenancyState.leaseEndDate, 'MMMM do, yyyy')}
                                 </p>
                             </div>
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-4">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Lease Started</p>
-                                <p>{format(leaseStartDate, 'MMMM do, yyyy')}</p>
+                                <p>{format(tenancyState.leaseStartDate, 'MMMM do, yyyy')}</p>
                             </div>
 
-                            {isLeaseExpired ? (
+                            {tenancyState.isLeaseExpired ? (
                                 <Button variant="outline" disabled><RefreshCcw className="mr-2 h-4 w-4"/> Request New Lease</Button>
                             ) : (
                                 <Dialog>
@@ -540,18 +576,22 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                                 </Dialog>
                             )}
                         </div>
+                        </>
+                        )}
                     </CardContent>
                 </Card>
             </TabsContent>
         </Tabs>
 
-        <PaymentDialog
-            isOpen={isPaymentDialogOpen}
-            onClose={() => setIsPaymentDialogOpen(false)}
-            onPaymentSuccess={handlePaymentSuccess}
-            amount={paymentAmount}
-            tenantName={tenant.name}
-        />
+        {tenancyState && (
+            <PaymentDialog
+                isOpen={isPaymentDialogOpen}
+                onClose={() => setIsPaymentDialogOpen(false)}
+                onPaymentSuccess={handlePaymentSuccess}
+                amount={tenancyState.paymentAmount}
+                tenantName={tenant.name}
+            />
+        )}
     </div>
   );
 }
@@ -585,3 +625,4 @@ function AddReviewForm() {
         </Card>
     );
 }
+
