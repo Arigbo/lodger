@@ -1,3 +1,6 @@
+
+'use client';
+
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -5,10 +8,34 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { MapPin } from "lucide-react";
+import { useState } from "react";
 
 const amenities = ["Furnished", "Wi-Fi", "In-unit Laundry", "Pet Friendly", "Parking Spot", "Gym Access"];
 
 export default function SearchFilters() {
+  const [location, setLocation] = useState("");
+
+  const handleLocationClick = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // In a real app, you'd use position.coords.latitude and position.coords.longitude
+          // to query a reverse geocoding API and get the city/address.
+          console.log("Lat:", position.coords.latitude, "Lon:", position.coords.longitude);
+          setLocation("Current Location");
+          alert("Location set to your current position!");
+        },
+        (error) => {
+          console.error("Error getting location: ", error);
+          alert("Could not get your location. Please ensure you've enabled location services for this site.");
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
+  };
+
   return (
     <Card className="sticky top-24">
       <CardHeader>
@@ -17,7 +44,25 @@ export default function SearchFilters() {
       <CardContent className="grid gap-6">
         <div className="grid gap-2">
           <Label htmlFor="location">Location</Label>
-          <Input id="location" placeholder="e.g. Urbanville" />
+          <div className="relative">
+            <Input 
+              id="location" 
+              placeholder="e.g. Urbanville" 
+              value={location} 
+              onChange={(e) => setLocation(e.target.value)}
+              className="pr-10"
+            />
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="icon" 
+              className="absolute inset-y-0 right-0 h-full px-3"
+              onClick={handleLocationClick}
+            >
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span className="sr-only">Use current location</span>
+            </Button>
+          </div>
         </div>
         <div className="grid gap-2">
           <Label>Price Range</Label>
