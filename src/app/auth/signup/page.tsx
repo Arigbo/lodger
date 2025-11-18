@@ -20,7 +20,6 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useAuth, useFirestore } from '@/firebase/provider';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { initiateEmailSignUp } from '@/firebase';
@@ -81,6 +80,7 @@ export default function SignupPage() {
     },
   });
 
+  const { setError } = form;
   const userType = form.watch('userType');
 
   const steps = userType === 'student' ? 
@@ -147,11 +147,20 @@ export default function SignupPage() {
         }
     } catch (error: any) {
         console.error("Error signing up:", error);
-        toast({
-            variant: "destructive",
-            title: "Uh oh! Something went wrong.",
-            description: error.message || "There was a problem with your request.",
-        });
+        if (error.code === 'auth/email-already-in-use') {
+            setError('email', {
+                type: 'manual',
+                message: 'This email address is already in use. Please try another one.',
+            });
+            // Go back to the step with the email field
+            setCurrentStep(2);
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Uh oh! Something went wrong.",
+                description: error.message || "There was a problem with your request.",
+            });
+        }
     }
   };
 

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -31,9 +32,13 @@ import { Progress } from '@/components/ui/progress';
 import { amenities as allAmenities } from '@/lib/definitions';
 import { cn, formatPrice } from '@/lib/utils';
 import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText } from 'lucide-react';
-import type { Property, User } from '@/lib/definitions';
+import type { Property } from '@/lib/definitions';
 import { User as FirebaseUser } from 'firebase/auth';
 import { format, add } from 'date-fns';
+import { useRouter } from 'next/navigation';
+import { useFirestore, useUser } from '@/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 
 function generateLeaseTextForTemplate(propertyData: Partial<FormValues>): string {
@@ -98,10 +103,11 @@ const formSchema = z.object({
   }),
   rules: z.string().optional(),
   leaseTemplate: z.string().min(100, 'Lease template must not be empty.'),
-  kitchenImage: z.any().refine((files) => files?.length == 1, 'Kitchen image is required.'),
-  livingRoomImage: z.any().refine((files) => files?.length == 1, 'Living room image is required.'),
-  bathroomImage: z.any().refine((files) => files?.length == 1, 'Bathroom image is required.'),
-  otherImages: z.any().optional(),
+  // Images are optional for now as we don't handle file uploads yet
+  // kitchenImage: z.any().refine((files) => files?.length == 1, 'Kitchen image is required.'),
+  // livingRoomImage: z.any().refine((files) => files?.length == 1, 'Living room image is required.'),
+  // bathroomImage: z.any().refine((files) => files?.length == 1, 'Bathroom image is required.'),
+  // otherImages: z.any().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -112,8 +118,8 @@ const steps = [
     { id: 3, name: 'Property Details', fields: ['bedrooms', 'bathrooms', 'area'] },
     { id: 4, name: 'Amenities & Rules', fields: ['amenities', 'rules'] },
     { id: 5, name: 'Lease Template', fields: ['leaseTemplate'] },
-    { id: 6, name: 'Upload Photos', fields: ['kitchenImage', 'livingRoomImage', 'bathroomImage'] },
-    { id: 7, name: 'Review' }
+    // { id: 6, name: 'Upload Photos', fields: ['kitchenImage', 'livingRoomImage', 'bathroomImage'] },
+    { id: 6, name: 'Review' }
 ];
 
 const FileUpload = ({ field, label, description }: { field: any, label: string, description: string }) => (
@@ -149,6 +155,10 @@ const FileUpload = ({ field, label, description }: { field: any, label: string, 
 export default function AddPropertyPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = steps.length;
+  const router = useRouter();
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const { toast } = useToast();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -179,9 +189,10 @@ export default function AddPropertyPage() {
         form.setValue('leaseTemplate', leaseText);
     }
     
-    const output = await form.trigger(fields as (keyof FormValues)[], { shouldFocus: true });
-
-    if (!output) return;
+    if (fields) {
+        const output = await form.trigger(fields as (keyof FormValues)[], { shouldFocus: true });
+        if (!output) return;
+    }
 
     if (currentStep < totalSteps) {
         setCurrentStep(step => step + 1);
@@ -190,13 +201,67 @@ export default function AddPropertyPage() {
 
   const prevStep = () => {
      if (currentStep > 1) {
-        setCurrentStep(step => step + 1);
+        setCurrentStep(step => step - 1);
      }
   }
 
-  function onSubmit(values: FormValues) {
-    console.log('New Property Data:', values);
-    // Here you would typically call an API to create the property
+  async function onSubmit(values: FormValues) {
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "You must be logged in to create a property.",
+        });
+        return;
+    }
+
+    // In a real app, you would handle image uploads here and get back URLs.
+    // For now, we'll use placeholders.
+    const placeholderImages = [
+        "https://images.unsplash.com/photo-1515263487990-61b07816b324?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        "https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    ];
+
+
+    const newProperty: Omit<Property, 'id'> = {
+        title: values.title,
+        description: values.description,
+        price: values.price,
+        type: values.type,
+        location: {
+            address: values.address,
+            city: values.city,
+            state: values.state,
+            zip: values.zip,
+        },
+        bedrooms: values.bedrooms,
+        bathrooms: values.bathrooms,
+        area: values.area,
+        amenities: values.amenities,
+        images: placeholderImages,
+        landlordId: user.uid,
+        status: 'available',
+        rules: values.rules ? values.rules.split(',').map(r => r.trim()).filter(Boolean) : [],
+        leaseTemplate: values.leaseTemplate,
+    };
+    
+    try {
+        const docRef = await addDoc(collection(firestore, 'properties'), newProperty);
+        console.log("Document written with ID: ", docRef.id);
+        toast({
+            title: "Property Listed!",
+            description: `${values.title} is now available for rent.`,
+        });
+        router.push('/landlord/properties');
+    } catch(e) {
+        console.error("Error adding document: ", e);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not list property. Please try again.",
+        });
+    }
   }
 
   return (
@@ -477,65 +542,11 @@ export default function AddPropertyPage() {
                 />
             </div>
 
-            <div className={cn(currentStep === 6 ? "block space-y-8" : "hidden")}>
-                <FormField
-                    control={form.control}
-                    name="kitchenImage"
-                    render={({ field }) => (
-                        <FileUpload field={field} label="Kitchen Photo (Required)" description="Upload a photo of the kitchen." />
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="livingRoomImage"
-                    render={({ field }) => (
-                        <FileUpload field={field} label="Living Room Photo (Required)" description="Upload a photo of the main living area." />
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="bathroomImage"
-                    render={({ field }) => (
-                        <FileUpload field={field} label="Bathroom Photo (Required)" description="Upload a photo of a primary bathroom." />
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="otherImages"
-                    render={({ field }) => (
-                         <FormItem>
-                            <FormLabel>Additional Photos</FormLabel>
-                            <FormDescription>Upload any other photos, like bedrooms, exterior views, or special features.</FormDescription>
-                            <FormControl>
-                                <div className="mt-4 flex justify-center rounded-lg border border-dashed border-input px-6 py-10">
-                                    <div className="text-center">
-                                        <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                                        <div className="mt-4 flex text-sm leading-6 text-muted-foreground">
-                                            <label
-                                                htmlFor="otherImages"
-                                                className="relative cursor-pointer rounded-md bg-background font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:text-primary/80"
-                                            >
-                                                <span>Upload files</span>
-                                                <input id="otherImages" name="otherImages" type="file" className="sr-only" multiple
-                                                    onChange={(e) => field.onChange(e.target.files)}
-                                                />
-                                            </label>
-                                            <p className="pl-1">or drag and drop</p>
-                                        </div>
-                                        <p className="text-xs leading-5 text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
-                                        {field.value?.length > 0 && Array.from(field.value as FileList).map((file: File) => (
-                                            <p key={file.name} className="text-sm text-green-600 mt-2">{file.name}</p>
-                                        ))}
-                                    </div>
-                                </div>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+            <div className={cn(currentStep === 7 ? "block space-y-8" : "hidden")}>
+                {/* This step is now unused since we are not handling file uploads */}
             </div>
             
-            <div className={cn(currentStep === 7 ? "block" : "hidden")}>
+            <div className={cn(currentStep === 6 ? "block" : "hidden")}>
                 <h3 className="font-headline text-xl font-semibold">Review Your Listing</h3>
                 <p className="text-muted-foreground">Please review all the information below before submitting.</p>
                 <div className="mt-6 space-y-6 rounded-lg border bg-secondary/50 p-6">
@@ -586,21 +597,9 @@ export default function AddPropertyPage() {
                     <Separator/>
                      {/* Images */}
                     <div>
-                        <p className="text-sm font-medium mb-2">Uploaded Images</p>
+                        <p className="text-sm font-medium mb-2">Images</p>
                         <div className="space-y-2 text-sm text-muted-foreground">
-                            {form.getValues('kitchenImage')?.[0] && <div className="flex items-center gap-2"><FileImage className="h-4 w-4"/><span>Kitchen: {form.getValues('kitchenImage')[0].name}</span></div>}
-                            {form.getValues('livingRoomImage')?.[0] && <div className="flex items-center gap-2"><FileImage className="h-4 w-4"/><span>Living Room: {form.getValues('livingRoomImage')[0].name}</span></div>}
-                            {form.getValues('bathroomImage')?.[0] && <div className="flex items-center gap-2"><FileImage className="h-4 w-4"/><span>Bathroom: {form.getValues('bathroomImage')[0].name}</span></div>}
-                            {form.getValues('otherImages')?.length > 0 && (
-                                <div>
-                                    <p className="flex items-center gap-2"><FileImage className="h-4 w-4"/>Additional Images:</p>
-                                    <ul className="list-disc pl-8">
-                                    {Array.from(form.getValues('otherImages') as FileList).map((file: File) => (
-                                        <li key={file.name}>{file.name}</li>
-                                    ))}
-                                    </ul>
-                                </div>
-                            )}
+                           <div className="flex items-center gap-2"><FileImage className="h-4 w-4"/><span>Placeholder images will be used.</span></div>
                         </div>
                     </div>
                     <Separator/>
