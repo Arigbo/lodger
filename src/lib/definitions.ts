@@ -98,6 +98,9 @@ export type LeaseAgreement = {
   leaseText: string;
   landlordSigned: boolean;
   tenantSigned: boolean;
+  startDate: string;
+  endDate: string;
+  status: 'active' | 'expired';
 };
 
 export type Conversation = {

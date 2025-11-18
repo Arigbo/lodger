@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Building2, Users, Bell, Wrench, UserCog, DollarSign, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Bell, Wrench, UserCog, DollarSign, MessageSquare, FileText } from "lucide-react";
 import { Badge } from "./ui/badge";
 
 const landlordNavLinks = [
@@ -21,6 +21,7 @@ const landlordNavLinks = [
     badge: 3,
   },
   { href: "/landlord/maintenance", label: "Maintenance", icon: Wrench },
+  { href: "/landlord/leases", label: "Lease Agreements", icon: FileText },
   { href: "/landlord/account", label: "Account", icon: UserCog },
 ];
 

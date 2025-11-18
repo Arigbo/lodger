@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Building2, UserCog, MessageSquare, Search } from "lucide-react";
+import { LayoutDashboard, Building2, UserCog, MessageSquare, Search, FileText } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { getUserById, getPropertiesByTenant } from "@/lib/data";
 
@@ -22,6 +22,7 @@ const studentNavLinks = [
     { href: "/student/tenancy", label: "My Tenancy", icon: Building2 },
     { href: "/student/properties", label: "Find a Property", icon: Search },
     { href: "/student/messages", label: "Messages", icon: MessageSquare },
+    { href: "/student/leases", label: "Lease Agreements", icon: FileText },
     { href: "/student/account", label: "Account", icon: UserCog },
 ]
 
