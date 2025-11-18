@@ -36,6 +36,7 @@ export default function PropertiesPage() {
       school: user?.school,
       useCurrentLocation: false,
   });
+  const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
 
   useEffect(() => {
@@ -44,10 +45,7 @@ export default function PropertiesPage() {
     // Filter by availability first
     properties = properties.filter(p => p.status === 'available');
 
-    if (filters.useCurrentLocation) {
-        // Simulate using browser geolocation by picking a default location.
-        // In a real app, you would use navigator.geolocation.getCurrentPosition
-        const currentLocation = schoolCoordinates['Urbanville University'];
+    if (filters.useCurrentLocation && currentLocation) {
         properties = properties.filter(p => {
              if (p.location.lat && p.location.lng) {
                 const distance = haversineDistance(currentLocation, { lat: p.location.lat, lng: p.location.lng });
@@ -101,12 +99,26 @@ export default function PropertiesPage() {
     }
 
     setFilteredProperties(properties);
-  }, [filters]);
+  }, [filters, currentLocation]);
 
 
   const handleFilterChange = (newFilters: FilterState) => {
+    if (newFilters.useCurrentLocation === false) {
+      setCurrentLocation(null);
+    }
     setFilters(newFilters);
   };
+  
+  const handleLocationSuccess = (coords: {lat: number, lng: number}) => {
+    setCurrentLocation(coords);
+    setFilters(prev => ({
+        ...prev,
+        useCurrentLocation: true,
+        country: undefined,
+        state: undefined,
+        school: undefined
+    }));
+  }
 
   const resetFilters = () => {
     // Reset all filters to an empty state
@@ -121,6 +133,7 @@ export default function PropertiesPage() {
       bathrooms: undefined,
       amenities: []
     });
+    setCurrentLocation(null);
   }
 
   return (
@@ -135,6 +148,7 @@ export default function PropertiesPage() {
             onFilterChange={handleFilterChange} 
             onReset={resetFilters} 
             initialFilters={filters}
+            onLocationSuccess={handleLocationSuccess}
           />
         </aside>
         <main className="lg:col-span-3">

@@ -28,10 +28,11 @@ type SearchFiltersProps = {
     onFilterChange: (filters: FilterState) => void;
     onReset: () => void;
     initialFilters?: FilterState;
+    onLocationSuccess: (coords: { lat: number; lng: number }) => void;
 };
 
 
-export default function SearchFilters({ onFilterChange, onReset, initialFilters }: SearchFiltersProps) {
+export default function SearchFilters({ onFilterChange, onReset, initialFilters, onLocationSuccess }: SearchFiltersProps) {
   const [filters, setFilters] = useState<FilterState>(initialFilters || {});
   const [price, setPrice] = useState(initialFilters?.price || 3000);
 
@@ -67,17 +68,26 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
   }
 
   const handleCurrentLocation = () => {
-    // In a real app, you'd use navigator.geolocation here.
-    // For this prototype, we'll simulate it by setting the useCurrentLocation flag.
-    const newFilters: FilterState = { 
-        ...filters, 
-        useCurrentLocation: true,
-        country: undefined,
-        state: undefined,
-        school: undefined,
-    };
-    setFilters(newFilters);
-    onFilterChange(newFilters); // Directly trigger the filter change
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                onLocationSuccess({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                });
+            },
+            (error) => {
+                console.error("Geolocation error:", error);
+                alert("Could not get your location. Please ensure location services are enabled and try again.");
+                // Reset location state if it fails
+                const newFilters = { ...filters, useCurrentLocation: false };
+                setFilters(newFilters);
+                onFilterChange(newFilters);
+            }
+        );
+    } else {
+        alert("Geolocation is not supported by this browser.");
+    }
   }
 
   return (
