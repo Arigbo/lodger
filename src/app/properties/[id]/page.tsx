@@ -1,7 +1,7 @@
 
 
 "use client"
-import { notFound } from "next/navigation";
+import { notFound, usePathname } from "next/navigation";
 import Image from "next/image";
 import { getPropertyById, getUserById, getReviewsByPropertyId, getImagesByIds } from "@/lib/data";
 import { formatPrice, cn } from "@/lib/utils";
@@ -11,12 +11,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter } from "lucide-react";
+import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin } from "lucide-react";
 import type { Property, User, Review, ImagePlaceholder } from "@/lib/definitions";
 import React from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import Link from "next/link";
 import { FaWhatsapp } from 'react-icons/fa';
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+
 
 // This is the new Server Component that fetches data.
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
@@ -47,23 +50,57 @@ function PropertyDetailView({
 }) {
   'use client';
   
-  const { useState } = React;
+  const { useState, useEffect } = React;
   const { Textarea } = require("@/components/ui/textarea");
   const { Label } = require("@/components/ui/label");
 
+  const pathname = usePathname();
+  const { toast } = useToast();
   const { user } = useUser();
   const [reviews] = useState(initialReviews);
   const [images] = useState(initialImages);
   const [requestMessage, setRequestMessage] = useState("");
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const averageRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
   
   const isTenant = user?.id === property.currentTenantId;
+  const propertyUrl = isClient ? `${window.location.origin}${pathname}` : '';
 
   const handleSendRequest = () => {
     console.log("Sending request for property", property.id, "with message:", requestMessage);
-    // Here you would typically call an API to create the rental request
+    toast({
+        title: "Request Sent!",
+        description: "Your rental request has been sent to the landlord.",
+    });
   }
+
+  const handleCopyToClipboard = () => {
+    navigator.clipboard.writeText(propertyUrl);
+    toast({ title: "Link Copied!", description: "Property URL copied to your clipboard." });
+  };
+  
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: property.title,
+          text: `Check out this property: ${property.title}`,
+          url: propertyUrl,
+        });
+      } catch (error) {
+        console.error("Error sharing:", error);
+      }
+    } else {
+        // This part is a fallback for the button, but the dialog itself provides better fallbacks.
+        alert("Web Share API is not supported in your browser. Use the links below to share.");
+    }
+  };
+
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-12">
@@ -172,10 +209,47 @@ function PropertyDetailView({
                         <Bookmark className="h-5 w-5"/>
                         <span className="text-xs">Save</span>
                     </Button>
-                    <Button variant="ghost" className="flex flex-col h-auto gap-1">
-                        <Share2 className="h-5 w-5"/>
-                        <span className="text-xs">Share</span>
-                    </Button>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" className="flex flex-col h-auto gap-1">
+                                <Share2 className="h-5 w-5"/>
+                                <span className="text-xs">Share</span>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Share this Property</DialogTitle>
+                                <DialogDescription>
+                                    Share this listing with friends or on social media.
+                                </DialogDescription>
+                            </DialogHeader>
+                            {isClient && navigator.share && (
+                                <Button onClick={handleNativeShare} className="w-full">
+                                    Share via...
+                                </Button>
+                            )}
+                            <div className="flex items-center space-x-2">
+                                <Input value={propertyUrl} readOnly />
+                                <Button size="icon" onClick={handleCopyToClipboard}><LinkIcon /></Button>
+                            </div>
+                            <Separator />
+                            <p className="text-sm font-medium text-center text-muted-foreground">Or share on</p>
+                            <div className="flex justify-center gap-4">
+                                <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-full">
+                                    <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(propertyUrl)}&text=${encodeURIComponent(property.title)}`} target="_blank" rel="noopener noreferrer"><Twitter /></a>
+                                </Button>
+                                <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-full">
+                                    <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(propertyUrl)}`} target="_blank" rel="noopener noreferrer"><Facebook /></a>
+                                </Button>
+                                <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-full">
+                                    <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${property.title}: ${propertyUrl}`)}`} target="_blank" rel="noopener noreferrer"><FaWhatsapp className="text-xl" /></a>
+                                </Button>
+                                 <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-full">
+                                    <a href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(propertyUrl)}&title=${encodeURIComponent(property.title)}`} target="_blank" rel="noopener noreferrer"><Linkedin /></a>
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </CardContent>
             </Card>
 
@@ -223,7 +297,9 @@ function PropertyDetailView({
                                 <DialogClose asChild>
                                     <Button variant="ghost">Cancel</Button>
                                 </DialogClose>
-                                <Button onClick={handleSendRequest}>Send Request</Button>
+                                <DialogClose asChild>
+                                    <Button onClick={handleSendRequest}>Send Request</Button>
+                                </DialogClose>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
