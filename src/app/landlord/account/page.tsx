@@ -35,11 +35,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { doc } from 'firebase/firestore';
 import type { User as UserProfile } from '@/lib/definitions';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
+import { uploadProfileImage } from '@/firebase/storage';
+import { getStorage } from 'firebase/storage';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -65,6 +67,8 @@ export default function AccountPage() {
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const firestore = useFirestore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const userDocRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -124,6 +128,32 @@ export default function AccountPage() {
         variant: "destructive"
     })
   }
+  
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user || !userDocRef) return;
+    
+    setIsUploading(true);
+    try {
+        const storage = getStorage();
+        const downloadURL = await uploadProfileImage(storage, user.uid, file);
+        updateDocumentNonBlocking(userDocRef, { avatarUrl: downloadURL });
+        toast({
+            title: "Profile Picture Updated",
+            description: "Your new picture has been saved.",
+        });
+    } catch (error) {
+        console.error("Error uploading image:", error);
+        toast({
+            variant: "destructive",
+            title: "Upload Failed",
+            description: "Could not upload your profile picture. Please try again.",
+        });
+    } finally {
+        setIsUploading(false);
+    }
+  }
+
 
   if (isUserLoading || isProfileLoading) {
     return <div>Loading...</div>;
@@ -159,7 +189,11 @@ export default function AccountPage() {
                                         <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="grid gap-2">
-                                        <Button type="button" variant="outline"><Upload className="mr-2 h-4 w-4"/> Upload Image</Button>
+                                        <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden"/>
+                                        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                                            <Upload className="mr-2 h-4 w-4"/> 
+                                            {isUploading ? "Uploading..." : "Upload Image"}
+                                        </Button>
                                         <p className="text-xs text-muted-foreground">For best results, upload a clear, friendly photo of yourself.</p>
                                     </div>
                                 </div>
