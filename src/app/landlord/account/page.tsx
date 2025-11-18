@@ -98,7 +98,7 @@ export default function AccountPage() {
             name: userProfile.name || user.displayName || '',
             email: userProfile.email || user.email || '',
             phone: userProfile.phone || '',
-            bio: userProfile.bio || 'Experienced landlord specializing in student housing near Urbanville University. Committed to providing safe, clean, and comfortable living environments for all tenants.',
+            bio: userProfile.bio || '',
         });
     }
   }, [user, userProfile, profileForm]);
@@ -147,7 +147,7 @@ export default function AccountPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Public Profile</CardTitle>
-                        <CardDescription>This is how other users will see you on the site.</CardDescription>
+                        <CardDescription>This is how other users will see you on the site. Complete your profile to attract more tenants.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Form {...profileForm}>
@@ -339,5 +339,3 @@ export default function AccountPage() {
     </div>
   );
 }
-
-    
