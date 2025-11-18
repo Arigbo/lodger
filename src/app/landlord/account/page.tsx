@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,7 +40,7 @@ import { useToast } from '@/hooks/use-toast';
 import { uploadProfileImage } from '@/firebase/storage';
 import { getStorage } from 'firebase/storage';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Pencil } from 'lucide-react';
+import { Pencil, User } from 'lucide-react';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -188,9 +189,8 @@ export default function AccountPage() {
                                         <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="grid gap-2">
-                                        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                                            <Pencil className="mr-2 h-4 w-4"/> 
-                                            {isUploading ? "Uploading..." : "Edit DP"}
+                                        <Button type="button" variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                                            <User/> 
                                         </Button>
                                         <p className="text-xs text-muted-foreground">Upload a real photo to build trust.</p>
                                         <input
@@ -375,5 +375,7 @@ export default function AccountPage() {
         </Tabs>
     </div>
   );
+
+    
 
     
