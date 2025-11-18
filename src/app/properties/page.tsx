@@ -113,7 +113,6 @@ export default function PropertiesPage() {
   const handleLocationSuccess = (coords: {lat: number, lng: number}) => {
     setCurrentLocation(coords);
 
-    // Simulate reverse geocoding to find state and schools
     let closestState: string | null = null;
     let minDistance = Infinity;
 
@@ -126,7 +125,8 @@ export default function PropertiesPage() {
     }
 
     let schools: string[] = [];
-    if (closestState) {
+    // Set a threshold for how far away is considered "in the state" (e.g., 500km)
+    if (closestState && minDistance < 500) {
         schools = [...new Set(allProperties
             .filter(p => p.location.state === closestState && p.location.school)
             .map(p => p.location.school!)
@@ -138,8 +138,8 @@ export default function PropertiesPage() {
     setFilters(prev => ({
         ...prev,
         useCurrentLocation: true,
-        country: 'USA',
-        state: closestState || undefined,
+        country: schools.length > 0 ? 'USA' : undefined,
+        state: schools.length > 0 ? closestState || undefined : undefined,
         school: undefined
     }));
   }

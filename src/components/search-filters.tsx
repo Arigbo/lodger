@@ -138,7 +138,7 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters,
                         <SelectItem key={school} value={school}>{school}</SelectItem>
                       ))}
                       {schoolsInArea && schoolsInArea.length === 0 && (
-                        <div className="p-2 text-sm text-muted-foreground">No schools found in area.</div>
+                        <div className="p-2 text-sm text-muted-foreground text-center">No schools found in area.</div>
                       )}
                     </SelectContent>
                 </Select>
