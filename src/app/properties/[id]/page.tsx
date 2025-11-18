@@ -93,7 +93,10 @@ function PropertyDetailView({
           url: propertyUrl,
         });
       } catch (error) {
-        console.error("Error sharing:", error);
+        // We can safely ignore AbortError which is thrown when the user cancels the share action
+        if ((error as Error).name !== 'AbortError') {
+          console.error("Error sharing:", error);
+        }
       }
     } else {
         // This part is a fallback for the button, but the dialog itself provides better fallbacks.
