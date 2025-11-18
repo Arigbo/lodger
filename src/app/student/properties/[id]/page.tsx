@@ -4,7 +4,7 @@
 
 import { notFound, usePathname, useParams } from "next/navigation";
 import Image from "next/image";
-import { getPropertyById, getUserById, getReviewsByPropertyId, getImagesByIds, getTransactionsByTenantId } from "@/lib/data";
+import { getPropertyById, getUserById, getReviewsByPropertyId, getImagesByIds, getTransactionsByTenantId, generateLeaseText } from "@/lib/data";
 import { formatPrice, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { add, format, isPast, isBefore } from 'date-fns';
 import PaymentDialog from '@/components/payment-dialog';
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Mock current user - replace with real auth
 const useUser = () => {
@@ -386,8 +387,8 @@ const amenityIcons: amenityIcon = {
 }
 
 function TenantPropertyView({ property, tenant }: { property: Property, tenant: User }) {
-  const [isClient, setIsClient] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [landlord, setLandlord] = useState<User | undefined>(undefined);
   
   const [tenancyState, setTenancyState] = useState<{
     transactions: Transaction[];
@@ -403,9 +404,9 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
   } | null>(null);
 
   useEffect(() => {
-    setIsClient(true);
-    
     // Defer all date-sensitive calculations to the client
+    setLandlord(getUserById(property.landlordId));
+
     const tenantTransactions = getTransactionsByTenantId(tenant.id);
     const today = new Date();
     const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
@@ -453,7 +454,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
       rentStatusText,
       rentDueDateText,
     });
-  }, [tenant.id, property.leaseStartDate]);
+  }, [tenant.id, property.leaseStartDate, property.landlordId]);
 
   const handlePaymentSuccess = () => {
     console.log("Payment successful!");
@@ -571,7 +572,20 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                                         <Button variant="outline"><FileText className="mr-2 h-4 w-4"/> View Lease Agreement</Button>
                                     </DialogTrigger>
                                     <DialogContent className="max-w-3xl">
-                                        {/* Lease Dialog Content */}
+                                        <DialogHeader>
+                                            <DialogTitle>Lease Agreement</DialogTitle>
+                                            <DialogDescription>
+                                                This is the lease agreement for {property.title}.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <ScrollArea className="max-h-[60vh] rounded-md border p-4">
+                                            {landlord && <div className="prose prose-sm whitespace-pre-wrap">{generateLeaseText(landlord, tenant, property)}</div>}
+                                        </ScrollArea>
+                                         <DialogFooter>
+                                            <DialogClose asChild>
+                                                <Button>Close</Button>
+                                            </DialogClose>
+                                        </DialogFooter>
                                     </DialogContent>
                                 </Dialog>
                             )}
