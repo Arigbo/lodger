@@ -1,5 +1,4 @@
 
-
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -15,9 +14,10 @@ import type { Property } from "@/lib/definitions";
 async function getFeaturedProperties(): Promise<Property[]> {
   try {
     // The firestore object from "@/firebase/server" will throw an error if not initialized,
-    // which we can catch here.
-    const propertiesRef = collection(firestore, 'properties');
-    const q = query(propertiesRef, where('isAvailable', '==', true), limit(3));
+    // which we can catch here. We'll check if it's available before using it.
+    const db = firestore; // This will throw if not initialized, and we'll catch it.
+    const propertiesRef = collection(db, 'properties');
+    const q = query(propertiesRef, where('status', '==', 'available'), limit(3));
     const querySnapshot = await getDocs(q);
     const properties: Property[] = [];
     querySnapshot.forEach((doc) => {
