@@ -22,6 +22,8 @@ import { cn } from '@/lib/utils';
 import { useAuth, useFirestore } from '@/firebase/provider';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { initiateEmailSignUp } from '@/firebase';
 
 
 const formSchema = z.object({
@@ -66,6 +68,7 @@ export default function SignupPage() {
   const router = useRouter();
   const auth = useAuth();
   const firestore = useFirestore();
+  const { toast } = useToast();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -113,7 +116,7 @@ export default function SignupPage() {
 
   const onSubmit = async (values: FormValues) => {
     try {
-        const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+        const userCredential = await initiateEmailSignUp(auth, values.email, values.password);
         const user = userCredential.user;
 
         const userData = {
@@ -122,26 +125,33 @@ export default function SignupPage() {
             email: values.email,
             role: values.userType,
             avatarUrl: `https://i.pravatar.cc/150?u=${user.uid}`, // Placeholder avatar
-            country: values.country,
-            state: values.state,
-            school: values.school,
-            phone: values.phone,
-            whatsappUrl: values.whatsappUrl,
-            twitterUrl: values.twitterUrl,
+            country: values.country || null,
+            state: values.state || null,
+            school: values.school || null,
+            phone: values.phone || null,
+            whatsappUrl: values.whatsappUrl || null,
+            twitterUrl: values.twitterUrl || null,
         };
 
         await setDoc(doc(firestore, "users", user.uid), userData);
 
-        console.log("User created and data stored in Firestore");
+        toast({
+            title: "Account Created!",
+            description: "Welcome to RentU. Redirecting you now...",
+        });
 
         if (values.userType === 'landlord') {
             router.push('/landlord');
         } else {
             router.push('/student/properties');
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error signing up:", error);
-        // Handle error, e.g., show a toast message
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: error.message || "There was a problem with your request.",
+        });
     }
   };
 
@@ -361,3 +371,6 @@ export default function SignupPage() {
     </div>
   );
 }
+
+
+    

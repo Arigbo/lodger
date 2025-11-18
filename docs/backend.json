@@ -10,44 +10,50 @@
           "type": "string",
           "description": "Unique identifier for the User entity."
         },
-        "userType": {
+        "role": {
           "type": "string",
-          "description": "The type of user. Can be 'landlord' or 'tenant'."
+          "description": "The type of user. Can be 'landlord' or 'student'."
         },
-        "firstName": {
+        "name": {
           "type": "string",
-          "description": "The first name of the user."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "The last name of the user."
+          "description": "The full name of the user."
         },
         "email": {
           "type": "string",
           "description": "The email address of the user.",
           "format": "email"
         },
-        "phoneNumber": {
-          "type": "string",
-          "description": "The phone number of the user."
-        },
-        "profilePicture": {
+        "avatarUrl": {
           "type": "string",
           "description": "URL of the user's profile picture.",
           "format": "uri"
         },
-        "bio": {
+        "phone": {
           "type": "string",
-          "description": "A short biography or description of the user."
+          "description": "The phone number of the user."
+        },
+        "country": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "school": {
+          "type": "string"
+        },
+        "whatsappUrl": {
+          "type": "string"
+        },
+        "twitterUrl": {
+          "type": "string"
         }
       },
       "required": [
         "id",
-        "userType",
-        "firstName",
-        "lastName",
+        "role",
+        "name",
         "email",
-        "phoneNumber"
+        "avatarUrl"
       ]
     },
     "Property": {
@@ -370,3 +376,5 @@
     "reasoning": "The Firestore data structure is designed to support Urban Nest's core features while adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs.  \n\n**Authorization Independence:** Achieved through denormalization.  For example, the `Property` document stores the `landlordId`, eliminating the need to fetch user data for authorization. The `LeaseAgreement` stores both `tenantId` and `landlordId` for similar reasons.  RentalApplications are located as subcollections of Properties to allow for filtering RentalApplications by Property with only the landlord having access to these applications. The `PropertyReview` collection includes the `propertyId`, enabling the filtering of reviews by property without requiring complex rule logic.\n\n**Structural Segregation:** Each collection houses documents with similar security requirements. User data is stored in the `/users/{userId}` path (path-based ownership), properties are stored in a top-level `/properties` collection, applications as subcollections of properties, and reviews in a top-level `/propertyReviews` collection.\n\n**Access Modeling:**  We leverage path-based ownership for user data (`/users/{userId}`), enabling simple security rules.  Properties have `landlordId` and are located in the top-level `/properties` collection, the `RentalApplication` is located as a subcollection of the property and includes the `tenantId`, and LeaseAgreements include both `tenantId` and `landlordId`.  \n\n**QAPs:** The structure supports secure list operations. For example, listing properties can be secured by checking the `landlordId` against `request.auth.uid`. Since the `RentalApplication` collection is a subcollection of `Property`, listing RentalApplications would happen under the security context of the parent Property. The reviews can be filtered by property id, with the review documents containing the associated property id."
   }
 }
+
+    
