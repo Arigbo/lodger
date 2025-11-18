@@ -34,14 +34,27 @@ export default function StudentSidebar() {
   const rentedProperties = getPropertiesByTenant(user.id);
   const isTenant = rentedProperties.length > 0;
 
-  // Hide the "My Tenancy" link if the student is not a tenant
-  const filteredNavLinks = isTenant ? studentNavLinks : studentNavLinks.filter(link => link.href !== '/student/tenancy');
+  // Show "My Tenancy" if the student is a tenant, otherwise don't.
+  // The link for "My Tenancy" will point to their specific property page.
+  const navLinks = studentNavLinks.map(link => {
+      if (link.href === '/student/tenancy') {
+          if (isTenant) {
+              return { ...link, href: `/student/properties/${rentedProperties[0].id}` };
+          }
+          return null; // Hide the link if not a tenant
+      }
+      return link;
+  }).filter(Boolean);
+
 
   return (
     <nav className="sticky top-24 flex flex-col gap-2">
-      {filteredNavLinks.map((link) => {
-        const isActive = pathname.startsWith(link.href) && link.href !== '/student' || pathname === '/student' && link.href === '/student';
-
+      {navLinks.map((link) => {
+        if (!link) return null;
+        
+        // Check for active link. For the tenancy link, it should be active on the property detail page.
+        const isActive = pathname === link.href || (link.label === "My Tenancy" && pathname.startsWith('/student/properties/'));
+        
         return (
             <Button
             key={link.href}
@@ -62,5 +75,3 @@ export default function StudentSidebar() {
     </nav>
   );
 }
-
-    

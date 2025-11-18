@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import { notFound, usePathname, useParams } from "next/navigation";
 import Image from "next/image";
-import { getPropertyById, getUserById, getReviewsByPropertyId, getImagesByIds } from "@/lib/data";
+import { getPropertyById, getUserById, getReviewsByPropertyId, getImagesByIds, getTransactionsByTenantId } from "@/lib/data";
 import { formatPrice, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,24 +12,26 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin } from "lucide-react";
-import type { Property, User, Review, ImagePlaceholder } from "@/lib/definitions";
+import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, FileText, RefreshCcw } from "lucide-react";
+import type { Property, User, Review, ImagePlaceholder, Transaction } from "@/lib/definitions";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import Link from "next/link";
 import { FaWhatsapp } from 'react-icons/fa';
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-
+import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { add, format, isPast, isBefore } from 'date-fns';
+import PaymentDialog from '@/components/payment-dialog';
 
 // Mock current user - replace with real auth
 const useUser = () => {
-  // To test a landlord, use 'user-1'. 
+  // To test a landlord, use 'user-1'.
   // To test a student tenant, use 'user-3'.
   // To test a student non-tenant, use 'user-2'.
-  const user = getUserById('user-2'); 
+  const user = getUserById('user-3');
   return { user };
 }
 
@@ -36,15 +39,44 @@ const useUser = () => {
 export default function PropertyDetailView() {
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const { user } = useUser();
+  
+  const property = getPropertyById(id);
+
+  if (!property) {
+    notFound();
+  }
+
+  const isTenant = user?.id === property.currentTenantId;
+
+  if (isTenant) {
+      return <TenantPropertyView property={property} tenant={user!} />;
+  }
+  
+  // Data fetching for non-tenant view
+  const landlord = property ? getUserById(property.landlordId) : undefined;
+  const reviews = property ? getReviewsByPropertyId(property.id) : [];
+  const images = property ? getImagesByIds(property.imageIds) : [];
+
+
+  return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews} images={images} />;
+}
+
+
+function ProspectiveTenantView({
+    property,
+    landlord,
+    reviews: initialReviews,
+    images: initialImages
+}: {
+    property: Property;
+    landlord: User | undefined;
+    reviews: Review[];
+    images: ImagePlaceholder[];
+}) {
   const pathname = usePathname();
   const { toast } = useToast();
   
-  const property = getPropertyById(id);
-  const landlord = property ? getUserById(property.landlordId) : undefined;
-  const initialReviews = property ? getReviewsByPropertyId(property.id) : [];
-  const initialImages = property ? getImagesByIds(property.imageIds) : [];
-  
-  const { user } = useUser();
   const [reviews] = useState(initialReviews);
   const [images] = useState(initialImages);
   const [requestMessage, setRequestMessage] = useState("");
@@ -54,13 +86,9 @@ export default function PropertyDetailView() {
     setIsClient(true);
   }, []);
 
-  if (!property) {
-    notFound();
-  }
 
   const averageRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
   
-  const isTenant = user?.id === property.currentTenantId;
   const propertyUrl = isClient ? `${window.location.origin}${pathname}` : '';
 
   const handleSendRequest = () => {
@@ -85,13 +113,11 @@ export default function PropertyDetailView() {
           url: propertyUrl,
         });
       } catch (error) {
-        // We can safely ignore AbortError which is thrown when the user cancels the share action
         if ((error as Error).name !== 'AbortError') {
           console.error("Error sharing:", error);
         }
       }
     } else {
-        // This part is a fallback for the button, but the dialog itself provides better fallbacks.
         alert("Web Share API is not supported in your browser. Use the links below to share.");
     }
   };
@@ -132,7 +158,6 @@ export default function PropertyDetailView() {
             </div>
           </div>
           
-          {/* Main Info */}
           <Card className="my-8">
               <CardContent className="p-6 flex items-center justify-around">
                   <div className="text-center"><BedDouble className="mx-auto mb-2 h-7 w-7 text-primary" /><p>{property.bedrooms} Beds</p></div>
@@ -141,7 +166,6 @@ export default function PropertyDetailView() {
               </CardContent>
           </Card>
           
-          {/* Tabs */}
           <Tabs defaultValue="description" className="w-full">
             <TabsList>
               <TabsTrigger value="description">Description</TabsTrigger>
@@ -167,7 +191,6 @@ export default function PropertyDetailView() {
             </TabsContent>
             <TabsContent value="reviews" className="py-4 space-y-6">
                 <h3 className="font-headline text-2xl font-semibold">Comments & Reviews</h3>
-                {isTenant && <AddReviewForm />}
                 {reviews.map(review => {
                     const reviewer = getUserById(review.userId);
                     return (
@@ -194,10 +217,8 @@ export default function PropertyDetailView() {
           </Tabs>
         </div>
         
-        {/* Right Sidebar */}
         <div className="lg:col-span-1">
           <div className="sticky top-24 space-y-6">
-             {/* Action Buttons */}
             <Card>
                 <CardContent className="p-4 flex items-center justify-around">
                     <Button variant="ghost" className="flex flex-col h-auto gap-1">
@@ -248,7 +269,6 @@ export default function PropertyDetailView() {
                 </CardContent>
             </Card>
 
-            {/* Landlord Card */}
             {landlord && (
               <Card>
                 <CardHeader>
@@ -279,8 +299,8 @@ export default function PropertyDetailView() {
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="message">Your Message</Label>
-                                    <Textarea 
-                                        id="message" 
+                                    <Textarea
+                                        id="message"
                                         placeholder="Hi, I'm very interested in this property. Would you consider a monthly rent of $1100?"
                                         value={requestMessage}
                                         onChange={(e) => setRequestMessage(e.target.value)}
@@ -359,9 +379,181 @@ type amenityIcon = {
 const amenityIcons: amenityIcon = {
     'Furnished': <Tv className="h-5 w-5 text-primary" />,
     'Wi-Fi': <Wifi className="h-5 w-5 text-primary" />,
-    'In-unit Laundry': <Wind className="h-5 w-5 text-primary" />, // Using Wind as a proxy for laundry/dryer
+    'In-unit Laundry': <Wind className="h-5 w-5 text-primary" />,
     'Pet Friendly': <Dog className="h-5 w-5 text-primary" />,
     'Parking Spot': <ParkingCircle className="h-5 w-5 text-primary" />,
+}
+
+function TenantPropertyView({ property, tenant }: { property: Property, tenant: User }) {
+  const tenantTransactions = getTransactionsByTenantId(tenant.id);
+
+  // --- DATE & PAYMENT CALCULATIONS ---
+  const today = new Date();
+  const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
+
+  const leaseEndDate = add(leaseStartDate, { years: 1 });
+
+  const lastRentPayment = tenantTransactions
+    .filter(t => t.type === 'Rent' && t.status === 'Completed')
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+
+  const isLeaseActive = isPast(leaseStartDate) && isBefore(today, leaseEndDate);
+  const isLeaseExpired = isPast(leaseEndDate);
+
+  let nextRentDueDate: Date;
+  let isRentDue = false;
+  let rentDueDateText = "N/A";
+  let rentStatusText = isLeaseActive ? `Due on` : 'Next due on';
+
+  if (isLeaseActive) {
+    if (lastRentPayment) {
+        nextRentDueDate = add(new Date(lastRentPayment.date), { months: 1 });
+        isRentDue = isPast(nextRentDueDate);
+    } else {
+        nextRentDueDate = leaseStartDate;
+        isRentDue = isPast(leaseStartDate);
+    }
+     rentDueDateText = format(nextRentDueDate, 'MMMM do, yyyy');
+  } else {
+      rentStatusText = 'Lease Inactive';
+  }
+
+  if(isRentDue) {
+      rentStatusText = 'Due on';
+  } else if (isLeaseActive) {
+      rentStatusText = 'Next due on';
+  }
+
+  const hasPendingPayments = tenantTransactions.some(t => t.status === 'Pending');
+  const showPayButton = (isRentDue || hasPendingPayments) && isLeaseActive;
+
+  const pendingTransactions = tenantTransactions.filter(t => t.status === 'Pending');
+  const paymentAmount = pendingTransactions.reduce((acc, t) => acc + t.amount, 0);
+
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+
+  const handlePaymentSuccess = () => {
+    console.log("Payment successful!");
+    window.location.reload();
+  };
+
+  return (
+    <div className="space-y-8">
+        <div>
+            <h1 className="font-headline text-3xl font-bold">My Tenancy</h1>
+            <p className="text-muted-foreground">Manage your current rental agreement and payments for {property.title}.</p>
+        </div>
+        <Separator />
+
+        <Tabs defaultValue="payments" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="payments">Payments</TabsTrigger>
+                <TabsTrigger value="lease">Lease Info</TabsTrigger>
+            </TabsList>
+            <TabsContent value="payments">
+                 <Card className="mt-2">
+                    <CardHeader>
+                        <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle>Payment History</CardTitle>
+                            <CardDescription>Review your past transactions.</CardDescription>
+                        </div>
+                        {showPayButton && paymentAmount > 0 && (
+                            <Button onClick={() => setIsPaymentDialogOpen(true)}>Pay Now {formatPrice(paymentAmount)}</Button>
+                        )}
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
+                                    <TableHead className="text-center">Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {tenantTransactions.length > 0 ? tenantTransactions.map(t => (
+                                    <TableRow key={t.id}>
+                                        <TableCell>{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
+                                        <TableCell>{t.type}</TableCell>
+                                        <TableCell className="text-right">{formatPrice(t.amount)}</TableCell>
+                                        <TableCell className="text-center">
+                                                <Badge variant={
+                                                t.status === 'Completed' ? 'secondary'
+                                                : t.status === 'Pending' ? 'default'
+                                                : 'destructive'
+                                            }>
+                                            {t.status}
+                                            </Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                )) : (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center h-24">No transactions found.</TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                 </Card>
+            </TabsContent>
+             <TabsContent value="lease">
+                <Card className="mt-2">
+                    <CardHeader>
+                        <CardTitle>Lease Information</CardTitle>
+                        <CardDescription>Key dates and details about your tenancy.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div className="rounded-lg border bg-secondary/50 p-4">
+                                <p className="text-sm font-medium text-muted-foreground">{rentStatusText}</p>
+                                <p className={cn("text-xl font-bold", isRentDue && isLeaseActive ? "text-destructive" : "text-primary")}>
+                                    {rentDueDateText}
+                                </p>
+                            </div>
+                            <div className={cn("rounded-lg border p-4", isLeaseExpired ? "border-destructive/50 bg-destructive/5" : "bg-secondary/50")}>
+                                <p className="text-sm font-medium text-muted-foreground">{isLeaseExpired ? "Lease Expired On" : "Lease End Date"}</p>
+                                <p className={cn("text-xl font-bold", isLeaseExpired && "text-destructive")}>
+                                    {format(leaseEndDate, 'MMMM do, yyyy')}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">Lease Started</p>
+                                <p>{format(leaseStartDate, 'MMMM do, yyyy')}</p>
+                            </div>
+
+                            {isLeaseExpired ? (
+                                <Button variant="outline" disabled><RefreshCcw className="mr-2 h-4 w-4"/> Request New Lease</Button>
+                            ) : (
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline"><FileText className="mr-2 h-4 w-4"/> View Lease Agreement</Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-3xl">
+                                        {/* Lease Dialog Content */}
+                                    </DialogContent>
+                                </Dialog>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
+
+        <PaymentDialog
+            isOpen={isPaymentDialogOpen}
+            onClose={() => setIsPaymentDialogOpen(false)}
+            onPaymentSuccess={handlePaymentSuccess}
+            amount={paymentAmount}
+            tenantName={tenant.name}
+        />
+    </div>
+  );
 }
 
 function AddReviewForm() {
