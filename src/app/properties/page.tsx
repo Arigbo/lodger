@@ -107,12 +107,17 @@ export default function PropertiesPage() {
   };
 
   const resetFilters = () => {
-    // Reset to user's default location or empty if no user
+    // Reset all filters to an empty state
      setFilters({
-      country: user?.country,
-      state: user?.state,
-      school: user?.school,
+      country: undefined,
+      state: undefined,
+      school: undefined,
       useCurrentLocation: false,
+      price: undefined,
+      propertyType: undefined,
+      bedrooms: undefined,
+      bathrooms: undefined,
+      amenities: []
     });
   }
 

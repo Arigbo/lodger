@@ -38,9 +38,7 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
   useEffect(() => {
     if (initialFilters) {
         setFilters(initialFilters);
-        if (initialFilters.price) {
-            setPrice(initialFilters.price);
-        }
+        setPrice(initialFilters.price || 3000);
     }
   }, [initialFilters]);
   
@@ -71,7 +69,13 @@ export default function SearchFilters({ onFilterChange, onReset, initialFilters 
   const handleCurrentLocation = () => {
     // In a real app, you'd use navigator.geolocation here.
     // For this prototype, we'll simulate it by setting the useCurrentLocation flag.
-    const newFilters = { useCurrentLocation: true }; // Clear other location filters
+    const newFilters: FilterState = { 
+        ...filters, 
+        useCurrentLocation: true,
+        country: undefined,
+        state: undefined,
+        school: undefined,
+    };
     setFilters(newFilters);
     onFilterChange(newFilters);
   }
