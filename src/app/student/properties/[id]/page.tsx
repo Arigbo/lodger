@@ -96,20 +96,17 @@ export default function PropertyDetailView() {
   }
 
   // After loading, if the property doesn't exist, show 404
-  if (!isLoading && !property) {
+  if (!property) {
     notFound();
   }
 
-  if (property) {
-    const isTenant = user?.uid === property.currentTenantId;
-    if (isTenant && user) {
-        return <TenantPropertyView property={property} tenant={user} />;
-    }
-    return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews || []} images={images} />;
+  const isTenant = user?.uid === property.currentTenantId;
+
+  if (isTenant && user) {
+      return <TenantPropertyView property={property} tenant={user} />;
   }
-  
-  // This should not be reached if logic is correct, but acts as a fallback.
-  return <TenancySkeleton />;
+
+  return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews || []} images={images} />;
 }
 
 
@@ -471,7 +468,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
   const { data: landlord } = useDoc<User>(landlordRef);
 
   const transactionsQuery = useMemoFirebase(() => query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.uid), where('propertyId', '==', property.id)), [firestore, tenant.uid, property.id]);
-  const { data: transactions } = useCollection<Transaction>(transactionsQuery);
+  const { data: transactions, refetch: refetchTransactions } = useCollection<Transaction>(transactionsQuery);
 
   const leaseQuery = useMemoFirebase(() => query(collection(firestore, 'leaseAgreements'), where('propertyId', '==', property.id), where('tenantId', '==', tenant.uid)), [firestore, property.id, tenant.uid]);
   const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leaseQuery);
@@ -545,6 +542,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
 
   const handlePaymentSuccess = () => {
     console.log("Payment successful!");
+    // The useCollection hook will automatically refetch the transactions.
   };
   
   if (!tenancyState || isLeaseLoading) {
@@ -636,10 +634,8 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
              <TabsContent value="lease">
                 <Card className="mt-2">
                     <CardHeader>
-                        <DialogHeader>
-                            <DialogTitle>Lease Information</DialogTitle>
-                            <DialogDescription>Key dates and details about your tenancy.</DialogDescription>
-                        </DialogHeader>
+                        <CardTitle>Lease Information</CardTitle>
+                        <CardDescription>Key dates and details about your tenancy.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
