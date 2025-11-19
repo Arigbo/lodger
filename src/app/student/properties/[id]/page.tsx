@@ -29,88 +29,6 @@ import TenancySkeleton from "@/components/tenancy-skeleton";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
 import { doc, collection, query, where, User as FirebaseUser, addDoc } from "firebase/firestore";
 
-function generateLeaseText(landlord: User, tenant: User | FirebaseUser, property: Property): string {
-  const leaseStartDate = new Date();
-  const leaseEndDate = add(leaseStartDate, { years: 1 });
-
-  return `
-    LEASE AGREEMENT
-
-    This Lease Agreement (the "Agreement") is made and entered into on ${format(new Date(), 'MMMM do, yyyy')}, by and between:
-
-    Landlord: ${landlord.name}
-    Tenant: ${'name' in tenant ? tenant.name : tenant.displayName}
-
-    1. PROPERTY. Landlord agrees to lease to Tenant the property located at:
-       ${property.location.address}, ${property.location.city}, ${property.location.state} ${property.location.zip}
-
-    2. TERM. The lease term will begin on ${format(leaseStartDate, 'MMMM do, yyyy')} and will terminate on ${format(leaseEndDate, 'MMMM do, yyyy')}.
-
-    3. RENT. Tenant agrees to pay Landlord the sum of ${formatPrice(property.price)} per month, due on the 1st day of each month.
-
-    4. SECURITY DEPOSIT. Upon execution of this Agreement, Tenant shall deposit with Landlord the sum of ${formatPrice(property.price)} as security for the faithful performance by Tenant of the terms hereof.
-
-    5. UTILITIES. Tenant is responsible for the payment of all utilities and services for the Property.
-
-    6. AMENITIES. The following amenities are included: ${property.amenities.join(', ')}.
-
-    7. RULES. Tenant agrees to abide by the following rules: ${property.rules.join(', ')}.
-
-    8. SIGNATURES. By signing below, the parties agree to the terms and conditions of this Lease Agreement.
-
-    Landlord: _________________________
-    Date: _________________________
-
-    Tenant: _________________________
-    Date: _________________________
-  `;
-}
-
-// This is the Client Component for rendering UI.
-export default function PropertyDetailView() {
-  const params = useParams();
-  const id = Array.isArray(params.id) ? params.id[0] : params.id;
-  const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
-
-  const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
-  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
-  
-  const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
-  const { data: landlord } = useDoc<User>(landlordRef);
-  
-  const reviewsQuery = useMemoFirebase(() => property ? query(collection(firestore, 'reviews'), where('propertyId', '==', property.id)) : null, [firestore, property]);
-  const { data: reviews } = useCollection<Review>(reviewsQuery);
-  
-  const images: ImagePlaceholder[] = property?.images?.map((url, i) => ({
-      id: `${property.id}-img-${i}`,
-      imageUrl: url,
-      description: property.title,
-      imageHint: 'apartment interior'
-  })) || [];
-
-  useEffect(() => {
-    // This effect ensures that notFound() is only called after loading is complete and the property is confirmed to not exist.
-    if (!isPropertyLoading && !property) {
-      notFound();
-    }
-  }, [isPropertyLoading, property]);
-
-  if (isUserLoading || isPropertyLoading || !property) {
-    // Show skeleton loader while user/property is loading, or if property is null temporarily before the effect runs.
-    return <TenancySkeleton />;
-  }
-
-  const isTenant = user?.uid === property.currentTenantId;
-
-  if (isTenant && user) {
-      return <TenantPropertyView property={property} tenant={user} />;
-  }
-
-  return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews || []} images={images} />;
-}
-
-
 function ProspectiveTenantView({
     property,
     landlord,
@@ -465,9 +383,6 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const firestore = useFirestore();
   
-  const landlordRef = useMemoFirebase(() => doc(firestore, 'users', property.landlordId), [firestore, property.landlordId]);
-  const { data: landlord } = useDoc<User>(landlordRef);
-
   const transactionsQuery = useMemoFirebase(() => query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.uid), where('propertyId', '==', property.id)), [firestore, tenant.uid, property.id]);
   const { data: transactions } = useCollection<Transaction>(transactionsQuery);
 
@@ -655,8 +570,8 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-4">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">Lease Started</p>
-                                <p>{format(tenancyState.leaseStartDate, 'MMMM do, yyyy')}</p>
+                                <CardTitle>Lease Started</CardTitle>
+                                <CardDescription>{format(tenancyState.leaseStartDate, 'MMMM do, yyyy')}</CardDescription>
                             </div>
 
                             {lease && (
@@ -704,36 +619,56 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
   );
 }
 
-function AddReviewForm() {
-    const [rating, setRating] = React.useState(0);
+// This is the Client Component for rendering UI.
+export default function PropertyDetailPage() {
+  const params = useParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
 
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Write a Review</CardTitle>
-                <CardDescription>Share your experience with this property.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <Label>Rating</Label>
-                    <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                            <button key={i} onClick={() => setRating(i + 1)}>
-                                <Star className={cn("h-6 w-6", i < rating ? "text-accent fill-current" : "text-muted-foreground")}/>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="comment">Comment</Label>
-                    <Textarea id="comment" placeholder="Describe your experience..." />
-                </div>
-                <Button>Submit Review</Button>
-            </CardContent>
-        </Card>
-    );
+  const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
+  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
+  
+  const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
+  const { data: landlord } = useDoc<User>(landlordRef);
+  
+  const reviewsQuery = useMemoFirebase(() => property ? query(collection(firestore, 'reviews'), where('propertyId', '==', property.id)) : null, [firestore, property]);
+  const { data: reviews } = useCollection<Review>(reviewsQuery);
+  
+  const [isDataReady, setIsDataReady] = useState(false);
+
+  useEffect(() => {
+    // This effect ensures that we only proceed when all initial loading is complete.
+    if (!isPropertyLoading && !isUserLoading) {
+      setIsDataReady(true);
+      if (!property) {
+        // If loading is done and there's no property, then it's a 404.
+        notFound();
+      }
+    }
+  }, [isPropertyLoading, isUserLoading, property]);
+
+  if (!isDataReady) {
+    return <TenancySkeleton />;
+  }
+
+  const isTenant = user?.uid === property?.currentTenantId;
+
+  const images: ImagePlaceholder[] = property?.images?.map((url, i) => ({
+      id: `${property.id}-img-${i}`,
+      imageUrl: url,
+      description: property.title,
+      imageHint: 'apartment interior'
+  })) || [];
+
+  if (isTenant && user && property) {
+      return <TenantPropertyView property={property} tenant={user} />;
+  }
+
+  if (property) {
+    return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews || []} images={images} />;
+  }
+  
+  // This part should ideally not be reached if the useEffect logic is correct.
+  return <TenancySkeleton />;
 }
-
-    
-
-    
