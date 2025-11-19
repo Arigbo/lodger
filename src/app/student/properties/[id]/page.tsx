@@ -81,13 +81,14 @@ function ProspectiveTenantView({
             title: "Not Logged In",
             description: "You must be logged in to send a rental request.",
         });
+        router.push('/auth/login');
         return;
     }
     try {
         const rentalRequestsRef = collection(firestore, 'rentalApplications');
         await addDoc(rentalRequestsRef, {
             propertyId: property.id,
-            userId: user.uid,
+            tenantId: user.uid,
             messageToLandlord: requestMessage,
             applicationDate: new Date().toISOString(),
             status: 'pending',
@@ -698,14 +699,12 @@ export default function PropertyDetailPage() {
 
     const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
     const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
-
+    
     // Fetch landlord info regardless of tenancy status, needed for both views
     const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
     const { data: landlord, isLoading: isLandlordLoading } = useDoc<User>(landlordRef);
 
-    const isTenant = user?.uid === property?.currentTenantId;
-
-    if (isUserLoading || isPropertyLoading) {
+    if (isUserLoading || isPropertyLoading || isLandlordLoading) {
         return <TenancySkeleton />;
     }
 
@@ -713,6 +712,8 @@ export default function PropertyDetailPage() {
         notFound();
         return null;
     }
+    
+    const isTenant = user?.uid === property.currentTenantId;
 
     // Now decide which view to show
     if (isTenant && user) {
@@ -743,5 +744,3 @@ function ProspectiveTenantLoader({ property, landlord }: { property: Property, l
 
     return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews || []} images={images} />;
 }
-
-    
