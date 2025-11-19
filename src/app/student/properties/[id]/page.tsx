@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, FileText, RefreshCcw, User as UserIcon, Signature, AlertTriangle } from "lucide-react";
-import type { Property, User, Review, ImagePlaceholder, Transaction, LeaseAgreement } from "@/lib/definitions";
+import type { Property, User, Review, ImagePlaceholder } from "@/lib/definitions";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import Link from "next/link";
@@ -20,20 +20,63 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { add, format, isPast, isBefore } from 'date-fns';
-import PaymentDialog from '@/components/payment-dialog';
-import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import TenancySkeleton from "@/components/tenancy-skeleton";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
 import { doc, collection, query, where, User as FirebaseUser, addDoc, serverTimestamp } from "firebase/firestore";
 
+const amenityIcons: { [key: string]: React.ReactNode } = {
+    'Furnished': <Tv className="h-5 w-5 text-primary" />,
+    'Wi-Fi': <Wifi className="h-5 w-5 text-primary" />,
+    'In-unit Laundry': <Wind className="h-5 w-5 text-primary" />,
+    'Pet Friendly': <Dog className="h-5 w-5 text-primary" />,
+    'Parking Spot': <ParkingCircle className="h-5 w-5 text-primary" />,
+};
+
+export default function PropertyDetailPage() {
+    const params = useParams();
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const firestore = useFirestore();
+
+    const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
+    const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
+    
+    const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
+    const { data: landlord, isLoading: isLandlordLoading } = useDoc<User>(landlordRef);
+
+    const reviewsQuery = useMemoFirebase(() => query(collection(firestore, 'propertyReviews'), where('propertyId', '==', id)), [firestore, id]);
+    const { data: reviews, isLoading: areReviewsLoading } = useCollection<Review>(reviewsQuery);
+    
+    if (isPropertyLoading || isLandlordLoading || areReviewsLoading) {
+        return <TenancySkeleton />;
+    }
+
+    if (!property) {
+        notFound();
+        return null;
+    }
+
+    const images: ImagePlaceholder[] = property?.images?.map((url, i) => ({
+        id: `${property.id}-img-${i}`,
+        imageUrl: url,
+        description: property.title,
+        imageHint: 'apartment interior'
+    })) || [];
+
+    return (
+        <ProspectiveTenantView 
+            property={property} 
+            landlord={landlord} 
+            reviews={reviews || []} 
+            images={images} 
+        />
+    );
+}
+
 function ProspectiveTenantView({
     property,
     landlord,
-    reviews: initialReviews,
-    images: initialImages
+    reviews,
+    images,
 }: {
     property: Property;
     landlord: User | undefined | null;
@@ -46,8 +89,6 @@ function ProspectiveTenantView({
   const firestore = useFirestore();
   const router = useRouter();
   
-  const [reviews] = useState(initialReviews);
-  const [images] = useState(initialImages);
   const [requestMessage, setRequestMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
   
@@ -94,7 +135,6 @@ function ProspectiveTenantView({
             status: 'pending',
         });
         
-        // Also create the first message to initiate the conversation
         const messagesRef = collection(firestore, 'messages');
         await addDoc(messagesRef, {
             text: requestMessage || `Hi, I'm interested in renting ${property.title}.`,
@@ -110,7 +150,6 @@ function ProspectiveTenantView({
             description: "Your rental request has been sent to the landlord.",
         });
         
-        // Redirect to messages page to show the new conversation
         router.push(`/student/messages?conversationId=${landlord.id}`);
 
     } catch (error) {
@@ -151,7 +190,6 @@ function ProspectiveTenantView({
     <div className="container mx-auto max-w-7xl px-4 py-12">
       <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-12">
         <div className="lg:col-span-2">
-          {/* Image Gallery */}
           <div className="grid grid-cols-2 grid-rows-2 gap-2 h-[500px] mb-8">
             <div className="col-span-2 row-span-2 relative">
                 {images[0] && <Image src={images[0].imageUrl} alt={property.title} fill className="object-cover rounded-lg" data-ai-hint={images[0].imageHint} />}
@@ -160,7 +198,6 @@ function ProspectiveTenantView({
             {images[2] && <div className="hidden md:block relative"><Image src={images[2].imageUrl} alt={property.title} fill className="object-cover rounded-lg" data-ai-hint={images[2].imageHint}/></div>}
           </div>
 
-          {/* Title and Meta */}
           <div className="flex flex-col md:flex-row md:items-start md:justify-between">
             <div>
               <Badge variant="secondary" className="mb-2">{property.type}</Badge>
@@ -403,344 +440,4 @@ function ProspectiveTenantView({
   );
 }
 
-type amenityIcon = {
-    [key: string]: React.ReactNode;
-}
-
-const amenityIcons: amenityIcon = {
-    'Furnished': <Tv className="h-5 w-5 text-primary" />,
-    'Wi-Fi': <Wifi className="h-5 w-5 text-primary" />,
-    'In-unit Laundry': <Wind className="h-5 w-5 text-primary" />,
-    'Pet Friendly': <Dog className="h-5 w-5 text-primary" />,
-    'Parking Spot': <ParkingCircle className="h-5 w-5 text-primary" />,
-}
-
-function TenantPropertyView({ property, tenant, landlord }: { property: Property, tenant: FirebaseUser, landlord: User | null | undefined }) {
-  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const firestore = useFirestore();
-  const router = useRouter();
-  
-  const transactionsQuery = useMemoFirebase(() => query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.uid), where('propertyId', '==', property.id)), [firestore, tenant.uid, property.id]);
-  const { data: transactions, isLoading: areTransactionsLoading } = useCollection<Transaction>(transactionsQuery);
-
-  const leaseQuery = useMemoFirebase(() => query(collection(firestore, 'leaseAgreements'), where('propertyId', '==', property.id), where('tenantId', '==', tenant.uid)), [firestore, property.id, tenant.uid]);
-  const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leaseQuery);
-  const lease = leases?.[0];
-
-  const [tenancyState, setTenancyState] = useState<{
-    showPayButton: boolean;
-    paymentAmount: number;
-    leaseEndDate: Date;
-    leaseStartDate: Date;
-    isLeaseActive: boolean;
-    isLeaseExpired: boolean;
-    isRentDue: boolean;
-    rentStatusText: string;
-    rentDueDateText: string;
-  } | null>(null);
-
-  useEffect(() => {
-    if (areTransactionsLoading || isLeaseLoading) return;
-
-    const tenantTransactions = transactions || [];
-    const today = new Date();
-    const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
-    const leaseEndDate = add(leaseStartDate, { years: 1 });
-    const lastRentPayment = tenantTransactions
-      .filter(t => t.type === 'Rent' && t.status === 'Completed')
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-
-    const isLeaseActive = lease?.status === 'active';
-    const isLeaseExpired = isPast(leaseEndDate);
     
-    let nextRentDueDate: Date;
-    let isRentDue = false;
-    let rentDueDateText = "N/A";
-    let rentStatusText: string;
-
-    if (isLeaseActive) {
-      if (lastRentPayment) {
-        nextRentDueDate = add(new Date(lastRentPayment.date), { months: 1 });
-        isRentDue = isPast(nextRentDueDate);
-      } else {
-        nextRentDueDate = leaseStartDate;
-        isRentDue = isPast(leaseStartDate);
-      }
-      rentDueDateText = format(nextRentDueDate, 'MMMM do, yyyy');
-      rentStatusText = isRentDue ? 'Rent is due on' : 'Rent will be due on';
-    } else {
-      rentStatusText = lease?.status === 'pending' ? 'Lease Pending Signature' : 'Lease Inactive';
-    }
-
-    const hasPendingPayments = tenantTransactions.some(t => t.status === 'Pending');
-    const showPayButton = isLeaseActive && (isRentDue || hasPendingPayments);
-    let paymentAmount = 0;
-    if (isRentDue) {
-        paymentAmount = property.price;
-    }
-
-
-    setTenancyState({
-      showPayButton,
-      paymentAmount,
-      leaseEndDate,
-      leaseStartDate,
-      isLeaseActive,
-      isLeaseExpired,
-      isRentDue,
-      rentStatusText,
-      rentDueDateText,
-    });
-  }, [transactions, lease, tenant.uid, property.leaseStartDate, property.price, areTransactionsLoading, isLeaseLoading]);
-
-  const handlePaymentSuccess = () => {
-    console.log("Payment successful!");
-    // The useCollection hook for transactions will automatically update the UI.
-  };
-
-  const handleMessageLandlord = () => {
-    if (landlord) {
-      router.push(`/student/messages?contact=${landlord.id}`);
-    }
-  };
-  
-  if (!tenancyState || isLeaseLoading) {
-    return <TenancySkeleton />;
-  }
-
-  return (
-    <div className="space-y-8">
-        <div>
-            <h1 className="font-headline text-3xl font-bold">My Tenancy</h1>
-            <p className="text-muted-foreground">Manage your current rental agreement and payments for {property.title}.</p>
-        </div>
-        <Separator />
-        
-        {lease?.status === 'pending' && (
-            <Card className="border-amber-500/50 bg-amber-50">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-amber-700">
-                        <AlertTriangle /> Action Required
-                    </CardTitle>
-                    <CardDescription>
-                        Your lease agreement is ready for review. Please sign the lease to activate your tenancy and enable payments.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Button asChild>
-                        <Link href={`/student/leases/${lease.id}`}>
-                            <Signature className="mr-2 h-4 w-4" /> Review & Sign Lease
-                        </Link>
-                    </Button>
-                </CardContent>
-            </Card>
-        )}
-
-        <Tabs defaultValue="payments" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="payments">Payments</TabsTrigger>
-                <TabsTrigger value="lease">Lease Info</TabsTrigger>
-                <TabsTrigger value="contact">Contact</TabsTrigger>
-            </TabsList>
-            <TabsContent value="payments">
-                 <Card className="mt-2">
-                    <CardHeader>
-                        <div className="flex justify-between items-center">
-                        <div>
-                            <CardTitle>Payment History</CardTitle>
-                            <CardDescription>Review your past transactions.</CardDescription>
-                        </div>
-                        {tenancyState.showPayButton && tenancyState.paymentAmount > 0 && (
-                            <Button onClick={() => setIsPaymentDialogOpen(true)}>Pay Now {formatPrice(tenancyState.paymentAmount)}</Button>
-                        )}
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead className="text-right">Amount</TableHead>
-                                    <TableHead className="text-center">Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {transactions && transactions.length > 0 ? transactions.map(t => (
-                                    <TableRow key={t.id}>
-                                        <TableCell>{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
-                                        <TableCell>{t.type}</TableCell>
-                                        <TableCell className="text-right">{formatPrice(t.amount)}</TableCell>
-                                        <TableCell className="text-center">
-                                                <Badge variant={
-                                                t.status === 'Completed' ? 'secondary'
-                                                : t.status === 'Pending' ? 'default'
-                                                : 'destructive'
-                                            }>
-                                            {t.status}
-                                            </Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                )) : (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="text-center h-24">No transactions found.</TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                 </Card>
-            </TabsContent>
-             <TabsContent value="lease">
-                <Card className="mt-2">
-                    <CardHeader>
-                        <CardTitle>Lease Information</CardTitle>
-                        <CardDescription>Key dates and details about your tenancy.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className={cn("text-xl font-bold", tenancyState.isRentDue && tenancyState.isLeaseActive ? "text-destructive" : "text-primary")}>
-                                        {tenancyState.rentDueDateText}
-                                    </CardTitle>
-                                    <CardDescription>{tenancyState.rentStatusText}</CardDescription>
-                                </CardHeader>
-                            </Card>
-                            <Card className={cn(tenancyState.isLeaseExpired ? "border-destructive/50 bg-destructive/5" : "")}>
-                                <CardHeader>
-                                     <CardTitle className={cn("text-xl font-bold", tenancyState.isLeaseExpired && "text-destructive")}>
-                                        {format(tenancyState.leaseEndDate, 'MMMM do, yyyy')}
-                                    </CardTitle>
-                                    <CardDescription>{tenancyState.isLeaseExpired ? "Lease Expired On" : "Lease End Date"}</CardDescription>
-                                </CardHeader>
-                            </Card>
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg border p-4">
-                            <div>
-                                <h4 className="font-semibold">Lease Started</h4>
-                                <p className="text-sm text-muted-foreground">{format(tenancyState.leaseStartDate, 'MMMM do, yyyy')}</p>
-                            </div>
-
-                            {lease && (
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button variant="outline"><FileText className="mr-2 h-4 w-4"/> View Lease Agreement</Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-3xl">
-                                        <DialogHeader>
-                                            <DialogTitle>Lease Agreement</DialogTitle>
-                                            <DialogDescription>
-                                                This is the lease agreement for {property.title}.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <ScrollArea className="max-h-[60vh] rounded-md border p-4">
-                                            <div className="prose prose-sm whitespace-pre-wrap">{lease.leaseText}</div>
-                                        </ScrollArea>
-                                         <DialogFooter>
-                                            <DialogClose asChild>
-                                                <Button>Close</Button>
-                                            </DialogClose>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-            <TabsContent value="contact">
-                {landlord && (
-                     <Card className="mt-2">
-                        <CardHeader>
-                            <CardTitle>Contact Your Landlord</CardTitle>
-                            <CardDescription>Get in touch with {landlord.name} regarding your tenancy.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex flex-col items-center text-center">
-                              <Avatar className="h-24 w-24 mx-auto mb-4">
-                                <AvatarImage src={landlord.profileImageUrl} />
-                                <AvatarFallback>
-                                    <UserIcon className="h-12 w-12 text-muted-foreground" />
-                                </AvatarFallback>
-                              </Avatar>
-                              <p className="font-semibold">{landlord.name}</p>
-                              <p className="text-sm text-muted-foreground">{landlord.email}</p>
-                              <Separator className="my-6" />
-                              <Button onClick={handleMessageLandlord} className="w-full max-w-sm">
-                                <MessageSquare className="mr-2 h-4 w-4"/> Start Conversation
-                              </Button>
-                        </CardContent>
-                     </Card>
-                )}
-            </TabsContent>
-        </Tabs>
-
-        {tenancyState && (
-            <PaymentDialog
-                isOpen={isPaymentDialogOpen}
-                onClose={() => setIsPaymentDialogOpen(false)}
-                onPaymentSuccess={handlePaymentSuccess}
-                amount={tenancyState.paymentAmount}
-                tenantName={tenant.displayName || tenant.email || ''}
-                tenantId={tenant.uid}
-                landlordId={property.landlordId}
-                propertyId={property.id}
-            />
-        )}
-    </div>
-  );
-}
-
-export default function PropertyDetailPage() {
-    const params = useParams();
-    const id = Array.isArray(params.id) ? params.id[0] : params.id;
-    const { user, isUserLoading } = useUser();
-    const firestore = useFirestore();
-
-    const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
-    const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
-    
-    // Fetch landlord info regardless of tenancy status, needed for both views
-    const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
-    const { data: landlord, isLoading: isLandlordLoading } = useDoc<User>(landlordRef);
-
-    if (isUserLoading || isPropertyLoading || isLandlordLoading) {
-        return <TenancySkeleton />;
-    }
-
-    if (!property) {
-        notFound();
-        return null;
-    }
-    
-    const isTenant = user?.uid === property.currentTenantId;
-
-    // Now decide which view to show
-    if (isTenant && user) {
-        return <TenantPropertyView property={property} tenant={user} landlord={landlord} />;
-    } else {
-        // This is the prospective tenant view, which needs reviews
-        return <ProspectiveTenantLoader property={property} landlord={landlord} />;
-    }
-}
-
-// Loader for the prospective view to fetch reviews
-function ProspectiveTenantLoader({ property, landlord }: { property: Property, landlord: User | null | undefined }) {
-    const firestore = useFirestore();
-
-    const reviewsQuery = useMemoFirebase(() => query(collection(firestore, 'propertyReviews'), where('propertyId', '==', property.id)), [firestore, property.id]);
-    const { data: reviews, isLoading: areReviewsLoading } = useCollection<Review>(reviewsQuery);
-    
-    const images: ImagePlaceholder[] = property?.images?.map((url, i) => ({
-        id: `${property.id}-img-${i}`,
-        imageUrl: url,
-        description: property.title,
-        imageHint: 'apartment interior'
-    })) || [];
-
-    if (areReviewsLoading) {
-        return <TenancySkeleton />;
-    }
-
-    return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews || []} images={images} />;
-}

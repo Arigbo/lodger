@@ -7,9 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, Building2, UserCog, MessageSquare, Search, FileText } from "lucide-react";
 import { Badge } from "./ui/badge";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
-import type { Property } from "@/lib/definitions";
+import { useUser } from "@/firebase";
 import React from 'react';
 
 
@@ -27,7 +25,6 @@ export default function StudentSidebar() {
   const { user } = useUser();
   
   if (!user) {
-    // You might want to return null or a skeleton loader while user is loading
     return null; 
   }
 
@@ -36,9 +33,11 @@ export default function StudentSidebar() {
       {navLinks.map((link) => {
         if (!link) return null;
         
-        // Special handling for dynamic routes
-        const isActive = (pathname === link.href) || (link.href === '/student/properties' && pathname.startsWith('/student/properties/'));
-        
+        // Use startsWith for parent routes, except for the generic properties search
+        const isActive = (pathname === link.href) || 
+                         (pathname.startsWith(link.href) && link.href !== '/student' && link.href !== '/student/properties') ||
+                         (pathname.startsWith('/student/properties/') && link.href === '/student/properties');
+
         return (
             <Button
             key={link.href}
@@ -59,3 +58,5 @@ export default function StudentSidebar() {
     </nav>
   );
 }
+
+    
