@@ -89,15 +89,16 @@ export default function PropertyDetailView() {
       imageHint: 'apartment interior'
   })) || [];
 
-  const isLoading = isUserLoading || isPropertyLoading;
+  useEffect(() => {
+    // This effect ensures that notFound() is only called after loading is complete and the property is confirmed to not exist.
+    if (!isPropertyLoading && !property) {
+      notFound();
+    }
+  }, [isPropertyLoading, property]);
 
-  if (isLoading) {
+  if (isUserLoading || isPropertyLoading || !property) {
+    // Show skeleton loader while user/property is loading, or if property is null temporarily before the effect runs.
     return <TenancySkeleton />;
-  }
-
-  // After loading, if the property doesn't exist, show 404
-  if (!property) {
-    notFound();
   }
 
   const isTenant = user?.uid === property.currentTenantId;
@@ -468,7 +469,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
   const { data: landlord } = useDoc<User>(landlordRef);
 
   const transactionsQuery = useMemoFirebase(() => query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.uid), where('propertyId', '==', property.id)), [firestore, tenant.uid, property.id]);
-  const { data: transactions, refetch: refetchTransactions } = useCollection<Transaction>(transactionsQuery);
+  const { data: transactions } = useCollection<Transaction>(transactionsQuery);
 
   const leaseQuery = useMemoFirebase(() => query(collection(firestore, 'leaseAgreements'), where('propertyId', '==', property.id), where('tenantId', '==', tenant.uid)), [firestore, property.id, tenant.uid]);
   const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leaseQuery);
@@ -732,5 +733,7 @@ function AddReviewForm() {
         </Card>
     );
 }
+
+    
 
     
