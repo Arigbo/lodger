@@ -77,17 +77,17 @@ export default function MessagesPage() {
                 participantIds.add(property.landlordId);
             }
             
-            if (participantIds.size === 0 && !newContact) {
+            // Add new contact from URL if they aren't already in the list
+            if (newContact) {
+                participantIds.add(newContact.id);
+            }
+
+            if (participantIds.size === 0) {
                  setConversations([]);
                  return;
             }
-
-            const allParticipantIds = Array.from(participantIds);
-            if (newContact && !allParticipantIds.includes(newContact.id)) {
-                allParticipantIds.push(newContact.id);
-            }
             
-            if(allParticipantIds.length === 0) return;
+            const allParticipantIds = Array.from(participantIds);
 
             const usersQuery = query(collection(firestore, 'users'), where('id', 'in', allParticipantIds));
             const usersSnapshot = await getDocs(usersQuery);
