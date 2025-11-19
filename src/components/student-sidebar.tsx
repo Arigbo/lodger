@@ -13,8 +13,9 @@ import type { Property } from "@/lib/definitions";
 import React from 'react';
 
 
-const baseStudentNavLinks = [
+const navLinks = [
     { href: "/student", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/student/tenancy", label: "My Tenancy", icon: Building2 },
     { href: "/student/properties", label: "Find a Property", icon: Search },
     { href: "/student/messages", label: "Messages", icon: MessageSquare },
     { href: "/student/leases", label: "Lease Agreements", icon: FileText },
@@ -24,32 +25,7 @@ const baseStudentNavLinks = [
 export default function StudentSidebar() {
   const pathname = usePathname();
   const { user } = useUser();
-  const firestore = useFirestore();
-
-  const rentedPropertiesQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(collection(firestore, 'properties'), where('currentTenantId', '==', user.uid));
-  }, [user, firestore]);
-
-  const { data: rentedProperties } = useCollection<Property>(rentedPropertiesQuery);
-
-  const isTenant = rentedProperties && rentedProperties.length > 0;
   
-  const navLinks = React.useMemo(() => {
-    let links = [...baseStudentNavLinks];
-    if (isTenant) {
-      const hasTenancyLink = links.some(link => link.href === "/student/tenancy");
-      if (!hasTenancyLink) {
-        links.splice(1, 0, {
-            href: "/student/tenancy",
-            label: "My Tenancy",
-            icon: Building2,
-        });
-      }
-    }
-    return links;
-  }, [isTenant]);
-
   if (!user) {
     // You might want to return null or a skeleton loader while user is loading
     return null; 
@@ -60,7 +36,8 @@ export default function StudentSidebar() {
       {navLinks.map((link) => {
         if (!link) return null;
         
-        const isActive = pathname === link.href;
+        // Special handling for dynamic routes
+        const isActive = (pathname === link.href) || (link.href === '/student/properties' && pathname.startsWith('/student/properties/'));
         
         return (
             <Button
