@@ -50,16 +50,15 @@ export default function MessagesPage() {
     }, []);
 
     useEffect(() => {
-        if (isUserLoading || !firestore) return; // Wait for auth and firestore
+        if (isUserLoading || !firestore) return;
         if (!student) {
             setIsDataLoading(false);
-            return; // Not logged in, so no data to fetch
+            return;
         }
 
         const fetchConversations = async () => {
             setIsDataLoading(true);
 
-            // 1. Get all messages involving the student
             const allMessagesQuery = query(
                 collection(firestore, 'messages'),
                 where('participantIds', 'array-contains', student.uid)
@@ -67,7 +66,6 @@ export default function MessagesPage() {
             const messagesSnapshot = await getDocs(allMessagesQuery);
             const allStudentMessages = messagesSnapshot.docs.map(doc => doc.data() as Message);
 
-            // 2. Group messages by participant and find the last message
             const conversationsMap = new Map<string, { lastMessage: Message, participantId: string }>();
             allStudentMessages.forEach(msg => {
                 const otherParticipantId = msg.participantIds.find(id => id !== student.uid);
@@ -80,7 +78,6 @@ export default function MessagesPage() {
 
             const participantIds = new Set(Array.from(conversationsMap.keys()));
 
-            // 3. Also ensure current landlord is in the contact list
             const rentedPropertiesQuery = query(collection(firestore, 'properties'), where('currentTenantId', '==', student.uid), limit(1));
             const rentedPropertiesSnapshot = await getDocs(rentedPropertiesQuery);
             if (!rentedPropertiesSnapshot.empty) {
@@ -88,7 +85,6 @@ export default function MessagesPage() {
                 participantIds.add(property.landlordId);
             }
             
-            // 4. If a new contact is specified in the URL, add them
             if (newContact) {
                 participantIds.add(newContact.id);
             }
@@ -99,14 +95,12 @@ export default function MessagesPage() {
                  return;
             }
             
-            // 5. Fetch user data for all participants
             const allParticipantIds = Array.from(participantIds);
             const usersQuery = query(collection(firestore, 'users'), where('id', 'in', allParticipantIds));
             const usersSnapshot = await getDocs(usersQuery);
             const usersMap = new Map<string, User>();
             usersSnapshot.forEach(docSnap => usersMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as User));
 
-            // 6. Build the final conversation objects
             const convos = allParticipantIds.map(pId => {
                 const participant = usersMap.get(pId);
                 if (!participant) return null;
