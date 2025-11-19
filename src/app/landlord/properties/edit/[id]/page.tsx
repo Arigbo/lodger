@@ -57,7 +57,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function EditPropertyPage() {
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
@@ -67,7 +67,7 @@ export default function EditPropertyPage() {
     return doc(firestore, 'properties', id as string);
   }, [id, firestore]);
 
-  const { data: property, isLoading } = useDoc<Property>(propertyRef);
+  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -78,9 +78,6 @@ export default function EditPropertyPage() {
 
   useEffect(() => {
     if (property) {
-      if (user?.uid !== property.landlordId) {
-          notFound();
-      }
       form.reset({
         title: property.title,
         description: property.description,
@@ -97,14 +94,15 @@ export default function EditPropertyPage() {
         rules: property.rules.join(', '),
       });
     }
-  }, [property, form, user]);
+  }, [property, form]);
 
 
-  if (isLoading) {
+  if (isUserLoading || isPropertyLoading) {
     return <div>Loading property details...</div>
   }
 
-  if (!property) {
+  // After loading, if the property doesn't exist OR if the user is not the owner, show 404.
+  if (!property || (user && user.uid !== property.landlordId)) {
     return notFound();
   }
 
@@ -367,7 +365,7 @@ export default function EditPropertyPage() {
                                         checked={field.value?.includes(item)}
                                         onCheckedChange={(checked) => {
                                         return checked
-                                            ? field.onChange([...field.value, item])
+                                            ? field.onChange([...(field.value || []), item])
                                             : field.onChange(
                                                 field.value?.filter(
                                                 (value) => value !== item
