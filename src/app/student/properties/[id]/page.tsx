@@ -384,10 +384,10 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
   const firestore = useFirestore();
   
   const transactionsQuery = useMemoFirebase(() => query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.uid), where('propertyId', '==', property.id)), [firestore, tenant.uid, property.id]);
-  const { data: transactions } = useCollection<Transaction>(transactionsQuery);
+  const { data: transactions, isLoading: areTransactionsLoading } = useCollection<Transaction>(transactionsQuery);
 
   const leaseQuery = useMemoFirebase(() => query(collection(firestore, 'leaseAgreements'), where('propertyId', '==', property.id), where('tenantId', '==', tenant.uid)), [firestore, property.id, tenant.uid]);
-  const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leaseQuery);
+  const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leasesQuery);
   const lease = leases?.[0];
 
   const [tenancyState, setTenancyState] = useState<{
@@ -403,7 +403,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
   } | null>(null);
 
   useEffect(() => {
-    if (transactions === null || !lease) return;
+    if (areTransactionsLoading || isLeaseLoading) return;
 
     const tenantTransactions = transactions || [];
     const today = new Date();
@@ -413,7 +413,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
       .filter(t => t.type === 'Rent' && t.status === 'Completed')
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
-    const isLeaseActive = lease.status === 'active';
+    const isLeaseActive = lease?.status === 'active';
     const isLeaseExpired = isPast(leaseEndDate);
     
     let nextRentDueDate: Date;
@@ -432,7 +432,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
       rentDueDateText = format(nextRentDueDate, 'MMMM do, yyyy');
       rentStatusText = isRentDue ? 'Due on' : 'Next due on';
     } else {
-      rentStatusText = lease.status === 'pending' ? 'Lease Pending Signature' : 'Lease Inactive';
+      rentStatusText = lease?.status === 'pending' ? 'Lease Pending Signature' : 'Lease Inactive';
     }
 
     const hasPendingPayments = tenantTransactions.some(t => t.status === 'Pending');
@@ -454,7 +454,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
       rentStatusText,
       rentDueDateText,
     });
-  }, [transactions, lease, tenant.uid, property.leaseStartDate, property.price]);
+  }, [transactions, lease, tenant.uid, property.leaseStartDate, property.price, areTransactionsLoading, isLeaseLoading]);
 
   const handlePaymentSuccess = () => {
     console.log("Payment successful!");
@@ -619,7 +619,6 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
   );
 }
 
-// This is the Client Component for rendering UI.
 export default function PropertyDetailPage() {
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -629,31 +628,32 @@ export default function PropertyDetailPage() {
   const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
   const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
   
+  // This hook is now only for the prospective view
   const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
   const { data: landlord } = useDoc<User>(landlordRef);
   
+  // This hook is now only for the prospective view
   const reviewsQuery = useMemoFirebase(() => property ? query(collection(firestore, 'reviews'), where('propertyId', '==', property.id)) : null, [firestore, property]);
   const { data: reviews } = useCollection<Review>(reviewsQuery);
   
-  const [isDataReady, setIsDataReady] = useState(false);
-
-  useEffect(() => {
-    // This effect ensures that we only proceed when all initial loading is complete.
-    if (!isPropertyLoading && !isUserLoading) {
-      setIsDataReady(true);
-      if (!property) {
-        // If loading is done and there's no property, then it's a 404.
-        notFound();
-      }
-    }
-  }, [isPropertyLoading, isUserLoading, property]);
-
-  if (!isDataReady) {
+  // Wait for the essential data to load before making any decisions
+  if (isPropertyLoading || isUserLoading) {
     return <TenancySkeleton />;
   }
 
-  const isTenant = user?.uid === property?.currentTenantId;
+  // AFTER loading, if the property is not found, then show 404
+  if (!property) {
+    notFound();
+  }
 
+  const isTenant = user?.uid === property.currentTenantId;
+
+  // Decide which view to render
+  if (isTenant && user) {
+      return <TenantPropertyView property={property} tenant={user} />;
+  }
+  
+  // Otherwise, show the public/prospective view
   const images: ImagePlaceholder[] = property?.images?.map((url, i) => ({
       id: `${property.id}-img-${i}`,
       imageUrl: url,
@@ -661,14 +661,5 @@ export default function PropertyDetailPage() {
       imageHint: 'apartment interior'
   })) || [];
 
-  if (isTenant && user && property) {
-      return <TenantPropertyView property={property} tenant={user} />;
-  }
-
-  if (property) {
-    return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews || []} images={images} />;
-  }
-  
-  // This part should ideally not be reached if the useEffect logic is correct.
-  return <TenancySkeleton />;
+  return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews || []} images={images} />;
 }
