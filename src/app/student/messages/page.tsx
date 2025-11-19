@@ -148,16 +148,22 @@ export default function MessagesPage() {
     // Memoized query for the selected conversation's messages
     const messagesQuery = useMemoFirebase(() => {
         if (!student || !selectedParticipant) return null;
+        // This complex query is the issue. Firestore doesn't allow two array-contains on different fields.
+        // We will fetch messages with just one array-contains and filter locally.
         return query(
             collection(firestore, 'messages'),
             where('participantIds', 'array-contains', student.uid),
-            where('participantIds', 'array-contains', selectedParticipant.id),
             orderBy('timestamp', 'asc')
         );
     }, [firestore, student, selectedParticipant]);
 
-    const { data: messages } = useCollection<Message>(messagesQuery);
+    const { data: allMessages } = useCollection<Message>(messagesQuery);
     
+    const messages = useMemo(() => {
+        if (!allMessages || !selectedParticipant) return [];
+        return allMessages.filter(msg => msg.participantIds.includes(selectedParticipant.id));
+    }, [allMessages, selectedParticipant]);
+
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !student || !selectedParticipant || !firestore) return;
 
@@ -167,7 +173,7 @@ export default function MessagesPage() {
                 text: newMessage,
                 senderId: student.uid,
                 recipientId: selectedParticipant.id,
-                participantIds: [student.uid, selectedParticipant.id],
+                participantIds: [student.uid, selectedParticipant.id].sort(),
                 timestamp: serverTimestamp(),
                 read: false,
             });
