@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,14 +15,16 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
-import { Eye, EyeOff, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { useAuth, useFirestore } from '@/firebase/provider';
-import { doc, setDoc } from 'firebase/firestore';
+import { useAuth, useFirestore, useCollection, useMemoFirebase } from '@/firebase/provider';
+import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { initiateEmailSignUp } from '@/firebase';
+import { countries, Country } from '@/lib/countries';
+import type { Property } from '@/lib/definitions';
 
 
 const formSchema = z.object({
@@ -68,6 +70,9 @@ export default function SignupPage() {
   const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
+  const [states, setStates] = useState<{name: string}[]>([]);
+  const [schoolExists, setSchoolExists] = useState<boolean | null>(null);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -80,8 +85,43 @@ export default function SignupPage() {
     },
   });
 
-  const { setError } = form;
-  const userType = form.watch('userType');
+  const { setError, watch } = form;
+  const userType = watch('userType');
+  const countryValue = watch('country');
+  const schoolValue = watch('school');
+
+  // School check logic
+  useEffect(() => {
+    if (userType !== 'student' || !schoolValue || schoolValue.length < 3) {
+      setSchoolExists(null);
+      return;
+    }
+
+    const checkSchool = async () => {
+        const propertiesRef = collection(firestore, 'properties');
+        const q = query(propertiesRef, where('location.school', '==', schoolValue));
+        const querySnapshot = await getDocs(q);
+        setSchoolExists(!querySnapshot.empty);
+    };
+
+    const debounceTimeout = setTimeout(() => {
+      checkSchool();
+    }, 500);
+
+    return () => clearTimeout(debounceTimeout);
+  }, [schoolValue, firestore, userType]);
+
+
+  useEffect(() => {
+    if (countryValue) {
+      const countryData = countries.find(c => c.name === countryValue);
+      setSelectedCountry(countryData || null);
+      setStates(countryData?.states || []);
+    } else {
+      setSelectedCountry(null);
+      setStates([]);
+    }
+  }, [countryValue]);
 
   const steps = userType === 'student' ? 
     [
@@ -299,25 +339,30 @@ export default function SignupPage() {
                     {userType === 'student' && (
                         <>
                             <p className="text-sm text-muted-foreground">Help us find properties near your school.</p>
-                            <FormField control={form.control} name="country" render={({ field }) => (
+                             <FormField control={form.control} name="country" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Country</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl><SelectTrigger><SelectValue placeholder="Select Country" /></SelectTrigger></FormControl>
-                                        <SelectContent><SelectItem value="USA">United States</SelectItem></SelectContent>
+                                        <SelectContent className="max-h-60">
+                                            {countries.map(country => (
+                                                <SelectItem key={country.iso2} value={country.name}>{country.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
                                     </Select>
                                     <FormMessage />
                                 </FormItem>
                             )}/>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4">
                                 <FormField control={form.control} name="state" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>State</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Select State" /></SelectTrigger></FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="CA">California</SelectItem>
-                                                <SelectItem value="NY">New York</SelectItem>
+                                        <FormLabel>State/Province</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!countryValue}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select State/Province" /></SelectTrigger></FormControl>
+                                            <SelectContent className="max-h-60">
+                                                {states.map(state => (
+                                                    <SelectItem key={state.name} value={state.name}>{state.name}</SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -326,13 +371,15 @@ export default function SignupPage() {
                                  <FormField control={form.control} name="school" render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>School</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Select School" /></SelectTrigger></FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="Urbanville University">Urbanville University</SelectItem>
-                                                <SelectItem value="Metropolis University">Metropolis University</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <FormControl>
+                                            <Input placeholder="Enter your school name" {...field} />
+                                        </FormControl>
+                                        {schoolExists === true && (
+                                            <p className="text-sm text-green-600 flex items-center gap-1 mt-1"><CheckCircle2 className="h-4 w-4"/> Great! We have listings near this school.</p>
+                                        )}
+                                        {schoolExists === false && schoolValue && (
+                                            <p className="text-sm text-amber-600 flex items-center gap-1 mt-1"><AlertCircle className="h-4 w-4"/> We don't have any listings for this school yet, but you can still sign up. Try using our location-based search after creating your account.</p>
+                                        )}
                                         <FormMessage />
                                     </FormItem>
                                 )}/>
@@ -380,8 +427,3 @@ export default function SignupPage() {
     </div>
   );
 }
-
-
-    
-
-    
