@@ -1,7 +1,7 @@
 
 'use client';
 
-import { notFound, usePathname, useParams } from "next/navigation";
+import { notFound, usePathname, useParams, useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { formatPrice, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,7 @@ function ProspectiveTenantView({
   const { toast } = useToast();
   const { user } = useUser();
   const firestore = useFirestore();
+  const router = useRouter();
   
   const [reviews] = useState(initialReviews);
   const [images] = useState(initialImages);
@@ -54,6 +55,20 @@ function ProspectiveTenantView({
     setIsClient(true);
   }, []);
 
+  const handleMessageLandlord = () => {
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "Not Logged In",
+            description: "You must be logged in to message a landlord.",
+        });
+        router.push('/auth/login');
+        return;
+    }
+    if (landlord) {
+      router.push(`/student/messages?contact=${landlord.id}`);
+    }
+  };
 
   const averageRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
   
@@ -277,11 +292,11 @@ function ProspectiveTenantView({
                   <p className="font-semibold">{landlord.name}</p>
                   <p className="text-sm text-muted-foreground">Joined {new Date().getFullYear()}</p>
                   <Separator className="my-4"/>
-                  <div className="flex gap-2">
+                   <div className="flex flex-col gap-2">
                     <Dialog>
                         <DialogTrigger asChild>
-                             <Button className="flex-1" disabled={property.status === 'occupied'}>
-                                <MessageSquare className="mr-2 h-4 w-4"/> Request to Rent
+                             <Button className="w-full" disabled={property.status === 'occupied'}>
+                                Request to Rent
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
@@ -313,49 +328,54 @@ function ProspectiveTenantView({
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
-                     <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="icon">
-                                <Phone className="h-4 w-4"/>
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-sm">
-                            <DialogHeader>
-                                <DialogTitle>Contact {landlord.name}</DialogTitle>
-                                <DialogDescription>
-                                    Use the methods below to get in touch. In-app messages are available after a request is accepted.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <Button variant="outline" className="w-full justify-start" asChild>
-                                    <a href={`mailto:${landlord.email}`}>
-                                        <Mail className="mr-2"/> {landlord.email}
-                                    </a>
+                    <div className="flex gap-2">
+                        <Button variant="outline" className="flex-1" onClick={handleMessageLandlord}>
+                            <MessageSquare className="mr-2 h-4 w-4"/> Message
+                        </Button>
+                         <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="icon">
+                                    <Phone className="h-4 w-4"/>
                                 </Button>
-                                {landlord.phone && (
-                                     <Button variant="outline" className="w-full justify-start" asChild>
-                                        <a href={`tel:${landlord.phone}`}>
-                                            <Phone className="mr-2"/> {landlord.phone}
+                            </DialogTrigger>
+                            <DialogContent className="max-w-sm">
+                                <DialogHeader>
+                                    <DialogTitle>Contact {landlord.name}</DialogTitle>
+                                    <DialogDescription>
+                                        Use these methods to get in touch.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                    <Button variant="outline" className="w-full justify-start" asChild>
+                                        <a href={`mailto:${landlord.email}`}>
+                                            <Mail className="mr-2"/> {landlord.email}
                                         </a>
                                     </Button>
-                                )}
-                                {landlord.whatsappUrl && (
-                                    <Button variant="outline" className="w-full justify-start" asChild>
-                                        <Link href={landlord.whatsappUrl} target="_blank">
-                                            <FaWhatsapp className="mr-2 text-xl" /> Chat on WhatsApp
-                                        </Link>
-                                    </Button>
-                                )}
-                                {landlord.twitterUrl && (
-                                    <Button variant="outline" className="w-full justify-start" asChild>
-                                        <Link href={landlord.twitterUrl} target="_blank">
-                                            <Twitter className="mr-2"/> View X (Twitter) Profile
-                                        </Link>
-                                    </Button>
-                                )}
-                            </div>
-                        </DialogContent>
-                     </Dialog>
+                                    {landlord.phone && (
+                                         <Button variant="outline" className="w-full justify-start" asChild>
+                                            <a href={`tel:${landlord.phone}`}>
+                                                <Phone className="mr-2"/> {landlord.phone}
+                                            </a>
+                                        </Button>
+                                    )}
+                                    {landlord.whatsappUrl && (
+                                        <Button variant="outline" className="w-full justify-start" asChild>
+                                            <Link href={landlord.whatsappUrl} target="_blank">
+                                                <FaWhatsapp className="mr-2 text-xl" /> Chat on WhatsApp
+                                            </Link>
+                                        </Button>
+                                    )}
+                                    {landlord.twitterUrl && (
+                                        <Button variant="outline" className="w-full justify-start" asChild>
+                                            <Link href={landlord.twitterUrl} target="_blank">
+                                                <Twitter className="mr-2"/> View X (Twitter) Profile
+                                            </Link>
+                                        </Button>
+                                    )}
+                                </div>
+                            </DialogContent>
+                         </Dialog>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -554,23 +574,27 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div className="rounded-lg border bg-secondary/50 p-4">
-                                <p className="text-sm font-medium text-muted-foreground">{tenancyState.rentStatusText}</p>
-                                <p className={cn("text-xl font-bold", tenancyState.isRentDue && tenancyState.isLeaseActive ? "text-destructive" : "text-primary")}>
-                                    {tenancyState.rentDueDateText}
-                                </p>
-                            </div>
-                            <div className={cn("rounded-lg border p-4", tenancyState.isLeaseExpired ? "border-destructive/50 bg-destructive/5" : "bg-secondary/50")}>
-                                <p className="text-sm font-medium text-muted-foreground">{tenancyState.isLeaseExpired ? "Lease Expired On" : "Lease End Date"}</p>
-                                <p className={cn("text-xl font-bold", tenancyState.isLeaseExpired && "text-destructive")}>
-                                    {format(tenancyState.leaseEndDate, 'MMMM do, yyyy')}
-                                </p>
-                            </div>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className={cn("text-xl font-bold", tenancyState.isRentDue && tenancyState.isLeaseActive ? "text-destructive" : "text-primary")}>
+                                        {tenancyState.rentDueDateText}
+                                    </CardTitle>
+                                    <CardDescription>{tenancyState.rentStatusText}</CardDescription>
+                                </CardHeader>
+                            </Card>
+                            <Card className={cn(tenancyState.isLeaseExpired ? "border-destructive/50 bg-destructive/5" : "")}>
+                                <CardHeader>
+                                     <CardTitle className={cn("text-xl font-bold", tenancyState.isLeaseExpired && "text-destructive")}>
+                                        {format(tenancyState.leaseEndDate, 'MMMM do, yyyy')}
+                                    </CardTitle>
+                                    <CardDescription>{tenancyState.isLeaseExpired ? "Lease Expired On" : "Lease End Date"}</CardDescription>
+                                </CardHeader>
+                            </Card>
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-4">
                             <div>
-                                <CardTitle>Lease Started</CardTitle>
-                                <CardDescription>{format(tenancyState.leaseStartDate, 'MMMM do, yyyy')}</CardDescription>
+                                <h4 className="font-semibold">Lease Started</h4>
+                                <p className="text-sm text-muted-foreground">{format(tenancyState.leaseStartDate, 'MMMM do, yyyy')}</p>
                             </div>
 
                             {lease && (
@@ -619,41 +643,53 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
 }
 
 export default function PropertyDetailPage() {
-  const params = useParams();
-  const id = Array.isArray(params.id) ? params.id[0] : params.id;
-  const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
+    const params = useParams();
+    const id = Array.isArray(params.id) ? params.id[0] : params.id;
+    const { user, isUserLoading } = useUser();
+    const firestore = useFirestore();
 
-  const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
-  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
-  
-  const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
-  const { data: landlord } = useDoc<User>(landlordRef);
-  
-  const reviewsQuery = useMemoFirebase(() => property ? query(collection(firestore, 'reviews'), where('propertyId', '==', property.id)) : null, [firestore, property]);
-  const { data: reviews } = useCollection<Review>(reviewsQuery);
-  
-  if (isPropertyLoading || isUserLoading) {
-    return <TenancySkeleton />;
-  }
+    const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
+    const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
+    
+    if (isPropertyLoading || isUserLoading) {
+        return <TenancySkeleton />;
+    }
 
-  if (!property) {
-    notFound();
-    return null;
-  }
+    if (!property) {
+        notFound();
+        return null;
+    }
 
-  const isTenant = user?.uid === property.currentTenantId;
+    const isTenant = user?.uid === property.currentTenantId;
 
-  if (isTenant && user) {
-      return <TenantPropertyView property={property} tenant={user} />;
-  }
-  
-  const images: ImagePlaceholder[] = property?.images?.map((url, i) => ({
-      id: `${property.id}-img-${i}`,
-      imageUrl: url,
-      description: property.title,
-      imageHint: 'apartment interior'
-  })) || [];
+    if (isTenant && user) {
+        return <TenantPropertyView property={property} tenant={user} />;
+    }
 
-  return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews || []} images={images} />;
+    // For prospective tenants, we still need landlord and reviews
+    return <PropertyDetailLoader property={property} />;
+}
+
+// New component to handle data loading for the prospective view
+function PropertyDetailLoader({ property }: { property: Property }) {
+    const firestore = useFirestore();
+    
+    const landlordRef = useMemoFirebase(() => doc(firestore, 'users', property.landlordId), [firestore, property.landlordId]);
+    const { data: landlord, isLoading: isLandlordLoading } = useDoc<User>(landlordRef);
+    
+    const reviewsQuery = useMemoFirebase(() => query(collection(firestore, 'reviews'), where('propertyId', '==', property.id)), [firestore, property.id]);
+    const { data: reviews, isLoading: areReviewsLoading } = useCollection<Review>(reviewsQuery);
+    
+    const images: ImagePlaceholder[] = property?.images?.map((url, i) => ({
+        id: `${property.id}-img-${i}`,
+        imageUrl: url,
+        description: property.title,
+        imageHint: 'apartment interior'
+    })) || [];
+
+    if (isLandlordLoading || areReviewsLoading) {
+        return <TenancySkeleton />;
+    }
+
+    return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews || []} images={images} />;
 }

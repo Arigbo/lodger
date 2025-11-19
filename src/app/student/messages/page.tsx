@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import type { User, Message } from '@/lib/definitions';
 import { Send, Phone, Video, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp, limit } from 'firebase/firestore';
 
 
@@ -39,7 +39,12 @@ export default function MessagesPage() {
     const [newMessage, setNewMessage] = useState('');
 
     const selectedConversationId = searchParams.get('conversationId');
+    const contactId = searchParams.get('contact');
 
+    const { data: newContact, isLoading: isContactLoading } = useDoc<User>(
+        useMemoFirebase(() => (contactId ? doc(firestore, 'users', contactId) : null), [contactId, firestore])
+    );
+    
     // Effect to set client-side flag
     useEffect(() => {
         setIsClient(true);
@@ -64,14 +69,24 @@ export default function MessagesPage() {
                 }
             });
             
-            if (participantIds.size === 0) return;
+            if (participantIds.size === 0 && !newContact) {
+                 setConversations([]);
+                 return;
+            }
 
-            const usersQuery = query(collection(firestore, 'users'), where('id', 'in', Array.from(participantIds)));
+            const allParticipantIds = Array.from(participantIds);
+            if (newContact && !allParticipantIds.includes(newContact.id)) {
+                allParticipantIds.push(newContact.id);
+            }
+            
+            if(allParticipantIds.length === 0) return;
+
+            const usersQuery = query(collection(firestore, 'users'), where('id', 'in', allParticipantIds));
             const usersSnapshot = await getDocs(usersQuery);
             const usersMap = new Map<string, User>();
             usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
 
-            const convoPromises = Array.from(participantIds).map(async (pId) => {
+            const convoPromises = allParticipantIds.map(async (pId) => {
                 const participant = usersMap.get(pId);
                 if (!participant) return null;
 
@@ -88,7 +103,7 @@ export default function MessagesPage() {
 
                 return {
                     participant,
-                    lastMessage: lastMessageDoc?.data()?.text || 'No messages yet.',
+                    lastMessage: lastMessageDoc?.data()?.text || 'Start a new conversation.',
                     lastMessageTimestamp: lastMessageDoc?.data()?.timestamp?.toDate() || null,
                     unreadCount: 0, // Unread count logic needs to be implemented
                 } as Conversation;
@@ -100,19 +115,27 @@ export default function MessagesPage() {
         };
 
         fetchConversations();
-    }, [student, firestore]);
+    }, [student, firestore, newContact]);
 
     // Effect to set the selected conversation based on URL param
     useEffect(() => {
-        if (selectedConversationId) {
-            const participant = conversations.find(c => c.participant.id === selectedConversationId)?.participant;
-            setSelectedParticipant(participant || null);
+        const targetId = contactId || selectedConversationId;
+
+        if (targetId) {
+            const participant = conversations.find(c => c.participant.id === targetId)?.participant;
+            if (participant) {
+                setSelectedParticipant(participant);
+                 // Update URL to reflect the conversation
+                if (contactId) {
+                    router.replace(`${pathname}?conversationId=${contactId}`, { scroll: false });
+                }
+            }
         } else if (conversations.length > 0 && !selectedParticipant) {
             // Default to first conversation
             setSelectedParticipant(conversations[0].participant);
              router.replace(`${pathname}?conversationId=${conversations[0].participant.id}`, { scroll: false });
         }
-    }, [selectedConversationId, conversations, selectedParticipant, router, pathname]);
+    }, [contactId, selectedConversationId, conversations, selectedParticipant, router, pathname]);
     
     // Memoized query for the selected conversation's messages
     const messagesQuery = useMemoFirebase(() => {
@@ -170,7 +193,7 @@ export default function MessagesPage() {
                                 {conversations.map(convo => (
                                     <Link
                                         key={convo.participant.id}
-                                        href={`/student/messages?conversationId=${convo.participant.id}`}
+                                        href={`${pathname}?conversationId=${convo.participant.id}`}
                                         className={cn(
                                             "flex w-full items-center gap-4 p-4 text-left hover:bg-accent",
                                             selectedParticipant?.id === convo.participant.id && 'bg-secondary'
