@@ -137,7 +137,7 @@ export default function SignupPage() {
 
         toast({
             title: "Account Created!",
-            description: "Welcome to RentU. Redirecting you now...",
+            description: "Welcome to Urban Nest. Redirecting you now...",
         });
 
         if (values.userType === 'landlord') {

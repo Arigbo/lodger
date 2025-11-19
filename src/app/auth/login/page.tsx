@@ -16,6 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { initiateEmailSignIn } from '@/firebase';
 import { useAuth } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 const loginSchema = z.object({
     email: z.string().email("Please enter a valid email address."),
@@ -27,6 +28,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
     const auth = useAuth();
     const { toast } = useToast();
+    const router = useRouter();
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
         defaultValues: { email: '', password: '' }
@@ -35,7 +37,7 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
     const { isSubmitting } = form.formState;
 
     const onSubmit = async (values: LoginFormValues) => {
-        initiateEmailSignIn(auth, values.email, values.password, toast);
+        initiateEmailSignIn(auth, values.email, values.password, toast, router);
     };
 
     return (
@@ -90,7 +92,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-3xl">Welcome Back</CardTitle>
-          <CardDescription>Sign in to continue to RentU</CardDescription>
+          <CardDescription>Sign in to continue to Urban Nest</CardDescription>
         </CardHeader>
         <CardContent>
             <Tabs defaultValue="student" onValueChange={(value) => setUserType(value as 'student' | 'landlord')} className="w-full">
