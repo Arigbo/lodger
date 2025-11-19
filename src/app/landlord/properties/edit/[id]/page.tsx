@@ -28,11 +28,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { amenities as allAmenities } from '@/lib/definitions';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { Property } from '@/lib/definitions';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebaseApp } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import Image from 'next/image';
+import { UploadCloud, X, Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -59,6 +62,7 @@ export default function EditPropertyPage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const firebaseApp = useFirebaseApp();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -67,7 +71,10 @@ export default function EditPropertyPage() {
     return doc(firestore, 'properties', id as string);
   }, [id, firestore]);
 
-  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
+  const { data: property, isLoading: isPropertyLoading, refetch } = useDoc<Property>(propertyRef);
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -108,14 +115,63 @@ export default function EditPropertyPage() {
     }
   }, [property, form]);
 
-
   if (isUserLoading || isPropertyLoading) {
     return <div>Loading property details...</div>
   }
 
-  // After loading, if the property doesn't exist OR if the user is not the owner, show 404.
   if (!isPropertyLoading && (!property || (user && user.uid !== property.landlordId))) {
     return notFound();
+  }
+
+  async function handleImageUpload(files: FileList | null) {
+      if (!files || !propertyRef) return;
+      setIsUploading(true);
+
+      const newImageUrls: string[] = [];
+      const storage = getStorage(firebaseApp);
+
+      for (const file of Array.from(files)) {
+          const imageRef = ref(storage, `properties/${id}/${Date.now()}_${file.name}`);
+          try {
+              const snapshot = await uploadBytes(imageRef, file);
+              const downloadURL = await getDownloadURL(snapshot.ref);
+              newImageUrls.push(downloadURL);
+          } catch (error) {
+              console.error("Error uploading image:", error);
+              toast({ variant: "destructive", title: "Upload Failed", description: `Could not upload ${file.name}.` });
+          }
+      }
+
+      if (newImageUrls.length > 0) {
+          const updatedImages = [...(property?.images || []), ...newImageUrls];
+          await updateDoc(propertyRef, { images: updatedImages });
+          toast({ title: "Images Uploaded", description: `${newImageUrls.length} new image(s) have been added.` });
+          refetch();
+      }
+      
+      setImageFiles([]);
+      setIsUploading(false);
+  }
+
+  async function handleRemoveImage(imageUrl: string) {
+    if (!propertyRef || !property?.images) return;
+    const isConfirmed = window.confirm("Are you sure you want to delete this image? This cannot be undone.");
+    if (!isConfirmed) return;
+
+    try {
+        const storage = getStorage(firebaseApp);
+        const imageRef = ref(storage, imageUrl);
+        await deleteObject(imageRef);
+
+        const updatedImages = property.images.filter(url => url !== imageUrl);
+        await updateDoc(propertyRef, { images: updatedImages });
+
+        toast({ title: "Image Removed", description: "The image has been successfully deleted." });
+        refetch();
+    } catch (error) {
+        console.error("Error deleting image:", error);
+        toast({ variant: "destructive", title: "Deletion Failed", description: "Could not remove the image. It may have already been deleted." });
+    }
   }
 
   async function onSubmit(values: FormValues) {
@@ -131,7 +187,6 @@ export default function EditPropertyPage() {
                 city: values.city,
                 state: values.state,
                 zip: values.zip,
-                // Keep lat/lng/school if they exist
                 lat: property?.location.lat,
                 lng: property?.location.lng,
                 school: property?.location.school,
@@ -167,7 +222,6 @@ export default function EditPropertyPage() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* Basic Information */}
             <h3 className="font-headline text-xl font-semibold">Basic Information</h3>
             <FormField
               control={form.control}
@@ -235,7 +289,6 @@ export default function EditPropertyPage() {
             </div>
             
             <Separator />
-            {/* Location */}
             <h3 className="font-headline text-xl font-semibold">Location</h3>
             <FormField
                 control={form.control}
@@ -293,7 +346,6 @@ export default function EditPropertyPage() {
             </div>
 
             <Separator />
-            {/* Property Details */}
              <h3 className="font-headline text-xl font-semibold">Property Details</h3>
             <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
                  <FormField
@@ -338,16 +390,43 @@ export default function EditPropertyPage() {
             </div>
 
             <Separator />
-            {/* Photos */}
             <h3 className="font-headline text-xl font-semibold">Photos</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <p className="text-sm text-muted-foreground md:col-span-2">To update photos, please create a new listing. Photo editing is not currently supported.</p>
-                {/* Future photo editing UI could go here */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {property?.images.map((url) => (
+                    <div key={url} className="relative group aspect-square">
+                        <Image src={url} alt="Property image" fill className="object-cover rounded-lg" />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button variant="destructive" size="icon" onClick={() => handleRemoveImage(url)}>
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Remove Image</span>
+                            </Button>
+                        </div>
+                    </div>
+                ))}
+                 <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-input aspect-square">
+                    <label htmlFor="image-upload" className="flex flex-col items-center justify-center w-full h-full cursor-pointer text-center p-4">
+                        {isUploading ? (
+                            <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
+                        ) : (
+                            <>
+                                <UploadCloud className="h-8 w-8 text-muted-foreground" />
+                                <span className="mt-2 text-sm text-muted-foreground">Upload Images</span>
+                            </>
+                        )}
+                        <input
+                            id="image-upload"
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            className="sr-only"
+                            onChange={(e) => handleImageUpload(e.target.files)}
+                            disabled={isUploading}
+                        />
+                    </label>
+                </div>
             </div>
 
-
              <Separator />
-            {/* Amenities & Rules */}
              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 <FormField
                     control={form.control}
@@ -429,3 +508,5 @@ export default function EditPropertyPage() {
     </Card>
   );
 }
+
+    
