@@ -51,8 +51,8 @@ export default function ViewStudentLeasePage() {
                 status: 'active'
             });
             toast({
-                title: "Lease Signed!",
-                description: "Your tenancy is now active."
+                title: "Lease Signed Successfully!",
+                description: "Your tenancy is now active. You can now proceed to make payments."
             });
             // After signing, redirect the student to their new tenancy page
             router.push(`/student/properties/${lease.propertyId}`);

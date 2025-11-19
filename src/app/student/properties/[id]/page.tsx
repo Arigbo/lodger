@@ -10,8 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, FileText, RefreshCcw, User as UserIcon } from "lucide-react";
-import type { Property, User, Review, ImagePlaceholder, Transaction } from "@/lib/definitions";
+import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, FileText, RefreshCcw, User as UserIcon, Signature, AlertTriangle } from "lucide-react";
+import type { Property, User, Review, ImagePlaceholder, Transaction, LeaseAgreement } from "@/lib/definitions";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import Link from "next/link";
@@ -74,7 +74,7 @@ export default function PropertyDetailView() {
   const firestore = useFirestore();
 
   const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
-  const { data: property, isLoading: isPropertyLoading, refetch } = useDoc<Property>(propertyRef);
+  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
   
   const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
   const { data: landlord } = useDoc<User>(landlordRef);
@@ -467,13 +467,16 @@ const amenityIcons: amenityIcon = {
 function TenantPropertyView({ property, tenant }: { property: Property, tenant: FirebaseUser }) {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const firestore = useFirestore();
-  const { refetch } = useDoc(doc(firestore, 'properties', property.id));
   
   const landlordRef = useMemoFirebase(() => doc(firestore, 'users', property.landlordId), [firestore, property.landlordId]);
   const { data: landlord } = useDoc<User>(landlordRef);
 
   const transactionsQuery = useMemoFirebase(() => query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.uid), where('propertyId', '==', property.id)), [firestore, tenant.uid, property.id]);
   const { data: transactions } = useCollection<Transaction>(transactionsQuery);
+
+  const leaseQuery = useMemoFirebase(() => query(collection(firestore, 'leaseAgreements'), where('propertyId', '==', property.id), where('tenantId', '==', tenant.uid)), [firestore, property.id, tenant.uid]);
+  const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leaseQuery);
+  const lease = leases?.[0];
 
   const [tenancyState, setTenancyState] = useState<{
     showPayButton: boolean;
@@ -488,7 +491,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
   } | null>(null);
 
   useEffect(() => {
-    if (transactions === null) return;
+    if (transactions === null || !lease) return;
 
     const tenantTransactions = transactions || [];
     const today = new Date();
@@ -498,7 +501,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
       .filter(t => t.type === 'Rent' && t.status === 'Completed')
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
-    const isLeaseActive = isPast(leaseStartDate) && isBefore(today, leaseEndDate);
+    const isLeaseActive = lease.status === 'active';
     const isLeaseExpired = isPast(leaseEndDate);
     
     let nextRentDueDate: Date;
@@ -517,11 +520,11 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
       rentDueDateText = format(nextRentDueDate, 'MMMM do, yyyy');
       rentStatusText = isRentDue ? 'Due on' : 'Next due on';
     } else {
-      rentStatusText = 'Lease Inactive';
+      rentStatusText = lease.status === 'pending' ? 'Lease Pending Signature' : 'Lease Inactive';
     }
 
     const hasPendingPayments = tenantTransactions.some(t => t.status === 'Pending');
-    const showPayButton = (isRentDue || hasPendingPayments) && isLeaseActive;
+    const showPayButton = isLeaseActive && (isRentDue || hasPendingPayments);
     let paymentAmount = 0;
     if (isRentDue) {
         paymentAmount = property.price;
@@ -539,14 +542,14 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
       rentStatusText,
       rentDueDateText,
     });
-  }, [transactions, tenant.uid, property.leaseStartDate, property.price]);
+  }, [transactions, lease, tenant.uid, property.leaseStartDate, property.price]);
 
   const handlePaymentSuccess = () => {
     console.log("Payment successful!");
-    // You might want to refetch transactions here or just close the dialog
+    // The useCollection hook for transactions will automatically refetch.
   };
   
-  if (!tenancyState) {
+  if (!tenancyState || isLeaseLoading) {
     return <TenancySkeleton />;
   }
 
@@ -557,6 +560,26 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
             <p className="text-muted-foreground">Manage your current rental agreement and payments for {property.title}.</p>
         </div>
         <Separator />
+        
+        {lease?.status === 'pending' && (
+            <Card className="border-amber-500/50 bg-amber-50">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-amber-700">
+                        <AlertTriangle /> Action Required
+                    </CardTitle>
+                    <CardDescription>
+                        Your lease agreement is ready for review. Please sign the lease to activate your tenancy and enable payments.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild>
+                        <Link href={`/student/leases/${lease.id}`}>
+                            <Signature className="mr-2 h-4 w-4" /> Review & Sign Lease
+                        </Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        )}
 
         <Tabs defaultValue="payments" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -641,9 +664,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                                 <p>{format(tenancyState.leaseStartDate, 'MMMM do, yyyy')}</p>
                             </div>
 
-                            {tenancyState.isLeaseExpired ? (
-                                <Button variant="outline" disabled><RefreshCcw className="mr-2 h-4 w-4"/> Request New Lease</Button>
-                            ) : (
+                            {lease && (
                                 <Dialog>
                                     <DialogTrigger asChild>
                                         <Button variant="outline"><FileText className="mr-2 h-4 w-4"/> View Lease Agreement</Button>
@@ -656,7 +677,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                                             </DialogDescription>
                                         </DialogHeader>
                                         <ScrollArea className="max-h-[60vh] rounded-md border p-4">
-                                            {landlord && <div className="prose prose-sm whitespace-pre-wrap">{generateLeaseText(landlord, tenant, property)}</div>}
+                                            <div className="prose prose-sm whitespace-pre-wrap">{lease.leaseText}</div>
                                         </ScrollArea>
                                          <DialogFooter>
                                             <DialogClose asChild>
