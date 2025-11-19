@@ -96,11 +96,10 @@ export default function PropertyDetailView() {
   }
 
   // After loading, if the property doesn't exist, show 404
-  if (!isPropertyLoading && !property) {
+  if (!isLoading && !property) {
     notFound();
   }
 
-  // This check is now safe because we've already confirmed property has loaded.
   if (property) {
     const isTenant = user?.uid === property.currentTenantId;
     if (isTenant && user) {
@@ -546,7 +545,6 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
 
   const handlePaymentSuccess = () => {
     console.log("Payment successful!");
-    // The useCollection hook for transactions will automatically refetch.
   };
   
   if (!tenancyState || isLeaseLoading) {
@@ -738,9 +736,5 @@ function AddReviewForm() {
         </Card>
     );
 }
-
-
-
-    
 
     
