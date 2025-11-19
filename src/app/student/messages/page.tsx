@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import type { User, Message } from '@/lib/definitions';
+import type { User, Message, Property } from '@/lib/definitions';
 import { Send, Phone, Video, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
@@ -55,9 +55,9 @@ export default function MessagesPage() {
         if (!student || !firestore) return;
 
         const fetchConversations = async () => {
+            // 1. Get existing messages to find participants
             const messagesRef = collection(firestore, 'messages');
             const q = query(messagesRef, where('participantIds', 'array-contains', student.uid));
-            
             const messagesSnapshot = await getDocs(q);
 
             const participantIds = new Set<string>();
@@ -68,6 +68,14 @@ export default function MessagesPage() {
                     participantIds.add(otherParticipant);
                 }
             });
+
+            // 2. Find student's current landlord
+            const rentedPropertiesQuery = query(collection(firestore, 'properties'), where('currentTenantId', '==', student.uid), limit(1));
+            const rentedPropertiesSnapshot = await getDocs(rentedPropertiesQuery);
+            if (!rentedPropertiesSnapshot.empty) {
+                const property = rentedPropertiesSnapshot.docs[0].data() as Property;
+                participantIds.add(property.landlordId);
+            }
             
             if (participantIds.size === 0 && !newContact) {
                  setConversations([]);
@@ -104,7 +112,7 @@ export default function MessagesPage() {
                 return {
                     participant,
                     lastMessage: lastMessageDoc?.data()?.text || 'Start a new conversation.',
-                    lastMessageTimestamp: lastMessageDoc?.data()?.timestamp?.toDate() || null,
+                    lastMessageTimestamp: lastMessageDoc?.data()?.timestamp?.toDate() || new Date(0), // Use epoch for sorting if no message
                     unreadCount: 0, // Unread count logic needs to be implemented
                 } as Conversation;
             });
@@ -209,7 +217,7 @@ export default function MessagesPage() {
                                         <div className="flex-grow overflow-hidden">
                                             <div className="flex justify-between items-center">
                                                 <p className="font-semibold truncate">{convo.participant.name}</p>
-                                                <p className="text-xs text-muted-foreground whitespace-nowrap">{isClient && convo.lastMessageTimestamp ? format(convo.lastMessageTimestamp, "p") : ''}</p>
+                                                <p className="text-xs text-muted-foreground whitespace-nowrap">{isClient && convo.lastMessageTimestamp && convo.lastMessageTimestamp.getTime() > 0 ? format(convo.lastMessageTimestamp, "p") : ''}</p>
                                             </div>
                                             <div className="flex justify-between items-start">
                                                 <p className="text-sm text-muted-foreground truncate">{convo.lastMessage}</p>
@@ -294,12 +302,12 @@ export default function MessagesPage() {
                             </div>
                             </>
                         ) : (
-                            <div className="flex h-full flex-col items-center justify-center text-center">
+                            <div className="flex h-full flex-col items-center justify-center text-center p-6">
                                 <div className="rounded-full bg-secondary p-4">
                                     <Send className="h-10 w-10 text-muted-foreground" />
                                 </div>
                                 <h3 className="mt-4 text-lg font-semibold">Select a conversation</h3>
-                                <p className="text-muted-foreground">Choose a landlord from the list to start chatting.</p>
+                                <p className="text-muted-foreground">Choose a landlord from the list to start chatting, or find a property to contact a new landlord.</p>
                             </div>
                         )}
                     </div>

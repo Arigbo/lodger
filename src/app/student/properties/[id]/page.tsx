@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { notFound, usePathname, useParams, useSearchParams, useRouter } from "next/navigation";
@@ -399,15 +400,16 @@ const amenityIcons: amenityIcon = {
     'Parking Spot': <ParkingCircle className="h-5 w-5 text-primary" />,
 }
 
-function TenantPropertyView({ property, tenant }: { property: Property, tenant: FirebaseUser }) {
+function TenantPropertyView({ property, tenant, landlord }: { property: Property, tenant: FirebaseUser, landlord: User | null | undefined }) {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const firestore = useFirestore();
+  const router = useRouter();
   
   const transactionsQuery = useMemoFirebase(() => query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.uid), where('propertyId', '==', property.id)), [firestore, tenant.uid, property.id]);
   const { data: transactions, isLoading: areTransactionsLoading } = useCollection<Transaction>(transactionsQuery);
 
-  const leaseQuery = useMemoFirebase(() => query(collection(firestore, 'leaseAgreements'), where('propertyId', '==', property.id), where('tenantId', '==', tenant.uid)), [firestore, property.id, tenant.uid]);
-  const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leaseQuery);
+  const leasesQuery = useMemoFirebase(() => query(collection(firestore, 'leaseAgreements'), where('propertyId', '==', property.id), where('tenantId', '==', tenant.uid)), [firestore, property.id, tenant.uid]);
+  const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leasesQuery);
   const lease = leases?.[0];
 
   const [tenancyState, setTenancyState] = useState<{
@@ -478,6 +480,13 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
 
   const handlePaymentSuccess = () => {
     console.log("Payment successful!");
+    // The useCollection hook for transactions will automatically update the UI.
+  };
+
+  const handleMessageLandlord = () => {
+    if (landlord) {
+      router.push(`/student/messages?contact=${landlord.id}`);
+    }
   };
   
   if (!tenancyState || isLeaseLoading) {
@@ -513,9 +522,10 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
         )}
 
         <Tabs defaultValue="payments" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="payments">Payments</TabsTrigger>
                 <TabsTrigger value="lease">Lease Info</TabsTrigger>
+                <TabsTrigger value="contact">Contact</TabsTrigger>
             </TabsList>
             <TabsContent value="payments">
                  <Card className="mt-2">
@@ -624,6 +634,30 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                     </CardContent>
                 </Card>
             </TabsContent>
+            <TabsContent value="contact">
+                {landlord && (
+                     <Card className="mt-2">
+                        <CardHeader>
+                            <CardTitle>Contact Your Landlord</CardTitle>
+                            <CardDescription>Get in touch with {landlord.name} regarding your tenancy.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex flex-col items-center text-center">
+                              <Avatar className="h-24 w-24 mx-auto mb-4">
+                                <AvatarImage src={landlord.profileImageUrl} />
+                                <AvatarFallback>
+                                    <UserIcon className="h-12 w-12 text-muted-foreground" />
+                                </AvatarFallback>
+                              </Avatar>
+                              <p className="font-semibold">{landlord.name}</p>
+                              <p className="text-sm text-muted-foreground">{landlord.email}</p>
+                              <Separator className="my-6" />
+                              <Button onClick={handleMessageLandlord} className="w-full max-w-sm">
+                                <MessageSquare className="mr-2 h-4 w-4"/> Start Conversation
+                              </Button>
+                        </CardContent>
+                     </Card>
+                )}
+            </TabsContent>
         </Tabs>
 
         {tenancyState && (
@@ -650,8 +684,14 @@ export default function PropertyDetailPage() {
 
     const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
     const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
-    
-    if (isPropertyLoading || isUserLoading) {
+
+    // Fetch landlord info regardless of tenancy status, needed for both views
+    const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
+    const { data: landlord, isLoading: isLandlordLoading } = useDoc<User>(landlordRef);
+
+    const isTenant = user?.uid === property?.currentTenantId;
+
+    if (isUserLoading || isPropertyLoading) {
         return <TenancySkeleton />;
     }
 
@@ -660,23 +700,19 @@ export default function PropertyDetailPage() {
         return null;
     }
 
-    const isTenant = user?.uid === property.currentTenantId;
-
+    // Now decide which view to show
     if (isTenant && user) {
-        return <TenantPropertyView property={property} tenant={user} />;
+        return <TenantPropertyView property={property} tenant={user} landlord={landlord} />;
+    } else {
+        // This is the prospective tenant view, which needs reviews
+        return <ProspectiveTenantLoader property={property} landlord={landlord} />;
     }
-
-    // For prospective tenants, we still need landlord and reviews
-    return <PropertyDetailLoader property={property} />;
 }
 
-// New component to handle data loading for the prospective view
-function PropertyDetailLoader({ property }: { property: Property }) {
+// Loader for the prospective view to fetch reviews
+function ProspectiveTenantLoader({ property, landlord }: { property: Property, landlord: User | null | undefined }) {
     const firestore = useFirestore();
-    
-    const landlordRef = useMemoFirebase(() => doc(firestore, 'users', property.landlordId), [firestore, property.landlordId]);
-    const { data: landlord, isLoading: isLandlordLoading } = useDoc<User>(landlordRef);
-    
+
     const reviewsQuery = useMemoFirebase(() => query(collection(firestore, 'reviews'), where('propertyId', '==', property.id)), [firestore, property.id]);
     const { data: reviews, isLoading: areReviewsLoading } = useCollection<Review>(reviewsQuery);
     
@@ -687,7 +723,7 @@ function PropertyDetailLoader({ property }: { property: Property }) {
         imageHint: 'apartment interior'
     })) || [];
 
-    if (isLandlordLoading || areReviewsLoading) {
+    if (areReviewsLoading) {
         return <TenancySkeleton />;
     }
 
