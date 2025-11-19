@@ -28,28 +28,27 @@ export default function LandlordSidebar() {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky top-24 flex flex-col gap-2">
+    <>
       {landlordNavLinks.map((link) => {
-        // Special handling for dynamic routes
-        const isActive = pathname.startsWith(link.href) && link.href !== '/landlord' || pathname === '/landlord' && link.href === '/landlord';
+        const isActive = pathname.startsWith(link.href) && (pathname === link.href || pathname.startsWith(link.href + '/'));
         
         return (
-            <Button
-            key={link.href}
-            asChild
-            variant={isActive ? "secondary" : "ghost"}
-            className="justify-start"
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                isActive && "bg-muted text-primary"
+              )}
             >
-            <Link href={link.href}>
-                <link.icon className="mr-2 h-4 w-4" />
-                {link.label}
-                {link.badge && (
-                <Badge className="ml-auto">{link.badge}</Badge>
-                )}
+              <link.icon className="h-4 w-4" />
+              {link.label}
+              {link.badge && (
+                <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">{link.badge}</Badge>
+              )}
             </Link>
-            </Button>
         )
       })}
-    </nav>
+    </>
   );
 }
