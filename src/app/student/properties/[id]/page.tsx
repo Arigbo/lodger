@@ -96,17 +96,21 @@ export default function PropertyDetailView() {
   }
 
   // After loading, if the property doesn't exist, show 404
-  if (!property) {
+  if (!isPropertyLoading && !property) {
     notFound();
   }
 
-  const isTenant = user?.uid === property.currentTenantId;
-
-  if (isTenant && user) {
-      return <TenantPropertyView property={property} tenant={user} />;
+  // This check is now safe because we've already confirmed property has loaded.
+  if (property) {
+    const isTenant = user?.uid === property.currentTenantId;
+    if (isTenant && user) {
+        return <TenantPropertyView property={property} tenant={user} />;
+    }
+    return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews || []} images={images} />;
   }
-
-  return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews || []} images={images} />;
+  
+  // This should not be reached if logic is correct, but acts as a fallback.
+  return <TenancySkeleton />;
 }
 
 
@@ -469,7 +473,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
   const { data: landlord } = useDoc<User>(landlordRef);
 
   const transactionsQuery = useMemoFirebase(() => query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.uid), where('propertyId', '==', property.id)), [firestore, tenant.uid, property.id]);
-  const { data: transactions, refetch: refetchTransactions } = useCollection<Transaction>(transactionsQuery);
+  const { data: transactions } = useCollection<Transaction>(transactionsQuery);
 
   const [tenancyState, setTenancyState] = useState<{
     showPayButton: boolean;
@@ -539,7 +543,6 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
 
   const handlePaymentSuccess = () => {
     console.log("Payment successful!");
-    refetchTransactions();
     // You might want to refetch transactions here or just close the dialog
   };
   
