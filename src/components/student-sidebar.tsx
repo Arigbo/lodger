@@ -10,6 +10,7 @@ import { Badge } from "./ui/badge";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
 import type { Property } from "@/lib/definitions";
+import React from 'react';
 
 
 const baseStudentNavLinks = [
@@ -34,17 +35,20 @@ export default function StudentSidebar() {
 
   const isTenant = rentedProperties && rentedProperties.length > 0;
   
-  const navLinks = useMemoFirebase(() => {
-    const links = [...baseStudentNavLinks];
-    if (isTenant && rentedProperties) {
-      links.splice(1, 0, {
-        href: `/student/properties/${rentedProperties[0].id}`,
-        label: "My Tenancy",
-        icon: Building2,
-      });
+  const navLinks = React.useMemo(() => {
+    let links = [...baseStudentNavLinks];
+    if (isTenant) {
+      const hasTenancyLink = links.some(link => link.href === "/student/tenancy");
+      if (!hasTenancyLink) {
+        links.splice(1, 0, {
+            href: "/student/tenancy",
+            label: "My Tenancy",
+            icon: Building2,
+        });
+      }
     }
     return links;
-  }, [isTenant, rentedProperties]);
+  }, [isTenant]);
 
   if (!user) {
     // You might want to return null or a skeleton loader while user is loading
@@ -56,8 +60,7 @@ export default function StudentSidebar() {
       {navLinks.map((link) => {
         if (!link) return null;
         
-        // Check for active link. For the tenancy link, it should be active on the property detail page.
-        const isActive = pathname === link.href || (link.label === "My Tenancy" && pathname.startsWith('/student/properties/') && isTenant);
+        const isActive = pathname === link.href;
         
         return (
             <Button

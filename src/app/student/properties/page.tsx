@@ -22,7 +22,7 @@ export default function PropertiesPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const propertiesQuery = useMemoFirebase(() => query(collection(firestore, 'properties')), [firestore]);
+  const propertiesQuery = useMemoFirebase(() => query(collection(firestore, 'properties'), where('status', '==', 'available')), [firestore]);
   const { data: allProperties, isLoading } = useCollection<Property>(propertiesQuery);
   
   const [filters, setFilters] = useState<FilterState>({
@@ -43,7 +43,7 @@ export default function PropertiesPage() {
     if (!allProperties) return;
     let properties = allProperties;
 
-    // Filter by availability first
+    // Filter by availability first (already done in the query, but good for safety)
     properties = properties.filter(p => p.status === 'available');
 
     if (filters.useCurrentLocation && currentLocation) {
