@@ -430,7 +430,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
         isRentDue = isPast(leaseStartDate);
       }
       rentDueDateText = format(nextRentDueDate, 'MMMM do, yyyy');
-      rentStatusText = isRentDue ? 'Due on' : 'Next due on';
+      rentStatusText = isRentDue ? 'Rent is due on' : 'Rent will be due on';
     } else {
       rentStatusText = lease?.status === 'pending' ? 'Lease Pending Signature' : 'Lease Inactive';
     }
@@ -458,7 +458,6 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
 
   const handlePaymentSuccess = () => {
     console.log("Payment successful!");
-    // The useCollection hook will automatically refetch the transactions.
   };
   
   if (!tenancyState || isLeaseLoading) {
@@ -640,6 +639,7 @@ export default function PropertyDetailPage() {
 
   if (!property) {
     notFound();
+    return null;
   }
 
   const isTenant = user?.uid === property.currentTenantId;
