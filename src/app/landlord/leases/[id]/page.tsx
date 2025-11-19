@@ -2,7 +2,6 @@
 'use client';
 
 import { notFound, useParams } from 'next/navigation';
-import { getLeaseAgreementById, getUserById, getPropertyById } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -11,29 +10,38 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { CheckCircle2, FileClock, Hourglass, Check } from 'lucide-react';
 import Link from 'next/link';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import type { LeaseAgreement, User, Property } from '@/lib/definitions';
+import { doc } from 'firebase/firestore';
 
-// Mock current user
-const useUser = () => {
-    // This is the landlord view
-    const user = getUserById('user-1');
-    return { user };
-};
 
 export default function ViewLandlordLeasePage() {
     const params = useParams();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
-    const { user: currentUser } = useUser();
+    const { user: currentUser, isUserLoading } = useUser();
+    const firestore = useFirestore();
 
-    const lease = getLeaseAgreementById(id);
+    const leaseRef = useMemoFirebase(() => doc(firestore, 'leaseAgreements', id), [firestore, id]);
+    const { data: lease, isLoading: isLeaseLoading } = useDoc<LeaseAgreement>(leaseRef);
 
-    if (!lease || !currentUser || (currentUser.id !== lease.landlordId)) {
+    const landlordRef = useMemoFirebase(() => lease ? doc(firestore, 'users', lease.landlordId) : null, [firestore, lease]);
+    const { data: landlord } = useDoc<User>(landlordRef);
+
+    const tenantRef = useMemoFirebase(() => lease ? doc(firestore, 'users', lease.tenantId) : null, [firestore, lease]);
+    const { data: tenant } = useDoc<User>(tenantRef);
+
+    const propertyRef = useMemoFirebase(() => lease ? doc(firestore, 'properties', lease.propertyId) : null, [firestore, lease]);
+    const { data: property } = useDoc<Property>(propertyRef);
+
+
+    if (isUserLoading || isLeaseLoading) {
+        return <div>Loading...</div>
+    }
+
+    if (!lease || !currentUser || (currentUser.uid !== lease.landlordId)) {
         notFound();
     }
     
-    const landlord = getUserById(lease.landlordId);
-    const tenant = getUserById(lease.tenantId);
-    const property = getPropertyById(lease.propertyId);
-
     const getStatusVariant = (status: 'active' | 'expired' | 'pending') => {
         switch (status) {
             case 'active': return 'secondary';

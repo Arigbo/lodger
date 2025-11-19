@@ -2,7 +2,6 @@
 'use client';
 
 import { notFound, useParams } from 'next/navigation';
-import { getLeaseAgreementById, getUserById, getPropertyById, signAndActivateLease } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -12,34 +11,59 @@ import { format } from 'date-fns';
 import { Signature, CheckCircle2, FileClock, Hourglass, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
-// Mock current user
-const useUser = () => {
-    // Switch between user-1 (landlord) and user-5 (student with pending lease) to test
-    const user = getUserById('user-5');
-    return { user };
-};
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import type { LeaseAgreement, Property, User } from '@/lib/definitions';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ViewStudentLeasePage() {
     const params = useParams();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
-    const { user: currentUser } = useUser();
+    const { user: currentUser, isUserLoading } = useUser();
+    const firestore = useFirestore();
     const router = useRouter();
+    const { toast } = useToast();
 
-    const lease = getLeaseAgreementById(id);
+    const leaseRef = useMemoFirebase(() => doc(firestore, 'leaseAgreements', id), [firestore, id]);
+    const { data: lease, isLoading: isLeaseLoading } = useDoc<LeaseAgreement>(leaseRef);
+    
+    const landlordRef = useMemoFirebase(() => lease ? doc(firestore, 'users', lease.landlordId) : null, [firestore, lease]);
+    const { data: landlord } = useDoc<User>(landlordRef);
 
-    if (!lease || !currentUser || (currentUser.id !== lease.tenantId)) {
+    const tenantRef = useMemoFirebase(() => lease ? doc(firestore, 'users', lease.tenantId) : null, [firestore, lease]);
+    const { data: tenant } = useDoc<User>(tenantRef);
+
+    const propertyRef = useMemoFirebase(() => lease ? doc(firestore, 'properties', lease.propertyId) : null, [firestore, lease]);
+    const { data: property } = useDoc<Property>(propertyRef);
+    
+    if (isUserLoading || isLeaseLoading) {
+        return <div>Loading...</div>;
+    }
+    
+    if (!lease || !currentUser || (currentUser.uid !== lease.tenantId)) {
         notFound();
     }
     
-    const landlord = getUserById(lease.landlordId);
-    const tenant = getUserById(lease.tenantId);
-    const property = getPropertyById(lease.propertyId);
-    
-    const handleSignLease = () => {
-        signAndActivateLease(lease.id, currentUser.id);
-        // After signing, redirect the student to their new tenancy page
-        router.push(`/student/properties/${lease.propertyId}`);
+    const handleSignLease = async () => {
+        try {
+            await updateDoc(leaseRef, {
+                tenantSigned: true,
+                status: 'active'
+            });
+            toast({
+                title: "Lease Signed!",
+                description: "Your tenancy is now active."
+            });
+            // After signing, redirect the student to their new tenancy page
+            router.push(`/student/properties/${lease.propertyId}`);
+        } catch (error) {
+            console.error("Error signing lease:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Could not sign the lease. Please try again."
+            })
+        }
     };
 
     const getStatusVariant = (status: 'active' | 'expired' | 'pending') => {

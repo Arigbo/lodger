@@ -4,20 +4,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import PropertyCard from "@/components/property-card";
 import SearchFilters from "@/components/search-filters";
-import { getProperties, getUserById } from "@/lib/data";
-import type { Property } from '@/lib/definitions';
+import type { Property, User } from '@/lib/definitions';
 import type { FilterState } from '@/components/search-filters';
 import { Home } from 'lucide-react';
 import { haversineDistance } from '@/lib/utils';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 
-// Mock current user - replace with real auth
-const useUser = () => {
-  // To test, use 'user-2' who is a student with location data
-  const user = getUserById('user-2'); 
-  return { user };
-}
-
-const allProperties = getProperties(true); // Get all available properties once, including occupied.
 
 // Mock coordinates for major state centers to determine location
 const stateCoordinates: { [key: string]: { lat: number; lng: number } } = {
@@ -27,6 +20,10 @@ const stateCoordinates: { [key: string]: { lat: number; lng: number } } = {
 
 export default function PropertiesPage() {
   const { user } = useUser();
+  const firestore = useFirestore();
+
+  const propertiesQuery = useMemoFirebase(() => query(collection(firestore, 'properties')), [firestore]);
+  const { data: allProperties, isLoading } = useCollection<Property>(propertiesQuery);
   
   const [filters, setFilters] = useState<FilterState>({
       country: user?.country,
@@ -38,11 +35,12 @@ export default function PropertiesPage() {
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [schoolsInArea, setSchoolsInArea] = useState<string[] | null>(null);
   
-  const availableStates = useMemo(() => [...new Set(allProperties.map(p => p.location.state))], []);
-  const availableSchools = useMemo(() => [...new Set(allProperties.map(p => p.location.school).filter(Boolean as any as (value: string | undefined) => value is string))], []);
+  const availableStates = useMemo(() => allProperties ? [...new Set(allProperties.map(p => p.location.state))] : [], [allProperties]);
+  const availableSchools = useMemo(() => allProperties ? [...new Set(allProperties.map(p => p.location.school).filter(Boolean as any as (value: string | undefined) => value is string))] : [], [allProperties]);
 
 
   useEffect(() => {
+    if (!allProperties) return;
     let properties = allProperties;
 
     // Filter by availability first
@@ -102,7 +100,7 @@ export default function PropertiesPage() {
     }
 
     setFilteredProperties(properties);
-  }, [filters, currentLocation]);
+  }, [filters, currentLocation, allProperties]);
 
 
   const handleFilterChange = (newFilters: FilterState) => {
@@ -114,6 +112,7 @@ export default function PropertiesPage() {
   };
   
   const handleLocationSuccess = (coords: {lat: number, lng: number}) => {
+    if (!allProperties) return;
     setCurrentLocation(coords);
 
     let closestState: string | null = null;
@@ -162,6 +161,10 @@ export default function PropertiesPage() {
     });
     setCurrentLocation(null);
     setSchoolsInArea(null);
+  }
+
+  if (isLoading) {
+    return <div>Loading properties...</div>
   }
 
   return (

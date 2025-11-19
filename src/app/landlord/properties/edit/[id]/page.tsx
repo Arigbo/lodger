@@ -4,10 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { notFound, useParams } from 'next/navigation';
-import {
-  getPropertyById,
-} from '@/lib/data';
+import { notFound, useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -33,7 +30,9 @@ import { Separator } from '@/components/ui/separator';
 import { amenities as allAmenities } from '@/lib/definitions';
 import { useEffect } from 'react';
 import type { Property } from '@/lib/definitions';
-import { UploadCloud } from 'lucide-react';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -58,7 +57,17 @@ type FormValues = z.infer<typeof formSchema>;
 export default function EditPropertyPage() {
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
-  const property = getPropertyById(id);
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const propertyRef = useMemoFirebase(() => {
+    if (!id) return null;
+    return doc(firestore, 'properties', id as string);
+  }, [id, firestore]);
+
+  const { data: property, isLoading } = useDoc<Property>(propertyRef);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -69,6 +78,9 @@ export default function EditPropertyPage() {
 
   useEffect(() => {
     if (property) {
+      if (user?.uid !== property.landlordId) {
+          notFound();
+      }
       form.reset({
         title: property.title,
         description: property.description,
@@ -85,16 +97,55 @@ export default function EditPropertyPage() {
         rules: property.rules.join(', '),
       });
     }
-  }, [property, form]);
+  }, [property, form, user]);
 
+
+  if (isLoading) {
+    return <div>Loading property details...</div>
+  }
 
   if (!property) {
     return notFound();
   }
 
-  function onSubmit(values: FormValues) {
-    console.log('Updated Property Data:', values);
-    // Here you would typically call an API to update the property
+  async function onSubmit(values: FormValues) {
+    if (!propertyRef) return;
+    try {
+        const updatedData = {
+            title: values.title,
+            description: values.description,
+            price: values.price,
+            type: values.type,
+            location: {
+                address: values.address,
+                city: values.city,
+                state: values.state,
+                zip: values.zip,
+                // Keep lat/lng/school if they exist
+                lat: property?.location.lat,
+                lng: property?.location.lng,
+                school: property?.location.school,
+            },
+            bedrooms: values.bedrooms,
+            bathrooms: values.bathrooms,
+            area: values.area,
+            amenities: values.amenities,
+            rules: values.rules ? values.rules.split(',').map(r => r.trim()).filter(Boolean) : [],
+        };
+        await updateDoc(propertyRef, updatedData);
+        toast({
+            title: "Property Updated",
+            description: "Your property details have been saved.",
+        });
+        router.push(`/landlord/properties/${id}`);
+    } catch (error) {
+        console.error("Error updating property:", error);
+        toast({
+            variant: "destructive",
+            title: "Update Failed",
+            description: "Could not save your changes. Please try again.",
+        })
+    }
   }
 
   return (
@@ -359,12 +410,12 @@ export default function EditPropertyPage() {
             </div>
             
             <Separator />
-            <Button type="submit" size="lg">Save Changes</Button>
+            <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
           </form>
         </Form>
       </CardContent>
     </Card>
   );
 }
-
-    

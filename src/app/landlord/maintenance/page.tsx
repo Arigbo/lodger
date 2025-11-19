@@ -27,23 +27,69 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { getMaintenanceRequestsByLandlord, getUserById, getPropertyById } from '@/lib/data';
-import type { MaintenanceRequest } from '@/lib/definitions';
+import type { MaintenanceRequest, User, Property } from '@/lib/definitions';
 import { MoreHorizontal, Wrench } from 'lucide-react';
 import Link from 'next/link';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
-// Mock current user
-const useUser = () => {
-  const user = getUserById('user-1');
-  return { user };
+
+type AggregatedRequest = MaintenanceRequest & {
+  tenantName: string;
+  propertyName: string;
 };
 
 export default function MaintenancePage() {
-  const { user: landlord } = useUser();
+  const { user: landlord, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const [requests, setRequests] = React.useState<AggregatedRequest[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  const requests = React.useMemo(() => {
-    return landlord ? getMaintenanceRequestsByLandlord(landlord.id) : [];
-  }, [landlord]);
+  React.useEffect(() => {
+    if (!landlord || !firestore) return;
+
+    const fetchMaintenanceRequests = async () => {
+      setIsLoading(true);
+
+      const requestsQuery = query(collection(firestore, 'maintenanceRequests'), where('landlordId', '==', landlord.uid));
+      const requestsSnapshot = await getDocs(requestsQuery);
+      const landlordRequests = requestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MaintenanceRequest));
+
+      if (landlordRequests.length === 0) {
+        setRequests([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const tenantIds = [...new Set(landlordRequests.map(r => r.tenantId))];
+      const propertyIds = [...new Set(landlordRequests.map(r => r.propertyId))];
+
+      const usersQuery = query(collection(firestore, 'users'), where('id', 'in', tenantIds));
+      const propertiesQuery = query(collection(firestore, 'properties'), where('id', 'in', propertyIds));
+
+      const [usersSnapshot, propertiesSnapshot] = await Promise.all([
+        getDocs(usersQuery),
+        getDocs(propertiesQuery)
+      ]);
+
+      const usersMap = new Map<string, User>();
+      usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+
+      const propertiesMap = new Map<string, Property>();
+      propertiesSnapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+
+      const aggregatedData = landlordRequests.map(request => ({
+        ...request,
+        tenantName: usersMap.get(request.tenantId)?.name || 'Unknown Tenant',
+        propertyName: propertiesMap.get(request.propertyId)?.title || 'Unknown Property',
+      }));
+
+      setRequests(aggregatedData);
+      setIsLoading(false);
+    };
+
+    fetchMaintenanceRequests();
+  }, [landlord, firestore]);
 
   const getPriorityVariant = (priority: MaintenanceRequest['priority']) => {
     switch (priority) {
@@ -72,6 +118,10 @@ export default function MaintenancePage() {
         return 'outline';
     }
   };
+
+  if (isUserLoading || isLoading) {
+    return <div>Loading...</div>
+  }
 
   return (
     <div>
@@ -109,18 +159,16 @@ export default function MaintenancePage() {
               </TableHeader>
               <TableBody>
                 {requests.map((request) => {
-                  const tenant = getUserById(request.tenantId);
-                  const property = getPropertyById(request.propertyId);
                   return (
                     <TableRow key={request.id}>
                       <TableCell>
-                        <Link href={`/landlord/properties/${property?.id}`} className="font-medium hover:underline">
-                          {property?.title}
+                        <Link href={`/landlord/properties/${request.propertyId}`} className="font-medium hover:underline">
+                          {request.propertyName}
                         </Link>
                       </TableCell>
                       <TableCell>
-                        <Link href={`/landlord/tenants/${tenant?.id}`} className="text-muted-foreground hover:underline">
-                          {tenant?.name}
+                        <Link href={`/landlord/tenants/${request.tenantId}`} className="text-muted-foreground hover:underline">
+                          {request.tenantName}
                         </Link>
                       </TableCell>
                       <TableCell className="font-medium max-w-xs truncate">{request.title}</TableCell>

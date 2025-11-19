@@ -20,38 +20,70 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { getLeasesByStudentId, getUserById, getPropertyById, signAndActivateLease } from '@/lib/data';
-import type { LeaseAgreement } from '@/lib/definitions';
+import type { LeaseAgreement, User, Property } from '@/lib/definitions';
 import { FileText, Signature } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
-// Mock current user
-const useUser = () => {
-  const user = getUserById('user-5'); // Use user-5 to test pending lease
-  return { user };
+
+type AggregatedLease = {
+  lease: LeaseAgreement;
+  landlord: User | null;
+  property: Property | null;
 };
 
 export default function StudentLeasesPage() {
-  const { user: student } = useUser();
-  const router = useRouter();
-
-  const [leases, setLeases] = React.useState<LeaseAgreement[]>([]);
+  const { user: student, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const [leases, setLeases] = React.useState<AggregatedLease[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    if (student) {
-      setLeases(getLeasesByStudentId(student.id));
-    }
-  }, [student]);
+    if (!student || !firestore) return;
 
-  const handleSignLease = (leaseId: string) => {
-    if (student) {
-      signAndActivateLease(leaseId, student.id);
-      // Optimistically update UI or refetch
-      setLeases(getLeasesByStudentId(student.id));
-      router.push(`/student/properties/${leases.find(l => l.id === leaseId)?.propertyId}`);
-    }
-  };
+    const fetchLeases = async () => {
+      setIsLoading(true);
+      
+      const leasesQuery = query(collection(firestore, 'leaseAgreements'), where('tenantId', '==', student.uid));
+      const leasesSnapshot = await getDocs(leasesQuery);
+      const studentLeases = leasesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LeaseAgreement));
+
+      if (studentLeases.length === 0) {
+        setLeases([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const landlordIds = [...new Set(studentLeases.map(l => l.landlordId))];
+      const propertyIds = [...new Set(studentLeases.map(l => l.propertyId))];
+
+      const usersQuery = query(collection(firestore, 'users'), where('id', 'in', landlordIds));
+      const propertiesQuery = query(collection(firestore, 'properties'), where('id', 'in', propertyIds));
+
+      const [usersSnapshot, propertiesSnapshot] = await Promise.all([
+        getDocs(usersQuery),
+        getDocs(propertiesQuery)
+      ]);
+
+      const usersMap = new Map<string, User>();
+      usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+
+      const propertiesMap = new Map<string, Property>();
+      propertiesSnapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+
+      const aggregatedData = studentLeases.map(lease => ({
+        lease,
+        landlord: usersMap.get(lease.landlordId) || null,
+        property: propertiesMap.get(lease.propertyId) || null,
+      }));
+
+      setLeases(aggregatedData.sort((a,b) => new Date(b.lease.startDate).getTime() - new Date(a.lease.startDate).getTime()));
+      setIsLoading(false);
+    };
+
+    fetchLeases();
+  }, [student, firestore]);
 
 
   const getStatusVariant = (status: LeaseAgreement['status']) => {
@@ -66,6 +98,10 @@ export default function StudentLeasesPage() {
         return 'default';
     }
   };
+
+  if (isLoading || isUserLoading) {
+    return <div>Loading...</div>
+  }
 
   return (
     <div>
@@ -100,9 +136,7 @@ export default function StudentLeasesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {leases.map((lease) => {
-                  const landlord = getUserById(lease.landlordId);
-                  const property = getPropertyById(lease.propertyId);
+                {leases.map(({ lease, landlord, property }) => {
                   return (
                     <TableRow key={lease.id}>
                       <TableCell>

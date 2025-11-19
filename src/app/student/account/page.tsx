@@ -20,8 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, User } from 'lucide-react';
-import { getUserById } from '@/lib/data';
+import { Upload, User as UserIcon } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
   AlertDialog,
@@ -35,12 +34,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-// Mock current user
-const useUser = () => {
-  const user = getUserById('user-3');
-  return { user };
-};
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import type { User } from '@/lib/definitions';
+import { doc } from 'firebase/firestore';
+import { useEffect } from 'react';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -64,18 +61,34 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 export default function AccountPage() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+
+  const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<User>(userDocRef);
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      name: user?.name || '',
-      email: user?.email || '',
-      country: user?.country || '',
-      state: user?.state || '',
-      school: user?.school || '',
+      name: '',
+      email: '',
+      country: '',
+      state: '',
+      school: '',
     },
   });
+
+  useEffect(() => {
+    if (userProfile) {
+        profileForm.reset({
+            name: userProfile.name || '',
+            email: userProfile.email || '',
+            country: userProfile.country || '',
+            state: userProfile.state || '',
+            school: userProfile.school || '',
+        });
+    }
+  }, [userProfile, profileForm]);
 
   const passwordForm = useForm<PasswordFormValues>({
       resolver: zodResolver(passwordFormSchema),
@@ -94,8 +107,12 @@ export default function AccountPage() {
     console.log('Password change request:', values);
   }
 
-  if (!user) {
+  if (isUserLoading || isProfileLoading) {
     return <div>Loading...</div>;
+  }
+  
+  if (!user || !userProfile) {
+      return <div>Please log in to view your account.</div>
   }
 
   return (
@@ -120,9 +137,9 @@ export default function AccountPage() {
                             <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
                                 <div className="flex items-center gap-6">
                                     <Avatar className="h-24 w-24">
-                                        <AvatarImage src={user.profileImageUrl} />
+                                        <AvatarImage src={userProfile.profileImageUrl} />
                                         <AvatarFallback>
-                                            <User className="h-12 w-12 text-muted-foreground" />
+                                            <UserIcon className="h-12 w-12 text-muted-foreground" />
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="grid gap-2">
@@ -319,7 +336,3 @@ export default function AccountPage() {
     </div>
   );
 }
-
-    
-
-    
