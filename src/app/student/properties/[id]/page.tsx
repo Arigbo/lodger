@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { notFound, usePathname, useParams, useSearchParams, useRouter } from "next/navigation";
@@ -28,7 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import TenancySkeleton from "@/components/tenancy-skeleton";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
-import { doc, collection, query, where, User as FirebaseUser, addDoc } from "firebase/firestore";
+import { doc, collection, query, where, User as FirebaseUser, addDoc, serverTimestamp } from "firebase/firestore";
 
 function ProspectiveTenantView({
     property,
@@ -76,7 +75,7 @@ function ProspectiveTenantView({
   const propertyUrl = isClient ? `${window.location.origin}${pathname}` : '';
 
   const handleSendRequest = async () => {
-    if (!user) {
+    if (!user || !landlord) {
         toast({
             variant: "destructive",
             title: "Not Logged In",
@@ -93,11 +92,26 @@ function ProspectiveTenantView({
             applicationDate: new Date().toISOString(),
             status: 'pending',
         });
+        
+        // Also create the first message to initiate the conversation
+        const messagesRef = collection(firestore, 'messages');
+        await addDoc(messagesRef, {
+            text: requestMessage || `Hi, I'm interested in renting ${property.title}.`,
+            senderId: user.uid,
+            recipientId: landlord.id,
+            participantIds: [user.uid, landlord.id].sort(),
+            timestamp: serverTimestamp(),
+            read: false,
+        });
 
         toast({
             title: "Request Sent!",
             description: "Your rental request has been sent to the landlord.",
         });
+        
+        // Redirect to messages page to show the new conversation
+        router.push(`/student/messages?conversationId=${landlord.id}`);
+
     } catch (error) {
         console.error("Error sending rental request:", error);
         toast({
@@ -408,8 +422,8 @@ function TenantPropertyView({ property, tenant, landlord }: { property: Property
   const transactionsQuery = useMemoFirebase(() => query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.uid), where('propertyId', '==', property.id)), [firestore, tenant.uid, property.id]);
   const { data: transactions, isLoading: areTransactionsLoading } = useCollection<Transaction>(transactionsQuery);
 
-  const leasesQuery = useMemoFirebase(() => query(collection(firestore, 'leaseAgreements'), where('propertyId', '==', property.id), where('tenantId', '==', tenant.uid)), [firestore, property.id, tenant.uid]);
-  const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leasesQuery);
+  const leaseQuery = useMemoFirebase(() => query(collection(firestore, 'leaseAgreements'), where('propertyId', '==', property.id), where('tenantId', '==', tenant.uid)), [firestore, property.id, tenant.uid]);
+  const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leaseQuery);
   const lease = leases?.[0];
 
   const [tenancyState, setTenancyState] = useState<{
@@ -713,7 +727,7 @@ export default function PropertyDetailPage() {
 function ProspectiveTenantLoader({ property, landlord }: { property: Property, landlord: User | null | undefined }) {
     const firestore = useFirestore();
 
-    const reviewsQuery = useMemoFirebase(() => query(collection(firestore, 'reviews'), where('propertyId', '==', property.id)), [firestore, property.id]);
+    const reviewsQuery = useMemoFirebase(() => query(collection(firestore, 'propertyReviews'), where('propertyId', '==', property.id)), [firestore, property.id]);
     const { data: reviews, isLoading: areReviewsLoading } = useCollection<Review>(reviewsQuery);
     
     const images: ImagePlaceholder[] = property?.images?.map((url, i) => ({
@@ -729,3 +743,5 @@ function ProspectiveTenantLoader({ property, landlord }: { property: Property, l
 
     return <ProspectiveTenantView property={property} landlord={landlord} reviews={reviews || []} images={images} />;
 }
+
+    
