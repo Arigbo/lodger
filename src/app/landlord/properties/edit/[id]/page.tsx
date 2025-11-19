@@ -72,26 +72,38 @@ export default function EditPropertyPage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      title: '',
+      description: '',
+      price: 0,
+      type: 'Apartment',
+      address: '',
+      city: '',
+      state: '',
+      zip: '',
+      bedrooms: 1,
+      bathrooms: 1,
+      area: 0,
       amenities: [],
+      rules: '',
     },
   });
 
   useEffect(() => {
     if (property) {
       form.reset({
-        title: property.title,
-        description: property.description,
-        price: property.price,
+        title: property.title || '',
+        description: property.description || '',
+        price: property.price || 0,
         type: property.type,
-        address: property.location.address,
-        city: property.location.city,
-        state: property.location.state,
-        zip: property.location.zip,
-        bedrooms: property.bedrooms,
-        bathrooms: property.bathrooms,
-        area: property.area,
-        amenities: property.amenities,
-        rules: property.rules.join(', '),
+        address: property.location?.address || '',
+        city: property.location?.city || '',
+        state: property.location?.state || '',
+        zip: property.location?.zip || '',
+        bedrooms: property.bedrooms || 1,
+        bathrooms: property.bathrooms || 1,
+        area: property.area || 0,
+        amenities: property.amenities || [],
+        rules: property.rules?.join(', ') || '',
       });
     }
   }, [property, form]);
@@ -102,7 +114,7 @@ export default function EditPropertyPage() {
   }
 
   // After loading, if the property doesn't exist OR if the user is not the owner, show 404.
-  if (!property || (user && user.uid !== property.landlordId)) {
+  if (!isPropertyLoading && (!property || (user && user.uid !== property.landlordId))) {
     return notFound();
   }
 
