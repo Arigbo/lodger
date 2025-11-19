@@ -11,10 +11,12 @@ import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
 import { amenities as allAmenities } from "@/lib/definitions";
 import { MapPin } from "lucide-react";
+import { Input } from "./ui/input";
 
 export type FilterState = {
   country?: string;
   state?: string;
+  city?: string;
   school?: string;
   price?: number;
   propertyType?: string;
@@ -57,7 +59,7 @@ export default function SearchFilters({
   const handleInputChange = (field: keyof FilterState, value: any) => {
     const newFilters = { ...filters, [field]: value };
     // If a manual location filter is changed, turn off `useCurrentLocation`
-    if (['country', 'state', 'school'].includes(field)) {
+    if (['country', 'state', 'city', 'school'].includes(field)) {
       newFilters.useCurrentLocation = false;
     }
     setFilters(newFilters);
@@ -118,18 +120,24 @@ export default function SearchFilters({
             </SelectContent>
           </Select>
         </div>
-        <div className="grid gap-2">
-          <Label htmlFor="state">State</Label>
-          <Select value={filters.state} onValueChange={(value) => handleInputChange('state', value)} disabled={filters.useCurrentLocation}>
-            <SelectTrigger id="state">
-              <SelectValue placeholder="Select State" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableStates.map(state => (
-                <SelectItem key={state} value={state}>{state}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-2">
+            <Label htmlFor="state">State</Label>
+            <Select value={filters.state} onValueChange={(value) => handleInputChange('state', value)} disabled={filters.useCurrentLocation}>
+                <SelectTrigger id="state">
+                <SelectValue placeholder="Select State" />
+                </SelectTrigger>
+                <SelectContent>
+                {availableStates.map(state => (
+                    <SelectItem key={state} value={state}>{state}</SelectItem>
+                ))}
+                </SelectContent>
+            </Select>
+            </div>
+             <div className="grid gap-2">
+                <Label htmlFor="city">City</Label>
+                <Input id="city" placeholder="Enter city" value={filters.city || ''} onChange={(e) => handleInputChange('city', e.target.value)} disabled={filters.useCurrentLocation} />
+            </div>
         </div>
         <div className="grid gap-2">
             <Label htmlFor="school">School</Label>

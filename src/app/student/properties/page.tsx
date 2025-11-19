@@ -63,6 +63,10 @@ export default function PropertiesPage() {
             properties = properties.filter(p => p.location.state === filters.state);
         }
 
+        if (filters.city) {
+            properties = properties.filter(p => p.location.city.toLowerCase().includes(filters.city!.toLowerCase()));
+        }
+
         if (filters.school) {
             properties = properties.filter(p => p.location.school === filters.school);
         }
@@ -151,6 +155,7 @@ export default function PropertiesPage() {
      setFilters({
       country: undefined,
       state: undefined,
+      city: undefined,
       school: undefined,
       useCurrentLocation: false,
       price: undefined,
