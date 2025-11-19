@@ -55,7 +55,7 @@ export default function TenancyDashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {rentedProperties.map(property => (
                      <Link key={property.id} href={`/student/tenancy/${property.id}`} className="group block">
-                        <PropertyCard property={property} />
+                        <PropertyCard property={property} as="div" />
                      </Link>
                 ))}
             </div>
@@ -78,5 +78,3 @@ export default function TenancyDashboardPage() {
     </div>
   );
 }
-
-    

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Image from "next/image";
@@ -10,12 +9,16 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { BedDouble, Bath, Ruler, MapPin } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+
 
 type PropertyCardProps = {
   property: Property;
+  as?: 'link' | 'div';
+  className?: string;
 };
 
-export default function PropertyCard({ property }: PropertyCardProps) {
+export default function PropertyCard({ property, as = 'link', className }: PropertyCardProps) {
   const image = property.images?.[0];
   const pathname = usePathname();
   
@@ -24,10 +27,8 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     linkHref = `/landlord/properties/${property.id}`;
   }
 
-
-  return (
-    <Link href={linkHref} className="group block">
-      <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+  const CardContentComponent = (
+     <Card className={cn("h-full overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1", className)}>
         <CardHeader className="p-0">
           <div className="relative h-56 w-full">
             {image && (
@@ -73,6 +74,19 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             </div>
         </CardFooter>
       </Card>
+  );
+
+  if (as === 'div') {
+      return (
+        <div className="group block">
+            {CardContentComponent}
+        </div>
+      )
+  }
+
+  return (
+    <Link href={linkHref} className="group block">
+      {CardContentComponent}
     </Link>
   );
 }
