@@ -14,9 +14,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { initiateEmailSignIn } from '@/firebase';
-import { useAuth } from '@/firebase/provider';
+import { useAuth, useFirestore } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { doc, getDoc } from 'firebase/firestore';
 
 const loginSchema = z.object({
     email: z.string().email("Please enter a valid email address."),
@@ -27,6 +28,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
     const auth = useAuth();
+    const firestore = useFirestore();
     const { toast } = useToast();
     const router = useRouter();
     const form = useForm<LoginFormValues>({
@@ -37,7 +39,49 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
     const { isSubmitting } = form.formState;
 
     const onSubmit = async (values: LoginFormValues) => {
-        initiateEmailSignIn(auth, values.email, values.password, toast, router);
+        try {
+            const userCredential = await initiateEmailSignIn(auth, values.email, values.password);
+            const user = userCredential.user;
+
+            const userDocRef = doc(firestore, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                if (userData.role === 'landlord') {
+                    router.push('/landlord');
+                } else {
+                    router.push('/student');
+                }
+            } else {
+                // Fallback for users without a document, though this is unlikely
+                router.push('/student');
+            }
+        } catch (error: any) {
+            console.error("Sign-in error:", error);
+            let errorMessage = "An unknown error occurred. Please try again.";
+            switch (error.code) {
+                case 'auth/invalid-email':
+                    errorMessage = "Please enter a valid email address.";
+                    break;
+                case 'auth/user-disabled':
+                    errorMessage = "This user account has been disabled.";
+                    break;
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential':
+                    errorMessage = "Invalid email or password. Please try again.";
+                    break;
+                default:
+                    errorMessage = error.message;
+                    break;
+            }
+            toast({
+                variant: "destructive",
+                title: "Sign In Failed",
+                description: errorMessage,
+            });
+        }
     };
 
     return (

@@ -24,59 +24,13 @@ export function initiateEmailSignUp(authInstance: Auth, email: string, password:
   return createUserWithEmailAndPassword(authInstance, email, password);
 }
 
-/** Initiate email/password sign-in (non-blocking). */
+/** Initiate email/password sign-in. Returns a promise that resolves on success or rejects on error. */
 export function initiateEmailSignIn(
     authInstance: Auth, 
     email: string, 
     password: string, 
-    toast: (options: Toast) => void,
-    router: AppRouterInstance
-): void {
-  signInWithEmailAndPassword(authInstance, email, password)
-    .then(async (userCredential) => {
-        const user = userCredential.user;
-        const { firestore } = getSdks(authInstance.app);
-        const userDocRef = doc(firestore, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-            if (userData.role === 'landlord') {
-                router.push('/landlord');
-            } else {
-                router.push('/student');
-            }
-        } else {
-            // This case should ideally not happen in a sign-in flow,
-            // but as a fallback, redirect to a generic student page.
-            router.push('/student');
-        }
-    })
-    .catch((error) => {
-      console.error("Sign-in error:", error);
-      let errorMessage = "An unknown error occurred. Please try again.";
-      switch (error.code) {
-        case 'auth/invalid-email':
-          errorMessage = "Please enter a valid email address.";
-          break;
-        case 'auth/user-disabled':
-          errorMessage = "This user account has been disabled.";
-          break;
-        case 'auth/user-not-found':
-        case 'auth/wrong-password':
-        case 'auth/invalid-credential':
-          errorMessage = "Invalid email or password. Please try again.";
-          break;
-        default:
-          errorMessage = error.message;
-          break;
-      }
-      toast({
-        variant: "destructive",
-        title: "Sign In Failed",
-        description: errorMessage,
-      });
-    });
+): Promise<UserCredential> {
+  return signInWithEmailAndPassword(authInstance, email, password);
 }
 
 /** Initiate Google sign-in (non-blocking). */
