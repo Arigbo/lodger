@@ -5,7 +5,7 @@ export default function Loading() {
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background">
       <div className="relative flex items-center justify-center">
-        {/* Icon */}
+        {/* Icon (slides in and stays) */}
         <div className="z-10 animate-slide-in-from-left">
            <svg
             width="64"
@@ -20,7 +20,7 @@ export default function Loading() {
             <path d="M12.5 24L7.5 18.5L13 13L18.5 17.5L22 14.5V22H12.5Z" fill="black"/>
           </svg>
         </div>
-        {/* Text */}
+        {/* Text (fades out from behind the icon) */}
         <span 
           className="font-headline text-5xl font-bold text-foreground absolute animate-fade-out-and-scale"
         >
