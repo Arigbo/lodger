@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { notFound, usePathname, useParams } from "next/navigation";
@@ -28,7 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import TenancySkeleton from "@/components/tenancy-skeleton";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
-import { doc, collection, query, where, User as FirebaseUser } from "firebase/firestore";
+import { doc, collection, query, where, User as FirebaseUser, addDoc } from "firebase/firestore";
 
 function generateLeaseText(landlord: User, tenant: User | FirebaseUser, property: Property): string {
   const leaseStartDate = new Date();
@@ -121,6 +120,8 @@ function ProspectiveTenantView({
 }) {
   const pathname = usePathname();
   const { toast } = useToast();
+  const { user } = useUser();
+  const firestore = useFirestore();
   
   const [reviews] = useState(initialReviews);
   const [images] = useState(initialImages);
@@ -136,13 +137,38 @@ function ProspectiveTenantView({
   
   const propertyUrl = isClient ? `${window.location.origin}${pathname}` : '';
 
-  const handleSendRequest = () => {
-    console.log("Sending request for property", property.id, "with message:", requestMessage);
-    toast({
-        title: "Request Sent!",
-        description: "Your rental request has been sent to the landlord.",
-    });
-  }
+  const handleSendRequest = async () => {
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "Not Logged In",
+            description: "You must be logged in to send a rental request.",
+        });
+        return;
+    }
+    try {
+        const rentalRequestsRef = collection(firestore, 'rentalApplications');
+        await addDoc(rentalRequestsRef, {
+            propertyId: property.id,
+            userId: user.uid,
+            messageToLandlord: requestMessage,
+            applicationDate: new Date().toISOString(),
+            status: 'pending',
+        });
+
+        toast({
+            title: "Request Sent!",
+            description: "Your rental request has been sent to the landlord.",
+        });
+    } catch (error) {
+        console.error("Error sending rental request:", error);
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: "Could not send your rental request. Please try again later.",
+        });
+    }
+  };
 
   const handleCopyToClipboard = () => {
     navigator.clipboard.writeText(propertyUrl);
@@ -307,7 +333,7 @@ function ProspectiveTenantView({
                                 </Button>
                                  <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-full">
                                     <a href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(propertyUrl)}&title=${encodeURIComponent(property.title)}`} target="_blank" rel="noopener noreferrer"><Linkedin /></a>
-                                </Button>
+                                 </Button>
                             </div>
                         </DialogContent>
                     </Dialog>
@@ -684,8 +710,3 @@ function AddReviewForm() {
     );
 }
 
-
-
-    
-
-    
