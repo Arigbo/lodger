@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -49,25 +49,29 @@ export default function MessagesPage() {
         setIsClient(true);
     }, []);
 
+    // This query now correctly aligns with the security rules.
+    const allMessagesQuery = useMemoFirebase(() => {
+        if (!student) return null;
+        return query(
+            collection(firestore, 'messages'),
+            where('participantIds', 'array-contains', student.uid)
+        );
+    }, [firestore, student]);
+
+    const { data: allStudentMessages, isLoading: messagesLoading } = useCollection<Message>(allMessagesQuery);
+
     useEffect(() => {
-        if (isUserLoading || !firestore) return;
+        if (isUserLoading || messagesLoading) return;
         if (!student) {
             setIsDataLoading(false);
             return;
         }
 
-        const fetchConversations = async () => {
+        const processConversations = async () => {
             setIsDataLoading(true);
 
-            const allMessagesQuery = query(
-                collection(firestore, 'messages'),
-                where('participantIds', 'array-contains', student.uid)
-            );
-            const messagesSnapshot = await getDocs(allMessagesQuery);
-            const allStudentMessages = messagesSnapshot.docs.map(doc => doc.data() as Message);
-
             const conversationsMap = new Map<string, { lastMessage: Message, participantId: string }>();
-            allStudentMessages.forEach(msg => {
+            (allStudentMessages || []).forEach(msg => {
                 const otherParticipantId = msg.participantIds.find(id => id !== student.uid);
                 if (otherParticipantId) {
                     if (!conversationsMap.has(otherParticipantId) || msg.timestamp.toMillis() > conversationsMap.get(otherParticipantId)!.lastMessage.timestamp.toMillis()) {
@@ -78,6 +82,7 @@ export default function MessagesPage() {
 
             const participantIds = new Set(Array.from(conversationsMap.keys()));
 
+            // Also find the landlord of the currently rented property
             const rentedPropertiesQuery = query(collection(firestore, 'properties'), where('currentTenantId', '==', student.uid), limit(1));
             const rentedPropertiesSnapshot = await getDocs(rentedPropertiesQuery);
             if (!rentedPropertiesSnapshot.empty) {
@@ -120,8 +125,8 @@ export default function MessagesPage() {
             setIsDataLoading(false);
         };
 
-        fetchConversations();
-    }, [student, firestore, newContact, isUserLoading]);
+        processConversations();
+    }, [student, firestore, newContact, isUserLoading, allStudentMessages, messagesLoading]);
 
     useEffect(() => {
         const targetId = contactId || selectedConversationId;
@@ -140,21 +145,12 @@ export default function MessagesPage() {
         }
     }, [contactId, selectedConversationId, conversations, selectedParticipant, router, pathname]);
     
-    const messagesQuery = useMemoFirebase(() => {
-        if (!student || !selectedParticipant) return null;
-        return query(
-            collection(firestore, 'messages'),
-            where('participantIds', 'array-contains', student.uid),
-            orderBy('timestamp', 'asc')
-        );
-    }, [firestore, student, selectedParticipant]);
-
-    const { data: allMessages } = useCollection<Message>(messagesQuery);
-    
     const messages = useMemo(() => {
-        if (!allMessages || !selectedParticipant) return [];
-        return allMessages.filter(msg => msg.participantIds.includes(selectedParticipant.id));
-    }, [allMessages, selectedParticipant]);
+        if (!allStudentMessages || !selectedParticipant) return [];
+        return allStudentMessages
+            .filter(msg => msg.participantIds.includes(selectedParticipant.id))
+            .sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis());
+    }, [allStudentMessages, selectedParticipant]);
 
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !student || !selectedParticipant || !firestore) return;
