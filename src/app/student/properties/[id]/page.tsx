@@ -89,10 +89,13 @@ export default function PropertyDetailView() {
       imageHint: 'apartment interior'
   })) || [];
 
-  if (isUserLoading || isPropertyLoading) {
-    return <TenancySkeleton />; // Or a more generic skeleton
+  const isLoading = isUserLoading || isPropertyLoading;
+
+  if (isLoading) {
+    return <TenancySkeleton />;
   }
 
+  // After loading, if the property doesn't exist, show 404
   if (!property) {
     notFound();
   }
@@ -710,3 +713,6 @@ function AddReviewForm() {
     );
 }
 
+
+
+    
