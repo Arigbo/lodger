@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -45,31 +44,35 @@ export default function MessagesPage() {
         useMemoFirebase(() => (contactId ? doc(firestore, 'users', contactId) : null), [contactId, firestore])
     );
     
-    // Effect to set client-side flag
     useEffect(() => {
         setIsClient(true);
     }, []);
 
-    // Effect to fetch all conversations for the student
     useEffect(() => {
         if (!student || !firestore) return;
 
         const fetchConversations = async () => {
-            // 1. Get existing messages to find participants
-            const messagesRef = collection(firestore, 'messages');
-            const q = query(messagesRef, where('participantIds', 'array-contains', student.uid));
-            const messagesSnapshot = await getDocs(q);
+            const allMessagesQuery = query(
+                collection(firestore, 'messages'),
+                where('participantIds', 'array-contains', student.uid)
+            );
+            const messagesSnapshot = await getDocs(allMessagesQuery);
+            const allStudentMessages = messagesSnapshot.docs.map(doc => doc.data() as Message);
 
-            const participantIds = new Set<string>();
-            messagesSnapshot.forEach(doc => {
-                const data = doc.data();
-                const otherParticipant = data.participantIds.find((id: string) => id !== student.uid);
-                if (otherParticipant) {
-                    participantIds.add(otherParticipant);
+            const conversationsMap = new Map<string, { lastMessage: Message, participantId: string }>();
+
+            allStudentMessages.forEach(msg => {
+                const otherParticipantId = msg.participantIds.find(id => id !== student.uid);
+                if (otherParticipantId) {
+                    if (!conversationsMap.has(otherParticipantId) || msg.timestamp.toMillis() > conversationsMap.get(otherParticipantId)!.lastMessage.timestamp.toMillis()) {
+                        conversationsMap.set(otherParticipantId, { lastMessage: msg, participantId: otherParticipantId });
+                    }
                 }
             });
 
-            // 2. Find student's current landlord
+            const participantIds = new Set(Array.from(conversationsMap.keys()));
+
+            // Also ensure current landlord is in the contact list
             const rentedPropertiesQuery = query(collection(firestore, 'properties'), where('currentTenantId', '==', student.uid), limit(1));
             const rentedPropertiesSnapshot = await getDocs(rentedPropertiesQuery);
             if (!rentedPropertiesSnapshot.empty) {
@@ -77,7 +80,6 @@ export default function MessagesPage() {
                 participantIds.add(property.landlordId);
             }
             
-            // Add new contact from URL if they aren't already in the list
             if (newContact) {
                 participantIds.add(newContact.id);
             }
@@ -88,44 +90,32 @@ export default function MessagesPage() {
             }
             
             const allParticipantIds = Array.from(participantIds);
-
             const usersQuery = query(collection(firestore, 'users'), where('id', 'in', allParticipantIds));
             const usersSnapshot = await getDocs(usersQuery);
             const usersMap = new Map<string, User>();
             usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
 
-            const convoPromises = allParticipantIds.map(async (pId) => {
+            const convos = allParticipantIds.map(pId => {
                 const participant = usersMap.get(pId);
                 if (!participant) return null;
-
-                const lastMessageQuery = query(
-                    collection(firestore, 'messages'),
-                    where('participantIds', 'array-contains', student.uid),
-                    where('participantIds', 'array-contains', pId),
-                    orderBy('timestamp', 'desc'),
-                    limit(1)
-                );
                 
-                const lastMessageSnapshot = await getDocs(lastMessageQuery);
-                const lastMessageDoc = lastMessageSnapshot.docs[0];
+                const convoData = conversationsMap.get(pId);
 
                 return {
                     participant,
-                    lastMessage: lastMessageDoc?.data()?.text || 'Start a new conversation.',
-                    lastMessageTimestamp: lastMessageDoc?.data()?.timestamp?.toDate() || new Date(0), // Use epoch for sorting if no message
-                    unreadCount: 0, // Unread count logic needs to be implemented
+                    lastMessage: convoData?.lastMessage.text || 'Start a new conversation.',
+                    lastMessageTimestamp: convoData?.lastMessage.timestamp?.toDate() || new Date(0),
+                    unreadCount: 0, 
                 } as Conversation;
-            });
+            }).filter(Boolean) as Conversation[];
 
-            const resolvedConversations = (await Promise.all(convoPromises)).filter(Boolean) as Conversation[];
-            resolvedConversations.sort((a,b) => (b.lastMessageTimestamp?.getTime() || 0) - (a.lastMessageTimestamp?.getTime() || 0));
-            setConversations(resolvedConversations);
+            convos.sort((a,b) => (b.lastMessageTimestamp?.getTime() || 0) - (a.lastMessageTimestamp?.getTime() || 0));
+            setConversations(convos);
         };
 
         fetchConversations();
     }, [student, firestore, newContact]);
 
-    // Effect to set the selected conversation based on URL param
     useEffect(() => {
         const targetId = contactId || selectedConversationId;
 
@@ -133,23 +123,18 @@ export default function MessagesPage() {
             const participant = conversations.find(c => c.participant.id === targetId)?.participant;
             if (participant) {
                 setSelectedParticipant(participant);
-                 // Update URL to reflect the conversation
                 if (contactId) {
                     router.replace(`${pathname}?conversationId=${contactId}`, { scroll: false });
                 }
             }
         } else if (conversations.length > 0 && !selectedParticipant) {
-            // Default to first conversation
             setSelectedParticipant(conversations[0].participant);
              router.replace(`${pathname}?conversationId=${conversations[0].participant.id}`, { scroll: false });
         }
     }, [contactId, selectedConversationId, conversations, selectedParticipant, router, pathname]);
     
-    // Memoized query for the selected conversation's messages
     const messagesQuery = useMemoFirebase(() => {
         if (!student || !selectedParticipant) return null;
-        // This complex query is the issue. Firestore doesn't allow two array-contains on different fields.
-        // We will fetch messages with just one array-contains and filter locally.
         return query(
             collection(firestore, 'messages'),
             where('participantIds', 'array-contains', student.uid),
@@ -196,7 +181,6 @@ export default function MessagesPage() {
             </div>
             <Card className="h-[calc(80vh)]">
                 <div className="grid h-full grid-cols-1 md:grid-cols-3">
-                    {/* Conversation List */}
                     <div className="flex flex-col border-r">
                         <CardHeader>
                             <CardTitle>Conversations</CardTitle>
@@ -236,11 +220,9 @@ export default function MessagesPage() {
                         </ScrollArea>
                     </div>
 
-                    {/* Chat Window */}
                     <div className="col-span-2 flex flex-col h-full">
                         {selectedParticipant && student ? (
                             <>
-                            {/* Chat Header */}
                              <div className="flex items-center justify-between border-b p-4">
                                 <div className="flex items-center gap-4 group">
                                     <Avatar>
@@ -259,7 +241,6 @@ export default function MessagesPage() {
                                     <Button variant="ghost" size="icon"><Video /></Button>
                                 </div>
                             </div>
-                            {/* Messages Area */}
                             <ScrollArea className="flex-grow p-6">
                                 <div className="space-y-6">
                                     {messages?.map(msg => (
@@ -292,7 +273,6 @@ export default function MessagesPage() {
                                     ))}
                                 </div>
                             </ScrollArea>
-                            {/* Message Input */}
                             <div className="border-t p-4">
                                 <form onSubmit={(e) => {e.preventDefault(); handleSendMessage();}} className="relative">
                                     <Input 
