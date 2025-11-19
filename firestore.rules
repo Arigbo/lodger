@@ -9,7 +9,10 @@ service cloud.firestore {
     }
 
     match /properties/{propertyId} {
-      allow get, list: if request.auth != null;
+      // Allow public read access for listings
+      allow get, list: if true;
+      
+      // Secure write operations to the owner
       allow create: if request.auth.uid == request.resource.data.landlordId;
       allow update, delete: if request.auth.uid == resource.data.landlordId;
     }
