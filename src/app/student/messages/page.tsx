@@ -74,7 +74,7 @@ export default function MessagesPage() {
             (allStudentMessages || []).forEach(msg => {
                 const otherParticipantId = msg.participantIds.find(id => id !== student.uid);
                 if (otherParticipantId) {
-                    if (!conversationsMap.has(otherParticipantId) || msg.timestamp.toMillis() > conversationsMap.get(otherParticipantId)!.lastMessage.timestamp.toMillis()) {
+                    if (!conversationsMap.has(otherParticipantId) || (msg.timestamp && conversationsMap.get(otherParticipantId)!.lastMessage.timestamp && msg.timestamp.toMillis() > conversationsMap.get(otherParticipantId)!.lastMessage.timestamp.toMillis())) {
                         conversationsMap.set(otherParticipantId, { lastMessage: msg, participantId: otherParticipantId });
                     }
                 }
@@ -149,7 +149,12 @@ export default function MessagesPage() {
         if (!allStudentMessages || !selectedParticipant) return [];
         return allStudentMessages
             .filter(msg => msg.participantIds.includes(selectedParticipant.id))
-            .sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis());
+            .sort((a, b) => {
+                if (a.timestamp && b.timestamp) {
+                    return a.timestamp.toMillis() - b.timestamp.toMillis();
+                }
+                return 0;
+            });
     }, [allStudentMessages, selectedParticipant]);
 
     const handleSendMessage = async () => {
