@@ -74,7 +74,7 @@ export default function PropertyDetailView() {
   const firestore = useFirestore();
 
   const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
-  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
+  const { data: property, isLoading: isPropertyLoading, refetch } = useDoc<Property>(propertyRef);
   
   const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
   const { data: landlord } = useDoc<User>(landlordRef);
@@ -463,12 +463,13 @@ const amenityIcons: amenityIcon = {
 function TenantPropertyView({ property, tenant }: { property: Property, tenant: FirebaseUser }) {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const firestore = useFirestore();
+  const { refetch } = useDoc(doc(firestore, 'properties', property.id));
   
   const landlordRef = useMemoFirebase(() => doc(firestore, 'users', property.landlordId), [firestore, property.landlordId]);
   const { data: landlord } = useDoc<User>(landlordRef);
 
-  const transactionsQuery = useMemoFirebase(() => query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.uid)), [firestore, tenant.uid]);
-  const { data: transactions } = useCollection<Transaction>(transactionsQuery);
+  const transactionsQuery = useMemoFirebase(() => query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.uid), where('propertyId', '==', property.id)), [firestore, tenant.uid, property.id]);
+  const { data: transactions, refetch: refetchTransactions } = useCollection<Transaction>(transactionsQuery);
 
   const [tenancyState, setTenancyState] = useState<{
     showPayButton: boolean;
@@ -483,10 +484,9 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
   } | null>(null);
 
   useEffect(() => {
-    if (!transactions) return;
+    if (transactions === null) return;
 
-    // Defer all date-sensitive calculations to the client
-    const tenantTransactions = transactions;
+    const tenantTransactions = transactions || [];
     const today = new Date();
     const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
     const leaseEndDate = add(leaseStartDate, { years: 1 });
@@ -518,12 +518,10 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
 
     const hasPendingPayments = tenantTransactions.some(t => t.status === 'Pending');
     const showPayButton = (isRentDue || hasPendingPayments) && isLeaseActive;
-    const pendingTransactions = tenantTransactions.filter(t => t.status === 'Pending');
     let paymentAmount = 0;
     if (isRentDue) {
         paymentAmount = property.price;
     }
-    paymentAmount += pendingTransactions.reduce((acc, t) => acc + t.amount, 0);
 
 
     setTenancyState({
@@ -541,6 +539,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
 
   const handlePaymentSuccess = () => {
     console.log("Payment successful!");
+    refetchTransactions();
     // You might want to refetch transactions here or just close the dialog
   };
   
@@ -677,6 +676,9 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
                 onPaymentSuccess={handlePaymentSuccess}
                 amount={tenancyState.paymentAmount}
                 tenantName={tenant.displayName || tenant.email || ''}
+                tenantId={tenant.uid}
+                landlordId={property.landlordId}
+                propertyId={property.id}
             />
         )}
     </div>
@@ -714,5 +716,7 @@ function AddReviewForm() {
 }
 
 
+
+    
 
     

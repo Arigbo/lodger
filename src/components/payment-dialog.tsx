@@ -17,6 +17,9 @@ import { formatPrice } from '@/lib/utils';
 import { CreditCard, Lock, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore } from '@/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+
 
 interface PaymentDialogProps {
   isOpen: boolean;
@@ -24,6 +27,9 @@ interface PaymentDialogProps {
   onPaymentSuccess: () => void;
   amount: number;
   tenantName: string;
+  tenantId: string;
+  landlordId: string;
+  propertyId: string;
 }
 
 export default function PaymentDialog({
@@ -32,17 +38,42 @@ export default function PaymentDialog({
   onPaymentSuccess,
   amount,
   tenantName,
+  tenantId,
+  landlordId,
+  propertyId,
 }: PaymentDialogProps) {
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+  const firestore = useFirestore();
 
-  const handleProcessPayment = () => {
+  const handleProcessPayment = async () => {
     setIsProcessing(true);
     // Simulate API call
-    setTimeout(() => {
-      setIsProcessing(false);
-      setStep(2);
+    setTimeout(async () => {
+      try {
+        const transactionsRef = collection(firestore, 'transactions');
+        await addDoc(transactionsRef, {
+            landlordId,
+            tenantId,
+            propertyId,
+            amount,
+            date: new Date().toISOString(),
+            type: 'Rent',
+            status: 'Completed',
+        });
+        
+        setIsProcessing(false);
+        setStep(2);
+      } catch (error) {
+        console.error("Error creating transaction:", error);
+        toast({
+            variant: 'destructive',
+            title: "Payment Failed",
+            description: "Could not record your payment. Please try again."
+        });
+        setIsProcessing(false);
+      }
     }, 2000);
   };
 
@@ -137,3 +168,5 @@ export default function PaymentDialog({
     </Dialog>
   );
 }
+
+    
