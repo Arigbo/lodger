@@ -387,7 +387,7 @@ function TenantPropertyView({ property, tenant }: { property: Property, tenant: 
   const { data: transactions, isLoading: areTransactionsLoading } = useCollection<Transaction>(transactionsQuery);
 
   const leaseQuery = useMemoFirebase(() => query(collection(firestore, 'leaseAgreements'), where('propertyId', '==', property.id), where('tenantId', '==', tenant.uid)), [firestore, property.id, tenant.uid]);
-  const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leasesQuery);
+  const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leaseQuery);
   const lease = leases?.[0];
 
   const [tenancyState, setTenancyState] = useState<{
@@ -628,32 +628,26 @@ export default function PropertyDetailPage() {
   const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
   const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
   
-  // This hook is now only for the prospective view
   const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
   const { data: landlord } = useDoc<User>(landlordRef);
   
-  // This hook is now only for the prospective view
   const reviewsQuery = useMemoFirebase(() => property ? query(collection(firestore, 'reviews'), where('propertyId', '==', property.id)) : null, [firestore, property]);
   const { data: reviews } = useCollection<Review>(reviewsQuery);
   
-  // Wait for the essential data to load before making any decisions
   if (isPropertyLoading || isUserLoading) {
     return <TenancySkeleton />;
   }
 
-  // AFTER loading, if the property is not found, then show 404
   if (!property) {
     notFound();
   }
 
   const isTenant = user?.uid === property.currentTenantId;
 
-  // Decide which view to render
   if (isTenant && user) {
       return <TenantPropertyView property={property} tenant={user} />;
   }
   
-  // Otherwise, show the public/prospective view
   const images: ImagePlaceholder[] = property?.images?.map((url, i) => ({
       id: `${property.id}-img-${i}`,
       imageUrl: url,
