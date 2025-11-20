@@ -26,18 +26,19 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { User, Property, Transaction } from '@/lib/definitions';
+import type { User, Property, Transaction, LeaseAgreement } from '@/lib/definitions';
 import { MoreHorizontal, Users, Mail, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
-import { add, isPast, isBefore } from 'date-fns';
+import { add, isPast, isBefore, isWithinInterval } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import React from 'react';
 
-type TenantWithProperty = {
+type TenantWithDetails = {
   tenant: User;
   property: Property;
+  lease: LeaseAgreement;
   isRentDue: boolean;
 };
 
@@ -54,8 +55,7 @@ function chunkArray<T>(array: T[], size: number): T[][] {
 export default function TenantsPage() {
   const { user: landlord, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const today = new Date();
-  const [tenants, setTenants] = React.useState<TenantWithProperty[]>([]);
+  const [tenants, setTenants] = React.useState<TenantWithDetails[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
 
@@ -65,62 +65,74 @@ export default function TenantsPage() {
     const fetchTenants = async () => {
       setIsLoading(true);
 
-      const propertiesQuery = query(collection(firestore, 'properties'), where('landlordId', '==', landlord.uid));
+      // 1. Get all properties for the landlord that have a tenant
+      const propertiesQuery = query(collection(firestore, 'properties'), 
+        where('landlordId', '==', landlord.uid),
+        where('currentTenantId', '!=', null)
+      );
       const propertiesSnapshot = await getDocs(propertiesQuery);
       const landlordProperties = propertiesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Property[];
       
-      const occupiedProperties = landlordProperties.filter(p => {
-        if (!p.currentTenantId || p.status !== 'occupied' || !p.leaseStartDate) {
-          return false;
-        }
-        const leaseEndDate = add(new Date(p.leaseStartDate), { years: 1 });
-        return isBefore(today, leaseEndDate);
-      });
+      const tenantIds = [...new Set(landlordProperties.map(p => p.currentTenantId!).filter(Boolean))];
 
-      if (occupiedProperties.length === 0) {
-        setTenants([]);
-        setIsLoading(false);
-        return;
-      }
-      
-      const tenantIds = [...new Set(occupiedProperties.map(p => p.currentTenantId!))];
       if (tenantIds.length === 0) {
         setTenants([]);
         setIsLoading(false);
         return;
       }
-
+      
+      // 2. Fetch all necessary data in batches
       const usersMap = new Map<string, User>();
       const transactionsMap = new Map<string, Transaction[]>();
+      const leasesMap = new Map<string, LeaseAgreement>();
 
       const userChunks = chunkArray(tenantIds, 30);
       const transactionChunks = chunkArray(tenantIds, 30);
+      const leaseChunks = chunkArray(tenantIds, 30);
 
-      const userPromises = userChunks.map(chunk => 
-        getDocs(query(collection(firestore, 'users'), where(documentId(), 'in', chunk)))
-      );
-      const transactionPromises = transactionChunks.map(chunk =>
-        getDocs(query(collection(firestore, 'transactions'), where('tenantId', 'in', chunk)))
-      );
+      // Fetch users
+      await Promise.all(userChunks.map(async chunk => {
+        const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+        const usersSnapshot = await getDocs(usersQuery);
+        usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+      }));
 
-      const userSnapshots = await Promise.all(userPromises);
-      userSnapshots.forEach(snapshot => {
-        snapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-      });
-      
-      const transactionSnapshots = await Promise.all(transactionPromises);
-      transactionSnapshots.forEach(snapshot => {
-        snapshot.forEach(doc => {
-          const t = doc.data() as Transaction;
-          const userTransactions = transactionsMap.get(t.tenantId) || [];
-          userTransactions.push(t);
-          transactionsMap.set(t.tenantId, userTransactions);
+      // Fetch transactions
+      await Promise.all(transactionChunks.map(async chunk => {
+        const transactionsQuery = query(collection(firestore, 'transactions'), where('tenantId', 'in', chunk));
+        const transactionsSnapshot = await getDocs(transactionsQuery);
+        transactionsSnapshot.forEach(doc => {
+            const t = doc.data() as Transaction;
+            const userTransactions = transactionsMap.get(t.tenantId) || [];
+            userTransactions.push(t);
+            transactionsMap.set(t.tenantId, userTransactions);
         });
-      });
+      }));
 
-      const tenantData = occupiedProperties.map(property => {
+      // Fetch leases
+      await Promise.all(leaseChunks.map(async chunk => {
+        const leasesQuery = query(collection(firestore, 'leaseAgreements'), where('tenantId', 'in', chunk));
+        const leasesSnapshot = await getDocs(leasesQuery);
+        leasesSnapshot.forEach(doc => {
+            const lease = { id: doc.id, ...doc.data() } as LeaseAgreement;
+            leasesMap.set(lease.tenantId, lease);
+        });
+      }));
+
+      // 3. Aggregate data and filter for active tenants
+      const today = new Date();
+      const tenantData = landlordProperties.map(property => {
         const tenant = usersMap.get(property.currentTenantId!);
-        if (!tenant) return null;
+        const lease = leasesMap.get(property.currentTenantId!);
+        
+        if (!tenant || !lease) return null;
+
+        // Filter for active leases
+        const leaseStartDate = new Date(lease.startDate);
+        const leaseEndDate = new Date(lease.endDate);
+        if (!isWithinInterval(today, { start: leaseStartDate, end: leaseEndDate })) {
+            return null;
+        }
 
         const tenantTransactions = transactionsMap.get(tenant.id) || [];
         const lastRentPayment = tenantTransactions
@@ -128,19 +140,20 @@ export default function TenantsPage() {
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
         let isRentDue = false;
-        const leaseStartDate = new Date(property.leaseStartDate!);
-        let nextDueDate = add(leaseStartDate, { months: 1 });
+        let nextDueDate: Date;
         
         if (lastRentPayment) {
             nextDueDate = add(new Date(lastRentPayment.date), { months: 1 });
-        } else if (isPast(leaseStartDate)) {
-            nextDueDate = leaseStartDate;
+        } else {
+            nextDueDate = new Date(lease.startDate);
         }
 
-        isRentDue = isPast(nextDueDate);
+        if (isPast(nextDueDate)) {
+            isRentDue = true;
+        }
         
-        return { tenant, property, isRentDue };
-      }).filter((item): item is TenantWithProperty => item !== null);
+        return { tenant, property, lease, isRentDue };
+      }).filter((item): item is TenantWithDetails => item !== null);
 
       setTenants(tenantData);
       setIsLoading(false);
@@ -188,7 +201,7 @@ export default function TenantsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tenants.map(({ tenant, property, isRentDue }) => (
+              {tenants.map(({ tenant, property, isRentDue, lease }) => (
                 <TableRow key={tenant.id}>
                   <TableCell>
                      <Link href={`/landlord/tenants/${tenant.id}`} className="hover:underline">
@@ -239,9 +252,11 @@ export default function TenantsPage() {
                             <Mail className="mr-2 h-4 w-4" /> Message Tenant
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/landlord/leases/${property.id}`}>View Lease</Link>
-                        </DropdownMenuItem>
+                        {lease && (
+                            <DropdownMenuItem asChild>
+                            <Link href={`/landlord/leases/${lease.id}`}>View Lease</Link>
+                            </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
