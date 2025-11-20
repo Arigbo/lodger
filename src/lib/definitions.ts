@@ -57,7 +57,7 @@ export type RentalRequest = {
   id: string;
   propertyId: string;
   userId: string;
-  status: 'pending' | 'accepted' | 'declined';
+  status: 'pending' | 'approved' | 'declined';
   messageToLandlord: string;
   applicationDate: string; // ISO 8601 date string
 };

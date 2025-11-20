@@ -70,9 +70,9 @@ export default function LandlordPropertyDetailPage() {
   const handleLeaseSigned = async () => {
       if(selectedRequest && property.leaseTemplate) {
         // Here you would:
-        // 1. Update the rental request to 'accepted'
+        // 1. Update the rental request to 'approved'
         const requestRef = doc(firestore, 'rentalApplications', selectedRequest.id);
-        updateDocumentNonBlocking(requestRef, { status: 'accepted' });
+        updateDocumentNonBlocking(requestRef, { status: 'approved' });
         
         // 2. Update the property to 'occupied' and set the tenant ID
         const propRef = doc(firestore, 'properties', property.id);
