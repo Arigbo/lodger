@@ -74,10 +74,10 @@ export default function LandlordLeasesPage() {
       const propertyChunks = chunkArray(propertyIds, 30);
 
       const userPromises = userChunks.map(chunk => 
-        getDocs(query(collection(firestore, 'users'), where('id', 'in', chunk)))
+        getDocs(query(collection(firestore, 'users'), where(documentId(), 'in', chunk)))
       );
       const propertyPromises = propertyChunks.map(chunk =>
-        getDocs(query(collection(firestore, 'properties'), where('id', 'in', chunk)))
+        getDocs(query(collection(firestore, 'properties'), where(documentId(), 'in', chunk)))
       );
 
       const userSnapshots = await Promise.all(userPromises);

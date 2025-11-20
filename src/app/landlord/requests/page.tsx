@@ -26,15 +26,24 @@ import { Badge } from '@/components/ui/badge';
 import React, { useState } from 'react';
 import LeaseGenerationDialog from '@/components/lease-generation-dialog';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { collection, doc, query, where, getDocs, addDoc, documentId } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-
 
 type AggregatedRequest = {
   request: RentalRequest;
   applicant: User;
   property: Property;
 };
+
+// Helper function to split an array into chunks
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
 
 export default function RentalRequestsPage() {
   const { user: landlord, isUserLoading } = useUser();
@@ -49,7 +58,6 @@ export default function RentalRequestsPage() {
 
     const fetchRequests = async () => {
         setIsLoading(true);
-        // 1. Get all properties for the landlord
         const propertiesQuery = query(collection(firestore, 'properties'), where('landlordId', '==', landlord.uid));
         const propertiesSnapshot = await getDocs(propertiesQuery);
         const landlordProperties = propertiesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Property[];
@@ -61,12 +69,13 @@ export default function RentalRequestsPage() {
             return;
         }
 
-        // 2. Get all rental applications for those properties
-        const requestsQuery = query(collection(firestore, 'rentalApplications'), where('propertyId', 'in', propertyIds));
-        const requestsSnapshot = await getDocs(requestsQuery);
-        const allRequests = requestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as RentalRequest[];
+        const requestChunks = chunkArray(propertyIds, 30);
+        const requestPromises = requestChunks.map(chunk => 
+            getDocs(query(collection(firestore, 'rentalApplications'), where('propertyId', 'in', chunk)))
+        );
+        const requestSnapshots = await Promise.all(requestPromises);
+        const allRequests = requestSnapshots.flatMap(snapshot => snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RentalRequest)));
 
-        // 3. Get all unique user IDs from the applications
         const userIds = [...new Set(allRequests.map(req => req.userId))];
 
         if (userIds.length === 0) {
@@ -74,14 +83,18 @@ export default function RentalRequestsPage() {
             setIsLoading(false);
             return;
         }
-
-        // 4. Get all applicant user documents
-        const usersQuery = query(collection(firestore, 'users'), where('id', 'in', userIds));
-        const usersSnapshot = await getDocs(usersQuery);
+        
+        const userChunks = chunkArray(userIds, 30);
+        const userPromises = userChunks.map(chunk =>
+            getDocs(query(collection(firestore, 'users'), where(documentId(), 'in', chunk)))
+        );
+        
+        const userSnapshots = await Promise.all(userPromises);
         const usersMap = new Map<string, User>();
-        usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+        userSnapshots.forEach(snapshot => {
+            snapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+        });
 
-        // 5. Aggregate the data
         const finalRequests = allRequests.map(request => ({
             request,
             applicant: usersMap.get(request.userId)!,
@@ -258,5 +271,3 @@ export default function RentalRequestsPage() {
     </div>
   );
 }
-
-    
