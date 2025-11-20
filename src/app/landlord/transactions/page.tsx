@@ -43,7 +43,7 @@ import { DateRange } from 'react-day-picker';
 import { addDays, format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 
 
 type AggregatedTransaction = {
@@ -51,6 +51,16 @@ type AggregatedTransaction = {
   tenant: User;
   property: Property;
 }
+
+// Helper function to split an array into chunks
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
 
 export default function TransactionsPage() {
   const { user: landlord, isUserLoading } = useUser();
@@ -71,7 +81,6 @@ export default function TransactionsPage() {
 
     const fetchTransactions = async () => {
       setIsLoading(true);
-      // 1. Get all transactions for the landlord
       const transactionsQuery = query(collection(firestore, 'transactions'), where('landlordId', '==', landlord.uid));
       const transactionsSnapshot = await getDocs(transactionsQuery);
       const allTransactions = transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[];
@@ -83,26 +92,33 @@ export default function TransactionsPage() {
         return;
       }
       
-      // 2. Get unique tenant and property IDs
       const tenantIds = [...new Set(allTransactions.map(t => t.tenantId))];
       const propertyIds = [...new Set(allTransactions.map(t => t.propertyId))];
 
-      // 3. Fetch all related documents
-      const usersQuery = tenantIds.length > 0 ? query(collection(firestore, 'users'), where('id', 'in', tenantIds)) : null;
-      const propertiesQuery = propertyIds.length > 0 ? query(collection(firestore, 'properties'), where('id', 'in', propertyIds)) : null;
-
-      const [usersSnapshot, propertiesSnapshot] = await Promise.all([
-        usersQuery ? getDocs(usersQuery) : Promise.resolve({ docs: [] }),
-        propertiesQuery ? getDocs(propertiesQuery) : Promise.resolve({ docs: [] })
-      ]);
-
       const usersMap = new Map<string, User>();
-      usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-
       const propertiesMap = new Map<string, Property>();
-      propertiesSnapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
       
-      // 4. Aggregate data
+      const userChunks = chunkArray(tenantIds, 30);
+      const propertyChunks = chunkArray(propertyIds, 30);
+
+      const userPromises = userChunks.map(chunk => 
+        getDocs(query(collection(firestore, 'users'), where(documentId(), 'in', chunk)))
+      );
+      
+      const propertyPromises = propertyChunks.map(chunk =>
+        getDocs(query(collection(firestore, 'properties'), where(documentId(), 'in', chunk)))
+      );
+
+      const userSnapshots = await Promise.all(userPromises);
+      userSnapshots.forEach(snapshot => {
+        snapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+      });
+
+      const propertySnapshots = await Promise.all(propertyPromises);
+      propertySnapshots.forEach(snapshot => {
+        snapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+      });
+      
       const finalTransactions = allTransactions.map(t => ({
         transaction: t,
         tenant: usersMap.get(t.tenantId)!,
