@@ -224,7 +224,7 @@ export default function AddPropertyPage() {
     ];
 
 
-    const newPropertyData = {
+    const newPropertyData: Omit<Property, 'id' | 'propertyId'> = {
         title: values.title,
         description: values.description,
         price: values.price,
@@ -248,8 +248,8 @@ export default function AddPropertyPage() {
     
     try {
         const docRef = await addDoc(collection(firestore, 'properties'), newPropertyData);
-        // Now update the document with its own ID
-        await updateDoc(docRef, { id: docRef.id });
+        // Now update the document with its own ID, using 'propertyId' as the field name
+        await updateDoc(docRef, { propertyId: docRef.id, id: docRef.id });
         
         toast({
             title: "Property Listed!",
@@ -642,4 +642,5 @@ export default function AddPropertyPage() {
 }
 
     
+
 

@@ -17,6 +17,7 @@ export type User = {
 
 export type Property = {
   id: string;
+  propertyId: string; // Explicitly adding propertyId to match database
   title: string;
   description: string;
   price: number;
@@ -75,6 +76,7 @@ export type Transaction = {
 export type MaintenanceRequest = {
   id: string;
   propertyId: string;
+  landlordId: string;
   tenantId: string;
   title: string;
   description: string;
