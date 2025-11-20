@@ -54,10 +54,10 @@ export default function PaymentDialog({
       try {
         const transactionsRef = collection(firestore, 'transactions');
         await addDoc(transactionsRef, {
-            landlordId,
-            tenantId,
-            propertyId,
-            amount,
+            landlordId: landlordId,
+            tenantId: tenantId,
+            propertyId: propertyId,
+            amount: amount,
             date: new Date().toISOString(),
             type: 'Rent',
             status: 'Completed',
@@ -157,7 +157,7 @@ export default function PaymentDialog({
                 <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
                 <DialogTitle className="text-2xl font-bold">Payment Successful!</DialogTitle>
                 <DialogDescription className="mt-2">
-                    Your rent payment of {formatPrice(amount)} has been confirmed. A receipt has been sent to your email.
+                    Your rent payment of ${formatPrice(amount)} has been confirmed. A receipt has been sent to your email.
                 </DialogDescription>
                 <Button onClick={handleFinish} className="mt-6 w-full">
                     Done
@@ -168,5 +168,3 @@ export default function PaymentDialog({
     </Dialog>
   );
 }
-
-    
