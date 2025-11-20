@@ -18,7 +18,7 @@ export default function TenancyDashboardPage() {
   
   const rentedPropertiesQuery = useMemoFirebase(() => {
     if (!user) return null;
-    return query(collection(firestore, 'properties'), where('currentTenantId', '==', user.uid), where('status', '==', 'occupied'));
+    return query(collection(firestore, 'properties'), where('status', '==', 'occupied'));
   }, [user, firestore]);
   
   const { data: rentedProperties, isLoading: isPropertiesLoading } = useCollection<Property>(rentedPropertiesQuery);

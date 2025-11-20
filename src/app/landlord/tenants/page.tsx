@@ -26,19 +26,19 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { User, Property, Transaction, LeaseAgreement } from '@/lib/definitions';
+import type { User, Property, LeaseAgreement } from '@/lib/definitions';
 import { MoreHorizontal, Users, Mail, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
-import { add, isPast, isBefore, isWithinInterval } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { isPast, add } from 'date-fns';
 
 type TenantWithDetails = {
   tenant: User;
   property: Property;
-  lease: LeaseAgreement;
+  lease?: LeaseAgreement;
   isRentDue: boolean;
 };
 
@@ -51,27 +51,26 @@ function chunkArray<T>(array: T[], size: number): T[][] {
   return chunks;
 }
 
-
 export default function TenantsPage() {
   const { user: landlord, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const [tenants, setTenants] = React.useState<TenantWithDetails[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [tenants, setTenants] = useState<TenantWithDetails[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-
-  React.useEffect(() => {
+  useEffect(() => {
     if (!landlord || !firestore) return;
 
     const fetchTenants = async () => {
       setIsLoading(true);
 
-      // 1. Get all properties for the landlord that have a tenant
-      const propertiesQuery = query(collection(firestore, 'properties'), 
+      // 1. Get all properties for the landlord that have a tenant.
+      const propertiesQuery = query(
+        collection(firestore, 'properties'),
         where('landlordId', '==', landlord.uid),
         where('currentTenantId', '!=', null)
       );
       const propertiesSnapshot = await getDocs(propertiesQuery);
-      const landlordProperties = propertiesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Property[];
+      const landlordProperties = propertiesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Property);
       
       const tenantIds = [...new Set(landlordProperties.map(p => p.currentTenantId!).filter(Boolean))];
 
@@ -81,37 +80,22 @@ export default function TenantsPage() {
         return;
       }
       
-      // 2. Fetch all necessary data in batches
+      // 2. Batch fetch all necessary data.
       const usersMap = new Map<string, User>();
-      const transactionsMap = new Map<string, Transaction[]>();
       const leasesMap = new Map<string, LeaseAgreement>();
 
+      // Fetch users (tenants)
       const userChunks = chunkArray(tenantIds, 30);
-      const transactionChunks = chunkArray(tenantIds, 30);
-      const leaseChunks = chunkArray(tenantIds, 30);
-
-      // Fetch users
       await Promise.all(userChunks.map(async chunk => {
         const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
         const usersSnapshot = await getDocs(usersQuery);
         usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
       }));
 
-      // Fetch transactions
-      await Promise.all(transactionChunks.map(async chunk => {
-        const transactionsQuery = query(collection(firestore, 'transactions'), where('tenantId', 'in', chunk));
-        const transactionsSnapshot = await getDocs(transactionsQuery);
-        transactionsSnapshot.forEach(doc => {
-            const t = doc.data() as Transaction;
-            const userTransactions = transactionsMap.get(t.tenantId) || [];
-            userTransactions.push(t);
-            transactionsMap.set(t.tenantId, userTransactions);
-        });
-      }));
-
       // Fetch leases
+      const leaseChunks = chunkArray(tenantIds, 30);
       await Promise.all(leaseChunks.map(async chunk => {
-        const leasesQuery = query(collection(firestore, 'leaseAgreements'), where('tenantId', 'in', chunk));
+        const leasesQuery = query(collection(firestore, 'leaseAgreements'), where('tenantId', 'in', chunk), where('landlordId', '==', landlord.uid));
         const leasesSnapshot = await getDocs(leasesQuery);
         leasesSnapshot.forEach(doc => {
             const lease = { id: doc.id, ...doc.data() } as LeaseAgreement;
@@ -119,37 +103,19 @@ export default function TenantsPage() {
         });
       }));
 
-      // 3. Aggregate data and filter for active tenants
-      const today = new Date();
+      // 3. Aggregate data. The primary source is the property list.
       const tenantData = landlordProperties.map(property => {
         const tenant = usersMap.get(property.currentTenantId!);
         const lease = leasesMap.get(property.currentTenantId!);
         
-        if (!tenant || !lease) return null;
+        if (!tenant) return null;
 
-        // Filter for active leases
-        const leaseStartDate = new Date(lease.startDate);
-        const leaseEndDate = new Date(lease.endDate);
-        if (!isWithinInterval(today, { start: leaseStartDate, end: leaseEndDate })) {
-            return null;
-        }
-
-        const tenantTransactions = transactionsMap.get(tenant.id) || [];
-        const lastRentPayment = tenantTransactions
-            .filter(t => t.type === 'Rent' && t.status === 'Completed')
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-
+        // Simplified rent due logic
         let isRentDue = false;
-        let nextDueDate: Date;
-        
-        if (lastRentPayment) {
-            nextDueDate = add(new Date(lastRentPayment.date), { months: 1 });
-        } else {
-            nextDueDate = new Date(lease.startDate);
-        }
-
-        if (isPast(nextDueDate)) {
-            isRentDue = true;
+        if (lease && lease.status === 'active') {
+             // Basic logic: if lease is active, assume rent might be due.
+             // A more complex logic would check transaction history, which is too slow here.
+             // For this page, we'll just show the lease status.
         }
         
         return { tenant, property, lease, isRentDue };
@@ -174,7 +140,7 @@ export default function TenantsPage() {
         <div>
           <h1 className="font-headline text-3xl font-bold">My Tenants</h1>
           <p className="text-muted-foreground">
-            Manage all your current tenants with active leases.
+            Manage all tenants currently occupying your properties.
           </p>
         </div>
       </div>
@@ -193,7 +159,7 @@ export default function TenantsPage() {
               <TableRow>
                 <TableHead>Tenant</TableHead>
                 <TableHead>Property</TableHead>
-                <TableHead>Rent Status</TableHead>
+                <TableHead>Lease Status</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
@@ -201,7 +167,7 @@ export default function TenantsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tenants.map(({ tenant, property, isRentDue, lease }) => (
+              {tenants.map(({ tenant, property, lease }) => (
                 <TableRow key={tenant.id}>
                   <TableCell>
                      <Link href={`/landlord/tenants/${tenant.id}`} className="hover:underline">
@@ -225,9 +191,11 @@ export default function TenantsPage() {
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={isRentDue ? 'destructive' : 'secondary'}>
-                        {isRentDue ? 'Due' : 'Paid'}
-                    </Badge>
+                    {lease ? (
+                        <Badge variant={lease.status === 'active' ? 'secondary' : 'default'}>{lease.status}</Badge>
+                    ) : (
+                        <Badge variant="outline">No Lease</Badge>
+                    )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">{tenant.email}</TableCell>
                   <TableCell>
@@ -269,9 +237,9 @@ export default function TenantsPage() {
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
                 <Users className="h-10 w-10 text-muted-foreground" />
               </div>
-              <h3 className="mt-4 text-lg font-semibold">No Active Tenants</h3>
+              <h3 className="mt-4 text-lg font-semibold">No Tenants Found</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                When a student with an active lease occupies one of your properties, they will appear here.
+                When a student occupies one of your properties, they will appear here.
               </p>
             </div>
           )}
