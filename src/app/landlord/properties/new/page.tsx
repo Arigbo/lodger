@@ -37,7 +37,7 @@ import { User as FirebaseUser } from 'firebase/auth';
 import { format, add } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -224,7 +224,7 @@ export default function AddPropertyPage() {
     ];
 
 
-    const newProperty: Omit<Property, 'id'> = {
+    const newPropertyData = {
         title: values.title,
         description: values.description,
         price: values.price,
@@ -241,14 +241,16 @@ export default function AddPropertyPage() {
         amenities: values.amenities,
         images: placeholderImages,
         landlordId: user.uid,
-        status: 'available',
+        status: 'available' as 'available' | 'occupied',
         rules: values.rules ? values.rules.split(',').map(r => r.trim()).filter(Boolean) : [],
         leaseTemplate: values.leaseTemplate,
     };
     
     try {
-        const docRef = await addDoc(collection(firestore, 'properties'), newProperty);
-        console.log("Document written with ID: ", docRef.id);
+        const docRef = await addDoc(collection(firestore, 'properties'), newPropertyData);
+        // Now update the document with its own ID
+        await updateDoc(docRef, { id: docRef.id });
+        
         toast({
             title: "Property Listed!",
             description: `${values.title} is now available for rent.`,
@@ -480,7 +482,7 @@ export default function AddPropertyPage() {
                                             checked={field.value?.includes(item)}
                                             onCheckedChange={(checked) => {
                                             return checked
-                                                ? field.onChange([...field.value, item])
+                                                ? field.onChange([...(field.value || []), item])
                                                 : field.onChange(
                                                     field.value?.filter(
                                                     (value) => value !== item
@@ -640,3 +642,4 @@ export default function AddPropertyPage() {
 }
 
     
+
