@@ -97,7 +97,7 @@ export default function TenantsPage() {
       const transactionChunks = chunkArray(tenantIds, 30);
 
       const userPromises = userChunks.map(chunk => 
-        getDocs(query(collection(firestore, 'users'), where('id', 'in', chunk)))
+        getDocs(query(collection(firestore, 'users'), where(documentId(), 'in', chunk)))
       );
       const transactionPromises = transactionChunks.map(chunk =>
         getDocs(query(collection(firestore, 'transactions'), where('tenantId', 'in', chunk)))

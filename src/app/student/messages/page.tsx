@@ -15,7 +15,7 @@ import type { User, Message, Property } from '@/lib/definitions';
 import { Send, Phone, Video, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
-import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp, limit } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp, limit, documentId } from 'firebase/firestore';
 
 
 type Conversation = {
@@ -101,7 +101,7 @@ export default function MessagesPage() {
             }
             
             const allParticipantIds = Array.from(participantIds);
-            const usersQuery = query(collection(firestore, 'users'), where('id', 'in', allParticipantIds));
+            const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', allParticipantIds));
             const usersSnapshot = await getDocs(usersQuery);
             const usersMap = new Map<string, User>();
             usersSnapshot.forEach(docSnap => usersMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as User));
