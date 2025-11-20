@@ -78,6 +78,7 @@ export default function TransactionsPage() {
       
       if (allTransactions.length === 0) {
         setAggregatedTransactions([]);
+        setFilteredTransactions([]);
         setIsLoading(false);
         return;
       }
@@ -87,12 +88,12 @@ export default function TransactionsPage() {
       const propertyIds = [...new Set(allTransactions.map(t => t.propertyId))];
 
       // 3. Fetch all related documents
-      const usersQuery = query(collection(firestore, 'users'), where('id', 'in', tenantIds));
-      const propertiesQuery = query(collection(firestore, 'properties'), where('id', 'in', propertyIds));
+      const usersQuery = tenantIds.length > 0 ? query(collection(firestore, 'users'), where('id', 'in', tenantIds)) : null;
+      const propertiesQuery = propertyIds.length > 0 ? query(collection(firestore, 'properties'), where('id', 'in', propertyIds)) : null;
 
       const [usersSnapshot, propertiesSnapshot] = await Promise.all([
-        getDocs(usersQuery),
-        getDocs(propertiesQuery)
+        usersQuery ? getDocs(usersQuery) : Promise.resolve({ docs: [] }),
+        propertiesQuery ? getDocs(propertiesQuery) : Promise.resolve({ docs: [] })
       ]);
 
       const usersMap = new Map<string, User>();
