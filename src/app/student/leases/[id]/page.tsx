@@ -15,6 +15,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import type { LeaseAgreement, Property, User } from '@/lib/definitions';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import Loading from '@/app/loading';
 
 export default function ViewStudentLeasePage() {
     const params = useParams();
@@ -24,20 +25,22 @@ export default function ViewStudentLeasePage() {
     const router = useRouter();
     const { toast } = useToast();
 
-    const leaseRef = useMemoFirebase(() => doc(firestore, 'leaseAgreements', id), [firestore, id]);
+    const leaseRef = useMemoFirebase(() => id ? doc(firestore, 'leaseAgreements', id) : null, [firestore, id]);
     const { data: lease, isLoading: isLeaseLoading } = useDoc<LeaseAgreement>(leaseRef);
     
     const landlordRef = useMemoFirebase(() => lease ? doc(firestore, 'users', lease.landlordId) : null, [firestore, lease]);
-    const { data: landlord } = useDoc<User>(landlordRef);
+    const { data: landlord, isLoading: isLandlordLoading } = useDoc<User>(landlordRef);
 
     const tenantRef = useMemoFirebase(() => lease ? doc(firestore, 'users', lease.tenantId) : null, [firestore, lease]);
-    const { data: tenant } = useDoc<User>(tenantRef);
+    const { data: tenant, isLoading: isTenantLoading } = useDoc<User>(tenantRef);
 
     const propertyRef = useMemoFirebase(() => lease ? doc(firestore, 'properties', lease.propertyId) : null, [firestore, lease]);
-    const { data: property } = useDoc<Property>(propertyRef);
+    const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
     
-    if (isUserLoading || isLeaseLoading) {
-        return <div>Loading...</div>;
+    const isLoading = isUserLoading || isLeaseLoading || isLandlordLoading || isTenantLoading || isPropertyLoading;
+
+    if (isLoading) {
+        return <Loading />;
     }
     
     if (!lease || !currentUser || (currentUser.uid !== lease.tenantId)) {
@@ -45,6 +48,7 @@ export default function ViewStudentLeasePage() {
     }
     
     const handleSignLease = async () => {
+        if (!leaseRef) return;
         try {
             await updateDoc(leaseRef, {
                 tenantSigned: true,
@@ -55,7 +59,7 @@ export default function ViewStudentLeasePage() {
                 description: "Your tenancy is now active. You can now proceed to make payments."
             });
             // After signing, redirect the student to their new tenancy page
-            router.push(`/student/properties/${lease.propertyId}`);
+            router.push(`/student/tenancy/${lease.propertyId}`);
         } catch (error) {
             console.error("Error signing lease:", error);
             toast({

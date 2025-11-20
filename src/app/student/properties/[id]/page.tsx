@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import TenancySkeleton from "@/components/tenancy-skeleton";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
 import { doc, collection, query, where, User as FirebaseUser, addDoc, serverTimestamp } from "firebase/firestore";
+import Loading from "@/app/loading";
 
 const amenityIcons: { [key: string]: React.ReactNode } = {
     'Furnished': <Tv className="h-5 w-5 text-primary" />,
@@ -38,7 +39,7 @@ export default function PropertyDetailPage() {
     const firestore = useFirestore();
     const pathname = usePathname();
     const { toast } = useToast();
-    const { user } = useUser();
+    const { user, isUserLoading } = useUser();
     const router = useRouter();
 
     const [requestMessage, setRequestMessage] = useState("");
@@ -48,22 +49,23 @@ export default function PropertyDetailPage() {
         setIsClient(true);
     }, []);
 
-    const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
+    const propertyRef = useMemoFirebase(() => id ? doc(firestore, 'properties', id) : null, [firestore, id]);
     const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
     
     const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
     const { data: landlord, isLoading: isLandlordLoading } = useDoc<User>(landlordRef);
 
-    const reviewsQuery = useMemoFirebase(() => query(collection(firestore, 'propertyReviews'), where('propertyId', '==', id)), [firestore, id]);
+    const reviewsQuery = useMemoFirebase(() => id ? query(collection(firestore, 'propertyReviews'), where('propertyId', '==', id)) : null, [firestore, id]);
     const { data: reviews, isLoading: areReviewsLoading } = useCollection<Review>(reviewsQuery);
     
-    if (isPropertyLoading || isLandlordLoading || areReviewsLoading) {
-        return <TenancySkeleton />;
+    const isLoading = isPropertyLoading || isLandlordLoading || areReviewsLoading || isUserLoading;
+
+    if (isLoading) {
+        return <Loading />;
     }
 
     if (!property) {
         notFound();
-        return null;
     }
 
     const images: ImagePlaceholder[] = property?.images?.map((url, i) => ({

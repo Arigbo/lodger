@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import type { LeaseAgreement, User, Property } from '@/lib/definitions';
 import { doc } from 'firebase/firestore';
+import Loading from '@/app/loading';
 
 
 export default function ViewLandlordLeasePage() {
@@ -21,24 +22,25 @@ export default function ViewLandlordLeasePage() {
     const { user: currentUser, isUserLoading } = useUser();
     const firestore = useFirestore();
 
-    const leaseRef = useMemoFirebase(() => doc(firestore, 'leaseAgreements', id), [firestore, id]);
+    const leaseRef = useMemoFirebase(() => id ? doc(firestore, 'leaseAgreements', id) : null, [firestore, id]);
     const { data: lease, isLoading: isLeaseLoading } = useDoc<LeaseAgreement>(leaseRef);
 
     const landlordRef = useMemoFirebase(() => lease ? doc(firestore, 'users', lease.landlordId) : null, [firestore, lease]);
-    const { data: landlord } = useDoc<User>(landlordRef);
+    const { data: landlord, isLoading: isLandlordLoading } = useDoc<User>(landlordRef);
 
     const tenantRef = useMemoFirebase(() => lease ? doc(firestore, 'users', lease.tenantId) : null, [firestore, lease]);
-    const { data: tenant } = useDoc<User>(tenantRef);
+    const { data: tenant, isLoading: isTenantLoading } = useDoc<User>(tenantRef);
 
     const propertyRef = useMemoFirebase(() => lease ? doc(firestore, 'properties', lease.propertyId) : null, [firestore, lease]);
-    const { data: property } = useDoc<Property>(propertyRef);
+    const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
 
+    const isLoading = isUserLoading || isLeaseLoading || isLandlordLoading || isTenantLoading || isPropertyLoading;
 
-    if (isUserLoading || isLeaseLoading) {
-        return <div>Loading...</div>
+    if (isLoading) {
+        return <Loading />;
     }
 
-    if (!lease || !currentUser || (currentUser.uid !== lease.landlordId)) {
+    if (!lease || !currentUser || currentUser.uid !== lease.landlordId) {
         notFound();
     }
     

@@ -23,6 +23,7 @@ import TenancySkeleton from "@/components/tenancy-skeleton";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
 import { doc, collection, query, where, User as FirebaseUser } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
+import Loading from "@/app/loading";
 
 export default function TenancyDetailPage() {
     const params = useParams();
@@ -31,7 +32,7 @@ export default function TenancyDetailPage() {
     const firestore = useFirestore();
     const router = useRouter();
 
-    const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
+    const propertyRef = useMemoFirebase(() => id ? doc(firestore, 'properties', id) : null, [firestore, id]);
     const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
     
     const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
@@ -39,10 +40,10 @@ export default function TenancyDetailPage() {
 
     const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   
-    const transactionsQuery = useMemoFirebase(() => user ? query(collection(firestore, 'transactions'), where('tenantId', '==', user.uid), where('propertyId', '==', id)) : null, [firestore, user, id]);
+    const transactionsQuery = useMemoFirebase(() => (user && id) ? query(collection(firestore, 'transactions'), where('tenantId', '==', user.uid), where('propertyId', '==', id)) : null, [firestore, user, id]);
     const { data: transactions, isLoading: areTransactionsLoading } = useCollection<Transaction>(transactionsQuery);
 
-    const leaseQuery = useMemoFirebase(() => user ? query(collection(firestore, 'leaseAgreements'), where('propertyId', '==', id), where('tenantId', '==', user.uid)) : null, [firestore, user, id]);
+    const leaseQuery = useMemoFirebase(() => (user && id) ? query(collection(firestore, 'leaseAgreements'), where('propertyId', '==', id), where('tenantId', '==', user.uid)) : null, [firestore, user, id]);
     const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leaseQuery);
     const lease = leases?.[0];
 
@@ -59,7 +60,7 @@ export default function TenancyDetailPage() {
     } | null>(null);
 
     useEffect(() => {
-        if (areTransactionsLoading || isLeaseLoading) return;
+        if (areTransactionsLoading || isLeaseLoading || !property) return;
 
         const tenantTransactions = transactions || [];
         const today = new Date();
@@ -111,14 +112,14 @@ export default function TenancyDetailPage() {
         });
     }, [transactions, lease, property, areTransactionsLoading, isLeaseLoading]);
 
+    const isLoading = isUserLoading || isPropertyLoading || isLandlordLoading || !tenancyState;
 
-    if (isUserLoading || isPropertyLoading || isLandlordLoading || !tenancyState) {
-        return <TenancySkeleton />;
+    if (isLoading) {
+        return <Loading />;
     }
 
     if (!property || user?.uid !== property.currentTenantId) {
         notFound();
-        return null;
     }
   
     const handlePaymentSuccess = () => {
@@ -313,5 +314,3 @@ export default function TenancyDetailPage() {
       </div>
     );
 }
-
-    

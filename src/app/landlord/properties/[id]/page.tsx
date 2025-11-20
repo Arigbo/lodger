@@ -30,13 +30,8 @@ import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@
 import { doc, collection, query, where } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { addDoc } from 'firebase/firestore';
+import Loading from '@/app/loading';
 
-
-// Mock current user - landlords only for this page
-// const useUser = () => {
-//   const user = getUserById('user-1');
-//   return { user };
-// };
 
 export default function LandlordPropertyDetailPage() {
   const { user: landlord, isUserLoading } = useUser();
@@ -44,20 +39,22 @@ export default function LandlordPropertyDetailPage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const firestore = useFirestore();
 
-  const propertyRef = useMemoFirebase(() => doc(firestore, 'properties', id), [firestore, id]);
+  const propertyRef = useMemoFirebase(() => id ? doc(firestore, 'properties', id) : null, [firestore, id]);
   const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
   
   const tenantRef = useMemoFirebase(() => property?.currentTenantId ? doc(firestore, 'users', property.currentTenantId) : null, [firestore, property]);
-  const { data: tenant } = useDoc<UserProfile>(tenantRef);
+  const { data: tenant, isLoading: isTenantLoading } = useDoc<UserProfile>(tenantRef);
 
-  const rentalRequestsQuery = useMemoFirebase(() => query(collection(firestore, 'rentalApplications'), where('propertyId', '==', id)), [firestore, id]);
-  const { data: rentalRequests } = useCollection<RentalRequest>(rentalRequestsQuery);
+  const rentalRequestsQuery = useMemoFirebase(() => id ? query(collection(firestore, 'rentalApplications'), where('propertyId', '==', id)) : null, [firestore, id]);
+  const { data: rentalRequests, isLoading: areRequestsLoading } = useCollection<RentalRequest>(rentalRequestsQuery);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<RentalRequest | null>(null);
 
-  if (isUserLoading || isPropertyLoading) {
-    return <div>Loading...</div>
+  const isLoading = isUserLoading || isPropertyLoading || isTenantLoading || areRequestsLoading;
+
+  if (isLoading) {
+    return <Loading />;
   }
 
   if (!property || !landlord || property.landlordId !== landlord.uid) {
@@ -219,7 +216,7 @@ export default function LandlordPropertyDetailPage() {
                 {tenant ? (
                      <div className="flex items-center gap-4">
                         <Avatar className="h-16 w-16">
-                            <AvatarImage src={tenant.avatarUrl} />
+                            <AvatarImage src={tenant.profileImageUrl} />
                             <AvatarFallback>
                                 <User className="h-8 w-8 text-muted-foreground" />
                             </AvatarFallback>
