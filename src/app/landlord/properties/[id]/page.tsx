@@ -39,7 +39,15 @@ export default function LandlordPropertyDetailPage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const firestore = useFirestore();
 
-  const propertyQuery = useMemoFirebase(() => id ? query(collection(firestore, 'properties'), where('propertyId', '==', id)) : null, [firestore, id]);
+  const propertyQuery = useMemoFirebase(() => {
+    if (!id || !user) return null;
+    return query(
+      collection(firestore, 'properties'),
+      where('propertyId', '==', id),
+      where('landlordId', '==', user.uid)
+    );
+  }, [firestore, id, user]);
+
   const { data: properties, isLoading: isPropertyLoading } = useCollection<Property>(propertyQuery);
   const property = properties?.[0];
   
@@ -64,8 +72,14 @@ export default function LandlordPropertyDetailPage() {
     return <Loading />;
   }
 
-  if (!property || !user || property.landlordId !== user.uid) {
+  // After loading, if there's no property, it means either it doesn't exist or the user doesn't own it.
+  if (!isPropertyLoading && !property) {
     notFound();
+  }
+  
+  if (!property || !user) {
+    // This case should be covered by the one above, but it's good practice for type safety.
+    return notFound();
   }
 
   const handleAcceptClick = (request: RentalRequest) => {
@@ -102,7 +116,7 @@ export default function LandlordPropertyDetailPage() {
   };
 
   const handleDeclineClick = (requestId: string) => {
-     const requestRef = doc(firestore, `properties/${id}/rentalApplications`, requestId);
+     const requestRef = doc(firestore, 'rentalApplications', requestId);
      updateDocumentNonBlocking(requestRef, { status: 'declined' });
   }
   
@@ -252,5 +266,3 @@ export default function LandlordPropertyDetailPage() {
     </div>
   );
 }
-
-    
