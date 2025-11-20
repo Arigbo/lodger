@@ -24,13 +24,23 @@ import type { LeaseAgreement, User, Property } from '@/lib/definitions';
 import { FileText } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 
 type AggregatedLease = {
   lease: LeaseAgreement;
   tenant: User | null;
   property: Property | null;
 };
+
+// Helper function to split an array into chunks
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
 
 export default function LandlordLeasesPage() {
   const { user: landlord, isUserLoading } = useUser();
@@ -57,19 +67,28 @@ export default function LandlordLeasesPage() {
       const tenantIds = [...new Set(landlordLeases.map(l => l.tenantId))];
       const propertyIds = [...new Set(landlordLeases.map(l => l.propertyId))];
 
-      const usersQuery = query(collection(firestore, 'users'), where('id', 'in', tenantIds));
-      const propertiesQuery = query(collection(firestore, 'properties'), where('id', 'in', propertyIds));
-
-      const [usersSnapshot, propertiesSnapshot] = await Promise.all([
-        getDocs(usersQuery),
-        getDocs(propertiesQuery)
-      ]);
-
       const usersMap = new Map<string, User>();
-      usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-
       const propertiesMap = new Map<string, Property>();
-      propertiesSnapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+
+      const userChunks = chunkArray(tenantIds, 30);
+      const propertyChunks = chunkArray(propertyIds, 30);
+
+      const userPromises = userChunks.map(chunk => 
+        getDocs(query(collection(firestore, 'users'), where('id', 'in', chunk)))
+      );
+      const propertyPromises = propertyChunks.map(chunk =>
+        getDocs(query(collection(firestore, 'properties'), where('id', 'in', chunk)))
+      );
+
+      const userSnapshots = await Promise.all(userPromises);
+      userSnapshots.forEach(snapshot => {
+        snapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+      });
+
+      const propertySnapshots = await Promise.all(propertyPromises);
+      propertySnapshots.forEach(snapshot => {
+        snapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+      });
 
       const aggregatedData = landlordLeases.map(lease => ({
         lease,
@@ -151,7 +170,7 @@ export default function LandlordLeasesPage() {
                       <TableCell>{new Date(lease.endDate).toLocaleDateString()}</TableCell>
                       <TableCell>
                          <Badge variant={getStatusVariant(lease.status)}>
-                            {lease.status === 'pending' ? 'Pending Signature' : lease.status}
+                            {lease.status}
                          </Badge>
                       </TableCell>
                       <TableCell>

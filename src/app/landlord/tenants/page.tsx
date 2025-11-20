@@ -31,8 +31,8 @@ import { MoreHorizontal, Users, Mail, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { add, isPast, isBefore } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { useUser, useFirestore } from '@/firebase';
+import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import React from 'react';
 
 type TenantWithProperty = {
@@ -40,6 +40,16 @@ type TenantWithProperty = {
   property: Property;
   isRentDue: boolean;
 };
+
+// Helper function to split an array into chunks
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
 
 export default function TenantsPage() {
   const { user: landlord, isUserLoading } = useUser();
@@ -55,12 +65,10 @@ export default function TenantsPage() {
     const fetchTenants = async () => {
       setIsLoading(true);
 
-      // 1. Get all properties for the landlord
       const propertiesQuery = query(collection(firestore, 'properties'), where('landlordId', '==', landlord.uid));
       const propertiesSnapshot = await getDocs(propertiesQuery);
       const landlordProperties = propertiesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Property[];
-
-      // 2. Filter for occupied properties with active leases
+      
       const occupiedProperties = landlordProperties.filter(p => {
         if (!p.currentTenantId || p.status !== 'occupied' || !p.leaseStartDate) {
           return false;
@@ -75,7 +83,6 @@ export default function TenantsPage() {
         return;
       }
       
-      // 3. Get tenant and transaction data
       const tenantIds = [...new Set(occupiedProperties.map(p => p.currentTenantId!))];
       if (tenantIds.length === 0) {
         setTenants([]);
@@ -83,26 +90,34 @@ export default function TenantsPage() {
         return;
       }
 
-      const usersQuery = query(collection(firestore, 'users'), where('id', 'in', tenantIds));
-      const transactionsQuery = query(collection(firestore, 'transactions'), where('tenantId', 'in', tenantIds));
-
-      const [usersSnapshot, transactionsSnapshot] = await Promise.all([
-          getDocs(usersQuery),
-          getDocs(transactionsQuery),
-      ]);
-      
       const usersMap = new Map<string, User>();
-      usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-
       const transactionsMap = new Map<string, Transaction[]>();
-      transactionsSnapshot.forEach(doc => {
+
+      const userChunks = chunkArray(tenantIds, 30);
+      const transactionChunks = chunkArray(tenantIds, 30);
+
+      const userPromises = userChunks.map(chunk => 
+        getDocs(query(collection(firestore, 'users'), where('id', 'in', chunk)))
+      );
+      const transactionPromises = transactionChunks.map(chunk =>
+        getDocs(query(collection(firestore, 'transactions'), where('tenantId', 'in', chunk)))
+      );
+
+      const userSnapshots = await Promise.all(userPromises);
+      userSnapshots.forEach(snapshot => {
+        snapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+      });
+      
+      const transactionSnapshots = await Promise.all(transactionPromises);
+      transactionSnapshots.forEach(snapshot => {
+        snapshot.forEach(doc => {
           const t = doc.data() as Transaction;
           const userTransactions = transactionsMap.get(t.tenantId) || [];
           userTransactions.push(t);
           transactionsMap.set(t.tenantId, userTransactions);
+        });
       });
 
-      // 4. Aggregate data
       const tenantData = occupiedProperties.map(property => {
         const tenant = usersMap.get(property.currentTenantId!);
         if (!tenant) return null;
@@ -113,10 +128,15 @@ export default function TenantsPage() {
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
         let isRentDue = false;
-        let nextDueDate = add(new Date(property.leaseStartDate!), { months: 1 });
+        const leaseStartDate = new Date(property.leaseStartDate!);
+        let nextDueDate = add(leaseStartDate, { months: 1 });
+        
         if (lastRentPayment) {
             nextDueDate = add(new Date(lastRentPayment.date), { months: 1 });
+        } else if (isPast(leaseStartDate)) {
+            nextDueDate = leaseStartDate;
         }
+
         isRentDue = isPast(nextDueDate);
         
         return { tenant, property, isRentDue };
@@ -220,7 +240,7 @@ export default function TenantsPage() {
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href={`/landlord/tenants/${tenant.id}`}>View Lease</Link>
+                          <Link href={`/landlord/leases/${property.id}`}>View Lease</Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -245,5 +265,3 @@ export default function TenantsPage() {
     </div>
   );
 }
-
-    
