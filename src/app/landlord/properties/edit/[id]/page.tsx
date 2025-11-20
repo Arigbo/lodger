@@ -30,12 +30,13 @@ import { Separator } from '@/components/ui/separator';
 import { amenities as allAmenities } from '@/lib/definitions';
 import { useEffect, useState } from 'react';
 import type { Property } from '@/lib/definitions';
-import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebaseApp } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useFirebaseApp } from '@/firebase';
+import { doc, updateDoc, collection, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import Image from 'next/image';
 import { UploadCloud, X, Loader2 } from 'lucide-react';
+import Loading from '@/app/loading';
 
 const formSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -65,13 +66,10 @@ export default function EditPropertyPage() {
   const firebaseApp = useFirebaseApp();
   const router = useRouter();
   const { toast } = useToast();
-
-  const propertyRef = useMemoFirebase(() => {
-    if (!id) return null;
-    return doc(firestore, 'properties', id as string);
-  }, [id, firestore]);
-
-  const { data: property, isLoading: isPropertyLoading, refetch } = useDoc<Property>(propertyRef);
+  
+  const propertyQuery = useMemoFirebase(() => id ? query(collection(firestore, 'properties'), where('propertyId', '==', id)) : null, [firestore, id]);
+  const { data: properties, isLoading: isPropertyLoading, refetch } = useCollection<Property>(propertyQuery);
+  const property = properties?.[0];
 
   const [isUploading, setIsUploading] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -116,7 +114,7 @@ export default function EditPropertyPage() {
   }, [property, form]);
 
   if (isUserLoading || isPropertyLoading) {
-    return <div>Loading property details...</div>
+    return <Loading />;
   }
 
   if (!isPropertyLoading && (!property || (user && user.uid !== property.landlordId))) {
@@ -124,14 +122,15 @@ export default function EditPropertyPage() {
   }
 
   async function handleImageUpload(files: FileList | null) {
-      if (!files || !propertyRef) return;
+      if (!files || !property) return;
+      const propertyRef = doc(firestore, 'properties', property.id);
       setIsUploading(true);
 
       const newImageUrls: string[] = [];
       const storage = getStorage(firebaseApp);
 
       for (const file of Array.from(files)) {
-          const imageRef = ref(storage, `properties/${id}/${Date.now()}_${file.name}`);
+          const imageRef = ref(storage, `properties/${property.id}/${Date.now()}_${file.name}`);
           try {
               const snapshot = await uploadBytes(imageRef, file);
               const downloadURL = await getDownloadURL(snapshot.ref);
@@ -154,7 +153,10 @@ export default function EditPropertyPage() {
   }
 
   async function handleRemoveImage(imageUrl: string) {
-    if (!propertyRef || !property?.images) return;
+    if (!property) return;
+    const propertyRef = doc(firestore, 'properties', property.id);
+    if (!property?.images) return;
+
     const isConfirmed = window.confirm("Are you sure you want to delete this image? This cannot be undone.");
     if (!isConfirmed) return;
 
@@ -175,7 +177,9 @@ export default function EditPropertyPage() {
   }
 
   async function onSubmit(values: FormValues) {
-    if (!propertyRef) return;
+    if (!property) return;
+    const propertyRef = doc(firestore, 'properties', property.id);
+
     try {
         const updatedData = {
             title: values.title,
@@ -508,5 +512,3 @@ export default function EditPropertyPage() {
     </Card>
   );
 }
-
-    

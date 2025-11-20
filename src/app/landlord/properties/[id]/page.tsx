@@ -39,8 +39,9 @@ export default function LandlordPropertyDetailPage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const firestore = useFirestore();
 
-  const propertyRef = useMemoFirebase(() => id ? doc(firestore, 'properties', id) : null, [firestore, id]);
-  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
+  const propertyQuery = useMemoFirebase(() => id ? query(collection(firestore, 'properties'), where('propertyId', '==', id)) : null, [firestore, id]);
+  const { data: properties, isLoading: isPropertyLoading } = useCollection<Property>(propertyQuery);
+  const property = properties?.[0];
   
   const tenantRef = useMemoFirebase(() => property?.currentTenantId ? doc(firestore, 'users', property.currentTenantId) : null, [firestore, property]);
   const { data: tenant, isLoading: isTenantLoading } = useDoc<UserProfile>(tenantRef);
