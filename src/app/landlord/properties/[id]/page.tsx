@@ -39,8 +39,9 @@ export default function LandlordPropertyDetailPage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const firestore = useFirestore();
 
-  const propertyRef = useMemoFirebase(() => id ? doc(firestore, 'properties', id) : null, [firestore, id]);
-  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
+  const propertyQuery = useMemoFirebase(() => id ? query(collection(firestore, 'properties'), where('propertyId', '==', id)) : null, [firestore, id]);
+  const { data: properties, isLoading: isPropertyLoading } = useCollection<Property>(propertyQuery);
+  const property = properties?.[0];
   
   const landlordRef = useMemoFirebase(() => property?.landlordId ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
   const { data: landlord, isLoading: isLandlordLoading } = useDoc<UserProfile>(landlordRef);
@@ -50,8 +51,7 @@ export default function LandlordPropertyDetailPage() {
 
   const rentalRequestsQuery = useMemoFirebase(() => {
     if (!id) return null;
-    // Correctly query the sub-collection
-    return collection(firestore, `properties/${id}/rentalApplications`);
+    return query(collection(firestore, 'rentalApplications'), where('propertyId', '==', id));
   }, [firestore, id]);
   const { data: rentalRequests, isLoading: areRequestsLoading } = useCollection<RentalRequest>(rentalRequestsQuery);
 
@@ -77,7 +77,7 @@ export default function LandlordPropertyDetailPage() {
       if(selectedRequest && property.leaseTemplate && landlord) {
         // Here you would:
         // 1. Update the rental request to 'approved'
-        const requestRef = doc(firestore, `properties/${id}/rentalApplications`, selectedRequest.id);
+        const requestRef = doc(firestore, 'rentalApplications', selectedRequest.id);
         updateDocumentNonBlocking(requestRef, { status: 'approved' });
         
         // 2. Update the property to 'occupied' and set the tenant ID
@@ -252,3 +252,5 @@ export default function LandlordPropertyDetailPage() {
     </div>
   );
 }
+
+    
