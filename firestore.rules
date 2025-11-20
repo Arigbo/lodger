@@ -18,8 +18,8 @@ service cloud.firestore {
       allow update, delete: if request.auth.uid == resource.data.landlordId;
     }
 
-    match /properties/{propertyId}/rentalApplications/{applicationId} {
-      allow read, write: if get(/databases/$(database)/documents/properties/$(propertyId)).data.landlordId == request.auth.uid || request.auth.uid == resource.data.tenantId;
+    match /rentalApplications/{applicationId} {
+      allow read, write: if get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.landlordId == request.auth.uid || request.auth.uid == resource.data.tenantId;
     }
 
     match /leaseAgreements/{leaseId} {
