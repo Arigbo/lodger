@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Home } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
 import type { Property } from "@/lib/definitions";
@@ -18,11 +19,11 @@ export default function StudentDashboardPage() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  // Redirect to login if not authenticated after loading
-  if (!isUserLoading && !user) {
-    router.replace('/auth/login');
-    return null;
-  }
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.replace('/auth/login');
+    }
+  }, [isUserLoading, user, router]);
   
   const propertiesQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -31,7 +32,7 @@ export default function StudentDashboardPage() {
   
   const { data: rentedProperties, isLoading: propertiesLoading } = useCollection<Property>(propertiesQuery);
   
-  if (isUserLoading || propertiesLoading) {
+  if (isUserLoading || propertiesLoading || !user) {
       return <div>Loading...</div>; // Or a more sophisticated skeleton loader
   }
 

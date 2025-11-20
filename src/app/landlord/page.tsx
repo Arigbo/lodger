@@ -1,3 +1,4 @@
+
 "use client";
 
 import PropertyCard from "@/components/property-card";
@@ -8,6 +9,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebas
 import { PlusCircle, Building } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { collection, query, where } from "firebase/firestore";
 import type { Property } from "@/lib/definitions";
 
@@ -15,13 +17,14 @@ export default function LandlordDashboardPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
-  if (isUserLoading) {
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.replace('/auth/login');
+    }
+  }, [isUserLoading, user, router]);
+
+  if (isUserLoading || !user) {
     return <div>Loading...</div>;
-  }
-  
-  if (!user) {
-    router.replace('/auth/login');
-    return null;
   }
   
   // This is a client component, but we have user data. We must ensure only landlords see this page.
