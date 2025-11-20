@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,7 +16,7 @@ import type { User, Message } from '@/lib/definitions';
 import { Send, Phone, Video, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp, limit } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp } from 'firebase/firestore';
 
 type Conversation = {
     participant: User;
@@ -36,71 +36,79 @@ export default function MessagesPage() {
     const [selectedParticipant, setSelectedParticipant] = useState<User | null>(null);
     const [isClient, setIsClient] = useState(false);
     const [newMessage, setNewMessage] = useState('');
+    const [isDataLoading, setIsDataLoading] = useState(true);
 
     const selectedConversationId = searchParams.get('conversationId');
 
-    // Effect to set client-side flag
     useEffect(() => {
         setIsClient(true);
     }, []);
 
-    // Effect to fetch all conversations for the landlord
+    // Query for all messages where the landlord is a participant
+    const allMessagesQuery = useMemoFirebase(() => {
+        if (!landlord) return null;
+        return query(
+            collection(firestore, 'messages'),
+            where('participantIds', 'array-contains', landlord.uid)
+        );
+    }, [firestore, landlord]);
+
+    const { data: allLandlordMessages, isLoading: messagesLoading } = useCollection<Message>(allMessagesQuery);
+
+    // This effect processes all messages to build the conversation list
     useEffect(() => {
-        if (!landlord || !firestore) return;
+        if (isUserLoading || messagesLoading) return;
+        if (!landlord || !allLandlordMessages) {
+            setConversations([]);
+            setIsDataLoading(false);
+            return;
+        }
 
-        const fetchConversations = async () => {
-            const messagesRef = collection(firestore, 'messages');
-            const q = query(messagesRef, where('participantIds', 'array-contains', landlord.uid));
+        const processConversations = async () => {
+            setIsDataLoading(true);
+            const conversationsMap = new Map<string, { lastMessage: Message, participantId: string }>();
             
-            const messagesSnapshot = await getDocs(q);
-
-            const participantIds = new Set<string>();
-            messagesSnapshot.forEach(doc => {
-                const data = doc.data();
-                const otherParticipant = data.participantIds.find((id: string) => id !== landlord.uid);
-                if (otherParticipant) {
-                    participantIds.add(otherParticipant);
+            allLandlordMessages.forEach(msg => {
+                const otherParticipantId = msg.participantIds.find(id => id !== landlord.uid);
+                if (otherParticipantId) {
+                    if (!conversationsMap.has(otherParticipantId) || (msg.timestamp && conversationsMap.get(otherParticipantId)!.lastMessage.timestamp && msg.timestamp.toMillis() > conversationsMap.get(otherParticipantId)!.lastMessage.timestamp.toMillis())) {
+                        conversationsMap.set(otherParticipantId, { lastMessage: msg, participantId: otherParticipantId });
+                    }
                 }
             });
-            
-            if (participantIds.size === 0) return;
 
-            const usersQuery = query(collection(firestore, 'users'), where('id', 'in', Array.from(participantIds)));
+            const participantIds = Array.from(conversationsMap.keys());
+            if (participantIds.length === 0) {
+                setConversations([]);
+                setIsDataLoading(false);
+                return;
+            }
+
+            const usersQuery = query(collection(firestore, 'users'), where('id', 'in', participantIds));
             const usersSnapshot = await getDocs(usersQuery);
             const usersMap = new Map<string, User>();
-            usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+            usersSnapshot.forEach(docSnap => usersMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as User));
 
-            const convoPromises = Array.from(participantIds).map(async (pId) => {
-                const participant = usersMap.get(pId);
+            const convos = Array.from(conversationsMap.values()).map(convoData => {
+                const participant = usersMap.get(convoData.participantId);
                 if (!participant) return null;
-
-                const lastMessageQuery = query(
-                    collection(firestore, 'messages'),
-                    where('participantIds', 'array-contains', landlord.uid),
-                    where('participantIds', 'array-contains', pId),
-                    orderBy('timestamp', 'desc'),
-                    limit(1)
-                );
-                
-                const lastMessageSnapshot = await getDocs(lastMessageQuery);
-                const lastMessageDoc = lastMessageSnapshot.docs[0];
 
                 return {
                     participant,
-                    lastMessage: lastMessageDoc?.data()?.text || 'No messages yet.',
-                    lastMessageTimestamp: lastMessageDoc?.data()?.timestamp?.toDate() || null,
+                    lastMessage: convoData.lastMessage.text || 'No messages yet.',
+                    lastMessageTimestamp: convoData.lastMessage.timestamp?.toDate() || null,
                     unreadCount: 0, // Unread count logic needs to be implemented
                 } as Conversation;
-            });
+            }).filter(Boolean) as Conversation[];
 
-            const resolvedConversations = (await Promise.all(convoPromises)).filter(Boolean) as Conversation[];
-            resolvedConversations.sort((a,b) => (b.lastMessageTimestamp?.getTime() || 0) - (a.lastMessageTimestamp?.getTime() || 0));
-            setConversations(resolvedConversations);
+            convos.sort((a,b) => (b.lastMessageTimestamp?.getTime() || 0) - (a.lastMessageTimestamp?.getTime() || 0));
+            setConversations(convos);
+            setIsDataLoading(false);
         };
 
-        fetchConversations();
-    }, [landlord, firestore]);
-
+        processConversations();
+    }, [landlord, allLandlordMessages, isUserLoading, messagesLoading, firestore]);
+    
     // Effect to set the selected conversation based on URL param
     useEffect(() => {
         if (selectedConversationId) {
@@ -113,18 +121,18 @@ export default function MessagesPage() {
         }
     }, [selectedConversationId, conversations, selectedParticipant, router, pathname]);
     
-    // Memoized query for the selected conversation's messages
-    const messagesQuery = useMemoFirebase(() => {
-        if (!landlord || !selectedParticipant) return null;
-        return query(
-            collection(firestore, 'messages'),
-            where('participantIds', 'array-contains', landlord.uid),
-            where('participantIds', 'array-contains', selectedParticipant.id),
-            orderBy('timestamp', 'asc')
-        );
-    }, [firestore, landlord, selectedParticipant]);
-
-    const { data: messages } = useCollection<Message>(messagesQuery);
+    // Memoized messages for the selected conversation, filtered from all messages
+    const messages = useMemo(() => {
+        if (!allLandlordMessages || !selectedParticipant) return [];
+        return allLandlordMessages
+            .filter(msg => msg.participantIds.includes(selectedParticipant.id))
+            .sort((a, b) => {
+                if (a.timestamp && b.timestamp) {
+                    return a.timestamp.toMillis() - b.timestamp.toMillis();
+                }
+                return 0;
+            });
+    }, [allLandlordMessages, selectedParticipant]);
     
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !landlord || !selectedParticipant || !firestore) return;
@@ -135,7 +143,7 @@ export default function MessagesPage() {
                 text: newMessage,
                 senderId: landlord.uid,
                 recipientId: selectedParticipant.id,
-                participantIds: [landlord.uid, selectedParticipant.id],
+                participantIds: [landlord.uid, selectedParticipant.id].sort(), // Ensure consistent array order
                 timestamp: serverTimestamp(),
                 read: false,
             });
@@ -146,7 +154,7 @@ export default function MessagesPage() {
         }
     };
 
-    if (isUserLoading) {
+    if (isUserLoading || isDataLoading) {
         return <div>Loading...</div>
     }
 
