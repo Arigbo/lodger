@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useParams } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { formatPrice } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,7 @@ export default function LandlordPropertyDetailPage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const firestore = useFirestore();
 
-  const propertyQuery = useMemoFirebase(() => id ? query(collection(firestore, 'properties'), where('propertyId', '==', id)) : null, [firestore, id]);
+  const propertyQuery = useMemoFirebase(() => id ? query(collection(firestore, 'properties'), where('id', '==', id)) : null, [firestore, id]);
   const { data: properties, isLoading: isPropertyLoading } = useCollection<Property>(propertyQuery);
   const property = properties?.[0];
   

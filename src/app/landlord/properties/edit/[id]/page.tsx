@@ -67,7 +67,7 @@ export default function EditPropertyPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const propertyQuery = useMemoFirebase(() => id ? query(collection(firestore, 'properties'), where('propertyId', '==', id)) : null, [firestore, id]);
+  const propertyQuery = useMemoFirebase(() => id ? query(collection(firestore, 'properties'), where('id', '==', id)) : null, [firestore, id]);
   const { data: properties, isLoading: isPropertyLoading, refetch } = useCollection<Property>(propertyQuery);
   const property = properties?.[0];
 
