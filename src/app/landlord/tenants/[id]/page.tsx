@@ -61,6 +61,8 @@ export default function TenantDetailPage() {
       compassionFee: number;
   } | null>(null);
 
+  const property = rentedProperties?.[0];
+
   useEffect(() => {
       if (!rentedProperties || !tenantTransactions) return;
 
@@ -127,12 +129,15 @@ export default function TenantDetailPage() {
   if (isLoading) {
     return <div>Loading tenant details...</div>;
   }
-
-  if (!tenant || !currentUser || currentUser.role !== 'landlord') {
+  
+  // Authorization check: 
+  // 1. Ensure a user, tenant, and property exist.
+  // 2. Ensure the logged-in user is a landlord.
+  // 3. Ensure the landlord is the owner of the property this tenant is renting.
+  if (!currentUser || !tenant || !property || currentUser.uid !== property.landlordId) {
     notFound();
   }
 
-  const property = rentedProperties?.[0];
 
   return (
     <div className="space-y-8">
