@@ -66,7 +66,7 @@ export default function LandlordPropertyDetailPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<RentalRequest | null>(null);
 
-  const isLoading = isUserLoading || isPropertyLoading || isLandlordLoading || isTenantLoading || areRequestsLoading;
+  const isLoading = isUserLoading || isPropertyLoading || isLandlordLoading || areRequestsLoading;
 
   if (isLoading) {
     return <Loading />;
