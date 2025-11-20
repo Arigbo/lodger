@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import type { User, Property } from '@/lib/definitions';
+import type { UserProfile, Property } from '@/lib/definitions';
 import { ScrollArea } from './ui/scroll-area';
 import { Signature, Send } from 'lucide-react';
 
@@ -19,7 +19,7 @@ interface LeaseGenerationDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onLeaseSigned: () => void;
-  landlord: User;
+  landlord: UserProfile;
   leaseText: string;
 }
 

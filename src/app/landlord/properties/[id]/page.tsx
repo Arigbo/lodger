@@ -22,7 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { BedDouble, Bath, Ruler, Check, X, Pencil, User } from 'lucide-react';
-import type { Property, User as UserProfile, RentalRequest } from '@/lib/definitions';
+import type { Property, UserProfile, RentalRequest } from '@/lib/definitions';
 import Link from 'next/link';
 import { useState } from 'react';
 import LeaseGenerationDialog from '@/components/lease-generation-dialog';
@@ -34,7 +34,7 @@ import Loading from '@/app/loading';
 
 
 export default function LandlordPropertyDetailPage() {
-  const { user: landlord, isUserLoading } = useUser();
+  const { user, isUserLoading } = useUser();
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const firestore = useFirestore();
@@ -43,6 +43,9 @@ export default function LandlordPropertyDetailPage() {
   const { data: properties, isLoading: isPropertyLoading } = useCollection<Property>(propertyQuery);
   const property = properties?.[0];
   
+  const landlordRef = useMemoFirebase(() => property?.landlordId ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
+  const { data: landlord, isLoading: isLandlordLoading } = useDoc<UserProfile>(landlordRef);
+
   const tenantRef = useMemoFirebase(() => property?.currentTenantId ? doc(firestore, 'users', property.currentTenantId) : null, [firestore, property]);
   const { data: tenant, isLoading: isTenantLoading } = useDoc<UserProfile>(tenantRef);
 
@@ -52,13 +55,13 @@ export default function LandlordPropertyDetailPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<RentalRequest | null>(null);
 
-  const isLoading = isUserLoading || isPropertyLoading || isTenantLoading || areRequestsLoading;
+  const isLoading = isUserLoading || isPropertyLoading || isLandlordLoading || isTenantLoading || areRequestsLoading;
 
   if (isLoading) {
     return <Loading />;
   }
 
-  if (!property || !landlord || property.landlordId !== landlord.uid) {
+  if (!property || !user || property.landlordId !== user.uid) {
     notFound();
   }
 
@@ -68,7 +71,7 @@ export default function LandlordPropertyDetailPage() {
   };
 
   const handleLeaseSigned = async () => {
-      if(selectedRequest && property.leaseTemplate) {
+      if(selectedRequest && property.leaseTemplate && landlord) {
         // Here you would:
         // 1. Update the rental request to 'approved'
         const requestRef = doc(firestore, 'rentalApplications', selectedRequest.id);
@@ -83,7 +86,7 @@ export default function LandlordPropertyDetailPage() {
         const leaseCollectionRef = collection(firestore, 'leaseAgreements');
         await addDoc(leaseCollectionRef, {
             propertyId: property.id,
-            landlordId: landlord.uid,
+            landlordId: landlord.id,
             tenantId: selectedRequest.userId,
             leaseText: property.leaseTemplate,
             landlordSigned: true,

@@ -1,6 +1,6 @@
 
 
-export type User = {
+export type UserProfile = {
   id: string;
   name: string;
   email: string;
@@ -109,7 +109,7 @@ export type LeaseAgreement = {
 
 export type Conversation = {
   id: string; // Corresponds to the participant's user ID
-  participant: User;
+  participant: UserProfile;
   lastMessage: string;
   lastMessageTimestamp: string;
   unreadCount: number;
