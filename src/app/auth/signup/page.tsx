@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 import { useAuth, useFirestore, useCollection, useMemoFirebase } from '@/firebase/provider';
 import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { initiateEmailSignUp } from '@/firebase';
+import { initiateEmailSignUp, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { countries, Country } from '@/lib/countries';
 import type { Property } from '@/lib/definitions';
 
@@ -150,7 +150,7 @@ export default function SignupPage() {
 
   const prevStep = () => {
      if (currentStep > 1) {
-        setCurrentStep(step => step - 1);
+        setCurrentStep(step => step + 1);
      }
   }
 
@@ -172,8 +172,19 @@ export default function SignupPage() {
             whatsappUrl: values.whatsappUrl || null,
             twitterUrl: values.twitterUrl || null,
         };
-
-        await setDoc(doc(firestore, "users", user.uid), userData);
+        
+        const userDocRef = doc(firestore, "users", user.uid);
+        await setDoc(userDocRef, userData).catch((serverError) => {
+            // This is the important part: catching the setDoc specific error
+            const permissionError = new FirestorePermissionError({
+                path: userDocRef.path,
+                operation: 'create',
+                requestResourceData: userData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            // We re-throw the original error to stop execution flow
+            throw serverError;
+        });
 
         toast({
             title: "Account Created!",
@@ -187,14 +198,16 @@ export default function SignupPage() {
         }
     } catch (error: any) {
         console.error("Error signing up:", error);
+
+        // This will now only handle auth errors or re-thrown Firestore errors
         if (error.code === 'auth/email-already-in-use') {
             setError('email', {
                 type: 'manual',
                 message: 'This email address is already in use. Please try another one.',
             });
-            // Go back to the step with the email field
             setCurrentStep(2);
-        } else {
+        } else if (!error.name.includes('FirestorePermissionError')) {
+             // Avoid showing a toast for errors we are already handling globally
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong.",

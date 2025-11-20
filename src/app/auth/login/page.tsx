@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -13,7 +14,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { initiateEmailSignIn } from '@/firebase';
+import { initiateEmailSignIn, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useAuth, useFirestore } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -59,28 +60,38 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
             }
         } catch (error: any) {
             console.error("Sign-in error:", error);
-            let errorMessage = "An unknown error occurred. Please try again.";
-            switch (error.code) {
-                case 'auth/invalid-email':
-                    errorMessage = "Please enter a valid email address.";
-                    break;
-                case 'auth/user-disabled':
-                    errorMessage = "This user account has been disabled.";
-                    break;
-                case 'auth/user-not-found':
-                case 'auth/wrong-password':
-                case 'auth/invalid-credential':
-                    errorMessage = "Invalid email or password. Please try again.";
-                    break;
-                default:
-                    errorMessage = error.message;
-                    break;
+
+            if (error.code && error.code.startsWith('auth/')) {
+                 let errorMessage = "An unknown error occurred. Please try again.";
+                switch (error.code) {
+                    case 'auth/invalid-email':
+                        errorMessage = "Please enter a valid email address.";
+                        break;
+                    case 'auth/user-disabled':
+                        errorMessage = "This user account has been disabled.";
+                        break;
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                    case 'auth/invalid-credential':
+                        errorMessage = "Invalid email or password. Please try again.";
+                        break;
+                    default:
+                        errorMessage = error.message;
+                        break;
+                }
+                toast({
+                    variant: "destructive",
+                    title: "Sign In Failed",
+                    description: errorMessage,
+                });
+            } else {
+                // This is likely a Firestore security rule error during getDoc
+                const permissionError = new FirestorePermissionError({
+                    path: `users/${auth.currentUser?.uid}`, // Approximate path
+                    operation: 'get',
+                });
+                errorEmitter.emit('permission-error', permissionError);
             }
-            toast({
-                variant: "destructive",
-                title: "Sign In Failed",
-                description: errorMessage,
-            });
         }
     };
 
