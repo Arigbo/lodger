@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import TenancySkeleton from "@/components/tenancy-skeleton";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
-import { doc, collection, query, where, User as FirebaseUser, addDoc, serverTimestamp } from "firebase/firestore";
+import { doc, collection, query, where, User as FirebaseUser, addDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import Loading from "@/app/loading";
 
 const amenityIcons: { [key: string]: React.ReactNode } = {
@@ -106,13 +106,15 @@ export default function PropertyDetailPage() {
         }
         try {
             const rentalRequestsRef = collection(firestore, 'rentalApplications');
-            await addDoc(rentalRequestsRef, {
+            const newApplicationRef = await addDoc(rentalRequestsRef, {
                 propertyId: property.id,
-                userId: user.uid,
+                tenantId: user.uid,
                 messageToLandlord: requestMessage,
                 applicationDate: new Date().toISOString(),
                 status: 'pending',
             });
+
+            await updateDoc(newApplicationRef, { id: newApplicationRef.id });
             
             const messagesRef = collection(firestore, 'messages');
             await addDoc(messagesRef, {
@@ -417,3 +419,5 @@ export default function PropertyDetailPage() {
         </div>
     );
 }
+
+    

@@ -27,7 +27,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import LeaseGenerationDialog from '@/components/lease-generation-dialog';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
-import { doc, collection, query, where, addDoc } from 'firebase/firestore';
+import { doc, collection, query, where, addDoc, updateDoc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Loading from '@/app/loading';
 
@@ -81,14 +81,14 @@ export default function LandlordPropertyDetailPage() {
         // 2. Update the property to 'occupied' and set the tenant ID
         const propRef = doc(firestore, 'properties', property.id);
         const leaseStartDate = new Date().toISOString();
-        updateDocumentNonBlocking(propRef, { status: 'occupied', currentTenantId: selectedRequest.userId, leaseStartDate });
+        updateDocumentNonBlocking(propRef, { status: 'occupied', currentTenantId: selectedRequest.tenantId, leaseStartDate });
 
-        // 3. Create a new lease agreement document in the top-level collection
+        // 3. Create a new lease agreement document
         const leaseCollectionRef = collection(firestore, 'leaseAgreements');
-        await addDoc(leaseCollectionRef, {
+        const leaseDocRef = await addDoc(leaseCollectionRef, {
             propertyId: property.id,
             landlordId: landlord.id,
-            tenantId: selectedRequest.userId,
+            tenantId: selectedRequest.tenantId,
             leaseText: property.leaseTemplate,
             landlordSigned: true,
             tenantSigned: false,
@@ -96,6 +96,8 @@ export default function LandlordPropertyDetailPage() {
             endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
             status: 'pending' // Pending tenant signature
         });
+        // 4. Update the new lease with its own ID
+        await updateDoc(leaseDocRef, { id: leaseDocRef.id });
       }
   };
 
@@ -178,7 +180,7 @@ export default function LandlordPropertyDetailPage() {
                                                     <User className="h-4 w-4" />
                                                 </AvatarFallback>
                                             </Avatar>
-                                            <span className='font-medium'>{request.userId.substring(0, 8)}...</span>
+                                            <span className='font-medium'>{request.tenantId.substring(0, 8)}...</span>
                                         </TableCell>
                                         <TableCell className="max-w-xs truncate text-muted-foreground">{request.messageToLandlord}</TableCell>
                                         <TableCell>{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
@@ -244,7 +246,7 @@ export default function LandlordPropertyDetailPage() {
           </Card>
         </div>
       </div>
-      {selectedRequest && applicantForDialog && landlord && property.leaseTemplate && (
+      {selectedRequest && landlord && property.leaseTemplate && (
          <LeaseGenerationDialog
             isOpen={dialogOpen}
             onClose={() => setDialogOpen(false)}

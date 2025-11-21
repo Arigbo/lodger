@@ -19,18 +19,18 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { User, Property, RentalRequest } from '@/lib/definitions';
+import type { User, Property, RentalApplication } from '@/lib/definitions';
 import { Check, X, Bell, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import React, { useState } from 'react';
 import LeaseGenerationDialog from '@/components/lease-generation-dialog';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, where, getDocs, addDoc, documentId } from 'firebase/firestore';
+import { collection, doc, query, where, getDocs, addDoc, updateDoc, documentId } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 type AggregatedRequest = {
-  request: RentalRequest;
+  request: RentalApplication;
   applicant: User;
   property: Property;
 };
@@ -74,9 +74,9 @@ export default function RentalRequestsPage() {
             getDocs(query(collection(firestore, 'rentalApplications'), where('propertyId', 'in', chunk)))
         );
         const requestSnapshots = await Promise.all(requestPromises);
-        const allRequests = requestSnapshots.flatMap(snapshot => snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RentalRequest)));
+        const allRequests = requestSnapshots.flatMap(snapshot => snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RentalApplication)));
 
-        const userIds = [...new Set(allRequests.map(req => req.userId))];
+        const userIds = [...new Set(allRequests.map(req => req.tenantId))];
 
         if (userIds.length === 0) {
             setAggregatedRequests([]);
@@ -97,7 +97,7 @@ export default function RentalRequestsPage() {
 
         const finalRequests = allRequests.map(request => ({
             request,
-            applicant: usersMap.get(request.userId)!,
+            applicant: usersMap.get(request.tenantId)!,
             property: landlordProperties.find(p => p.id === request.propertyId)!,
         })).filter(req => req.applicant && req.property);
         
@@ -139,16 +139,16 @@ export default function RentalRequestsPage() {
         const leaseStartDate = new Date().toISOString();
         updateDocumentNonBlocking(propertyRef, {
             status: 'occupied',
-            currentTenantId: request.userId,
+            currentTenantId: request.tenantId,
             leaseStartDate,
         });
 
         // 3. Create a new lease agreement
         const leaseCollectionRef = collection(firestore, 'leaseAgreements');
-        await addDoc(leaseCollectionRef, {
+        const leaseDocRef = await addDoc(leaseCollectionRef, {
             propertyId: property.id,
             landlordId: landlord.uid,
-            tenantId: request.userId,
+            tenantId: request.tenantId,
             leaseText: property.leaseTemplate,
             landlordSigned: true,
             tenantSigned: false,
@@ -156,6 +156,7 @@ export default function RentalRequestsPage() {
             endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
             status: 'pending',
         });
+        await updateDoc(leaseDocRef, { id: leaseDocRef.id });
 
         // 4. Update local state to reflect the change
         setAggregatedRequests(prev => prev.map(ar => 
@@ -271,3 +272,5 @@ export default function RentalRequestsPage() {
     </div>
   );
 }
+
+    
