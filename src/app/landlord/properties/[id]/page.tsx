@@ -49,8 +49,7 @@ export default function LandlordPropertyDetailPage() {
 
   const rentalRequestsQuery = useMemoFirebase(() => {
     if (!id) return null;
-    // Correctly query the sub-collection
-    return collection(firestore, 'properties', id, 'rentalApplications');
+    return query(collection(firestore, 'rentalApplications'), where('propertyId', '==', id));
   }, [firestore, id]);
   const { data: rentalRequests, isLoading: areRequestsLoading } = useCollection<RentalApplication>(rentalRequestsQuery);
 
@@ -76,7 +75,7 @@ export default function LandlordPropertyDetailPage() {
   const handleLeaseSigned = async () => {
       if(selectedRequest && property?.leaseTemplate && landlord) {
         // 1. Update the rental request to 'approved'
-        const requestRef = doc(firestore, 'properties', property.id, 'rentalApplications', selectedRequest.id);
+        const requestRef = doc(firestore, 'rentalApplications', selectedRequest.id);
         updateDocumentNonBlocking(requestRef, { status: 'approved' });
         
         // 2. Update the property to 'occupied' and set the tenant ID
@@ -102,7 +101,7 @@ export default function LandlordPropertyDetailPage() {
 
   const handleDeclineClick = (requestId: string) => {
      if (!property) return;
-     const requestRef = doc(firestore, 'properties', property.id, 'rentalApplications', requestId);
+     const requestRef = doc(firestore, 'rentalApplications', requestId);
      updateDocumentNonBlocking(requestRef, { status: 'declined' });
   }
   
@@ -257,3 +256,5 @@ export default function LandlordPropertyDetailPage() {
     </div>
   );
 }
+
+    

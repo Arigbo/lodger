@@ -396,7 +396,7 @@
         }
       },
       {
-        "path": "/properties/{propertyId}/rentalApplications/{rentalApplicationId}",
+        "path": "/rentalApplications/{rentalApplicationId}",
         "definition": {
             "entityName": "RentalApplication",
             "schema": {
