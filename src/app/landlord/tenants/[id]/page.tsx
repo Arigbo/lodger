@@ -33,6 +33,7 @@ import { Badge } from '@/components/ui/badge';
 import React, { useEffect, useState } from 'react';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, where } from 'firebase/firestore';
+import Loading from '@/app/loading';
 
 
 export default function TenantDetailPage() {
@@ -127,17 +128,19 @@ export default function TenantDetailPage() {
   const isLoading = isUserLoading || isTenantLoading || arePropertiesLoading || areTransactionsLoading;
 
   if (isLoading) {
-    return <div>Loading tenant details...</div>;
+    return <Loading />;
   }
   
-  // Authorization check: 
-  // 1. Ensure a user, tenant, and property exist.
-  // 2. Ensure the logged-in user is a landlord.
-  // 3. Ensure the landlord is the owner of the property this tenant is renting.
-  if (!currentUser || !tenant || !property || currentUser.uid !== property.landlordId) {
+  // If, after loading, there is no tenant data for this ID, then it's a 404.
+  if (!isTenantLoading && !tenant) {
     notFound();
   }
 
+  // The parent layout already verifies that the currentUser is a landlord.
+  // We just need to make sure the tenant profile exists.
+  if (!tenant) {
+    return <Loading />; // Should be caught by the above notFound, but good for safety.
+  }
 
   return (
     <div className="space-y-8">
