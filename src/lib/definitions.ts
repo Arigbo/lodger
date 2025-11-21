@@ -53,7 +53,7 @@ export type Review = {
   date: string; // ISO 8601 date string
 };
 
-export type RentalRequest = {
+export type RentalApplication = {
   id: string;
   propertyId: string;
   userId: string;
@@ -132,3 +132,4 @@ export const amenities = ["Furnished", "Wi-Fi", "In-unit Laundry", "Pet Friendly
     
 
     
+

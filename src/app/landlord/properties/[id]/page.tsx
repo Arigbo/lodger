@@ -22,7 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { BedDouble, Bath, Ruler, Check, X, Pencil, User } from 'lucide-react';
-import type { Property, UserProfile, RentalRequest } from '@/lib/definitions';
+import type { Property, UserProfile, RentalApplication } from '@/lib/definitions';
 import Link from 'next/link';
 import { useState } from 'react';
 import LeaseGenerationDialog from '@/components/lease-generation-dialog';
@@ -39,17 +39,8 @@ export default function LandlordPropertyDetailPage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const firestore = useFirestore();
 
-  const propertyQuery = useMemoFirebase(() => {
-    if (!id || !user) return null;
-    return query(
-      collection(firestore, 'properties'),
-      where('propertyId', '==', id),
-      where('landlordId', '==', user.uid)
-    );
-  }, [firestore, id, user]);
-
-  const { data: properties, isLoading: isPropertyLoading } = useCollection<Property>(propertyQuery);
-  const property = properties?.[0];
+  const propertyRef = useMemoFirebase(() => id ? doc(firestore, 'properties', id) : null, [firestore, id]);
+  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
   
   const landlordRef = useMemoFirebase(() => property?.landlordId ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
   const { data: landlord, isLoading: isLandlordLoading } = useDoc<UserProfile>(landlordRef);
@@ -61,10 +52,10 @@ export default function LandlordPropertyDetailPage() {
     if (!id) return null;
     return query(collection(firestore, 'rentalApplications'), where('propertyId', '==', id));
   }, [firestore, id]);
-  const { data: rentalRequests, isLoading: areRequestsLoading } = useCollection<RentalRequest>(rentalRequestsQuery);
+  const { data: rentalRequests, isLoading: areRequestsLoading } = useCollection<RentalApplication>(rentalRequestsQuery);
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<RentalRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<RentalApplication | null>(null);
 
   const isLoading = isUserLoading || isPropertyLoading || isLandlordLoading || areRequestsLoading;
 
@@ -73,16 +64,11 @@ export default function LandlordPropertyDetailPage() {
   }
 
   // After loading, if there's no property, it means either it doesn't exist or the user doesn't own it.
-  if (!isPropertyLoading && !property) {
+  if (!property || !user || property.landlordId !== user.uid) {
     notFound();
   }
   
-  if (!property || !user) {
-    // This case should be covered by the one above, but it's good practice for type safety.
-    return notFound();
-  }
-
-  const handleAcceptClick = (request: RentalRequest) => {
+  const handleAcceptClick = (request: RentalApplication) => {
       setSelectedRequest(request);
       setDialogOpen(true);
   };
@@ -266,3 +252,4 @@ export default function LandlordPropertyDetailPage() {
     </div>
   );
 }
+
