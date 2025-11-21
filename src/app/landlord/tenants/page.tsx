@@ -61,43 +61,57 @@ export default function TenantsPage() {
     const fetchTenants = async () => {
       setIsLoading(true);
 
-      // 1. Get all properties for the landlord.
-      const propertiesQuery = query(
-        collection(firestore, 'properties'),
-        where('landlordId', '==', landlord.uid)
+      // 1. Get all active leases for the current landlord.
+      const leasesQuery = query(
+        collection(firestore, 'leaseAgreements'),
+        where('landlordId', '==', landlord.uid),
+        where('status', '==', 'active')
       );
-      const propertiesSnapshot = await getDocs(propertiesQuery);
-      const landlordProperties = propertiesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Property);
+      const leasesSnapshot = await getDocs(leasesQuery);
+      const activeLeases = leasesSnapshot.docs.map(doc => doc.data() as LeaseAgreement);
 
-      // 2. Filter for properties that have a tenant.
-      const occupiedProperties = landlordProperties.filter(p => p.currentTenantId);
-
-      if (occupiedProperties.length === 0) {
+      if (activeLeases.length === 0) {
         setTenantsWithProperties([]);
         setIsLoading(false);
         return;
       }
-      
-      const tenantIds = [...new Set(occupiedProperties.map(p => p.currentTenantId!))];
 
-      // 3. Fetch user data for all tenants in batches.
+      // 2. Get unique tenant and property IDs from the leases.
+      const tenantIds = [...new Set(activeLeases.map(l => l.tenantId))];
+      const propertyIds = [...new Set(activeLeases.map(l => l.propertyId))];
+      
       const usersMap = new Map<string, User>();
-      const userChunks = chunkArray(tenantIds, 30);
-      
-      await Promise.all(userChunks.map(async chunk => {
-        const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-        const usersSnapshot = await getDocs(usersQuery);
-        usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-      }));
+      const propertiesMap = new Map<string, Property>();
 
-      // 4. Combine property and tenant data.
-      const tenantData = occupiedProperties.map(property => {
-        const tenant = usersMap.get(property.currentTenantId!);
-        if (!tenant) return null; // Tenant data not found, skip.
+      // 3. Fetch user data for tenants.
+      if (tenantIds.length > 0) {
+        const userChunks = chunkArray(tenantIds, 30);
+        await Promise.all(userChunks.map(async chunk => {
+          const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+          const usersSnapshot = await getDocs(usersQuery);
+          usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+        }));
+      }
+
+      // 4. Fetch property data.
+      if (propertyIds.length > 0) {
+         const propertyChunks = chunkArray(propertyIds, 30);
+         await Promise.all(propertyChunks.map(async chunk => {
+            const propertiesQuery = query(collection(firestore, 'properties'), where('id', 'in', chunk));
+            const propertiesSnapshot = await getDocs(propertiesQuery);
+            propertiesSnapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+        }));
+      }
+      
+      // 5. Combine the data.
+      const combinedData = activeLeases.map(lease => {
+        const tenant = usersMap.get(lease.tenantId);
+        const property = propertiesMap.get(lease.propertyId);
+        if (!tenant || !property) return null;
         return { tenant, property };
       }).filter((item): item is TenantWithProperty => item !== null);
-
-      setTenantsWithProperties(tenantData);
+      
+      setTenantsWithProperties(combinedData);
       setIsLoading(false);
     };
 
