@@ -18,8 +18,9 @@ service cloud.firestore {
       allow update, delete: if request.auth.uid == resource.data.landlordId;
     }
 
-    match /rentalApplications/{applicationId} {
-      allow read, write: if get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.landlordId == request.auth.uid || request.auth.uid == resource.data.tenantId;
+    match /rentalApplications/{rentalApplicationId} {
+        allow read, write: if get(/databases/$(database)/documents/properties/$(request.resource.data.propertyId)).data.landlordId == request.auth.uid || request.auth.uid == request.resource.data.tenantId;
+        allow list: if request.auth.uid == request.query.landlordId || request.auth.uid == request.query.tenantId;
     }
 
     match /leaseAgreements/{leaseId} {
@@ -37,7 +38,10 @@ service cloud.firestore {
     }
 
     match /transactions/{transactionId} {
-      allow read, write: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
+      // Allow landlords and tenants to read/write their own transactions
+      allow get, update, delete, create: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
+      // Allow landlords and tenants to list transactions they are a part of
+      allow list: if request.query.where[0][2] == request.auth.uid;
     }
   }
 }

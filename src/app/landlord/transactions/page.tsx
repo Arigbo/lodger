@@ -98,26 +98,23 @@ export default function TransactionsPage() {
       const usersMap = new Map<string, User>();
       const propertiesMap = new Map<string, Property>();
       
-      const userChunks = chunkArray(tenantIds, 30);
-      const propertyChunks = chunkArray(propertyIds, 30);
+      if (tenantIds.length > 0) {
+        const userChunks = chunkArray(tenantIds, 30);
+        for (const chunk of userChunks) {
+            const userQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+            const userSnapshots = await getDocs(userQuery);
+            userSnapshots.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+        }
+      }
 
-      const userPromises = userChunks.map(chunk => 
-        getDocs(query(collection(firestore, 'users'), where(documentId(), 'in', chunk)))
-      );
-      
-      const propertyPromises = propertyChunks.map(chunk =>
-        getDocs(query(collection(firestore, 'properties'), where(documentId(), 'in', chunk)))
-      );
-
-      const userSnapshots = await Promise.all(userPromises);
-      userSnapshots.forEach(snapshot => {
-        snapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-      });
-
-      const propertySnapshots = await Promise.all(propertyPromises);
-      propertySnapshots.forEach(snapshot => {
-        snapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
-      });
+      if (propertyIds.length > 0) {
+        const propertyChunks = chunkArray(propertyIds, 30);
+        for (const chunk of propertyChunks) {
+            const propertyQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
+            const propertySnapshots = await getDocs(propertyQuery);
+            propertySnapshots.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+        }
+      }
       
       const finalTransactions = allTransactions.map(t => ({
         transaction: t,
@@ -396,4 +393,3 @@ export default function TransactionsPage() {
   );
 }
 
-    
