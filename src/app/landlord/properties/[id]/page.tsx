@@ -27,9 +27,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import LeaseGenerationDialog from '@/components/lease-generation-dialog';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
-import { doc, collection, query, where } from 'firebase/firestore';
+import { doc, collection, query, where, addDoc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { addDoc } from 'firebase/firestore';
 import Loading from '@/app/loading';
 
 
@@ -50,7 +49,8 @@ export default function LandlordPropertyDetailPage() {
 
   const rentalRequestsQuery = useMemoFirebase(() => {
     if (!id) return null;
-    return query(collection(firestore, 'rentalApplications'), where('propertyId', '==', id));
+    // Correctly query the sub-collection
+    return collection(firestore, 'properties', id, 'rentalApplications');
   }, [firestore, id]);
   const { data: rentalRequests, isLoading: areRequestsLoading } = useCollection<RentalApplication>(rentalRequestsQuery);
 
@@ -63,8 +63,8 @@ export default function LandlordPropertyDetailPage() {
     return <Loading />;
   }
 
-  // After loading, if there's no property, it means either it doesn't exist or the user doesn't own it.
-  if (!property || !user || property.landlordId !== user.uid) {
+  // Authorization Check: Wait for data to load, then verify ownership.
+  if (!isPropertyLoading && (!property || (user && property.landlordId !== user.uid))) {
     notFound();
   }
   
@@ -74,10 +74,9 @@ export default function LandlordPropertyDetailPage() {
   };
 
   const handleLeaseSigned = async () => {
-      if(selectedRequest && property.leaseTemplate && landlord) {
-        // Here you would:
+      if(selectedRequest && property?.leaseTemplate && landlord) {
         // 1. Update the rental request to 'approved'
-        const requestRef = doc(firestore, 'rentalApplications', selectedRequest.id);
+        const requestRef = doc(firestore, 'properties', property.id, 'rentalApplications', selectedRequest.id);
         updateDocumentNonBlocking(requestRef, { status: 'approved' });
         
         // 2. Update the property to 'occupied' and set the tenant ID
@@ -85,7 +84,7 @@ export default function LandlordPropertyDetailPage() {
         const leaseStartDate = new Date().toISOString();
         updateDocumentNonBlocking(propRef, { status: 'occupied', currentTenantId: selectedRequest.userId, leaseStartDate });
 
-        // 3. Create a new lease agreement document
+        // 3. Create a new lease agreement document in the top-level collection
         const leaseCollectionRef = collection(firestore, 'leaseAgreements');
         await addDoc(leaseCollectionRef, {
             propertyId: property.id,
@@ -102,11 +101,17 @@ export default function LandlordPropertyDetailPage() {
   };
 
   const handleDeclineClick = (requestId: string) => {
-     const requestRef = doc(firestore, 'rentalApplications', requestId);
+     if (!property) return;
+     const requestRef = doc(firestore, 'properties', property.id, 'rentalApplications', requestId);
      updateDocumentNonBlocking(requestRef, { status: 'declined' });
   }
   
   const applicantForDialog = selectedRequest ? rentalRequests?.find(r => r.id === selectedRequest.id) : null;
+
+  // This check ensures property is not null before rendering. It's redundant due to the notFound() call but is good practice.
+  if (!property) {
+      return <Loading />;
+  }
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -252,4 +257,3 @@ export default function LandlordPropertyDetailPage() {
     </div>
   );
 }
-
