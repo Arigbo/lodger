@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon } from "lucide-react";
+import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon, Building } from "lucide-react";
 import type { Property, UserProfile, PropertyReview, ImagePlaceholder } from "@/lib/definitions";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
@@ -66,7 +66,18 @@ export default function PropertyDetailPage() {
     }
 
     if (!property) {
-        notFound();
+        return (
+            <div className="flex flex-col items-center justify-center text-center py-20">
+                <div className="rounded-full bg-secondary p-4">
+                    <Building className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h1 className="mt-6 text-2xl font-bold">Property Not Found</h1>
+                <p className="mt-2 text-muted-foreground">The property you are looking for does not exist or is no longer available.</p>
+                <Button asChild className="mt-6">
+                    <Link href="/student/properties">Browse Other Properties</Link>
+                </Button>
+            </div>
+        );
     }
 
     const images: ImagePlaceholder[] = property?.images?.map((url, i) => ({

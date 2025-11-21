@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { BedDouble, Bath, Ruler, Check, X, Pencil, User } from 'lucide-react';
+import { BedDouble, Bath, Ruler, Check, X, Pencil, User, Building } from 'lucide-react';
 import type { Property, UserProfile, RentalApplication } from '@/lib/definitions';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -62,9 +62,20 @@ export default function LandlordPropertyDetailPage() {
     return <Loading />;
   }
 
-  // Authorization Check: Wait for data to load, then verify ownership.
-  if (!isPropertyLoading && (!property || (user && property.landlordId !== user.uid))) {
-    notFound();
+  // Authorization Check & Not Found
+  if (!property || (user && property.landlordId !== user.uid)) {
+     return (
+        <div className="flex flex-col items-center justify-center text-center py-20">
+            <div className="rounded-full bg-secondary p-4">
+                <Building className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <h1 className="mt-6 text-2xl font-bold">Property Not Found</h1>
+            <p className="mt-2 text-muted-foreground">The property you are looking for does not exist or you do not have permission to view it.</p>
+            <Button asChild className="mt-6">
+                <Link href="/landlord/properties">Back to My Properties</Link>
+            </Button>
+        </div>
+    );
   }
   
   const handleAcceptClick = (request: RentalApplication) => {
@@ -105,11 +116,6 @@ export default function LandlordPropertyDetailPage() {
      if (!property) return;
      const requestRef = doc(firestore, 'rentalApplications', requestId);
      updateDocumentNonBlocking(requestRef, { status: 'declined' });
-  }
-  
-  // This check ensures property is not null before rendering. It's redundant due to the notFound() call but is good practice.
-  if (!property) {
-      return <Loading />;
   }
 
   return (

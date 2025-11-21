@@ -69,7 +69,20 @@ export default function TenantDetailPage() {
   } | null>(null);
 
   useEffect(() => {
-      if (!lease || !property || !tenantTransactions) return;
+      if (!lease || !property || !tenantTransactions) {
+          if (!areLeasesLoading && !isPropertyLoading) {
+            setRentStatus({
+                status: 'Inactive',
+                text: 'No active lease',
+                isLeaseActive: false,
+                isLeaseEndingSoon: false,
+                leaseEndDate: null,
+                leaseDaysRemaining: 0,
+                compassionFee: 0,
+            });
+          }
+          return;
+      };
 
       const today = new Date();
       const leaseStartDate = new Date(lease.startDate);
@@ -124,21 +137,29 @@ export default function TenantDetailPage() {
           compassionFee
       });
 
-  }, [lease, property, tenantTransactions]);
+  }, [lease, property, tenantTransactions, areLeasesLoading, isPropertyLoading]);
 
-  const isLoading = isUserLoading || isTenantLoading || areLeasesLoading || isPropertyLoading || areTransactionsLoading;
+  const isLoading = isUserLoading || isTenantLoading || areLeasesLoading || isPropertyLoading || areTransactionsLoading || !rentStatus;
 
   if (isLoading) {
     return <Loading />;
   }
   
   if (!isTenantLoading && !tenant) {
-    notFound();
+    return (
+        <div className="flex flex-col items-center justify-center text-center py-20">
+            <div className="rounded-full bg-secondary p-4">
+                <UserIcon className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <h1 className="mt-6 text-2xl font-bold">Tenant Not Found</h1>
+            <p className="mt-2 text-muted-foreground">The user you are looking for does not exist or their profile could not be loaded.</p>
+            <Button asChild className="mt-6">
+                <Link href="/landlord/tenants">Back to All Tenants</Link>
+            </Button>
+        </div>
+    );
   }
 
-  if (!tenant) {
-    return <Loading />;
-  }
 
   return (
     <div className="space-y-8">
