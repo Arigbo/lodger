@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { notFound, usePathname, useParams, useRouter } from "next/navigation";
@@ -11,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon } from "lucide-react";
-import type { Property, User, Review, ImagePlaceholder } from "@/lib/definitions";
+import type { Property, UserProfile, PropertyReview, ImagePlaceholder } from "@/lib/definitions";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import Link from "next/link";
@@ -53,10 +54,10 @@ export default function PropertyDetailPage() {
     const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
     
     const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
-    const { data: landlord, isLoading: isLandlordLoading } = useDoc<User>(landlordRef);
+    const { data: landlord, isLoading: isLandlordLoading } = useDoc<UserProfile>(landlordRef);
 
     const reviewsQuery = useMemoFirebase(() => id ? query(collection(firestore, 'propertyReviews'), where('propertyId', '==', id)) : null, [firestore, id]);
-    const { data: reviews, isLoading: areReviewsLoading } = useCollection<Review>(reviewsQuery);
+    const { data: reviews, isLoading: areReviewsLoading } = useCollection<PropertyReview>(reviewsQuery);
     
     const isLoading = isPropertyLoading || isLandlordLoading || areReviewsLoading || isUserLoading;
 
@@ -242,8 +243,8 @@ export default function PropertyDetailPage() {
                                 </Avatar>
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <p className="font-semibold">{review.userId}</p>
-                                        <p className="text-xs text-muted-foreground">{new Date(review.date).toLocaleDateString()}</p>
+                                        <p className="font-semibold">{review.tenantId}</p>
+                                        <p className="text-xs text-muted-foreground">{new Date(review.reviewDate).toLocaleDateString()}</p>
                                     </div>
                                     <div className="flex items-center gap-0.5 mt-1">
                                         {[...Array(5)].map((_, i) => <Star key={i} className={cn("h-4 w-4", i < review.rating ? "text-accent fill-current" : "text-muted-foreground")} />)}

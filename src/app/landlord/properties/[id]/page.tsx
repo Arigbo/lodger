@@ -107,8 +107,6 @@ export default function LandlordPropertyDetailPage() {
      updateDocumentNonBlocking(requestRef, { status: 'declined' });
   }
   
-  const applicantForDialog = selectedRequest ? rentalRequests?.find(r => r.id === selectedRequest.id) : null;
-
   // This check ensures property is not null before rendering. It's redundant due to the notFound() call but is good practice.
   if (!property) {
       return <Loading />;

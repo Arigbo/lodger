@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -70,11 +71,14 @@ export default function RentalRequestsPage() {
         }
 
         const requestChunks = chunkArray(propertyIds, 30);
-        const requestPromises = requestChunks.map(chunk => 
-            getDocs(query(collection(firestore, 'rentalApplications'), where('propertyId', 'in', chunk)))
-        );
-        const requestSnapshots = await Promise.all(requestPromises);
-        const allRequests = requestSnapshots.flatMap(snapshot => snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RentalApplication)));
+        let allRequests: RentalApplication[] = [];
+
+        for (const chunk of requestChunks) {
+          const requestsQuery = query(collection(firestore, 'rentalApplications'), where('propertyId', 'in', chunk));
+          const requestsSnapshot = await getDocs(requestsQuery);
+          const chunkRequests = requestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RentalApplication));
+          allRequests = [...allRequests, ...chunkRequests];
+        }
 
         const userIds = [...new Set(allRequests.map(req => req.tenantId))];
 
@@ -85,15 +89,13 @@ export default function RentalRequestsPage() {
         }
         
         const userChunks = chunkArray(userIds, 30);
-        const userPromises = userChunks.map(chunk =>
-            getDocs(query(collection(firestore, 'users'), where(documentId(), 'in', chunk)))
-        );
-        
-        const userSnapshots = await Promise.all(userPromises);
         const usersMap = new Map<string, User>();
-        userSnapshots.forEach(snapshot => {
-            snapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-        });
+        
+        for (const chunk of userChunks) {
+          const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+          const userSnapshots = await getDocs(usersQuery);
+          userSnapshots.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+        }
 
         const finalRequests = allRequests.map(request => ({
             request,

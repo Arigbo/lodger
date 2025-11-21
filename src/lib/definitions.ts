@@ -17,7 +17,6 @@ export type UserProfile = {
 
 export type Property = {
   id: string;
-  propertyId: string; // Explicitly adding propertyId to match database
   title: string;
   description: string;
   price: number;
@@ -44,19 +43,19 @@ export type Property = {
   leaseTemplate?: string;
 };
 
-export type Review = {
+export type PropertyReview = {
   id: string;
   propertyId: string;
-  userId: string;
+  tenantId: string;
   rating: number; // 1-5
   comment: string;
-  date: string; // ISO 8601 date string
+  reviewDate: string; // ISO 8601 date string
 };
 
 export type RentalApplication = {
   id: string;
   propertyId: string;
-  userId: string;
+  tenantId: string;
   status: 'pending' | 'approved' | 'declined';
   messageToLandlord: string;
   applicationDate: string; // ISO 8601 date string
@@ -129,7 +128,3 @@ export type Message = {
 export const amenities = ["Furnished", "Wi-Fi", "In-unit Laundry", "Pet Friendly", "Parking Spot", "Gym Access", "Rooftop Access", "Dishwasher", "All Utilities Included", "Secure Entry", "Private Yard"];
 
     
-    
-
-    
-
