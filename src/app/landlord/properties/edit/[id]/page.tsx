@@ -30,8 +30,8 @@ import { Separator } from '@/components/ui/separator';
 import { amenities as allAmenities } from '@/lib/definitions';
 import { useEffect, useState } from 'react';
 import type { Property } from '@/lib/definitions';
-import { useUser, useFirestore, useCollection, useMemoFirebase, useFirebaseApp } from '@/firebase';
-import { doc, updateDoc, collection, query, where } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebaseApp } from '@/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import Image from 'next/image';
@@ -67,17 +67,8 @@ export default function EditPropertyPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const propertyQuery = useMemoFirebase(() => {
-    if (!id || !user) return null;
-    return query(
-      collection(firestore, 'properties'), 
-      where('propertyId', '==', id),
-      where('landlordId', '==', user.uid)
-    );
-  }, [firestore, id, user]);
-
-  const { data: properties, isLoading: isPropertyLoading, refetch } = useCollection<Property>(propertyQuery);
-  const property = properties?.[0];
+  const propertyRef = useMemoFirebase(() => id ? doc(firestore, 'properties', id) : null, [firestore, id]);
+  const { data: property, isLoading: isPropertyLoading, refetch } = useDoc<Property>(propertyRef);
 
   const [isUploading, setIsUploading] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -130,8 +121,7 @@ export default function EditPropertyPage() {
   }
 
   async function handleImageUpload(files: FileList | null) {
-      if (!files || !property) return;
-      const propertyRef = doc(firestore, 'properties', property.id);
+      if (!files || !property || !propertyRef) return;
       setIsUploading(true);
 
       const newImageUrls: string[] = [];
@@ -161,8 +151,7 @@ export default function EditPropertyPage() {
   }
 
   async function handleRemoveImage(imageUrl: string) {
-    if (!property) return;
-    const propertyRef = doc(firestore, 'properties', property.id);
+    if (!property || !propertyRef) return;
     if (!property?.images) return;
 
     const isConfirmed = window.confirm("Are you sure you want to delete this image? This cannot be undone.");
@@ -185,8 +174,7 @@ export default function EditPropertyPage() {
   }
 
   async function onSubmit(values: FormValues) {
-    if (!property) return;
-    const propertyRef = doc(firestore, 'properties', property.id);
+    if (!property || !propertyRef) return;
 
     try {
         const updatedData = {
@@ -224,6 +212,8 @@ export default function EditPropertyPage() {
         })
     }
   }
+  
+  if(!property) return <Loading />;
 
   return (
     <Card>

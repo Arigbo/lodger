@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState } from 'react';
@@ -14,7 +13,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { initiateEmailSignIn, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { initiateEmailSignIn, errorEmitter, FirestorePermissionError, initiateGoogleSignIn } from '@/firebase';
 import { useAuth, useFirestore } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -38,15 +37,11 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
     });
 
     const { isSubmitting } = form.formState;
-
-    const onSubmit = async (values: LoginFormValues) => {
+    
+    const handleSuccessfulLogin = async (userId: string) => {
+        const userDocRef = doc(firestore, 'users', userId);
         try {
-            const userCredential = await initiateEmailSignIn(auth, values.email, values.password);
-            const user = userCredential.user;
-
-            const userDocRef = doc(firestore, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
-
             if (userDoc.exists()) {
                 const userData = userDoc.data();
                 if (userData.role === 'landlord') {
@@ -55,44 +50,54 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
                     router.push('/student');
                 }
             } else {
-                // Fallback for users without a document, though this is unlikely
-                router.push('/student');
+                 toast({
+                    variant: "destructive",
+                    title: "User data not found",
+                    description: "We couldn't find your user profile information.",
+                });
+                // Fallback, or redirect to a profile creation page
+                router.push('/student/properties');
             }
+        } catch (error) {
+             console.error("Error fetching user document:", error);
+             const permissionError = new FirestorePermissionError({ path: userDocRef.path, operation: 'get' });
+             errorEmitter.emit('permission-error', permissionError);
+        }
+    }
+
+    const onSubmit = async (values: LoginFormValues) => {
+        try {
+            const userCredential = await initiateEmailSignIn(auth, values.email, values.password);
+            await handleSuccessfulLogin(userCredential.user.uid);
         } catch (error: any) {
             console.error("Sign-in error:", error);
-
-            if (error.code && error.code.startsWith('auth/')) {
-                 let errorMessage = "An unknown error occurred. Please try again.";
-                switch (error.code) {
-                    case 'auth/invalid-email':
-                        errorMessage = "Please enter a valid email address.";
-                        break;
-                    case 'auth/user-disabled':
-                        errorMessage = "This user account has been disabled.";
-                        break;
-                    case 'auth/user-not-found':
-                    case 'auth/wrong-password':
-                    case 'auth/invalid-credential':
-                        errorMessage = "Invalid email or password. Please try again.";
-                        break;
-                    default:
-                        errorMessage = error.message;
-                        break;
-                }
-                toast({
-                    variant: "destructive",
-                    title: "Sign In Failed",
-                    description: errorMessage,
-                });
-            } else {
-                // This is likely a Firestore security rule error during getDoc
-                const permissionError = new FirestorePermissionError({
-                    path: `users/${auth.currentUser?.uid}`, // Approximate path
-                    operation: 'get',
-                });
-                errorEmitter.emit('permission-error', permissionError);
+             let errorMessage = "An unknown error occurred. Please try again.";
+            switch (error.code) {
+                case 'auth/invalid-email':
+                    errorMessage = "Please enter a valid email address.";
+                    break;
+                case 'auth/user-disabled':
+                    errorMessage = "This user account has been disabled.";
+                    break;
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential':
+                    errorMessage = "Invalid email or password. Please try again.";
+                    break;
+                default:
+                    errorMessage = error.message;
+                    break;
             }
+            toast({
+                variant: "destructive",
+                title: "Sign In Failed",
+                description: errorMessage,
+            });
         }
+    };
+    
+    const handleGoogleSignIn = () => {
+        initiateGoogleSignIn(auth, userType, handleSuccessfulLogin, toast);
     };
 
     return (
@@ -131,7 +136,10 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
                 />
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Sign In as {userType.charAt(0).toUpperCase() + userType.slice(1)}
+                    Sign In with Email
+                </Button>
+                 <Button type="button" variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isSubmitting}>
+                    Sign In with Google
                 </Button>
             </form>
         </Form>
@@ -140,10 +148,9 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
 
 export default function LoginPage() {
   const [userType, setUserType] = useState<'student' | 'landlord'>('student');
-  const auth = useAuth();
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center bg-background px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-3xl">Welcome Back</CardTitle>

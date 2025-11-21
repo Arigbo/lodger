@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import { notFound, useParams } from 'next/navigation';
-import type { User, Property, Transaction } from '@/lib/definitions';
+import type { User, Property, Transaction, LeaseAgreement } from '@/lib/definitions';
 import {
   Card,
   CardContent,
@@ -14,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Phone, Mail, AlertTriangle, Coins, RefreshCcw, Pencil, User as UserIcon } from 'lucide-react';
+import { Phone, Mail, AlertTriangle, Coins, Pencil, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { add, format, differenceInDays, isPast, isBefore, differenceInMonths } from 'date-fns';
 import { cn, formatPrice } from '@/lib/utils';
@@ -43,12 +42,19 @@ export default function TenantDetailPage() {
   const { user: currentUser, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  const tenantRef = useMemoFirebase(() => doc(firestore, 'users', id), [firestore, id]);
+  const tenantRef = useMemoFirebase(() => id ? doc(firestore, 'users', id) : null, [firestore, id]);
   const { data: tenant, isLoading: isTenantLoading } = useDoc<User>(tenantRef);
 
-  const rentedPropertiesQuery = useMemoFirebase(() => tenant ? query(collection(firestore, 'properties'), where('currentTenantId', '==', tenant.id)) : null, [tenant, firestore]);
-  const { data: rentedProperties, isLoading: arePropertiesLoading } = useCollection<Property>(rentedPropertiesQuery);
+  const leaseQuery = useMemoFirebase(() => {
+    if (!tenant) return null;
+    return query(collection(firestore, 'leaseAgreements'), where('tenantId', '==', tenant.id), where('status', '==', 'active'));
+  }, [tenant, firestore]);
+  const { data: leases, isLoading: areLeasesLoading } = useCollection<LeaseAgreement>(leaseQuery);
+  const lease = leases?.[0];
 
+  const propertyRef = useMemoFirebase(() => lease ? doc(firestore, 'properties', lease.propertyId) : null, [lease, firestore]);
+  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
+  
   const transactionsQuery = useMemoFirebase(() => tenant ? query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.id)) : null, [tenant, firestore]);
   const { data: tenantTransactions, isLoading: areTransactionsLoading } = useCollection<Transaction>(transactionsQuery);
 
@@ -62,23 +68,18 @@ export default function TenantDetailPage() {
       compassionFee: number;
   } | null>(null);
 
-  const property = rentedProperties?.[0];
-
   useEffect(() => {
-      if (!rentedProperties || !tenantTransactions) return;
+      if (!lease || !property || !tenantTransactions) return;
 
-      const property = rentedProperties[0];
-      if (!property) return;
-      
       const today = new Date();
-      const leaseStartDate = property.leaseStartDate ? new Date(property.leaseStartDate) : new Date();
-      const leaseEndDate = add(leaseStartDate, { years: 1 });
+      const leaseStartDate = new Date(lease.startDate);
+      const leaseEndDate = new Date(lease.endDate);
       
       const lastRentPayment = tenantTransactions
         .filter(t => t.type === 'Rent' && t.status === 'Completed')
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
-      const isLeaseActive = isPast(leaseStartDate) && isBefore(today, leaseEndDate);
+      const isLeaseActive = lease.status === 'active';
       
       let nextRentDueDate: Date;
       let status: 'Paid' | 'Due' | 'Inactive' = 'Inactive';
@@ -123,23 +124,20 @@ export default function TenantDetailPage() {
           compassionFee
       });
 
-  }, [rentedProperties, tenantTransactions]);
+  }, [lease, property, tenantTransactions]);
 
-  const isLoading = isUserLoading || isTenantLoading || arePropertiesLoading || areTransactionsLoading;
+  const isLoading = isUserLoading || isTenantLoading || areLeasesLoading || isPropertyLoading || areTransactionsLoading;
 
   if (isLoading) {
     return <Loading />;
   }
   
-  // If, after loading, there is no tenant data for this ID, then it's a 404.
   if (!isTenantLoading && !tenant) {
     notFound();
   }
 
-  // The parent layout already verifies that the currentUser is a landlord.
-  // We just need to make sure the tenant profile exists.
   if (!tenant) {
-    return <Loading />; // Should be caught by the above notFound, but good for safety.
+    return <Loading />;
   }
 
   return (

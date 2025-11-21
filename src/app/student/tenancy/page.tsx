@@ -7,23 +7,47 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import type { Property } from '@/lib/definitions';
+import type { LeaseAgreement, Property } from '@/lib/definitions';
 import { Building } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import PropertyCard from '@/components/property-card';
+import React from 'react';
 
 export default function TenancyDashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  
-  const rentedPropertiesQuery = useMemoFirebase(() => {
+  const [properties, setProperties] = React.useState<Property[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  const leasesQuery = useMemoFirebase(() => {
     if (!user) return null;
-    return query(collection(firestore, 'properties'), where('status', '==', 'occupied'));
+    return query(collection(firestore, 'leaseAgreements'), where('tenantId', '==', user.uid), where('status', '==', 'active'));
   }, [user, firestore]);
   
-  const { data: rentedProperties, isLoading: isPropertiesLoading } = useCollection<Property>(rentedPropertiesQuery);
+  const { data: leases, isLoading: areLeasesLoading } = useCollection<LeaseAgreement>(leasesQuery);
 
-  if (isUserLoading || isPropertiesLoading) {
+  React.useEffect(() => {
+    if (areLeasesLoading || !leases) return;
+
+    const fetchProperties = async () => {
+        if (leases.length === 0) {
+            setProperties([]);
+            setIsLoading(false);
+            return;
+        }
+
+        const propertyIds = leases.map(lease => lease.propertyId);
+        const propertiesQuery = query(collection(firestore, 'properties'), where('id', 'in', propertyIds));
+        const propertySnapshots = await getDocs(propertiesQuery);
+        const fetchedProperties = propertySnapshots.docs.map(doc => doc.data() as Property);
+        setProperties(fetchedProperties);
+        setIsLoading(false);
+    }
+    fetchProperties();
+  }, [leases, areLeasesLoading, firestore]);
+
+
+  if (isUserLoading || isLoading) {
       return (
         <div className="space-y-6">
             <div className="flex flex-col items-center justify-center text-center">
@@ -51,9 +75,9 @@ export default function TenancyDashboardPage() {
             <p className="text-muted-foreground">Manage your current rental agreements and payments.</p>
         </div>
 
-        {rentedProperties && rentedProperties.length > 0 ? (
+        {properties && properties.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {rentedProperties.map(property => (
+                {properties.map(property => (
                      <Link key={property.id} href={`/student/tenancy/${property.id}`} className="group block">
                         <PropertyCard property={property} as="div" />
                      </Link>

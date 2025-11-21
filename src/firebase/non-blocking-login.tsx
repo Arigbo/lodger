@@ -12,7 +12,6 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getSdks } from '.';
 import type { Toast } from '@/hooks/use-toast';
-import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
 /** Initiate anonymous sign-in (non-blocking). */
 export function initiateAnonymousSignIn(authInstance: Auth): void {
@@ -33,36 +32,53 @@ export function initiateEmailSignIn(
   return signInWithEmailAndPassword(authInstance, email, password);
 }
 
-/** Initiate Google sign-in (non-blocking). */
-export function initiateGoogleSignIn(auth: Auth, userType: 'student' | 'landlord'): void {
+/** Initiate Google sign-in. */
+export function initiateGoogleSignIn(
+  auth: Auth, 
+  userType: 'student' | 'landlord',
+  onSuccess: (uid: string) => void,
+  toast: (options: any) => void
+): void {
   const provider = new GoogleAuthProvider();
   signInWithPopup(auth, provider)
     .then(async (result) => {
       const user = result.user;
       const { firestore } = getSdks(auth.app);
       const userDocRef = doc(firestore, 'users', user.uid);
-      const userDoc = await getDoc(userDocRef);
-
-      if (!userDoc.exists()) {
-        const newUser = {
-          id: user.uid,
-          name: user.displayName || 'Anonymous',
-          email: user.email,
-          role: userType,
-          profileImageUrl: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
-        };
-        await setDoc(userDocRef, newUser);
-      }
       
-      if(userType === 'landlord'){
-        window.location.href = '/landlord';
-      } else {
-        window.location.href = '/student';
+      try {
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+          const newUser = {
+            id: user.uid,
+            name: user.displayName || 'Anonymous',
+            email: user.email,
+            role: userType,
+            profileImageUrl: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
+          };
+          await setDoc(userDocRef, newUser);
+        }
+        
+        onSuccess(user.uid);
+
+      } catch (error) {
+        console.error("Error during Google sign-in user setup:", error);
+        toast({
+            variant: "destructive",
+            title: "Sign In Failed",
+            description: "Could not set up your user profile. Please try again.",
+        });
       }
     })
     .catch((error) => {
       const errorCode = error.code;
       const errorMessage = error.message;
       console.error(`Google Sign-In Error (${errorCode}):`, errorMessage);
+      toast({
+          variant: "destructive",
+          title: "Google Sign-In Failed",
+          description: errorMessage,
+      });
     });
 }
