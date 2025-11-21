@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { notFound, useParams } from 'next/navigation';
@@ -80,7 +81,7 @@ export default function LandlordPropertyDetailPage() {
         return;
       }
       
-      const applicantIds = [...new Set(rentalRequests.map(r => r.tenantId))];
+      const applicantIds = [...new Set(rentalRequests.map(r => r.tenantId))].filter(Boolean); // Filter out any undefined/null IDs
       const usersMap = new Map<string, UserProfile>();
 
       if (applicantIds.length > 0) {
@@ -94,7 +95,7 @@ export default function LandlordPropertyDetailPage() {
 
       const finalRequests = rentalRequests.map(request => ({
         request,
-        applicant: usersMap.get(request.tenantId) || null
+        applicant: request.tenantId ? usersMap.get(request.tenantId) || null : null
       }));
       
       setAggregatedRequests(finalRequests);
