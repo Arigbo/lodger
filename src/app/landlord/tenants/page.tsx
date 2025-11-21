@@ -78,7 +78,7 @@ export default function TenantsPage() {
         return;
       }
       
-      const tenantIds = occupiedProperties.map(p => p.currentTenantId!);
+      const tenantIds = [...new Set(occupiedProperties.map(p => p.currentTenantId!))];
 
       // 3. Fetch user data for all tenants in batches.
       const usersMap = new Map<string, User>();
@@ -144,7 +144,7 @@ export default function TenantsPage() {
             </TableHeader>
             <TableBody>
               {tenantsWithProperties.map(({ tenant, property }) => (
-                <TableRow key={tenant.id}>
+                <TableRow key={`${tenant.id}-${property.id}`}>
                   <TableCell>
                      <Link href={`/landlord/tenants/${tenant.id}`} className="hover:underline">
                         <div className="flex items-center gap-3">
