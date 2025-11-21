@@ -24,7 +24,8 @@ service cloud.firestore {
     }
 
     match /leaseAgreements/{leaseId} {
-      allow read, write: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
+      allow get, update, create, delete: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
+      allow list: if request.query.where[0][2] == request.auth.uid;
     }
 
     match /propertyReviews/{reviewId} {

@@ -24,7 +24,7 @@ import type { LeaseAgreement, User, Property } from '@/lib/definitions';
 import { FileText, Signature } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 
 
 type AggregatedLease = {
@@ -58,8 +58,8 @@ export default function StudentLeasesPage() {
       const landlordIds = [...new Set(studentLeases.map(l => l.landlordId))];
       const propertyIds = [...new Set(studentLeases.map(l => l.propertyId))];
 
-      const usersQuery = query(collection(firestore, 'users'), where('id', 'in', landlordIds));
-      const propertiesQuery = query(collection(firestore, 'properties'), where('id', 'in', propertyIds));
+      const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', landlordIds));
+      const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', propertyIds));
 
       const [usersSnapshot, propertiesSnapshot] = await Promise.all([
         getDocs(usersQuery),

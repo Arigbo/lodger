@@ -23,7 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import type { LeaseAgreement, User, Property } from '@/lib/definitions';
 import { FileText } from 'lucide-react';
 import Link from 'next/link';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 
 type AggregatedLease = {
