@@ -19,12 +19,11 @@ import { Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from 'l
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { useAuth, useFirestore, useCollection, useMemoFirebase } from '@/firebase/provider';
+import { useAuth, useFirestore } from '@/firebase/provider';
 import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { initiateEmailSignUp, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { countries, Country } from '@/lib/countries';
-import type { Property } from '@/lib/definitions';
 
 
 const formSchema = z.object({
@@ -98,7 +97,10 @@ export default function SignupPage() {
     }
 
     const checkSchool = async () => {
+        if (!firestore) return;
         const propertiesRef = collection(firestore, 'properties');
+        // This is a mock check. In a real app, you might have a dedicated 'schools' collection
+        // or a more efficient way to check for school existence.
         const q = query(propertiesRef, where('location.school', '==', schoolValue));
         const querySnapshot = await getDocs(q);
         setSchoolExists(!querySnapshot.empty);
@@ -150,11 +152,20 @@ export default function SignupPage() {
 
   const prevStep = () => {
      if (currentStep > 1) {
-        setCurrentStep(step => step + 1);
+        setCurrentStep(step => step - 1);
      }
   }
 
   const onSubmit = async (values: FormValues) => {
+    if (!auth || !firestore) {
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: "Firebase is not initialized. Please try again later.",
+        });
+        return;
+    }
+
     try {
         const userCredential = await initiateEmailSignUp(auth, values.email, values.password);
         const user = userCredential.user;
@@ -171,20 +182,23 @@ export default function SignupPage() {
             phone: values.phone || null,
             whatsappUrl: values.whatsappUrl || null,
             twitterUrl: values.twitterUrl || null,
+            bio: ''
         };
         
         const userDocRef = doc(firestore, "users", user.uid);
-        await setDoc(userDocRef, userData).catch((serverError) => {
-            // This is the important part: catching the setDoc specific error
-            const permissionError = new FirestorePermissionError({
-                path: userDocRef.path,
-                operation: 'create',
-                requestResourceData: userData,
+        
+        // Use a non-blocking write with custom error handling
+        await setDoc(userDocRef, userData)
+            .catch((serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: userDocRef.path,
+                    operation: 'create',
+                    requestResourceData: userData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                // Re-throw to ensure the rest of the try block doesn't execute
+                throw permissionError;
             });
-            errorEmitter.emit('permission-error', permissionError);
-            // We re-throw the original error to stop execution flow
-            throw serverError;
-        });
 
         toast({
             title: "Account Created!",
@@ -196,18 +210,20 @@ export default function SignupPage() {
         } else {
             router.push('/student/properties');
         }
-    } catch (error: any) {
-        console.error("Error signing up:", error);
 
-        // This will now only handle auth errors or re-thrown Firestore errors
+    } catch (error: any) {
+        // This will now handle auth errors or re-thrown FirestorePermissionError
         if (error.code === 'auth/email-already-in-use') {
             setError('email', {
                 type: 'manual',
                 message: 'This email address is already in use. Please try another one.',
             });
-            setCurrentStep(2);
-        } else if (!error.name.includes('FirestorePermissionError')) {
-             // Avoid showing a toast for errors we are already handling globally
+            setCurrentStep(2); // Go back to the relevant step
+        } else if (error instanceof FirestorePermissionError) {
+            // The global listener will handle this, so we don't need a toast.
+            console.log("Firestore permission error caught and emitted.");
+        } else {
+            // For other unexpected errors
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong.",
@@ -219,7 +235,7 @@ export default function SignupPage() {
 
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center bg-background px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-3xl">Create an Account</CardTitle>
@@ -245,7 +261,20 @@ export default function SignupPage() {
                                 <FormLabel>I am a...</FormLabel>
                                 <FormControl>
                                 <RadioGroup
-                                    onValueChange={field.onChange}
+                                    onValueChange={(value) => {
+                                        field.onChange(value);
+                                        // Reset conditional fields when user type changes
+                                        form.reset({
+                                            ...form.getValues(),
+                                            userType: value as 'student' | 'landlord',
+                                            phone: '',
+                                            whatsappUrl: '',
+                                            twitterUrl: '',
+                                            country: '',
+                                            state: '',
+                                            school: '',
+                                        });
+                                    }}
                                     defaultValue={field.value}
                                     className="grid grid-cols-2 gap-4"
                                 >
@@ -253,7 +282,7 @@ export default function SignupPage() {
                                     <RadioGroupItem value="student" id="student" className="peer sr-only" />
                                     <Label
                                         htmlFor="student"
-                                        className="flex cursor-pointer flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                                        className="flex h-full cursor-pointer flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                                     >
                                         Student
                                     </Label>
@@ -262,7 +291,7 @@ export default function SignupPage() {
                                     <RadioGroupItem value="landlord" id="landlord" className="peer sr-only" />
                                     <Label
                                         htmlFor="landlord"
-                                        className="flex cursor-pointer flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                                        className="flex h-full cursor-pointer flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                                     >
                                         Landlord
                                     </Label>
@@ -391,7 +420,7 @@ export default function SignupPage() {
                                             <p className="text-sm text-green-600 flex items-center gap-1 mt-1"><CheckCircle2 className="h-4 w-4"/> Great! We have listings near this school.</p>
                                         )}
                                         {schoolExists === false && schoolValue && (
-                                            <p className="text-sm text-amber-600 flex items-center gap-1 mt-1"><AlertCircle className="h-4 w-4"/> We don't have any listings for this school yet, but you can still sign up. Try using our location-based search after creating your account.</p>
+                                            <p className="text-sm text-amber-600 flex items-center gap-1 mt-1"><AlertCircle className="h-4 w-4"/> We don't have any listings for this school yet, but you can still sign up.</p>
                                         )}
                                         <FormMessage />
                                     </FormItem>
@@ -411,7 +440,9 @@ export default function SignupPage() {
                         Next <ArrowRight className="ml-2 h-4 w-4"/>
                         </Button>
                     ) : (
-                        <Button type="submit">Create Account</Button>
+                        <Button type="submit" disabled={form.formState.isSubmitting}>
+                            {form.formState.isSubmitting ? 'Creating Account...' : 'Create Account'}
+                        </Button>
                     )}
                 </div>
             </form>
