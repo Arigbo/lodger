@@ -6,13 +6,23 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import type { LeaseAgreement, Property } from '@/lib/definitions';
 import { Building } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import PropertyCard from '@/components/property-card';
 import React from 'react';
 import Loading from '@/app/loading';
+
+// Helper function to split an array into chunks
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
 
 export default function TenancyDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -22,13 +32,17 @@ export default function TenancyDashboardPage() {
 
   const leasesQuery = useMemoFirebase(() => {
     if (!user) return null;
-    return query(collection(firestore, 'leaseAgreements'), where('tenantId', '==', user.uid), where('status', '==', 'active'));
+    return query(
+      collection(firestore, 'leaseAgreements'), 
+      where('tenantId', '==', user.uid), 
+      where('status', '==', 'active')
+    );
   }, [user, firestore]);
   
   const { data: leases, isLoading: areLeasesLoading } = useCollection<LeaseAgreement>(leasesQuery);
 
   React.useEffect(() => {
-    if (areLeasesLoading || !leases) return;
+    if (areLeasesLoading || !leases || !firestore) return;
 
     const fetchProperties = async () => {
         if (leases.length === 0) {
@@ -38,9 +52,23 @@ export default function TenancyDashboardPage() {
         }
 
         const propertyIds = leases.map(lease => lease.propertyId);
-        const propertiesQuery = query(collection(firestore, 'properties'), where('id', 'in', propertyIds));
-        const propertySnapshots = await getDocs(propertiesQuery);
-        const fetchedProperties = propertySnapshots.docs.map(doc => doc.data() as Property);
+        
+        if (propertyIds.length === 0) {
+            setProperties([]);
+            setIsLoading(false);
+            return;
+        }
+
+        const propertyChunks = chunkArray(propertyIds, 30);
+        const fetchedProperties: Property[] = [];
+        for (const chunk of propertyChunks) {
+            const propertiesQuery = query(collection(firestore, 'properties'), where('id', 'in', chunk));
+            const propertySnapshots = await getDocs(propertiesQuery);
+            propertySnapshots.forEach(doc => {
+                fetchedProperties.push(doc.data() as Property);
+            });
+        }
+        
         setProperties(fetchedProperties);
         setIsLoading(false);
     }
@@ -86,5 +114,3 @@ export default function TenancyDashboardPage() {
     </div>
   );
 }
-
-    
