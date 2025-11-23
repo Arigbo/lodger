@@ -34,11 +34,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import type { User } from '@/lib/definitions';
-import { doc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { useEffect } from 'react';
 import Loading from '@/app/loading';
+import { useToast } from '@/hooks/use-toast';
+import { countries } from '@/lib/countries';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -64,6 +66,7 @@ type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 export default function AccountPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<User>(userDocRef);
@@ -101,11 +104,39 @@ export default function AccountPage() {
   })
 
   function onProfileSubmit(values: ProfileFormValues) {
-    console.log('Profile updated:', values);
+    if (!userDocRef) return;
+
+    const dataToUpdate = {
+        name: values.name,
+        country: values.country,
+        state: values.state,
+        school: values.school,
+    };
+    
+    setDoc(userDocRef, dataToUpdate, { merge: true })
+        .then(() => {
+            toast({
+                title: "Profile Updated",
+                description: "Your profile has been successfully updated.",
+            });
+        })
+        .catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+                path: userDocRef.path,
+                operation: 'update',
+                requestResourceData: dataToUpdate,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
   }
 
   function onPasswordSubmit(values: PasswordFormValues) {
     console.log('Password change request:', values);
+     toast({
+        title: "Feature Not Implemented",
+        description: "Password changes are not yet available.",
+        variant: "destructive"
+    })
   }
 
   if (isUserLoading || isProfileLoading) {
@@ -183,7 +214,11 @@ export default function AccountPage() {
                                     <FormLabel>Country</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl><SelectTrigger><SelectValue placeholder="Select Country" /></SelectTrigger></FormControl>
-                                        <SelectContent><SelectItem value="USA">United States</SelectItem></SelectContent>
+                                        <SelectContent className="max-h-60">
+                                            {countries.map(country => (
+                                                <SelectItem key={country.iso2} value={country.name}>{country.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
                                     </Select>
                                     <FormMessage />
                                 </FormItem>
@@ -192,11 +227,12 @@ export default function AccountPage() {
                                 <FormField control={profileForm.control} name="state" render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>State</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!profileForm.watch('country')}>
                                             <FormControl><SelectTrigger><SelectValue placeholder="Select State" /></SelectTrigger></FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="CA">California</SelectItem>
-                                                <SelectItem value="NY">New York</SelectItem>
+                                            <SelectContent className="max-h-60">
+                                                {countries.find(c => c.name === profileForm.watch('country'))?.states.map(state => (
+                                                    <SelectItem key={state.name} value={state.name}>{state.name}</SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -205,13 +241,9 @@ export default function AccountPage() {
                                  <FormField control={profileForm.control} name="school" render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>School</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Select School" /></SelectTrigger></FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="Urbanville University">Urbanville University</SelectItem>
-                                                <SelectItem value="Metropolis University">Metropolis University</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <FormControl>
+                                            <Input placeholder="Enter school name" {...field} />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}/>
@@ -338,4 +370,3 @@ export default function AccountPage() {
   );
 }
 
-    
