@@ -66,7 +66,6 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
                                 requestResourceData: userData,
                             });
                             errorEmitter.emit('permission-error', permissionError);
-                            throw permissionError; // Re-throw to stop execution
                         });
                     
                     sessionStorage.removeItem('newUserProfile');
