@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import TenancySkeleton from "@/components/tenancy-skeleton";
-import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { doc, collection, query, where, User as FirebaseUser, addDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import Loading from "@/app/loading";
 import type { Metadata } from 'next';
@@ -167,28 +167,32 @@ export default function PropertyDetailPage() {
     const propertyUrl = isClient ? `${window.location.origin}${pathname}` : '';
 
     const handleSendRequest = async () => {
-        if (!user || !landlord) {
+        if (!user || !landlord || !property) {
             toast({
                 variant: "destructive",
-                title: "Not Logged In",
-                description: "You must be logged in to send a rental request.",
+                title: "Login or Data Missing",
+                description: "You must be logged in and property data must be loaded to send a request.",
             });
-            router.push('/auth/login');
+            if (!user) router.push('/auth/login');
             return;
         }
-        try {
-            const rentalRequestsRef = collection(firestore, 'rentalApplications');
-            const newApplicationRef = await addDoc(rentalRequestsRef, {
-                propertyId: property.id,
-                tenantId: user.uid,
-                landlordId: property.landlordId, // Add landlordId for easier querying
-                messageToLandlord: requestMessage,
-                applicationDate: new Date().toISOString(),
-                status: 'pending',
-            });
 
+        const rentalRequestsRef = collection(firestore, 'rentalApplications');
+        const applicationData = {
+            propertyId: property.id,
+            tenantId: user.uid,
+            landlordId: property.landlordId, // Ensure landlordId is included
+            messageToLandlord: requestMessage,
+            applicationDate: new Date().toISOString(),
+            status: 'pending' as const,
+        };
+
+        try {
+            // First, add the rental application
+            const newApplicationRef = await addDoc(rentalRequestsRef, applicationData);
             await updateDoc(newApplicationRef, { id: newApplicationRef.id });
-            
+
+            // Then, send a message to initiate the conversation
             const messagesRef = collection(firestore, 'messages');
             await addDoc(messagesRef, {
                 text: requestMessage || `Hi, I'm interested in renting ${property.title}.`,
@@ -208,11 +212,21 @@ export default function PropertyDetailPage() {
 
         } catch (error) {
             console.error("Error sending rental request:", error);
-            toast({
-                variant: "destructive",
-                title: "Uh oh! Something went wrong.",
-                description: "Could not send your rental request. Please try again later.",
-            });
+            // This is a good place to use the custom error emitter if a permission error is caught
+            if (error instanceof Error && error.message.includes('permission-denied')) {
+                 const permissionError = new FirestorePermissionError({
+                    path: rentalRequestsRef.path,
+                    operation: 'create',
+                    requestResourceData: applicationData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Uh oh! Something went wrong.",
+                    description: "Could not send your rental request. Please try again later.",
+                });
+            }
         }
     };
 
