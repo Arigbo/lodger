@@ -28,6 +28,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc, getDoc } from 'firebase/firestore';
@@ -118,6 +119,7 @@ export default function LandlordPropertiesPage() {
               </TableHeader>
               <TableBody>
                 {propertiesWithTenants.map((property) => {
+                  const isOccupied = property.status === 'occupied';
                   return (
                   <TableRow key={property.id}>
                     <TableCell className="font-medium">
@@ -126,7 +128,7 @@ export default function LandlordPropertiesPage() {
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={property.status === 'occupied' ? 'secondary' : 'default'}>
+                      <Badge variant={isOccupied ? 'secondary' : 'default'}>
                         {property.status}
                       </Badge>
                     </TableCell>
@@ -148,9 +150,28 @@ export default function LandlordPropertiesPage() {
                           <DropdownMenuItem asChild>
                               <Link href={`/landlord/properties/${property.id}`}>View Requests</Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            Delete
-                          </DropdownMenuItem>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                  <div className="relative w-full">
+                                    <DropdownMenuItem 
+                                        className="text-destructive" 
+                                        disabled={isOccupied}
+                                        onSelect={(e) => {
+                                          if (isOccupied) e.preventDefault();
+                                        }}
+                                    >
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </div>
+                              </TooltipTrigger>
+                              {isOccupied && (
+                                <TooltipContent>
+                                  <p>Cannot delete a property with an active tenant.</p>
+                                </TooltipContent>
+                              )}
+                            </Tooltip>
+                          </TooltipProvider>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -180,5 +201,3 @@ export default function LandlordPropertiesPage() {
     </div>
   );
 }
-
-    
