@@ -11,8 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon, Building } from "lucide-react";
-import type { Property, UserProfile, PropertyReview, ImagePlaceholder } from "@/lib/definitions";
+import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon, Building, Users } from "lucide-react";
+import type { Property, UserProfile, PropertyReview, ImagePlaceholder, RentalApplication } from "@/lib/definitions";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import Link from "next/link";
@@ -108,6 +108,9 @@ export default function PropertyDetailPage() {
     const reviewsQuery = useMemoFirebase(() => id ? query(collection(firestore, 'propertyReviews'), where('propertyId', '==', id)) : null, [firestore, id]);
     const { data: reviews, isLoading: areReviewsLoading } = useCollection<PropertyReview>(reviewsQuery);
     
+    const applicationsQuery = useMemoFirebase(() => id ? query(collection(firestore, 'rentalApplications'), where('propertyId', '==', id), where('status', '==', 'pending')) : null, [firestore, id]);
+    const { data: applications, isLoading: areApplicationsLoading } = useCollection<RentalApplication>(applicationsQuery);
+
     // SEO effect for client components
     useEffect(() => {
         if (property) {
@@ -119,7 +122,7 @@ export default function PropertyDetailPage() {
         }
     }, [property]);
 
-    const isLoading = isPropertyLoading || isLandlordLoading || areReviewsLoading || isUserLoading;
+    const isLoading = isPropertyLoading || isLandlordLoading || areReviewsLoading || isUserLoading || areApplicationsLoading;
 
     if (isLoading) {
         return <Loading />;
@@ -445,6 +448,15 @@ export default function PropertyDetailPage() {
                         </Dialog>
                     </CardContent>
                 </Card>
+
+                {applications && applications.length > 0 && (
+                    <Card>
+                        <CardHeader className="flex-row items-center gap-2 space-y-0">
+                            <Users className="h-5 w-5 text-muted-foreground" />
+                            <CardTitle className="text-base font-semibold">{applications.length} Student{applications.length > 1 ? 's' : ''} on Waitlist</CardTitle>
+                        </CardHeader>
+                    </Card>
+                )}
 
                 {landlord && (
                 <Card>
