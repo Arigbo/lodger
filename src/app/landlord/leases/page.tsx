@@ -35,6 +35,7 @@ type AggregatedLease = {
 
 // Helper function to split an array into chunks
 function chunkArray<T>(array: T[], size: number): T[][] {
+  if (array.length === 0) return [];
   const chunks: T[][] = [];
   for (let i = 0; i < array.length; i += size) {
     chunks.push(array.slice(i, i + size));
@@ -55,6 +56,7 @@ export default function LandlordLeasesPage() {
     const fetchLeases = async () => {
       setIsLoading(true);
       
+      // 1. Securely query for leases where the current user is the landlord.
       const leasesQuery = query(collection(firestore, 'leaseAgreements'), where('landlordId', '==', landlord.uid));
       const leasesSnapshot = await getDocs(leasesQuery);
       const landlordLeases = leasesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LeaseAgreement));
@@ -65,34 +67,33 @@ export default function LandlordLeasesPage() {
         return;
       }
 
+      // 2. Get unique IDs for related tenants and properties.
       const tenantIds = [...new Set(landlordLeases.map(l => l.tenantId))].filter(Boolean);
       const propertyIds = [...new Set(landlordLeases.map(l => l.propertyId))].filter(Boolean);
 
       const usersMap = new Map<string, User>();
       const propertiesMap = new Map<string, Property>();
 
+      // 3. Fetch related documents in batches using 'in' queries.
       if (tenantIds.length > 0) {
         const userChunks = chunkArray(tenantIds, 30);
-        const userPromises = userChunks.map(chunk => 
-          getDocs(query(collection(firestore, 'users'), where(documentId(), 'in', chunk)))
-        );
-        const userSnapshots = await Promise.all(userPromises);
-        userSnapshots.forEach(snapshot => {
-          snapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-        });
+        for (const chunk of userChunks) {
+            const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+            const userSnapshots = await getDocs(usersQuery);
+            userSnapshots.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+        }
       }
 
       if (propertyIds.length > 0) {
         const propertyChunks = chunkArray(propertyIds, 30);
-        const propertyPromises = propertyChunks.map(chunk =>
-          getDocs(query(collection(firestore, 'properties'), where(documentId(), 'in', chunk)))
-        );
-        const propertySnapshots = await Promise.all(propertyPromises);
-        propertySnapshots.forEach(snapshot => {
-          snapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
-        });
+        for (const chunk of propertyChunks) {
+            const propertyPromises = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
+            const propertySnapshots = await getDocs(propertyPromises);
+            propertySnapshots.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+        }
       }
       
+      // 4. Aggregate the data.
       const aggregatedData = landlordLeases.map(lease => ({
         lease,
         tenant: usersMap.get(lease.tenantId) || null,
