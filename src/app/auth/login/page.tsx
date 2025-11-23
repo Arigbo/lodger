@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -17,7 +18,8 @@ import { initiateEmailSignIn, errorEmitter, FirestorePermissionError, initiateGo
 import { useAuth, useFirestore } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import type { UserProfile } from '@/lib/definitions';
 
 const loginSchema = z.object({
     email: z.string().email("Please enter a valid email address."),
@@ -38,37 +40,75 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
 
     const { isSubmitting } = form.formState;
     
-    const handleSuccessfulLogin = async (userId: string) => {
+    const handleSuccessfulLogin = async (userId: string, isNewUser: boolean = false) => {
+        if (!firestore) return;
+        
         const userDocRef = doc(firestore, 'users', userId);
+        
         try {
+            let userData: UserProfile | null = null;
             const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                if (userData.role === 'landlord') {
-                    router.push('/landlord');
+
+            if (!userDoc.exists()) {
+                // This is a new user (either from email signup or first time Google login)
+                const newUserProfileDataString = sessionStorage.getItem('newUserProfile');
+                if (newUserProfileDataString) {
+                    userData = JSON.parse(newUserProfileDataString) as UserProfile;
+                    // Ensure the ID matches the authenticated user's ID
+                    userData.id = userId;
+                    
+                    // Non-blocking write with error handling
+                    setDoc(userDocRef, userData)
+                        .catch(serverError => {
+                             const permissionError = new FirestorePermissionError({
+                                path: userDocRef.path,
+                                operation: 'create',
+                                requestResourceData: userData,
+                            });
+                            errorEmitter.emit('permission-error', permissionError);
+                            throw permissionError; // Re-throw to stop execution
+                        });
+                    
+                    sessionStorage.removeItem('newUserProfile');
                 } else {
-                    router.push('/student');
+                    // This case might happen if a user signs up but then clears session storage
+                    // before logging in. We can create a minimal profile.
+                    // For Google sign-in, this logic is handled inside initiateGoogleSignIn.
+                     toast({
+                        variant: "destructive",
+                        title: "User Profile Incomplete",
+                        description: "Could not find profile data. Please contact support.",
+                    });
+                    return; // Stop the login process
                 }
             } else {
-                 toast({
-                    variant: "destructive",
-                    title: "User data not found",
-                    description: "We couldn't find your user profile information.",
-                });
-                // Fallback, or redirect to a profile creation page
-                router.push('/student/properties');
+                // Existing user
+                userData = userDoc.data() as UserProfile;
             }
+            
+            // Redirect based on role
+            if (userData?.role === 'landlord') {
+                router.push('/landlord');
+            } else {
+                router.push('/student');
+            }
+
         } catch (error) {
-             console.error("Error fetching user document:", error);
-             const permissionError = new FirestorePermissionError({ path: userDocRef.path, operation: 'get' });
-             errorEmitter.emit('permission-error', permissionError);
+             console.error("Error during login process:", error);
+             if (!(error instanceof FirestorePermissionError)) {
+                toast({
+                    variant: "destructive",
+                    title: "Login Error",
+                    description: "An unexpected error occurred while fetching your profile.",
+                });
+             }
         }
     }
 
     const onSubmit = async (values: LoginFormValues) => {
         try {
             const userCredential = await initiateEmailSignIn(auth, values.email, values.password);
-            await handleSuccessfulLogin(userCredential.user.uid);
+            await handleSuccessfulLogin(userCredential.user.uid, true);
         } catch (error: any) {
             console.error("Sign-in error:", error);
              let errorMessage = "An unknown error occurred. Please try again.";
@@ -97,6 +137,7 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
     };
     
     const handleGoogleSignIn = () => {
+        // We pass handleSuccessfulLogin as the callback
         initiateGoogleSignIn(auth, userType, handleSuccessfulLogin, toast);
     };
 

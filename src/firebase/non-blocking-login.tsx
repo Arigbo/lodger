@@ -12,6 +12,7 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getSdks } from '.';
 import type { Toast } from '@/hooks/use-toast';
+import { FirestorePermissionError, errorEmitter } from '@/firebase';
 
 /** Initiate anonymous sign-in (non-blocking). */
 export function initiateAnonymousSignIn(authInstance: Auth): void {
@@ -36,7 +37,7 @@ export function initiateEmailSignIn(
 export function initiateGoogleSignIn(
   auth: Auth, 
   userType: 'student' | 'landlord',
-  onSuccess: (uid: string) => void,
+  onSuccess: (uid: string, isNewUser: boolean) => void,
   toast: (options: any) => void
 ): void {
   const provider = new GoogleAuthProvider();
@@ -48,27 +49,33 @@ export function initiateGoogleSignIn(
       
       try {
         const userDoc = await getDoc(userDocRef);
+        const isNewUser = !userDoc.exists();
 
-        if (!userDoc.exists()) {
-          const newUser = {
+        if (isNewUser) {
+          const newUserProfile = {
             id: user.uid,
             name: user.displayName || 'Anonymous',
             email: user.email,
             role: userType,
             profileImageUrl: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
           };
-          await setDoc(userDocRef, newUser);
+          // Temporarily store profile for the login page to handle
+          sessionStorage.setItem('newUserProfile', JSON.stringify(newUserProfile));
         }
         
-        onSuccess(user.uid);
+        onSuccess(user.uid, isNewUser);
 
       } catch (error) {
         console.error("Error during Google sign-in user setup:", error);
-        toast({
-            variant: "destructive",
-            title: "Sign In Failed",
-            description: "Could not set up your user profile. Please try again.",
-        });
+         if (error instanceof FirestorePermissionError) {
+             errorEmitter.emit('permission-error', error);
+         } else {
+            toast({
+                variant: "destructive",
+                title: "Sign In Failed",
+                description: "Could not set up your user profile. Please try again.",
+            });
+         }
       }
     })
     .catch((error) => {

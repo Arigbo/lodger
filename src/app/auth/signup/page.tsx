@@ -67,11 +67,9 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
   const auth = useAuth();
-  const firestore = useFirestore();
   const { toast } = useToast();
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [states, setStates] = useState<{name: string}[]>([]);
-  const [schoolExists, setSchoolExists] = useState<boolean | null>(null);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -87,32 +85,6 @@ export default function SignupPage() {
   const { setError, watch } = form;
   const userType = watch('userType');
   const countryValue = watch('country');
-  const schoolValue = watch('school');
-
-  // School check logic
-  useEffect(() => {
-    if (userType !== 'student' || !schoolValue || schoolValue.length < 3) {
-      setSchoolExists(null);
-      return;
-    }
-
-    const checkSchool = async () => {
-        if (!firestore) return;
-        const propertiesRef = collection(firestore, 'properties');
-        // This is a mock check. In a real app, you might have a dedicated 'schools' collection
-        // or a more efficient way to check for school existence.
-        const q = query(propertiesRef, where('location.school', '==', schoolValue));
-        const querySnapshot = await getDocs(q);
-        setSchoolExists(!querySnapshot.empty);
-    };
-
-    const debounceTimeout = setTimeout(() => {
-      checkSchool();
-    }, 500);
-
-    return () => clearTimeout(debounceTimeout);
-  }, [schoolValue, firestore, userType]);
-
 
   useEffect(() => {
     if (countryValue) {
@@ -157,7 +129,7 @@ export default function SignupPage() {
   }
 
   const onSubmit = async (values: FormValues) => {
-    if (!auth || !firestore) {
+    if (!auth) {
         toast({
             variant: "destructive",
             title: "Uh oh! Something went wrong.",
@@ -168,14 +140,15 @@ export default function SignupPage() {
 
     try {
         const userCredential = await initiateEmailSignUp(auth, values.email, values.password);
-        const user = userCredential.user;
-
-        const userData = {
-            id: user.uid,
+        
+        // Store user details temporarily to pass to the login page
+        // In a real app, you might use a state management library or query params
+        sessionStorage.setItem('newUserProfile', JSON.stringify({
+            id: userCredential.user.uid,
             name: values.name,
             email: values.email,
             role: values.userType,
-            profileImageUrl: `https://i.pravatar.cc/150?u=${user.uid}`, // Placeholder avatar
+            profileImageUrl: `https://i.pravatar.cc/150?u=${userCredential.user.uid}`,
             country: values.country || null,
             state: values.state || null,
             school: values.school || null,
@@ -183,47 +156,23 @@ export default function SignupPage() {
             whatsappUrl: values.whatsappUrl || null,
             twitterUrl: values.twitterUrl || null,
             bio: ''
-        };
+        }));
         
-        const userDocRef = doc(firestore, "users", user.uid);
-        
-        // Use a non-blocking write with custom error handling
-        await setDoc(userDocRef, userData)
-            .catch((serverError) => {
-                const permissionError = new FirestorePermissionError({
-                    path: userDocRef.path,
-                    operation: 'create',
-                    requestResourceData: userData,
-                });
-                errorEmitter.emit('permission-error', permissionError);
-                // Re-throw to ensure the rest of the try block doesn't execute
-                throw permissionError;
-            });
-
         toast({
             title: "Account Created!",
-            description: "Welcome to Urban Nest. Redirecting you now...",
+            description: "Please sign in to continue.",
         });
 
-        if (values.userType === 'landlord') {
-            router.push('/landlord');
-        } else {
-            router.push('/student/properties');
-        }
+        router.push('/auth/login');
 
     } catch (error: any) {
-        // This will now handle auth errors or re-thrown FirestorePermissionError
         if (error.code === 'auth/email-already-in-use') {
             setError('email', {
                 type: 'manual',
                 message: 'This email address is already in use. Please try another one.',
             });
             setCurrentStep(2); // Go back to the relevant step
-        } else if (error instanceof FirestorePermissionError) {
-            // The global listener will handle this, so we don't need a toast.
-            console.log("Firestore permission error caught and emitted.");
         } else {
-            // For other unexpected errors
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong.",
@@ -416,12 +365,6 @@ export default function SignupPage() {
                                         <FormControl>
                                             <Input placeholder="Enter your school name" {...field} />
                                         </FormControl>
-                                        {schoolExists === true && (
-                                            <p className="text-sm text-green-600 flex items-center gap-1 mt-1"><CheckCircle2 className="h-4 w-4"/> Great! We have listings near this school.</p>
-                                        )}
-                                        {schoolExists === false && schoolValue && (
-                                            <p className="text-sm text-amber-600 flex items-center gap-1 mt-1"><AlertCircle className="h-4 w-4"/> We don't have any listings for this school yet, but you can still sign up.</p>
-                                        )}
                                         <FormMessage />
                                     </FormItem>
                                 )}/>
