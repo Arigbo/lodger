@@ -22,8 +22,7 @@ service cloud.firestore {
         allow read: if get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.landlordId == request.auth.uid || request.auth.uid == resource.data.tenantId;
         allow create: if request.auth.uid == request.resource.data.tenantId;
         allow update: if get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.landlordId == request.auth.uid;
-        // Allow querying by landlordId for landlords or tenantId for tenants
-        allow list: if request.auth.uid == request.query.landlordId || request.auth.uid == request.query.tenantId;
+        allow list: if request.auth.uid == request.query.landlordId;
     }
 
     match /leaseAgreements/{leaseId} {
@@ -39,12 +38,13 @@ service cloud.firestore {
 
     match /maintenanceRequests/{requestId} {
       allow get, create, update: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
-      allow list: if request.query.landlordId == request.auth.uid || request.query.tenantId == request.auth.uid;
+      allow list: if request.query.landlordId == request.auth.uid;
     }
 
     match /messages/{messageId} {
       allow read, write: if request.auth.uid in resource.data.participantIds;
-      allow list: if request.auth.uid == request.query.participantIds[0] || request.auth.uid == request.query.participantIds[1];
+      // This rule allows a user to list all conversations they are a part of.
+      allow list: if request.auth.uid in request.query.where.value;
     }
 
     match /transactions/{transactionId} {
