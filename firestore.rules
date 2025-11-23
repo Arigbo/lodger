@@ -26,8 +26,11 @@ service cloud.firestore {
     }
 
     match /leaseAgreements/{leaseId} {
-      allow get, update, delete: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
-      allow create: if request.auth.uid == request.resource.data.landlordId;
+      // Allow single document access if the user is a participant
+      allow get, update, create: if request.auth.uid == request.resource.data.landlordId || request.auth.uid == request.resource.data.tenantId;
+      allow delete: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
+    
+      // Enforce that list queries are filtered by either landlordId or tenantId
       allow list: if (request.query.where.field == "landlordId" && request.query.where.value == request.auth.uid) || (request.query.where.field == "tenantId" && request.query.where.value == request.auth.uid);
     }
 
