@@ -42,7 +42,11 @@ export default function TenancyDashboardPage() {
   const { data: leases, isLoading: areLeasesLoading } = useCollection<LeaseAgreement>(leasesQuery);
 
   React.useEffect(() => {
-    if (areLeasesLoading || !leases || !firestore) return;
+    if (areLeasesLoading) return;
+    if (!leases || !firestore) {
+        setIsLoading(false);
+        return;
+    };
 
     const fetchProperties = async () => {
         if (leases.length === 0) {
