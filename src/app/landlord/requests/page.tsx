@@ -29,6 +29,7 @@ import LeaseGenerationDialog from '@/components/lease-generation-dialog';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, where, getDocs, addDoc, updateDoc, documentId } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import Loading from '@/app/loading';
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -170,7 +171,7 @@ export default function RentalRequestsPage() {
   }
 
   if (isUserLoading || isLoading) {
-    return <div>Loading requests...</div>
+    return <Loading />;
   }
 
   return (
@@ -274,5 +275,7 @@ export default function RentalRequestsPage() {
     </div>
   );
 }
+
+    
 
     

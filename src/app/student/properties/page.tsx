@@ -10,6 +10,7 @@ import { Home } from 'lucide-react';
 import { haversineDistance } from '@/lib/utils';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
+import Loading from '@/app/loading';
 
 
 // Mock coordinates for major state centers to determine location
@@ -169,7 +170,7 @@ export default function PropertiesPage() {
   }
 
   if (isLoading) {
-    return <div>Loading properties...</div>
+    return <Loading />;
   }
 
   return (
@@ -216,3 +217,5 @@ export default function PropertiesPage() {
     </div>
   );
 }
+
+    

@@ -25,6 +25,7 @@ import { FileText } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
+import Loading from '@/app/loading';
 
 type AggregatedLease = {
   lease: LeaseAgreement;
@@ -117,7 +118,7 @@ export default function LandlordLeasesPage() {
   };
 
   if (isLoading || isUserLoading) {
-    return <div>Loading leases...</div>;
+    return <Loading />;
   }
 
   return (
@@ -201,3 +202,5 @@ export default function LandlordLeasesPage() {
     </div>
   );
 }
+
+    

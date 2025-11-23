@@ -44,6 +44,7 @@ import { addDays, format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
+import Loading from '@/app/loading';
 
 
 type AggregatedTransaction = {
@@ -181,7 +182,7 @@ export default function TransactionsPage() {
 
 
   if (isLoading || isUserLoading) {
-      return <div>Loading transactions...</div>
+      return <Loading />;
   }
 
   return (
@@ -393,3 +394,5 @@ export default function TransactionsPage() {
   );
 }
 
+
+    

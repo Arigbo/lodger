@@ -16,6 +16,7 @@ import { Send, Phone, Video, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp, limit, documentId } from 'firebase/firestore';
+import Loading from '@/app/loading';
 
 
 type Conversation = {
@@ -178,7 +179,7 @@ export default function MessagesPage() {
     };
 
     if (isUserLoading || isDataLoading) {
-        return <div>Loading conversations...</div>
+        return <Loading />;
     }
 
     return (
@@ -310,3 +311,5 @@ export default function MessagesPage() {
         </div>
     );
 }
+
+    

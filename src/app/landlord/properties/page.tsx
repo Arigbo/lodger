@@ -33,6 +33,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { collection, query, where, doc, getDoc } from 'firebase/firestore';
 import type { Property, User } from '@/lib/definitions';
 import { useEffect, useState } from 'react';
+import Loading from '@/app/loading';
 
 type PropertyWithTenant = Property & { tenantName?: string };
 
@@ -74,7 +75,7 @@ export default function LandlordPropertiesPage() {
 
 
   if (isLoading) {
-    return <div>Loading properties...</div>
+    return <Loading />;
   }
 
   return (
@@ -179,3 +180,5 @@ export default function LandlordPropertiesPage() {
     </div>
   );
 }
+
+    

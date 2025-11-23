@@ -40,6 +40,7 @@ import { uploadProfileImage } from '@/firebase/storage';
 import { getStorage } from 'firebase/storage';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Pencil, User } from 'lucide-react';
+import Loading from '@/app/loading';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -163,7 +164,7 @@ export default function AccountPage() {
   }
   
   if (isUserLoading || isProfileLoading) {
-    return <div>Loading...</div>;
+    return <Loading />;
   }
 
   if (!user || !userProfile) {
@@ -384,6 +385,8 @@ export default function AccountPage() {
         </Tabs>
     </div>
   );
+    
+
     
 
     

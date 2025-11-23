@@ -32,6 +32,7 @@ import { MoreHorizontal, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
+import Loading from '@/app/loading';
 
 
 type AggregatedRequest = MaintenanceRequest & {
@@ -137,7 +138,7 @@ export default function MaintenancePage() {
   };
 
   if (isUserLoading || isLoading) {
-    return <div>Loading...</div>
+    return <Loading />;
   }
 
   return (
@@ -236,3 +237,5 @@ export default function MaintenancePage() {
     </div>
   );
 }
+
+    

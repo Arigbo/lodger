@@ -33,6 +33,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
+import Loading from '@/app/loading';
 
 type TenantWithProperty = {
   tenant: User;
@@ -121,7 +122,7 @@ export default function TenantsPage() {
   
 
   if (isLoading || isUserLoading) {
-      return <div>Loading tenants...</div>
+      return <Loading />;
   }
 
   return (
@@ -229,3 +230,5 @@ export default function TenantsPage() {
     </div>
   );
 }
+
+    

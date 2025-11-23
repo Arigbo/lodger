@@ -25,6 +25,7 @@ import { FileText, Signature } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
+import Loading from '@/app/loading';
 
 
 type AggregatedLease = {
@@ -100,7 +101,7 @@ export default function StudentLeasesPage() {
   };
 
   if (isLoading || isUserLoading) {
-    return <div>Loading...</div>
+    return <Loading />;
   }
 
   return (
@@ -188,3 +189,5 @@ export default function StudentLeasesPage() {
     </div>
   );
 }
+
+    

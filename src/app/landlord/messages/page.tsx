@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -17,6 +16,7 @@ import { Send, Phone, Video, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp } from 'firebase/firestore';
+import Loading from '@/app/loading';
 
 type Conversation = {
     participant: User;
@@ -155,7 +155,7 @@ export default function MessagesPage() {
     };
 
     if (isUserLoading || isDataLoading) {
-        return <div>Loading...</div>
+        return <Loading />;
     }
 
     return (
@@ -292,5 +292,7 @@ export default function MessagesPage() {
         </div>
     );
 }
+
+    
 
     

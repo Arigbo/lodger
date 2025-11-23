@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
 import type { Property } from "@/lib/definitions";
+import Loading from '@/app/loading';
 
 
 export default function StudentDashboardPage() {
@@ -33,7 +34,7 @@ export default function StudentDashboardPage() {
   const { data: rentedProperties, isLoading: propertiesLoading } = useCollection<Property>(propertiesQuery);
   
   if (isUserLoading || propertiesLoading || !user) {
-      return <div>Loading...</div>; // Or a more sophisticated skeleton loader
+      return <Loading />; // Or a more sophisticated skeleton loader
   }
 
   // The user object from Firebase Auth doesn't contain the role.
@@ -81,3 +82,5 @@ export default function StudentDashboardPage() {
     </div>
   )
 }
+
+    

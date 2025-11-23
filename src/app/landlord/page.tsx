@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { collection, query, where } from "firebase/firestore";
 import type { Property } from "@/lib/definitions";
+import Loading from '@/app/loading';
 
 export default function LandlordDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -24,7 +25,7 @@ export default function LandlordDashboardPage() {
   }, [isUserLoading, user, router]);
 
   if (isUserLoading || !user) {
-    return <div>Loading...</div>;
+    return <Loading />;
   }
   
   // This is a client component, but we have user data. We must ensure only landlords see this page.
@@ -47,7 +48,7 @@ function LandlordOverview() {
   const { data: properties, isLoading } = useCollection<Property>(propertiesQuery);
 
   if (isLoading) {
-    return <div>Loading properties...</div>
+    return <Loading />;
   }
 
   return (
@@ -96,3 +97,5 @@ function LandlordOverview() {
     </div>
   );
 }
+
+    

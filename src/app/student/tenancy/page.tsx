@@ -6,12 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import type { LeaseAgreement, Property } from '@/lib/definitions';
 import { Building } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import PropertyCard from '@/components/property-card';
 import React from 'react';
+import Loading from '@/app/loading';
 
 export default function TenancyDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -48,24 +49,7 @@ export default function TenancyDashboardPage() {
 
 
   if (isUserLoading || isLoading) {
-      return (
-        <div className="space-y-6">
-            <div className="flex flex-col items-center justify-center text-center">
-                <Skeleton className="h-8 w-48 mb-2"/>
-                <Skeleton className="h-4 w-64"/>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                    <CardHeader><Skeleton className="h-48 w-full"/></CardHeader>
-                    <CardContent className="space-y-4">
-                        <Skeleton className="h-6 w-3/4"/>
-                        <Skeleton className="h-4 w-full"/>
-                        <Skeleton className="h-4 w-1/2"/>
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
-      );
+      return <Loading />;
   }
 
   return (
@@ -102,3 +86,5 @@ export default function TenancyDashboardPage() {
     </div>
   );
 }
+
+    
