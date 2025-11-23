@@ -13,6 +13,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getSdks } from '.';
 import type { Toast } from '@/hooks/use-toast';
 import { FirestorePermissionError, errorEmitter } from '@/firebase';
+import type { UserProfile } from '@/lib/definitions';
 
 /** Initiate anonymous sign-in (non-blocking). */
 export function initiateAnonymousSignIn(authInstance: Auth): void {
@@ -52,7 +53,7 @@ export function initiateGoogleSignIn(
         const isNewUser = !userDoc.exists();
 
         if (isNewUser) {
-          const newUserProfile = {
+          const newUserProfile: Partial<UserProfile> = {
             id: user.uid,
             name: user.displayName || 'Anonymous',
             email: user.email,
@@ -65,20 +66,27 @@ export function initiateGoogleSignIn(
         
         onSuccess(user.uid, isNewUser);
 
-      } catch (error) {
-        console.error("Error during Google sign-in user setup:", error);
-         if (error instanceof FirestorePermissionError) {
-             errorEmitter.emit('permission-error', error);
-         } else {
-            toast({
-                variant: "destructive",
-                title: "Sign In Failed",
-                description: "Could not set up your user profile. Please try again.",
+      } catch (error: any) {
+        // This is the critical change: ensuring Firestore errors are caught
+        // and re-emitted with proper context.
+        if (error.code && (error.code.includes('permission-denied') || error.code.includes('unauthenticated'))) {
+            const permissionError = new FirestorePermissionError({
+                path: userDocRef.path,
+                operation: 'get',
             });
-         }
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+           console.error("Error during Google sign-in user setup:", error);
+           toast({
+               variant: "destructive",
+               title: "Sign In Failed",
+               description: "Could not set up your user profile. Please try again.",
+           });
+        }
       }
     })
     .catch((error) => {
+      // This block handles popup errors, not Firestore errors.
       const errorCode = error.code;
       const errorMessage = error.message;
       console.error(`Google Sign-In Error (${errorCode}):`, errorMessage);
