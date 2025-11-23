@@ -47,22 +47,29 @@ function chunkArray<T>(array: T[], size: number): T[][] {
 export default function StudentLeasesPage() {
   const { user: student, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const [leases, setLeases] = React.useState<AggregatedLease[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [aggregatedLeases, setAggregatedLeases] = React.useState<AggregatedLease[]>([]);
+  const [isAggregating, setIsAggregating] = React.useState(true);
+
+  const leasesQuery = useMemoFirebase(() => {
+    if (!student) return null;
+    return query(collection(firestore, 'leaseAgreements'), where('tenantId', '==', student.uid));
+  }, [student, firestore]);
+
+  const { data: studentLeases, isLoading: areLeasesLoading } = useCollection<LeaseAgreement>(leasesQuery);
 
   React.useEffect(() => {
-    if (!student || !firestore) return;
+    if (areLeasesLoading) return;
+    if (!studentLeases || !firestore) {
+      setAggregatedLeases([]);
+      setIsAggregating(false);
+      return;
+    };
 
-    const fetchLeases = async () => {
-      setIsLoading(true);
-      
-      const leasesQuery = query(collection(firestore, 'leaseAgreements'), where('tenantId', '==', student.uid));
-      const leasesSnapshot = await getDocs(leasesQuery);
-      const studentLeases = leasesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LeaseAgreement));
-
+    const aggregateData = async () => {
+      setIsAggregating(true);
       if (studentLeases.length === 0) {
-        setLeases([]);
-        setIsLoading(false);
+        setAggregatedLeases([]);
+        setIsAggregating(false);
         return;
       }
 
@@ -90,18 +97,18 @@ export default function StudentLeasesPage() {
          }
       }
 
-      const aggregatedData = studentLeases.map(lease => ({
+      const finalData = studentLeases.map(lease => ({
         lease,
         landlord: usersMap.get(lease.landlordId) || null,
         property: propertiesMap.get(lease.propertyId) || null,
       }));
 
-      setLeases(aggregatedData.sort((a,b) => new Date(b.lease.startDate).getTime() - new Date(a.lease.startDate).getTime()));
-      setIsLoading(false);
+      setAggregatedLeases(finalData.sort((a,b) => new Date(b.lease.startDate).getTime() - new Date(a.lease.startDate).getTime()));
+      setIsAggregating(false);
     };
 
-    fetchLeases();
-  }, [student, firestore]);
+    aggregateData();
+  }, [studentLeases, areLeasesLoading, firestore]);
 
 
   const getStatusVariant = (status: LeaseAgreement['status']) => {
@@ -117,7 +124,7 @@ export default function StudentLeasesPage() {
     }
   };
 
-  if (isLoading || isUserLoading) {
+  if (isUserLoading || areLeasesLoading || isAggregating) {
     return <Loading />;
   }
 
@@ -137,11 +144,11 @@ export default function StudentLeasesPage() {
         <CardHeader>
           <CardTitle>My Leases</CardTitle>
           <CardDescription>
-            You have {leases.length} lease agreements on record.
+            You have {aggregatedLeases.length} lease agreements on record.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {leases.length > 0 ? (
+          {aggregatedLeases.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -154,7 +161,7 @@ export default function StudentLeasesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {leases.map(({ lease, landlord, property }) => {
+                {aggregatedLeases.map(({ lease, landlord, property }) => {
                   return (
                     <TableRow key={lease.id}>
                       <TableCell>

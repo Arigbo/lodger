@@ -23,7 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import type { LeaseAgreement, User, Property } from '@/lib/definitions';
 import { FileText } from 'lucide-react';
 import Link from 'next/link';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import Loading from '@/app/loading';
 
@@ -47,34 +47,38 @@ function chunkArray<T>(array: T[], size: number): T[][] {
 export default function LandlordLeasesPage() {
   const { user: landlord, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const [leases, setLeases] = React.useState<AggregatedLease[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [aggregatedLeases, setAggregatedLeases] = React.useState<AggregatedLease[]>([]);
+  const [isAggregating, setIsAggregating] = React.useState(true);
+  
+  const leasesQuery = useMemoFirebase(() => {
+      if (!landlord) return null;
+      return query(collection(firestore, 'leaseAgreements'), where('landlordId', '==', landlord.uid));
+  }, [landlord, firestore]);
+
+  const { data: landlordLeases, isLoading: areLeasesLoading } = useCollection<LeaseAgreement>(leasesQuery);
 
   React.useEffect(() => {
-    if (!landlord || !firestore) return;
+    if (areLeasesLoading) return;
+    if (!landlordLeases || !firestore) {
+      setAggregatedLeases([]);
+      setIsAggregating(false);
+      return;
+    }
 
-    const fetchLeases = async () => {
-      setIsLoading(true);
-      
-      // 1. Securely query for leases where the current user is the landlord.
-      const leasesQuery = query(collection(firestore, 'leaseAgreements'), where('landlordId', '==', landlord.uid));
-      const leasesSnapshot = await getDocs(leasesQuery);
-      const landlordLeases = leasesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LeaseAgreement));
-
+    const aggregateData = async () => {
+      setIsAggregating(true);
       if (landlordLeases.length === 0) {
-        setLeases([]);
-        setIsLoading(false);
+        setAggregatedLeases([]);
+        setIsAggregating(false);
         return;
       }
 
-      // 2. Get unique IDs for related tenants and properties.
       const tenantIds = [...new Set(landlordLeases.map(l => l.tenantId))].filter(Boolean);
       const propertyIds = [...new Set(landlordLeases.map(l => l.propertyId))].filter(Boolean);
 
       const usersMap = new Map<string, User>();
       const propertiesMap = new Map<string, Property>();
 
-      // 3. Fetch related documents in batches using 'in' queries.
       if (tenantIds.length > 0) {
         const userChunks = chunkArray(tenantIds, 30);
         for (const chunk of userChunks) {
@@ -93,19 +97,18 @@ export default function LandlordLeasesPage() {
         }
       }
       
-      // 4. Aggregate the data.
-      const aggregatedData = landlordLeases.map(lease => ({
+      const finalData = landlordLeases.map(lease => ({
         lease,
         tenant: usersMap.get(lease.tenantId) || null,
         property: propertiesMap.get(lease.propertyId) || null,
       }));
 
-      setLeases(aggregatedData.sort((a,b) => new Date(b.lease.startDate).getTime() - new Date(a.lease.startDate).getTime()));
-      setIsLoading(false);
+      setAggregatedLeases(finalData.sort((a,b) => new Date(b.lease.startDate).getTime() - new Date(a.lease.startDate).getTime()));
+      setIsAggregating(false);
     };
 
-    fetchLeases();
-  }, [landlord, firestore]);
+    aggregateData();
+  }, [landlordLeases, areLeasesLoading, firestore]);
 
   const getStatusVariant = (status: LeaseAgreement['status']) => {
     switch (status) {
@@ -120,7 +123,7 @@ export default function LandlordLeasesPage() {
     }
   };
 
-  if (isLoading || isUserLoading) {
+  if (isUserLoading || areLeasesLoading || isAggregating) {
     return <Loading />;
   }
 
@@ -140,11 +143,11 @@ export default function LandlordLeasesPage() {
         <CardHeader>
           <CardTitle>All Leases</CardTitle>
           <CardDescription>
-            You have {leases.length} total lease agreements on record.
+            You have {aggregatedLeases.length} total lease agreements on record.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {leases.length > 0 ? (
+          {aggregatedLeases.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -157,7 +160,7 @@ export default function LandlordLeasesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {leases.map(({lease, tenant, property}) => {
+                {aggregatedLeases.map(({lease, tenant, property}) => {
                   return (
                     <TableRow key={lease.id}>
                       <TableCell>
