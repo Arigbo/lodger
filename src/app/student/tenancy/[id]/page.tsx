@@ -23,7 +23,6 @@ import TenancySkeleton from "@/components/tenancy-skeleton";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
 import { doc, collection, query, where, User as FirebaseUser } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
-import Loading from "@/app/loading";
 
 export default function TenancyDetailPage() {
     const params = useParams();
@@ -115,7 +114,7 @@ export default function TenancyDetailPage() {
     const isLoading = isUserLoading || isPropertyLoading || isLandlordLoading || !tenancyState;
 
     if (isLoading) {
-        return <Loading />;
+        return <TenancySkeleton />;
     }
 
     if (!property || user?.uid !== property.currentTenantId) {

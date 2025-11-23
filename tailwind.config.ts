@@ -90,12 +90,18 @@ export default {
           '80%': { transform: 'translateX(0) scale(1)', opacity: '1'},
           '100%': { transform: 'translateX(200%) scale(0.8)', opacity: '0'},
         },
+        pulse: {
+          '50%': {
+            opacity: '0.5',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'slide-in-icon': 'slide-in-icon 1.5s ease-out forwards',
         'slide-and-fade': 'slide-and-fade 1.5s ease-out forwards',
+        'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
     },
   },
