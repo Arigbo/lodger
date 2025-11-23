@@ -181,6 +181,7 @@ export default function PropertyDetailPage() {
             const newApplicationRef = await addDoc(rentalRequestsRef, {
                 propertyId: property.id,
                 tenantId: user.uid,
+                landlordId: property.landlordId, // Add landlordId for easier querying
                 messageToLandlord: requestMessage,
                 applicationDate: new Date().toISOString(),
                 status: 'pending',

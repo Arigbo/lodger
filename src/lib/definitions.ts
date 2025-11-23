@@ -56,6 +56,7 @@ export type RentalApplication = {
   id: string;
   propertyId: string;
   tenantId: string;
+  landlordId: string;
   status: 'pending' | 'approved' | 'declined';
   messageToLandlord: string;
   applicationDate: string; // ISO 8601 date string
@@ -126,5 +127,3 @@ export type Message = {
 
 
 export const amenities = ["Furnished", "Wi-Fi", "In-unit Laundry", "Pet Friendly", "Parking Spot", "Gym Access", "Rooftop Access", "Dishwasher", "All Utilities Included", "Secure Entry", "Private Yard"];
-
-    

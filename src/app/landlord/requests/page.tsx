@@ -26,7 +26,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import React, { useState } from 'react';
 import LeaseGenerationDialog from '@/components/lease-generation-dialog';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, where, getDocs, addDoc, updateDoc, documentId } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Loading from '@/app/loading';
@@ -56,52 +56,48 @@ export default function RentalRequestsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   React.useEffect(() => {
-    if (!landlord) return;
+    if (!landlord || !firestore) return;
 
     const fetchRequests = async () => {
         setIsLoading(true);
-        const propertiesQuery = query(collection(firestore, 'properties'), where('landlordId', '==', landlord.uid));
-        const propertiesSnapshot = await getDocs(propertiesQuery);
-        const landlordProperties = propertiesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Property[];
-        const propertyIds = landlordProperties.map(p => p.id);
+        const requestsQuery = query(collection(firestore, 'rentalApplications'), where('landlordId', '==', landlord.uid));
+        const requestsSnapshot = await getDocs(requestsQuery);
+        const allRequests = requestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RentalApplication));
 
-        if (propertyIds.length === 0) {
+        if (allRequests.length === 0) {
             setAggregatedRequests([]);
             setIsLoading(false);
             return;
         }
 
-        const requestChunks = chunkArray(propertyIds, 30);
-        let allRequests: RentalApplication[] = [];
+        const userIds = [...new Set(allRequests.map(req => req.tenantId))].filter(Boolean);
+        const propertyIds = [...new Set(allRequests.map(req => req.propertyId))].filter(Boolean);
 
-        for (const chunk of requestChunks) {
-          const requestsQuery = query(collection(firestore, 'rentalApplications'), where('propertyId', 'in', chunk));
-          const requestsSnapshot = await getDocs(requestsQuery);
-          const chunkRequests = requestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RentalApplication));
-          allRequests = [...allRequests, ...chunkRequests];
-        }
-
-        const userIds = [...new Set(allRequests.map(req => req.tenantId))];
-
-        if (userIds.length === 0) {
-            setAggregatedRequests([]);
-            setIsLoading(false);
-            return;
-        }
-        
-        const userChunks = chunkArray(userIds, 30);
         const usersMap = new Map<string, User>();
-        
-        for (const chunk of userChunks) {
-          const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-          const userSnapshots = await getDocs(usersQuery);
-          userSnapshots.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+        const propertiesMap = new Map<string, Property>();
+
+        if (userIds.length > 0) {
+          const userChunks = chunkArray(userIds, 30);
+          for (const chunk of userChunks) {
+            const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+            const userSnapshots = await getDocs(usersQuery);
+            userSnapshots.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+          }
+        }
+
+        if (propertyIds.length > 0) {
+          const propertyChunks = chunkArray(propertyIds, 30);
+          for (const chunk of propertyChunks) {
+            const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
+            const propertySnapshots = await getDocs(propertiesQuery);
+            propertySnapshots.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+          }
         }
 
         const finalRequests = allRequests.map(request => ({
             request,
             applicant: usersMap.get(request.tenantId)!,
-            property: landlordProperties.find(p => p.id === request.propertyId)!,
+            property: propertiesMap.get(request.propertyId)!,
         })).filter(req => req.applicant && req.property);
         
         setAggregatedRequests(finalRequests.sort((a, b) => new Date(b.request.applicationDate).getTime() - new Date(a.request.applicationDate).getTime()));
@@ -275,7 +271,3 @@ export default function RentalRequestsPage() {
     </div>
   );
 }
-
-    
-
-    

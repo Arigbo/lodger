@@ -22,8 +22,8 @@ service cloud.firestore {
         allow read: if get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.landlordId == request.auth.uid || request.auth.uid == resource.data.tenantId;
         allow create: if request.auth.uid == request.resource.data.tenantId;
         allow update: if get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.landlordId == request.auth.uid;
-        // Allow querying by propertyId for landlords or tenantId for tenants
-        allow list: if request.auth.uid == request.query.tenantId || (request.query.propertyId != null && get(/databases/$(database)/documents/properties/$(request.query.propertyId)).data.landlordId == request.auth.uid);
+        // Allow querying by landlordId for landlords or tenantId for tenants
+        allow list: if request.auth.uid == request.query.landlordId || request.auth.uid == request.query.tenantId;
     }
 
     match /leaseAgreements/{leaseId} {
