@@ -26,7 +26,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { User, Property, LeaseAgreement } from '@/lib/definitions';
+import type { User, Property } from '@/lib/definitions';
 import { MoreHorizontal, Users, Mail, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore } from '@/firebase';
@@ -62,53 +62,37 @@ export default function TenantsPage() {
     const fetchTenants = async () => {
       setIsLoading(true);
 
-      // 1. Get all active leases for the current landlord.
-      const leasesQuery = query(
-        collection(firestore, 'leaseAgreements'),
-        where('landlordId', '==', landlord.uid),
-        where('status', '==', 'active')
+      // 1. Get all properties for the current landlord.
+      const propertiesQuery = query(
+        collection(firestore, 'properties'),
+        where('landlordId', '==', landlord.uid)
       );
-      const leasesSnapshot = await getDocs(leasesQuery);
-      const activeLeases = leasesSnapshot.docs.map(doc => doc.data() as LeaseAgreement);
+      const propertiesSnapshot = await getDocs(propertiesQuery);
+      const landlordProperties = propertiesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
 
-      if (activeLeases.length === 0) {
+      // 2. Filter for occupied properties and get unique tenant IDs.
+      const occupiedProperties = landlordProperties.filter(p => p.currentTenantId);
+      const tenantIds = [...new Set(occupiedProperties.map(p => p.currentTenantId!))];
+
+      if (tenantIds.length === 0) {
         setTenantsWithProperties([]);
         setIsLoading(false);
         return;
       }
-
-      // 2. Get unique tenant and property IDs from the leases.
-      const tenantIds = [...new Set(activeLeases.map(l => l.tenantId))];
-      const propertyIds = [...new Set(activeLeases.map(l => l.propertyId))];
       
+      // 3. Fetch user data for all unique tenants.
       const usersMap = new Map<string, User>();
-      const propertiesMap = new Map<string, Property>();
+      const userChunks = chunkArray(tenantIds, 30);
+      await Promise.all(userChunks.map(async chunk => {
+        const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+        const usersSnapshot = await getDocs(usersQuery);
+        usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+      }));
 
-      // 3. Fetch user data for tenants.
-      if (tenantIds.length > 0) {
-        const userChunks = chunkArray(tenantIds, 30);
-        await Promise.all(userChunks.map(async chunk => {
-          const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-          const usersSnapshot = await getDocs(usersQuery);
-          usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-        }));
-      }
-
-      // 4. Fetch property data.
-      if (propertyIds.length > 0) {
-         const propertyChunks = chunkArray(propertyIds, 30);
-         await Promise.all(propertyChunks.map(async chunk => {
-            const propertiesQuery = query(collection(firestore, 'properties'), where('id', 'in', chunk));
-            const propertiesSnapshot = await getDocs(propertiesQuery);
-            propertiesSnapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
-        }));
-      }
-      
-      // 5. Combine the data.
-      const combinedData = activeLeases.map(lease => {
-        const tenant = usersMap.get(lease.tenantId);
-        const property = propertiesMap.get(lease.propertyId);
-        if (!tenant || !property) return null;
+      // 4. Combine the data.
+      const combinedData = occupiedProperties.map(property => {
+        const tenant = usersMap.get(property.currentTenantId!);
+        if (!tenant) return null;
         return { tenant, property };
       }).filter((item): item is TenantWithProperty => item !== null);
       
