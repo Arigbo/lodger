@@ -19,31 +19,39 @@ service cloud.firestore {
     }
 
     match /rentalApplications/{rentalApplicationId} {
-        allow read: if true; // Temporarily allow public reads for debugging
-        allow write: if get(/databases/$(database)/documents/properties/$(request.resource.data.propertyId)).data.landlordId == request.auth.uid || request.auth.uid == request.resource.data.tenantId;
-        allow list: if request.auth.uid == request.query.landlordId || request.auth.uid == request.query.tenantId;
+        allow read: if get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.landlordId == request.auth.uid || request.auth.uid == resource.data.tenantId;
+        allow create: if request.auth.uid == request.resource.data.tenantId;
+        allow update: if get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.landlordId == request.auth.uid;
+        // Allow querying by propertyId for landlords or tenantId for tenants
+        allow list: if request.auth.uid == request.query.tenantId || (request.query.propertyId != null && get(/databases/$(database)/documents/properties/$(request.query.propertyId)).data.landlordId == request.auth.uid);
     }
 
     match /leaseAgreements/{leaseId} {
       allow get, update, create, delete: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
-      allow list: if request.query.where[0][2] == request.auth.uid;
+      allow list: if request.query.landlordId == request.auth.uid || request.query.tenantId == request.auth.uid;
     }
 
     match /propertyReviews/{reviewId} {
       allow read;
       allow create: if request.auth.uid == request.resource.data.tenantId;
+      allow list: if request.query.propertyId != null;
+    }
+
+    match /maintenanceRequests/{requestId} {
+      allow get, create, update: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
+      allow list: if request.query.landlordId == request.auth.uid || request.query.tenantId == request.auth.uid;
     }
 
     match /messages/{messageId} {
-      allow read: if request.auth.uid in resource.data.participantIds;
-      allow create: if request.auth.uid == request.resource.data.senderId && request.auth.uid in request.resource.data.participantIds;
+      allow read, write: if request.auth.uid in resource.data.participantIds;
+      allow list: if request.auth.uid == request.query.participantIds[0] || request.auth.uid == request.query.participantIds[1];
     }
 
     match /transactions/{transactionId} {
       // Allow landlords and tenants to read/write their own transactions
       allow get, update, delete, create: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
       // Allow landlords and tenants to list transactions they are a part of
-      allow list: if request.query.where[0][2] == request.auth.uid;
+      allow list: if request.query.landlordId == request.auth.uid || request.query.tenantId == request.auth.uid;
     }
   }
 }
