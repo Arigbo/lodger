@@ -1,13 +1,8 @@
-'use client';
-
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
 import { Toaster } from "@/components/ui/toaster";
-import { usePathname } from "next/navigation";
 import { HeaderAndFooterProvider } from "@/components/header-and-footer-provider";
 import { FirebaseClientProvider } from "@/firebase";
 
@@ -17,9 +12,51 @@ const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
 });
 
-// Since we are using a client component, we can't export metadata directly.
-// This would typically be handled in a parent server component or on a per-page basis.
-// For now, we'll manage the title in the <head> tag directly.
+export const metadata: Metadata = {
+  title: {
+    default: "Lodger - Find Your Perfect Student Home",
+    template: "%s | Lodger",
+  },
+  description: "The easiest way for university students to find and book their next rental property.",
+  openGraph: {
+    title: "Lodger - Find Your Perfect Student Home",
+    description: "The easiest way for university students to find and book their next rental property.",
+    url: "https://your-domain.com", // TODO: Replace with your actual domain
+    siteName: "Lodger",
+    images: [
+      {
+        url: "https://your-domain.com/og-image.png", // TODO: Replace with your actual OG image URL
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lodger - Find Your Perfect Student Home",
+    description: "The easiest way for university students to find and book their next rental property.",
+    // TODO: Add your Twitter handle
+    // creator: "@your_handle", 
+    images: ["https://your-domain.com/og-image.png"], // TODO: Replace with your actual OG image URL
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  icons: {
+    icon: "/favicon.ico", // Ensure you have a favicon.ico in your public folder
+  }
+};
+
 
 export default function RootLayout({
   children,
@@ -27,10 +64,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
-        <title>Lodger - Student Housing Made Easy</title>
-        <meta name="description" content="Find and book your perfect student rental." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

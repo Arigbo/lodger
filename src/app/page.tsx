@@ -1,4 +1,3 @@
-
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { collection, getDocs, limit, query, where } from "firebase/firestore";
 import { firestore } from "@/firebase/server";
 import type { Property } from "@/lib/definitions";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "Lodger - Find Your Perfect Student Home",
+  description: "The easiest way for university students to find and book their next rental property. Search thousands of listings near your campus.",
+  alternates: {
+    canonical: '/',
+  },
+};
 
 async function getFeaturedProperties(): Promise<Property[]> {
   try {

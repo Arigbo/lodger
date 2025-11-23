@@ -25,6 +25,55 @@ import TenancySkeleton from "@/components/tenancy-skeleton";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
 import { doc, collection, query, where, User as FirebaseUser, addDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import Loading from "@/app/loading";
+import type { Metadata } from 'next';
+import { firestore as adminFirestore } from "@/firebase/server";
+
+
+// This function is for generating dynamic metadata and is commented out
+// because this is a client component. For SEO on dynamic client-rendered pages,
+// you would typically fetch data in a parent Server Component and pass it down,
+// or use a client-side solution to update the document head.
+
+// export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+//   if (!adminFirestore) {
+//     return { title: "Property Details" };
+//   }
+//   const propertyRef = doc(adminFirestore, 'properties', params.id);
+//   const propertySnap = await getDoc(propertyRef);
+
+//   if (!propertySnap.exists()) {
+//     return {
+//       title: 'Property Not Found',
+//       description: 'The property you are looking for does not exist.',
+//     };
+//   }
+
+//   const property = propertySnap.data() as Property;
+
+//   return {
+//     title: property.title,
+//     description: property.description.substring(0, 160),
+//     openGraph: {
+//       title: property.title,
+//       description: property.description.substring(0, 160),
+//       images: [
+//         {
+//           url: property.images[0],
+//           width: 1200,
+//           height: 630,
+//           alt: property.title,
+//         },
+//       ],
+//     },
+//     twitter: {
+//       card: 'summary_large_image',
+//       title: property.title,
+//       description: property.description.substring(0, 160),
+//       images: [property.images[0]],
+//     }
+//   };
+// }
+
 
 const amenityIcons: { [key: string]: React.ReactNode } = {
     'Furnished': <Tv className="h-5 w-5 text-primary" />,
@@ -59,6 +108,17 @@ export default function PropertyDetailPage() {
     const reviewsQuery = useMemoFirebase(() => id ? query(collection(firestore, 'propertyReviews'), where('propertyId', '==', id)) : null, [firestore, id]);
     const { data: reviews, isLoading: areReviewsLoading } = useCollection<PropertyReview>(reviewsQuery);
     
+    // SEO effect for client components
+    useEffect(() => {
+        if (property) {
+            document.title = `${property.title} | Lodger`;
+            const descriptionTag = document.querySelector('meta[name="description"]');
+            if (descriptionTag) {
+                descriptionTag.setAttribute('content', property.description.substring(0, 160));
+            }
+        }
+    }, [property]);
+
     const isLoading = isPropertyLoading || isLandlordLoading || areReviewsLoading || isUserLoading;
 
     if (isLoading) {
@@ -178,8 +238,57 @@ export default function PropertyDetailPage() {
         }
     };
 
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "RealEstateListing",
+      "name": property.title,
+      "description": property.description,
+      "image": property.images,
+      "url": propertyUrl,
+      "leaseLength": {
+        "@type": "QuantitativeValue",
+        "value": 12,
+        "unitCode": "MON"
+      },
+      "floorSize": {
+        "@type": "QuantitativeValue",
+        "value": property.area,
+        "unitCode": "FTS"
+      },
+      "numberOfBedrooms": property.bedrooms,
+      "numberOfBathroomsTotal": property.bathrooms,
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": property.location.address,
+        "addressLocality": property.location.city,
+        "addressRegion": property.location.state,
+        "postalCode": property.location.zip,
+        "addressCountry": "US" // Assuming US for now
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": property.location.lat,
+        "longitude": property.location.lng
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": property.price,
+        "priceCurrency": "USD"
+      },
+      "landlord": {
+          "@type": "Person",
+          "name": landlord?.name,
+          "url": isClient ? `${window.location.origin}/landlord/${landlord?.id}` : ''
+      }
+    };
+
+
     return (
         <div className="container mx-auto max-w-7xl px-4 py-12">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-12">
             <div className="lg:col-span-2">
             <div className="grid grid-cols-2 grid-rows-2 gap-2 h-[500px] mb-8">
@@ -431,5 +540,3 @@ export default function PropertyDetailPage() {
         </div>
     );
 }
-
-    
