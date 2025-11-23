@@ -134,7 +134,8 @@ export default function MessagesPage() {
             });
     }, [allLandlordMessages, selectedParticipant]);
     
-    const handleSendMessage = async () => {
+    const handleSendMessage = async (e: React.FormEvent) => {
+        e.preventDefault();
         if (!newMessage.trim() || !landlord || !selectedParticipant || !firestore) return;
 
         const messagesRef = collection(firestore, 'messages');
@@ -264,7 +265,7 @@ export default function MessagesPage() {
                                 </ScrollArea>
                                 {/* Message Input */}
                                 <div className="border-t p-4">
-                                     <form onSubmit={(e) => {e.preventDefault(); handleSendMessage();}} className="relative">
+                                     <form onSubmit={handleSendMessage} className="relative">
                                         <Input
                                             placeholder="Type your message..."
                                             className="pr-12"
@@ -292,7 +293,3 @@ export default function MessagesPage() {
         </div>
     );
 }
-
-    
-
-    
