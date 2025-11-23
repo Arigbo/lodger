@@ -34,6 +34,16 @@ type AggregatedLease = {
   property: Property | null;
 };
 
+// Helper function to split an array into chunks
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
+
 export default function StudentLeasesPage() {
   const { user: student, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -56,22 +66,29 @@ export default function StudentLeasesPage() {
         return;
       }
 
-      const landlordIds = [...new Set(studentLeases.map(l => l.landlordId))];
-      const propertyIds = [...new Set(studentLeases.map(l => l.propertyId))];
-
-      const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', landlordIds));
-      const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', propertyIds));
-
-      const [usersSnapshot, propertiesSnapshot] = await Promise.all([
-        getDocs(usersQuery),
-        getDocs(propertiesQuery)
-      ]);
-
+      const landlordIds = [...new Set(studentLeases.map(l => l.landlordId))].filter(Boolean);
+      const propertyIds = [...new Set(studentLeases.map(l => l.propertyId))].filter(Boolean);
+      
       const usersMap = new Map<string, User>();
-      usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-
       const propertiesMap = new Map<string, Property>();
-      propertiesSnapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+
+      if (landlordIds.length > 0) {
+        const userChunks = chunkArray(landlordIds, 30);
+        for (const chunk of userChunks) {
+          const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+          const usersSnapshot = await getDocs(usersQuery);
+          usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+        }
+      }
+
+      if (propertyIds.length > 0) {
+         const propertyChunks = chunkArray(propertyIds, 30);
+         for (const chunk of propertyChunks) {
+            const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
+            const propertiesSnapshot = await getDocs(propertiesQuery);
+            propertiesSnapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+         }
+      }
 
       const aggregatedData = studentLeases.map(lease => ({
         lease,
@@ -142,11 +159,11 @@ export default function StudentLeasesPage() {
                     <TableRow key={lease.id}>
                       <TableCell>
                         <Link href={`/student/properties/${property?.id}`} className="font-medium hover:underline">
-                          {property?.title}
+                          {property?.title || 'Unknown Property'}
                         </Link>
                       </TableCell>
                       <TableCell>
-                        <span className="text-muted-foreground">{landlord?.name}</span>
+                        <span className="text-muted-foreground">{landlord?.name || 'Unknown Landlord'}</span>
                       </TableCell>
                       <TableCell>{new Date(lease.startDate).toLocaleDateString()}</TableCell>
                       <TableCell>{new Date(lease.endDate).toLocaleDateString()}</TableCell>
@@ -189,5 +206,3 @@ export default function StudentLeasesPage() {
     </div>
   );
 }
-
-    
