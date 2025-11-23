@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Building2, UserCog, MessageSquare, Search, FileText } from "lucide-react";
+import { LayoutDashboard, Building2, UserCog, MessageSquare, Search, FileText, Bell } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { useUser } from "@/firebase";
 import React from 'react';
@@ -15,6 +15,7 @@ const navLinks = [
     { href: "/student", label: "Dashboard", icon: LayoutDashboard },
     { href: "/student/tenancy", label: "My Tenancy", icon: Building2 },
     { href: "/student/properties", label: "Find a Property", icon: Search },
+    { href: "/student/requests", label: "My Requests", icon: Bell },
     { href: "/student/messages", label: "Messages", icon: MessageSquare },
     { href: "/student/leases", label: "Lease Agreements", icon: FileText },
     { href: "/student/account", label: "Account", icon: UserCog },
@@ -34,7 +35,7 @@ export default function StudentSidebar() {
         if (!link) return null;
         
         const isActive = (pathname === link.href) || 
-                         (pathname.startsWith(link.href) && link.href !== '/student');
+                         (pathname.startsWith(link.href) && link.href !== '/student' && link.href !== '/student/properties');
         
         return (
             <Link
