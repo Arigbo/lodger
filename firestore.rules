@@ -26,8 +26,9 @@ service cloud.firestore {
     }
 
     match /leaseAgreements/{leaseId} {
-      allow get, update, create, delete: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
-      allow list: if request.query.landlordId == request.auth.uid || request.query.tenantId == request.auth.uid;
+      allow get, update, delete: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
+      allow create: if request.auth.uid == request.resource.data.landlordId;
+      allow list: if (request.query.where.field == "landlordId" && request.query.where.value == request.auth.uid) || (request.query.where.field == "tenantId" && request.query.where.value == request.auth.uid);
     }
 
     match /propertyReviews/{reviewId} {
@@ -42,9 +43,12 @@ service cloud.firestore {
     }
 
     match /messages/{messageId} {
-      allow read, write: if request.auth.uid in resource.data.participantIds;
-      // This rule allows a user to list all conversations they are a part of.
-      allow list: if request.auth.uid in request.query.where.value[0];
+      // Allow read, update, delete if the user is a participant
+      allow read, update, delete: if request.auth.uid in resource.data.participantIds;
+      // Allow create if the user is in the new message's participants list
+      allow create: if request.auth.uid in request.resource.data.participantIds;
+      // Allow list operations (queries) if the user is filtering by their own ID
+      allow list: if request.auth.uid == request.query.where.value;
     }
 
     match /transactions/{transactionId} {
