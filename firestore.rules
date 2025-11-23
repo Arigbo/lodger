@@ -26,12 +26,23 @@ service cloud.firestore {
     }
 
     match /leaseAgreements/{leaseId} {
-      // Allow single document access if the user is a participant
-      allow get, update, create: if request.auth.uid == request.resource.data.landlordId || request.auth.uid == request.resource.data.tenantId;
-      allow delete: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
-    
-      // Enforce that list queries are filtered by either landlordId or tenantId
-      allow list: if (request.query.where.field == "landlordId" && request.query.where.value == request.auth.uid) || (request.query.where.field == "tenantId" && request.query.where.value == request.auth.uid);
+      // Helper to check if user is a participant
+      function isParticipant() {
+        return request.auth.uid == resource.data.landlordId || 
+               request.auth.uid == resource.data.tenantId;
+      }
+
+      // READ (covers get and list):
+      // This works AUTOMATICALLY if the client sends a "where" clause 
+      // matching one of these conditions.
+      allow read: if isParticipant();
+
+      // WRITE:
+      // Ensure the user is one of the parties creating/editing the lease
+      allow create: if request.auth.uid == request.resource.data.landlordId || 
+                       request.auth.uid == request.resource.data.tenantId;
+                       
+      allow update, delete: if isParticipant();
     }
 
     match /propertyReviews/{reviewId} {
