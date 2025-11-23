@@ -46,14 +46,14 @@ export default function TenantDetailPage() {
   const { data: tenant, isLoading: isTenantLoading } = useDoc<User>(tenantRef);
 
   const leaseQuery = useMemoFirebase(() => {
-    if (!tenant || !currentUser) return null;
+    if (!id || !currentUser) return null;
     return query(
         collection(firestore, 'leaseAgreements'), 
-        where('tenantId', '==', tenant.id), 
+        where('tenantId', '==', id), 
         where('landlordId', '==', currentUser.uid),
         where('status', '==', 'active')
     );
-  }, [tenant, currentUser, firestore]);
+  }, [id, currentUser, firestore]);
   const { data: leases, isLoading: areLeasesLoading } = useCollection<LeaseAgreement>(leaseQuery);
   const lease = leases?.[0];
 
