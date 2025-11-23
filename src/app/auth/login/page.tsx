@@ -106,6 +106,10 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
     }
 
     const onSubmit = async (values: LoginFormValues) => {
+        if (!auth) {
+            toast({ variant: 'destructive', title: 'Firebase not initialized.'});
+            return;
+        }
         try {
             const userCredential = await initiateEmailSignIn(auth, values.email, values.password);
             await handleSuccessfulLogin(userCredential.user.uid, true);
