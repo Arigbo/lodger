@@ -44,7 +44,7 @@ service cloud.firestore {
     match /messages/{messageId} {
       allow read, write: if request.auth.uid in resource.data.participantIds;
       // This rule allows a user to list all conversations they are a part of.
-      allow list: if request.auth.uid in request.query.where.value;
+      allow list: if request.auth.uid in request.query.where.value[0];
     }
 
     match /transactions/{transactionId} {
