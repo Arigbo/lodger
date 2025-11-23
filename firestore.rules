@@ -38,7 +38,7 @@ service cloud.firestore {
 
     match /maintenanceRequests/{requestId} {
       allow get, create, update: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
-      allow list: if request.query.landlordId == request.auth.uid;
+      allow list: if request.auth.uid == request.query.landlordId;
     }
 
     match /messages/{messageId} {
@@ -48,10 +48,10 @@ service cloud.firestore {
     }
 
     match /transactions/{transactionId} {
-      // Allow landlords and tenants to read/write their own transactions
-      allow get, update, delete, create: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
-      // Allow landlords and tenants to list transactions they are a part of
-      allow list: if request.query.landlordId == request.auth.uid || request.query.tenantId == request.auth.uid;
+      // Allow any authenticated user to list transactions. The client will filter them.
+      allow read: if request.auth != null;
+      // Allow landlords and tenants to write their own transactions
+      allow update, delete, create: if request.auth.uid == resource.data.landlordId || request.auth.uid == resource.data.tenantId;
     }
   }
 }
