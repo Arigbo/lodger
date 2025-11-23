@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import type { User, Message, Property } from '@/lib/definitions';
 import { Send, Phone, Video, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
-import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp, limit, documentId } from 'firebase/firestore';
 import Loading from '@/app/loading';
 
@@ -158,25 +158,31 @@ export default function MessagesPage() {
             });
     }, [allStudentMessages, selectedParticipant]);
 
-    const handleSendMessage = async (e: React.FormEvent) => {
+    const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !student || !selectedParticipant || !firestore) return;
 
         const messagesRef = collection(firestore, 'messages');
-        try {
-            await addDoc(messagesRef, {
-                text: newMessage,
-                senderId: student.uid,
-                recipientId: selectedParticipant.id,
-                participantIds: [student.uid, selectedParticipant.id].sort(),
-                timestamp: serverTimestamp(),
-                read: false,
-            });
+        const messageData = {
+            text: newMessage,
+            senderId: student.uid,
+            recipientId: selectedParticipant.id,
+            participantIds: [student.uid, selectedParticipant.id].sort(),
+            timestamp: serverTimestamp(),
+            read: false,
+        };
 
-            setNewMessage('');
-        } catch (error) {
-            console.error("Error sending message:", error);
-        }
+        addDoc(messagesRef, messageData)
+          .catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+              path: messagesRef.path,
+              operation: 'create',
+              requestResourceData: messageData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+          });
+        
+        setNewMessage('');
     };
 
     if (isUserLoading || isDataLoading) {
