@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -24,7 +23,7 @@ import type { User, Property, RentalApplication } from '@/lib/definitions';
 import { Check, X, Bell, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LeaseGenerationDialog from '@/components/lease-generation-dialog';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, where, getDocs, addDoc, updateDoc, documentId } from 'firebase/firestore';
@@ -33,12 +32,13 @@ import Loading from '@/app/loading';
 
 type AggregatedRequest = {
   request: RentalApplication;
-  applicant: User;
-  property: Property;
+  applicant: User | null;
+  property: Property | null;
 };
 
 // Helper function to split an array into chunks
 function chunkArray<T>(array: T[], size: number): T[][] {
+  if (array.length === 0) return [];
   const chunks: T[][] = [];
   for (let i = 0; i < array.length; i += size) {
     chunks.push(array.slice(i, i + size));
@@ -56,7 +56,10 @@ export default function RentalRequestsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   React.useEffect(() => {
-    if (!landlord || !firestore) return;
+    if (!landlord || !firestore) {
+        if (!isUserLoading) setIsLoading(false);
+        return;
+    }
 
     const fetchRequests = async () => {
         setIsLoading(true);
@@ -94,18 +97,18 @@ export default function RentalRequestsPage() {
           }
         }
 
-        const finalRequests = allRequests.map(request => ({
+        const finalRequests: AggregatedRequest[] = allRequests.map(request => ({
             request,
-            applicant: usersMap.get(request.tenantId)!,
-            property: propertiesMap.get(request.propertyId)!,
-        })).filter(req => req.applicant && req.property);
+            applicant: usersMap.get(request.tenantId) || null,
+            property: propertiesMap.get(request.propertyId) || null,
+        }));
         
         setAggregatedRequests(finalRequests.sort((a, b) => new Date(b.request.applicationDate).getTime() - new Date(a.request.applicationDate).getTime()));
         setIsLoading(false);
     };
 
     fetchRequests();
-  }, [landlord, firestore]);
+  }, [landlord, firestore, isUserLoading]);
 
   const pendingRequests = aggregatedRequests.filter(req => req.request.status === 'pending');
   
@@ -126,7 +129,7 @@ export default function RentalRequestsPage() {
   };
 
   const handleLeaseSigned = async () => {
-    if (selectedRequest && landlord && selectedRequest.property.leaseTemplate) {
+    if (selectedRequest && landlord && selectedRequest.property?.leaseTemplate) {
         const { request, property } = selectedRequest;
       
         // 1. Update rental request status
@@ -220,6 +223,7 @@ export default function RentalRequestsPage() {
                         {pendingRequests.length > 0 ? (
                             pendingRequests.map((aggregatedRequest) => {
                                 const { request, applicant, property } = aggregatedRequest;
+                                if (!applicant || !property) return null;
                                 return (
                                 <TableRow key={request.id}>
                                     <TableCell>
@@ -259,7 +263,7 @@ export default function RentalRequestsPage() {
             </Card>
         </div>
       )}
-      {selectedRequest && landlord && selectedRequest.property.leaseTemplate && (
+      {selectedRequest && landlord && selectedRequest.property?.leaseTemplate && (
         <LeaseGenerationDialog
             isOpen={dialogOpen}
             onClose={() => setDialogOpen(false)}
