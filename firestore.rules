@@ -19,7 +19,8 @@ service cloud.firestore {
     }
 
     match /rentalApplications/{rentalApplicationId} {
-        allow read, write: if get(/databases/$(database)/documents/properties/$(request.resource.data.propertyId)).data.landlordId == request.auth.uid || request.auth.uid == request.resource.data.tenantId;
+        allow read: if true; // Temporarily allow public reads for debugging
+        allow write: if get(/databases/$(database)/documents/properties/$(request.resource.data.propertyId)).data.landlordId == request.auth.uid || request.auth.uid == request.resource.data.tenantId;
         allow list: if request.auth.uid == request.query.landlordId || request.auth.uid == request.query.tenantId;
     }
 
