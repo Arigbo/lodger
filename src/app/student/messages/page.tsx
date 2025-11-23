@@ -12,7 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import type { User, Message, Property } from '@/lib/definitions';
-import { Send, Phone, Video, User as UserIcon } from 'lucide-react';
+import { Send, Phone, Video, User as UserIcon, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp, limit, documentId } from 'firebase/firestore';
@@ -197,7 +197,11 @@ export default function MessagesPage() {
             </div>
             <Card className="h-[calc(80vh)]">
                 <div className="grid h-full grid-cols-1 md:grid-cols-3">
-                    <div className="flex flex-col border-r">
+                    <div className={cn(
+                        "flex flex-col border-r",
+                        "md:flex",
+                        selectedConversationId ? "hidden" : "flex"
+                    )}>
                         <CardHeader>
                             <CardTitle>Conversations</CardTitle>
                         </CardHeader>
@@ -236,11 +240,20 @@ export default function MessagesPage() {
                         </ScrollArea>
                     </div>
 
-                    <div className="col-span-2 flex flex-col h-full">
+                    <div className={cn(
+                        "col-span-2 flex-col h-full",
+                        selectedConversationId ? "flex" : "hidden",
+                        "md:flex"
+                    )}>
                         {selectedParticipant && student ? (
                             <>
                              <div className="flex items-center justify-between border-b p-4">
                                 <div className="flex items-center gap-4 group">
+                                     <Button variant="ghost" size="icon" className="md:hidden" asChild>
+                                        <Link href="/student/messages" scroll={false}>
+                                            <ArrowLeft />
+                                        </Link>
+                                    </Button>
                                     <Avatar>
                                         <AvatarImage src={selectedParticipant.profileImageUrl} />
                                         <AvatarFallback>
@@ -304,7 +317,7 @@ export default function MessagesPage() {
                             </div>
                             </>
                         ) : (
-                            <div className="flex h-full flex-col items-center justify-center text-center p-6">
+                            <div className="hidden h-full md:flex flex-col items-center justify-center text-center p-6">
                                 <div className="rounded-full bg-secondary p-4">
                                     <Send className="h-10 w-10 text-muted-foreground" />
                                 </div>

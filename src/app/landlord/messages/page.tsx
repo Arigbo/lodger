@@ -12,7 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import type { User, Message } from '@/lib/definitions';
-import { Send, Phone, Video, User as UserIcon } from 'lucide-react';
+import { Send, Phone, Video, User as UserIcon, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -174,7 +174,11 @@ export default function MessagesPage() {
             <Card className="h-[calc(80vh)]">
                 <div className="grid h-full grid-cols-1 md:grid-cols-3">
                     {/* Conversation List */}
-                    <div className="flex flex-col border-r">
+                    <div className={cn(
+                        "flex flex-col border-r",
+                        "md:flex",
+                        selectedConversationId ? "hidden" : "flex"
+                    )}>
                         <CardHeader>
                             <CardTitle>Conversations</CardTitle>
                         </CardHeader>
@@ -214,23 +218,34 @@ export default function MessagesPage() {
                     </div>
 
                     {/* Chat Window */}
-                    <div className="col-span-2 flex flex-col h-full">
+                    <div className={cn(
+                        "col-span-2 flex-col h-full",
+                        selectedConversationId ? "flex" : "hidden",
+                        "md:flex"
+                    )}>
                         {selectedParticipant && landlord ? (
                             <>
                                 {/* Chat Header */}
                                 <div className="flex items-center justify-between border-b p-4">
-                                    <Link href={`/landlord/tenants/${selectedParticipant.id}`} className="flex items-center gap-4 group">
-                                        <Avatar>
-                                            <AvatarImage src={selectedParticipant.profileImageUrl} />
-                                            <AvatarFallback>
-                                                <UserIcon className="h-4 w-4" />
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <p className="font-semibold group-hover:underline">{selectedParticipant.name}</p>
-                                            <p className="text-xs text-muted-foreground">Online</p>
-                                        </div>
-                                    </Link>
+                                    <div className="flex items-center gap-4">
+                                        <Button variant="ghost" size="icon" className="md:hidden" asChild>
+                                            <Link href="/landlord/messages" scroll={false}>
+                                                <ArrowLeft />
+                                            </Link>
+                                        </Button>
+                                        <Link href={`/landlord/tenants/${selectedParticipant.id}`} className="flex items-center gap-4 group">
+                                            <Avatar>
+                                                <AvatarImage src={selectedParticipant.profileImageUrl} />
+                                                <AvatarFallback>
+                                                    <UserIcon className="h-4 w-4" />
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <p className="font-semibold group-hover:underline">{selectedParticipant.name}</p>
+                                                <p className="text-xs text-muted-foreground">Online</p>
+                                            </div>
+                                        </Link>
+                                    </div>
                                     <div className="flex items-center gap-2">
                                         <Button variant="ghost" size="icon"><Phone /></Button>
                                         <Button variant="ghost" size="icon"><Video /></Button>
@@ -285,7 +300,7 @@ export default function MessagesPage() {
                                 </div>
                             </>
                         ) : (
-                            <div className="flex h-full flex-col items-center justify-center text-center">
+                            <div className="hidden h-full md:flex flex-col items-center justify-center text-center">
                                 <div className="rounded-full bg-secondary p-4">
                                     <Send className="h-10 w-10 text-muted-foreground" />
                                 </div>
