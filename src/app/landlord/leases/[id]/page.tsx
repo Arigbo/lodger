@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import format from "date-fns/format";
 import { CheckCircle2, FileClock, Hourglass, Check } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import type { LeaseAgreement, User, Property } from '@/lib/definitions';
+import type { LeaseAgreement, UserProfile as User, Property } from '@/types/';
 import { doc } from 'firebase/firestore';
 import Loading from '@/app/loading';
 
@@ -42,8 +42,9 @@ export default function ViewLandlordLeasePage() {
 
     if (!lease || !currentUser || currentUser.uid !== lease.landlordId) {
         notFound();
+        return null;
     }
-    
+
     const getStatusVariant = (status: 'active' | 'expired' | 'pending') => {
         switch (status) {
             case 'active': return 'secondary';
@@ -51,7 +52,7 @@ export default function ViewLandlordLeasePage() {
             case 'pending': return 'default';
         }
     };
-     const getStatusIcon = (status: 'active' | 'expired' | 'pending') => {
+    const getStatusIcon = (status: 'active' | 'expired' | 'pending') => {
         switch (status) {
             case 'active': return <CheckCircle2 className="h-5 w-5 text-green-600" />;
             case 'expired': return <FileClock className="h-5 w-5 text-muted-foreground" />;
@@ -94,7 +95,7 @@ export default function ViewLandlordLeasePage() {
                             <p>{format(new Date(lease.startDate), 'MMM dd, yyyy')} - {format(new Date(lease.endDate), 'MMM dd, yyyy')}</p>
                         </div>
                     </div>
-                    <Separator className="my-6"/>
+                    <Separator className="my-6" />
                     <h3 className="font-semibold mb-2">Lease Document</h3>
                     <ScrollArea className="h-96 rounded-md border bg-secondary/30 p-4">
                         <div className="prose prose-sm max-w-none whitespace-pre-wrap">{lease.leaseText}</div>
@@ -107,18 +108,18 @@ export default function ViewLandlordLeasePage() {
                             <div className="flex flex-col items-center gap-2">
                                 <span className="font-semibold">Landlord</span>
                                 {lease.landlordSigned ? (
-                                    <span className="font-serif italic text-green-600 flex items-center gap-1"><Check className="h-4 w-4"/> Digitally Signed</span>
+                                    <span className="font-serif italic text-green-600 flex items-center gap-1"><Check className="h-4 w-4" /> Digitally Signed</span>
                                 ) : (
-                                    <span className="font-serif italic text-amber-600 flex items-center gap-1"><Hourglass className="h-4 w-4"/> Pending Signature</span>
+                                    <span className="font-serif italic text-amber-600 flex items-center gap-1"><Hourglass className="h-4 w-4" /> Pending Signature</span>
                                 )}
                                 <span className="text-xs text-muted-foreground">{landlord?.name}</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <span className="font-semibold">Tenant</span>
                                 {lease.tenantSigned ? (
-                                    <span className="font-serif italic text-green-600 flex items-center gap-1"><Check className="h-4 w-4"/> Digitally Signed</span>
+                                    <span className="font-serif italic text-green-600 flex items-center gap-1"><Check className="h-4 w-4" /> Digitally Signed</span>
                                 ) : (
-                                    <span className="font-serif italic text-amber-600 flex items-center gap-1"><Hourglass className="h-4 w-4"/> Pending Signature</span>
+                                    <span className="font-serif italic text-amber-600 flex items-center gap-1"><Hourglass className="h-4 w-4" /> Pending Signature</span>
                                 )}
                                 <span className="text-xs text-muted-foreground">{tenant?.name}</span>
                             </div>

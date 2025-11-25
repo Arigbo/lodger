@@ -6,7 +6,7 @@ import { Menu, X, User } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/logo";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,3 +38,5 @@ const navLinks = [
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/landlord", label: "For Landlords" },
 ];
+
+

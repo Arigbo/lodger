@@ -35,12 +35,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import type { Transaction, User, Property } from '@/lib/definitions';
-import { formatPrice, cn } from '@/lib/utils';
+import type { Transaction, UserProfile as User, Property } from '@/types';
+import { formatPrice, cn } from '@/utils';
 import { DollarSign, ExternalLink, MoreHorizontal, Download, Calendar as CalendarIcon, X as ClearIcon, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { DateRange } from 'react-day-picker';
-import { addDays, format } from 'date-fns';
+import { addDays, format } from "date-fns";
 import { Calendar } from '@/components/ui/calendar';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
@@ -76,7 +76,7 @@ export default function TransactionsPage() {
   });
   const [type, setType] = React.useState('all');
   const [status, setStatus] = React.useState('all');
-  
+
   React.useEffect(() => {
     if (!landlord || !firestore) return;
 
@@ -84,39 +84,39 @@ export default function TransactionsPage() {
       setIsLoading(true);
       const transactionsQuery = query(collection(firestore, 'transactions'), where('landlordId', '==', landlord.uid));
       const transactionsSnapshot = await getDocs(transactionsQuery);
-      const allTransactions = transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[];
-      
+      const allTransactions: Transaction[] = transactionsSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })) as Transaction[];
+
       if (allTransactions.length === 0) {
         setAggregatedTransactions([]);
         setFilteredTransactions([]);
         setIsLoading(false);
         return;
       }
-      
+
       const tenantIds = [...new Set(allTransactions.map(t => t.tenantId))];
       const propertyIds = [...new Set(allTransactions.map(t => t.propertyId))];
 
       const usersMap = new Map<string, User>();
       const propertiesMap = new Map<string, Property>();
-      
+
       if (tenantIds.length > 0) {
         const userChunks = chunkArray(tenantIds, 30);
         for (const chunk of userChunks) {
-            const userQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-            const userSnapshots = await getDocs(userQuery);
-            userSnapshots.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+          const userQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+          const userSnapshots = await getDocs(userQuery);
+          userSnapshots.forEach((doc: any) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
         }
       }
 
       if (propertyIds.length > 0) {
         const propertyChunks = chunkArray(propertyIds, 30);
         for (const chunk of propertyChunks) {
-            const propertyQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
-            const propertySnapshots = await getDocs(propertyQuery);
-            propertySnapshots.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+          const propertyQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
+          const propertySnapshots = await getDocs(propertyQuery);
+          propertySnapshots.forEach((doc: any) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
         }
       }
-      
+
       const finalTransactions = allTransactions.map(t => ({
         transaction: t,
         tenant: usersMap.get(t.tenantId)!,
@@ -133,20 +133,20 @@ export default function TransactionsPage() {
   React.useEffect(() => {
     let transactions = aggregatedTransactions;
     if (date?.from && date?.to) {
-        transactions = transactions.filter(t => {
-            const tDate = new Date(t.transaction.date);
-            const from = new Date(date.from!);
-            from.setHours(0, 0, 0, 0);
-            const to = new Date(date.to!);
-            to.setHours(23, 59, 59, 999);
-            return tDate >= from && tDate <= to;
-        });
+      transactions = transactions.filter(t => {
+        const tDate = new Date(t.transaction.date);
+        const from = new Date(date.from!);
+        from.setHours(0, 0, 0, 0);
+        const to = new Date(date.to!);
+        to.setHours(23, 59, 59, 999);
+        return tDate >= from && tDate <= to;
+      });
     }
     if (type !== 'all') {
-        transactions = transactions.filter(t => t.transaction.type === type);
+      transactions = transactions.filter(t => t.transaction.type === type);
     }
     if (status !== 'all') {
-        transactions = transactions.filter(t => t.transaction.status === status);
+      transactions = transactions.filter(t => t.transaction.status === status);
     }
 
     setFilteredTransactions(transactions);
@@ -159,17 +159,17 @@ export default function TransactionsPage() {
     console.log("Downloading report for:", filteredTransactions);
     alert('Generating CSV report...');
   }
-  
+
   const handleDownloadReceipt = (transactionId: string) => {
     // Placeholder for receipt generation logic
     console.log("Downloading receipt for:", transactionId);
     alert(`Generating receipt for transaction ${transactionId}...`);
   }
-  
+
   const resetFilters = () => {
-      setDate(undefined);
-      setType('all');
-      setStatus('all');
+    setDate(undefined);
+    setType('all');
+    setStatus('all');
   }
 
   const totalRevenue = filteredTransactions
@@ -182,7 +182,7 @@ export default function TransactionsPage() {
 
 
   if (isLoading || isUserLoading) {
-      return <Loading />;
+    return <Loading />;
   }
 
   return (
@@ -195,116 +195,116 @@ export default function TransactionsPage() {
           </p>
         </div>
         <Button onClick={handleDownloadReport}>
-            <Download className="mr-2 h-4 w-4" />
-            Download Report
+          <Download className="mr-2 h-4 w-4" />
+          Download Report
         </Button>
       </div>
       <Separator className="my-6" />
 
-       {/* Overview Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{formatPrice(totalRevenue)}</div>
-                    <p className="text-xs text-muted-foreground">From {filteredTransactions.filter(t => t.transaction.status === 'Completed').length} completed transactions</p>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Pending</CardTitle>
-                    <Wallet className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{formatPrice(pendingAmount)}</div>
-                    <p className="text-xs text-muted-foreground">From transactions currently processing</p>
-                </CardContent>
-            </Card>
-        </div>
+      {/* Overview Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatPrice(totalRevenue)}</div>
+            <p className="text-xs text-muted-foreground">From {filteredTransactions.filter(t => t.transaction.status === 'Completed').length} completed transactions</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatPrice(pendingAmount)}</div>
+            <p className="text-xs text-muted-foreground">From transactions currently processing</p>
+          </CardContent>
+        </Card>
+      </div>
 
 
-       {/* Filter Controls */}
+      {/* Filter Controls */}
       <div className="mb-6 rounded-lg border bg-card p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="grid gap-2">
             <label className="text-sm font-medium">Date Range</label>
-             <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="date"
-                    variant={"outline"}
-                    className={cn(
-                      "justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date?.from ? (
-                      date.to ? (
-                        <>
-                          {format(date.from, "LLL dd, y")} -{" "}
-                          {format(date.to, "LLL dd, y")}
-                        </>
-                      ) : (
-                        format(date.from, "LLL dd, y")
-                      )
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="date"
+                  variant={"outline"}
+                  className={cn(
+                    "justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date?.from ? (
+                    date.to ? (
+                      <>
+                        {format(date.from, "LLL dd, y")} -{" "}
+                        {format(date.to, "LLL dd, y")}
+                      </>
                     ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={date?.from}
-                    selected={date}
-                    onSelect={setDate}
-                    numberOfMonths={2}
-                  />
-                  <div className="p-2 border-t">
-                      <Button variant="ghost" size="sm" className="w-full justify-center" onClick={() => setDate(undefined)}>Clear</Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                      format(date.from, "LLL dd, y")
+                    )
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={date?.from}
+                  selected={date}
+                  onSelect={setDate}
+                  numberOfMonths={2}
+                />
+                <div className="p-2 border-t">
+                  <Button variant="ghost" size="sm" className="w-full justify-center" onClick={() => setDate(undefined)}>Clear</Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
-           <div className="grid gap-2">
+          <div className="grid gap-2">
             <label htmlFor="type-filter" className="text-sm font-medium">Type</label>
-             <Select value={type} onValueChange={setType}>
-                <SelectTrigger id="type-filter">
-                    <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="Rent">Rent</SelectItem>
-                    <SelectItem value="Deposit">Deposit</SelectItem>
-                    <SelectItem value="Late Fee">Late Fee</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
+            <Select value={type} onValueChange={setType}>
+              <SelectTrigger id="type-filter">
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="Rent">Rent</SelectItem>
+                <SelectItem value="Deposit">Deposit</SelectItem>
+                <SelectItem value="Late Fee">Late Fee</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
             </Select>
           </div>
-           <div className="grid gap-2">
+          <div className="grid gap-2">
             <label htmlFor="status-filter" className="text-sm font-medium">Status</label>
-             <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger id="status-filter">
-                    <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Failed">Failed</SelectItem>
-                </SelectContent>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger id="status-filter">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
+                <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Failed">Failed</SelectItem>
+              </SelectContent>
             </Select>
           </div>
-           <div className="grid gap-2 items-end">
-              <Button onClick={resetFilters} variant="ghost">
-                <ClearIcon className="mr-2 h-4 w-4" /> Reset Filters
-              </Button>
-            </div>
+          <div className="grid gap-2 items-end">
+            <Button onClick={resetFilters} variant="ghost">
+              <ClearIcon className="mr-2 h-4 w-4" /> Reset Filters
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -335,27 +335,27 @@ export default function TransactionsPage() {
                     <TableRow key={transaction.id}>
                       <TableCell>
                         <Link href={`/landlord/tenants/${tenant?.id}`} className="font-medium hover:underline flex items-center gap-2">
-                           {tenant?.name} <ExternalLink className="h-3 w-3 text-muted-foreground"/>
+                          {tenant?.name} <ExternalLink className="h-3 w-3 text-muted-foreground" />
                         </Link>
                       </TableCell>
-                       <TableCell>
+                      <TableCell>
                         <Link href={`/landlord/properties/${property?.id}`} className="text-muted-foreground hover:underline">
                           {property?.title}
                         </Link>
                       </TableCell>
                       <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                       <TableCell className="text-muted-foreground">{transaction.type}</TableCell>
+                      <TableCell className="text-muted-foreground">{transaction.type}</TableCell>
                       <TableCell className="text-right font-medium">{formatPrice(transaction.amount)}</TableCell>
-                       <TableCell className="text-center">
+                      <TableCell className="text-center">
                         <Badge variant={
-                            transaction.status === 'Completed' ? 'secondary' 
-                            : transaction.status === 'Pending' ? 'default' 
-                            : 'destructive'
+                          transaction.status === 'Completed' ? 'secondary'
+                            : transaction.status === 'Pending' ? 'default'
+                              : 'destructive'
                         }>
                           {transaction.status}
                         </Badge>
                       </TableCell>
-                       <TableCell>
+                      <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -366,8 +366,8 @@ export default function TransactionsPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuItem onClick={() => handleDownloadReceipt(transaction.id)}>
-                                <Download className="mr-2 h-4 w-4" />
-                                Download Receipt
+                              <Download className="mr-2 h-4 w-4" />
+                              Download Receipt
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -378,7 +378,7 @@ export default function TransactionsPage() {
               </TableBody>
             </Table>
           ) : (
-             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
                 <DollarSign className="h-10 w-10 text-muted-foreground" />
               </div>
@@ -393,3 +393,5 @@ export default function TransactionsPage() {
     </div>
   );
 }
+
+

@@ -1,4 +1,4 @@
-# **App Name**: Urban Nest
+# **App Name**: Lodger
 
 ## Core Features:
 

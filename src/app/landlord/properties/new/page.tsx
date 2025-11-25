@@ -8,33 +8,33 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
-import { amenities as allAmenities } from '@/lib/definitions';
-import { cn, formatPrice } from '@/lib/utils';
+import { amenities as allAmenities } from '@/types';
+import { cn, formatPrice } from '@/utils';
 import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText } from 'lucide-react';
-import type { Property } from '@/lib/definitions';
-import { User as FirebaseUser } from 'firebase/auth';
-import { format, add } from 'date-fns';
+import type { Property } from '@/types';
+import { format } from 'date-fns';
+import { add } from 'date-fns/add';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, addDoc, updateDoc } from 'firebase/firestore';
@@ -48,9 +48,9 @@ function generateLeaseTextForTemplate(propertyData: Partial<FormValues>): string
     const landlordName = "[Landlord Name]"; // Placeholder
     const tenantName = "[Tenant Name]"; // Placeholder
 
-    const rules = typeof propertyData.rules === 'string' 
-      ? propertyData.rules.split(',').map(r => r.trim()).filter(Boolean) 
-      : [];
+    const rules = typeof propertyData.rules === 'string'
+        ? propertyData.rules.split(',').map(r => r.trim()).filter(Boolean)
+        : [];
 
     return `
     LEASE AGREEMENT
@@ -87,27 +87,27 @@ function generateLeaseTextForTemplate(propertyData: Partial<FormValues>): string
 
 
 const formSchema = z.object({
-  title: z.string().min(5, 'Title must be at least 5 characters.'),
-  description: z.string().min(10, 'Description is required.'),
-  price: z.coerce.number().positive('Price must be a positive number.'),
-  type: z.enum(['Apartment', 'House', 'Studio', 'Loft']),
-  address: z.string().min(5, 'Address is required.'),
-  city: z.string().min(2, 'City is required.'),
-  state: z.string().min(2, 'State is required.'),
-  zip: z.string().min(5, 'ZIP code is required.'),
-  bedrooms: z.coerce.number().int().min(1, 'Must have at least 1 bedroom.'),
-  bathrooms: z.coerce.number().int().min(1, 'Must have at least 1 bathroom.'),
-  area: z.coerce.number().positive('Area must be a positive number.'),
-  amenities: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: 'You have to select at least one amenity.',
-  }),
-  rules: z.string().optional(),
-  leaseTemplate: z.string().min(100, 'Lease template must not be empty.'),
-  // Images are optional for now as we don't handle file uploads yet
-  // kitchenImage: z.any().refine((files) => files?.length == 1, 'Kitchen image is required.'),
-  // livingRoomImage: z.any().refine((files) => files?.length == 1, 'Living room image is required.'),
-  // bathroomImage: z.any().refine((files) => files?.length == 1, 'Bathroom image is required.'),
-  // otherImages: z.any().optional(),
+    title: z.string().min(5, 'Title must be at least 5 characters.'),
+    description: z.string().min(10, 'Description is required.'),
+    price: z.coerce.number().positive('Price must be a positive number.'),
+    type: z.enum(['Apartment', 'House', 'Studio', 'Loft']),
+    address: z.string().min(5, 'Address is required.'),
+    city: z.string().min(2, 'City is required.'),
+    state: z.string().min(2, 'State is required.'),
+    zip: z.string().min(5, 'ZIP code is required.'),
+    bedrooms: z.coerce.number().int().min(1, 'Must have at least 1 bedroom.'),
+    bathrooms: z.coerce.number().int().min(1, 'Must have at least 1 bathroom.'),
+    area: z.coerce.number().positive('Area must be a positive number.'),
+    amenities: z.array(z.string()).refine((value) => value.some((item) => item), {
+        message: 'You have to select at least one amenity.',
+    }),
+    rules: z.string().optional(),
+    leaseTemplate: z.string().min(100, 'Lease template must not be empty.'),
+    // Images are optional for now as we don't handle file uploads yet
+    // kitchenImage: z.any().refine((files) => files?.length == 1, 'Kitchen image is required.'),
+    // livingRoomImage: z.any().refine((files) => files?.length == 1, 'Living room image is required.'),
+    // bathroomImage: z.any().refine((files) => files?.length == 1, 'Bathroom image is required.'),
+    // otherImages: z.any().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -153,492 +153,493 @@ const FileUpload = ({ field, label, description }: { field: any, label: string, 
 
 
 export default function AddPropertyPage() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = steps.length;
-  const router = useRouter();
-  const firestore = useFirestore();
-  const { user } = useUser();
-  const { toast } = useToast();
-  
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      price: 0,
-      address: '',
-      city: '',
-      state: '',
-      zip: '',
-      bedrooms: 1,
-      bathrooms: 1,
-      area: 0,
-      amenities: [],
-      rules: '',
-      leaseTemplate: '',
-    },
-  });
+    const [currentStep, setCurrentStep] = useState(1);
+    const totalSteps = steps.length;
+    const router = useRouter();
+    const firestore = useFirestore();
+    const { user } = useUser();
+    const { toast } = useToast();
 
-  const nextStep = async () => {
-    const fields = steps[currentStep - 1].fields;
-    
-    // When moving to the lease step, generate the template text
-    if (currentStep === 4) {
-        const propertyData = form.getValues();
-        const leaseText = generateLeaseTextForTemplate(propertyData);
-        form.setValue('leaseTemplate', leaseText);
-    }
-    
-    if (fields) {
-        const output = await form.trigger(fields as (keyof FormValues)[], { shouldFocus: true });
-        if (!output) return;
-    }
-
-    if (currentStep < totalSteps) {
-        setCurrentStep(step => step + 1);
-    }
-  }
-
-  const prevStep = () => {
-     if (currentStep > 1) {
-        setCurrentStep(step => step - 1);
-     }
-  }
-
-  async function onSubmit(values: FormValues) {
-    if (!user) {
-        toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: "You must be logged in to create a property.",
-        });
-        return;
-    }
-
-    // In a real app, you would handle image uploads here and get back URLs.
-    // For now, we'll use placeholders.
-    const placeholderImages = [
-        "https://images.unsplash.com/photo-1515263487990-61b07816b324?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        "https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-    ];
-
-
-    const newPropertyData: Omit<Property, 'id'> = {
-        title: values.title,
-        description: values.description,
-        price: values.price,
-        type: values.type,
-        location: {
-            address: values.address,
-            city: values.city,
-            state: values.state,
-            zip: values.zip,
+    const form = useForm<FormValues>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            title: '',
+            description: '',
+            price: 0,
+            address: '',
+            city: '',
+            state: '',
+            zip: '',
+            bedrooms: 1,
+            bathrooms: 1,
+            area: 0,
+            amenities: [],
+            rules: '',
+            leaseTemplate: '',
         },
-        bedrooms: values.bedrooms,
-        bathrooms: values.bathrooms,
-        area: values.area,
-        amenities: values.amenities,
-        images: placeholderImages,
-        landlordId: user.uid,
-        status: 'available' as 'available' | 'occupied',
-        rules: values.rules ? values.rules.split(',').map(r => r.trim()).filter(Boolean) : [],
-        leaseTemplate: values.leaseTemplate,
-    };
-    
-    try {
-        const docRef = await addDoc(collection(firestore, 'properties'), newPropertyData);
-        // Now update the document with its own ID
-        await updateDoc(docRef, { id: docRef.id });
-        
-        toast({
-            title: "Property Listed!",
-            description: `${values.title} is now available for rent.`,
-        });
-        router.push('/landlord/properties');
-    } catch(e) {
-        console.error("Error adding document: ", e);
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Could not list property. Please try again.",
-        });
+    });
+
+    const nextStep = async () => {
+        const fields = steps[currentStep - 1].fields;
+
+        // When moving to the lease step, generate the template text
+        if (currentStep === 4) {
+            const propertyData = form.getValues();
+            const leaseText = generateLeaseTextForTemplate(propertyData);
+            form.setValue('leaseTemplate', leaseText);
+        }
+
+        if (fields) {
+            const output = await form.trigger(fields as (keyof FormValues)[], { shouldFocus: true });
+            if (!output) return;
+        }
+
+        if (currentStep < totalSteps) {
+            setCurrentStep(step => step + 1);
+        }
     }
-  }
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-headline text-3xl font-bold">Add New Property</CardTitle>
-        <CardDescription>Follow the steps to list your property.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-            <Progress value={(currentStep / totalSteps) * 100} className="mb-8" />
-            <h3 className="font-headline text-xl font-semibold">{steps[currentStep-1].name}</h3>
-        </div>
+    const prevStep = () => {
+        if (currentStep > 1) {
+            setCurrentStep(step => step - 1);
+        }
+    }
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-8">
-            
-            <div className={cn(currentStep === 1 ? "block" : "hidden")}>
-                <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Property Title</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., Modern Downtown Loft" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <Separator className="my-8"/>
-                <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                        <Textarea placeholder="Describe your property in detail..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                 <Separator className="my-8"/>
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                    <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Price (per month)</FormLabel>
-                        <FormControl>
-                            <Input type="number" placeholder="1200" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Property Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a property type" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            <SelectItem value="Apartment">Apartment</SelectItem>
-                            <SelectItem value="House">House</SelectItem>
-                            <SelectItem value="Studio">Studio</SelectItem>
-                            <SelectItem value="Loft">Loft</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
+    async function onSubmit(values: FormValues) {
+        if (!user) {
+            toast({
+                variant: "destructive",
+                title: "Authentication Error",
+                description: "You must be logged in to create a property.",
+            });
+            return;
+        }
+
+        // In a real app, you would handle image uploads here and get back URLs.
+        // For now, we'll use placeholders.
+        const placeholderImages = [
+            "https://images.unsplash.com/photo-1515263487990-61b07816b324?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            "https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+        ];
+
+
+        const newPropertyData: Omit<Property, 'id'> = {
+            title: values.title,
+            description: values.description,
+            price: values.price,
+            type: values.type,
+            location: {
+                address: values.address,
+                city: values.city,
+                state: values.state,
+                zip: values.zip,
+            },
+            bedrooms: values.bedrooms,
+            bathrooms: values.bathrooms,
+            area: values.area,
+            amenities: values.amenities,
+            images: placeholderImages,
+            landlordId: user.uid,
+            status: 'available' as 'available' | 'occupied',
+            rules: values.rules ? values.rules.split(',').map(r => r.trim()).filter(Boolean) : [],
+            leaseTemplate: values.leaseTemplate,
+        };
+
+        try {
+            const docRef = await addDoc(collection(firestore, 'properties'), newPropertyData);
+            // Now update the document with its own ID
+            await updateDoc(docRef, { id: docRef.id });
+
+            toast({
+                title: "Property Listed!",
+                description: `${values.title} is now available for rent.`,
+            });
+            router.push('/landlord/properties');
+        } catch (e: unknown) {
+            console.error("Error adding document: ", e);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Could not list property. Please try again.",
+            });
+        }
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline text-3xl font-bold">Add New Property</CardTitle>
+                <CardDescription>Follow the steps to list your property.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4">
+                    <Progress value={(currentStep / totalSteps) * 100} className="mb-8" />
+                    <h3 className="font-headline text-xl font-semibold">{steps[currentStep - 1].name}</h3>
                 </div>
-            </div>
-            
-            <div className={cn(currentStep === 2 ? "block" : "hidden")}>
-                <FormField
-                    control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Street Address</FormLabel>
-                        <FormControl>
-                        <Input placeholder="123 University Ave" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <Separator className="my-8"/>
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-                    <FormField
-                        control={form.control}
-                        name="city"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>City</FormLabel>
-                            <FormControl>
-                            <Input placeholder="Urbanville" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="state"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>State</FormLabel>
-                            <FormControl>
-                            <Input placeholder="CA" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="zip"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>ZIP Code</FormLabel>
-                            <FormControl>
-                            <Input placeholder="90210" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                </div>
-            </div>
 
-            <div className={cn(currentStep === 3 ? "block" : "hidden")}>
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-                    <FormField
-                        control={form.control}
-                        name="bedrooms"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Bedrooms</FormLabel>
-                            <FormControl>
-                            <Input type="number" placeholder="2" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="bathrooms"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Bathrooms</FormLabel>
-                            <FormControl>
-                            <Input type="number" placeholder="1" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="area"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Area (sqft)</FormLabel>
-                            <FormControl>
-                            <Input type="number" placeholder="1000" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                </div>
-            </div>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-8">
 
-            <div className={cn(currentStep === 4 ? "block" : "hidden")}>
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                    <FormField
-                        control={form.control}
-                        name="amenities"
-                        render={() => (
-                            <FormItem>
-                            <div className="mb-4">
-                                <FormLabel className="text-base">Amenities</FormLabel>
-                                <FormDescription>
-                                Select the amenities available at your property.
-                                </FormDescription>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                            {allAmenities.map((item) => (
-                                <FormField
-                                key={item}
+                        <div className={cn(currentStep === 1 ? "block" : "hidden")}>
+                            <FormField
                                 control={form.control}
-                                name="amenities"
-                                render={({ field }) => {
-                                    return (
-                                    <FormItem
-                                        key={item}
-                                        className="flex flex-row items-start space-x-3 space-y-0"
-                                    >
+                                name="title"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Property Title</FormLabel>
                                         <FormControl>
-                                        <Checkbox
-                                            checked={field.value?.includes(item)}
-                                            onCheckedChange={(checked) => {
-                                            return checked
-                                                ? field.onChange([...(field.value || []), item])
-                                                : field.onChange(
-                                                    field.value?.filter(
-                                                    (value) => value !== item
-                                                    )
-                                                )
-                                            }}
-                                        />
+                                            <Input placeholder="e.g., Modern Downtown Loft" {...field} />
                                         </FormControl>
-                                        <FormLabel className="font-normal">
-                                        {item}
-                                        </FormLabel>
+                                        <FormMessage />
                                     </FormItem>
-                                    )
-                                }}
+                                )}
+                            />
+                            <Separator className="my-8" />
+                            <FormField
+                                control={form.control}
+                                name="description"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Description</FormLabel>
+                                        <FormControl>
+                                            <Textarea placeholder="Describe your property in detail..." {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <Separator className="my-8" />
+                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="price"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Price (per month)</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" placeholder="1200" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
                                 />
-                            ))}
+                                <FormField
+                                    control={form.control}
+                                    name="type"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Property Type</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select a property type" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="Apartment">Apartment</SelectItem>
+                                                    <SelectItem value="House">House</SelectItem>
+                                                    <SelectItem value="Studio">Studio</SelectItem>
+                                                    <SelectItem value="Loft">Loft</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </div>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                    <FormField
-                        control={form.control}
-                        name="rules"
-                        render={({ field }) => (
-                        <FormItem>
-                            <div className="mb-4">
-                                <FormLabel className="text-base">House Rules</FormLabel>
-                                <FormDescription>
-                                List your property rules, separated by commas.
-                                </FormDescription>
+                        </div>
+
+                        <div className={cn(currentStep === 2 ? "block" : "hidden")}>
+                            <FormField
+                                control={form.control}
+                                name="address"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Street Address</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="123 University Ave" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <Separator className="my-8" />
+                            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                                <FormField
+                                    control={form.control}
+                                    name="city"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>City</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Urbanville" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="state"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>State</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="CA" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="zip"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>ZIP Code</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="90210" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </div>
-                            <FormControl>
-                            <Textarea placeholder="e.g., No smoking, Quiet hours after 10 PM" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                </div>
-            </div>
-            
-            <div className={cn(currentStep === 5 ? "block space-y-8" : "hidden")}>
-                 <FormField
-                    control={form.control}
-                    name="leaseTemplate"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Lease Document Template</FormLabel>
-                            <FormDescription>
-                                This is a standard lease template. Review and edit the text as needed. This document will be used to generate lease agreements for this property. Once you proceed, this text will be locked for any future leases for this property.
-                            </FormDescription>
-                            <FormControl>
-                                <Textarea {...field} rows={20} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
+                        </div>
 
-            <div className={cn(currentStep === 7 ? "block space-y-8" : "hidden")}>
-                {/* This step is now unused since we are not handling file uploads */}
-            </div>
-            
-            <div className={cn(currentStep === 6 ? "block" : "hidden")}>
-                <h3 className="font-headline text-xl font-semibold">Review Your Listing</h3>
-                <p className="text-muted-foreground">Please review all the information below before submitting.</p>
-                <div className="mt-6 space-y-6 rounded-lg border bg-secondary/50 p-6">
-                    {/* Basic Info & Location */}
-                    <div className="space-y-2">
-                        <h4 className="font-semibold">{form.getValues('title')}</h4>
-                        <p className="text-muted-foreground">{form.getValues('address')}, {form.getValues('city')}, {form.getValues('state')} {form.getValues('zip')}</p>
-                    </div>
-                    <Separator/>
-                    {/* Description */}
-                    <p className="text-sm">{form.getValues('description')}</p>
-                    <Separator/>
-                     {/* Details Grid */}
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                        <div>
-                            <p className="text-sm font-medium">Price</p>
-                            <p className="text-muted-foreground">${form.getValues('price')}/month</p>
+                        <div className={cn(currentStep === 3 ? "block" : "hidden")}>
+                            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                                <FormField
+                                    control={form.control}
+                                    name="bedrooms"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Bedrooms</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" placeholder="2" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="bathrooms"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Bathrooms</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" placeholder="1" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="area"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Area (sqft)</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" placeholder="1000" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm font-medium">Type</p>
-                            <p className="text-muted-foreground">{form.getValues('type')}</p>
+
+                        <div className={cn(currentStep === 4 ? "block" : "hidden")}>
+                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="amenities"
+                                    render={() => (
+                                        <FormItem>
+                                            <div className="mb-4">
+                                                <FormLabel className="text-base">Amenities</FormLabel>
+                                                <FormDescription>
+                                                    Select the amenities available at your property.
+                                                </FormDescription>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {allAmenities.map((item) => (
+                                                    <FormField
+                                                        key={item}
+                                                        control={form.control}
+                                                        name="amenities"
+                                                        render={({ field }) => {
+                                                            return (
+                                                                <FormItem
+                                                                    key={item}
+                                                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                                                >
+                                                                    <FormControl>
+                                                                        <Checkbox
+                                                                            checked={field.value?.includes(item)}
+                                                                            onCheckedChange={(checked) => {
+                                                                                return checked
+                                                                                    ? field.onChange([...(field.value || []), item])
+                                                                                    : field.onChange(
+                                                                                        field.value?.filter(
+                                                                                            (value) => value !== item
+                                                                                        )
+                                                                                    )
+                                                                            }}
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormLabel className="font-normal">
+                                                                        {item}
+                                                                    </FormLabel>
+                                                                </FormItem>
+                                                            )
+                                                        }}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="rules"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <div className="mb-4">
+                                                <FormLabel className="text-base">House Rules</FormLabel>
+                                                <FormDescription>
+                                                    List your property rules, separated by commas.
+                                                </FormDescription>
+                                            </div>
+                                            <FormControl>
+                                                <Textarea placeholder="e.g., No smoking, Quiet hours after 10 PM" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm font-medium">Bedrooms</p>
-                            <p className="text-muted-foreground">{form.getValues('bedrooms')}</p>
+
+                        <div className={cn(currentStep === 5 ? "block space-y-8" : "hidden")}>
+                            <FormField
+                                control={form.control}
+                                name="leaseTemplate"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Lease Document Template</FormLabel>
+                                        <FormDescription>
+                                            This is a standard lease template. Review and edit the text as needed. This document will be used to generate lease agreements for this property. Once you proceed, this text will be locked for any future leases for this property.
+                                        </FormDescription>
+                                        <FormControl>
+                                            <Textarea {...field} rows={20} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
-                         <div>
-                            <p className="text-sm font-medium">Bathrooms</p>
-                            <p className="text-muted-foreground">{form.getValues('bathrooms')}</p>
+
+                        <div className={cn(currentStep === 7 ? "block space-y-8" : "hidden")}>
+                            {/* This step is now unused since we are not handling file uploads */}
                         </div>
-                         <div>
-                            <p className="text-sm font-medium">Area</p>
-                            <p className="text-muted-foreground">{form.getValues('area')} sqft</p>
+
+                        <div className={cn(currentStep === 6 ? "block" : "hidden")}>
+                            <h3 className="font-headline text-xl font-semibold">Review Your Listing</h3>
+                            <p className="text-muted-foreground">Please review all the information below before submitting.</p>
+                            <div className="mt-6 space-y-6 rounded-lg border bg-secondary/50 p-6">
+                                {/* Basic Info & Location */}
+                                <div className="space-y-2">
+                                    <h4 className="font-semibold">{form.getValues('title')}</h4>
+                                    <p className="text-muted-foreground">{form.getValues('address')}, {form.getValues('city')}, {form.getValues('state')} {form.getValues('zip')}</p>
+                                </div>
+                                <Separator />
+                                {/* Description */}
+                                <p className="text-sm">{form.getValues('description')}</p>
+                                <Separator />
+                                {/* Details Grid */}
+                                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                                    <div>
+                                        <p className="text-sm font-medium">Price</p>
+                                        <p className="text-muted-foreground">${form.getValues('price')}/month</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium">Type</p>
+                                        <p className="text-muted-foreground">{form.getValues('type')}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium">Bedrooms</p>
+                                        <p className="text-muted-foreground">{form.getValues('bedrooms')}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium">Bathrooms</p>
+                                        <p className="text-muted-foreground">{form.getValues('bathrooms')}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium">Area</p>
+                                        <p className="text-muted-foreground">{form.getValues('area')} sqft</p>
+                                    </div>
+                                </div>
+                                <Separator />
+                                {/* Amenities & Rules */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <p className="text-sm font-medium mb-2">Amenities</p>
+                                        <p className="text-sm text-muted-foreground">{form.getValues('amenities').join(', ')}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium mb-2">Rules</p>
+                                        <p className="text-sm text-muted-foreground">{form.getValues('rules')}</p>
+                                    </div>
+                                </div>
+                                <Separator />
+                                {/* Images */}
+                                <div>
+                                    <p className="text-sm font-medium mb-2">Images</p>
+                                    <div className="space-y-2 text-sm text-muted-foreground">
+                                        <div className="flex items-center gap-2"><FileImage className="h-4 w-4" /><span>Placeholder images will be used.</span></div>
+                                    </div>
+                                </div>
+                                <Separator />
+                                {/* Lease Template */}
+                                <div>
+                                    <p className="text-sm font-medium mb-2">Lease Template</p>
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <FileText className="h-4 w-4" />
+                                        <span>Lease document template has been configured.</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <Separator/>
-                    {/* Amenities & Rules */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <p className="text-sm font-medium mb-2">Amenities</p>
-                            <p className="text-sm text-muted-foreground">{form.getValues('amenities').join(', ')}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium mb-2">Rules</p>
-                            <p className="text-sm text-muted-foreground">{form.getValues('rules')}</p>
-                        </div>
-                    </div>
-                    <Separator/>
-                     {/* Images */}
-                    <div>
-                        <p className="text-sm font-medium mb-2">Images</p>
-                        <div className="space-y-2 text-sm text-muted-foreground">
-                           <div className="flex items-center gap-2"><FileImage className="h-4 w-4"/><span>Placeholder images will be used.</span></div>
-                        </div>
-                    </div>
-                    <Separator/>
-                    {/* Lease Template */}
-                     <div>
-                        <p className="text-sm font-medium mb-2">Lease Template</p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <FileText className="h-4 w-4"/>
-                            <span>Lease document template has been configured.</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
 
-            <div className="mt-12 flex justify-between">
-              <Button type="button" variant="outline" onClick={prevStep} className={cn(currentStep === 1 && "invisible")}>
-                <ArrowLeft className="mr-2 h-4 w-4"/> Back
-              </Button>
-              
-              {currentStep < totalSteps -1 ? (
-                <Button type="button" onClick={nextStep}>
-                  Next <ArrowRight className="ml-2 h-4 w-4"/>
-                </Button>
-              ) : currentStep === totalSteps - 1 ? (
-                <Button type="button" onClick={nextStep}>
-                    Review <ArrowRight className="ml-2 h-4 w-4"/>
-                </Button>
-              ) : (
-                <Button type="submit" size="lg">Create Property</Button>
-              )}
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
-  );
+                        <div className="mt-12 flex justify-between">
+                            <Button type="button" variant="outline" onClick={prevStep} className={cn(currentStep === 1 && "invisible")}>
+                                <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                            </Button>
+
+                            {currentStep < totalSteps - 1 ? (
+                                <Button type="button" onClick={nextStep}>
+                                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                            ) : currentStep === totalSteps - 1 ? (
+                                <Button type="button" onClick={nextStep}>
+                                    Review <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                            ) : (
+                                <Button type="submit" size="lg">Create Property</Button>
+                            )}
+                        </div>
+                    </form>
+                </Form>
+            </CardContent>
+        </Card>
+    );
 }
 
-    
+
+

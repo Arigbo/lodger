@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 
 export default function Logo({ className }: { className?: string }) {
   return (
@@ -22,3 +22,5 @@ export default function Logo({ className }: { className?: string }) {
     </div>
   );
 }
+
+

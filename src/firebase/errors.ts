@@ -4,7 +4,7 @@ import { getAuth, type User } from 'firebase/auth';
 type SecurityRuleContext = {
   path: string;
   operation: 'get' | 'list' | 'create' | 'update' | 'delete' | 'write';
-  requestResourceData?: any;
+  requestResourceData?: unknown;
 };
 
 interface FirebaseAuthToken {
@@ -30,7 +30,7 @@ interface SecurityRuleRequest {
   method: string;
   path: string;
   resource?: {
-    data: any;
+    data: unknown;
   };
 }
 
@@ -83,7 +83,7 @@ function buildRequestObject(context: SecurityRuleContext): SecurityRuleRequest {
     if (currentUser) {
       authObject = buildAuthObject(currentUser);
     }
-  } catch {
+  } catch (error: unknown) {
     // This will catch errors if the Firebase app is not yet initialized.
     // In this case, we'll proceed without auth information.
   }
@@ -121,3 +121,5 @@ export class FirestorePermissionError extends Error {
     this.request = requestObject;
   }
 }
+
+

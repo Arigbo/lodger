@@ -20,7 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import type { RentalApplication, User, Property } from '@/lib/definitions';
+import type { RentalApplication, UserProfile as User, Property } from '@/types';
 import { BellRing, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -49,10 +49,10 @@ export default function StudentRequestsPage() {
   const firestore = useFirestore();
   const [aggregatedRequests, setAggregatedRequests] = React.useState<AggregatedRequest[]>([]);
   const [isAggregating, setIsAggregating] = React.useState(true);
-  
+
   const requestsQuery = useMemoFirebase(() => {
-      if (!student) return null;
-      return query(collection(firestore, 'rentalApplications'), where('tenantId', '==', student.uid));
+    if (!student) return null;
+    return query(collection(firestore, 'rentalApplications'), where('tenantId', '==', student.uid));
   }, [student, firestore]);
 
   const { data: studentRequests, isLoading: areRequestsLoading } = useCollection<RentalApplication>(requestsQuery);
@@ -82,28 +82,28 @@ export default function StudentRequestsPage() {
       if (landlordIds.length > 0) {
         const userChunks = chunkArray(landlordIds, 30);
         for (const chunk of userChunks) {
-            const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-            const userSnapshots = await getDocs(usersQuery);
-            userSnapshots.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+          const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+          const userSnapshots = await getDocs(usersQuery);
+          userSnapshots.forEach((doc: any) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
         }
       }
 
       if (propertyIds.length > 0) {
         const propertyChunks = chunkArray(propertyIds, 30);
         for (const chunk of propertyChunks) {
-            const propertyPromises = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
-            const propertySnapshots = await getDocs(propertyPromises);
-            propertySnapshots.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+          const propertyPromises = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
+          const propertySnapshots = await getDocs(propertyPromises);
+          propertySnapshots.forEach((doc: any) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
         }
       }
-      
+
       const finalData = studentRequests.map(request => ({
         request,
         landlord: usersMap.get(request.landlordId) || null,
         property: propertiesMap.get(request.propertyId) || null,
       }));
 
-      setAggregatedRequests(finalData.sort((a,b) => new Date(b.request.applicationDate).getTime() - new Date(a.request.applicationDate).getTime()));
+      setAggregatedRequests(finalData.sort((a, b) => new Date(b.request.applicationDate).getTime() - new Date(a.request.applicationDate).getTime()));
       setIsAggregating(false);
     };
 
@@ -159,7 +159,7 @@ export default function StudentRequestsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {aggregatedRequests.map(({request, landlord, property}) => {
+                {aggregatedRequests.map(({ request, landlord, property }) => {
                   return (
                     <TableRow key={request.id}>
                       <TableCell>
@@ -172,17 +172,17 @@ export default function StudentRequestsPage() {
                       </TableCell>
                       <TableCell>{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
                       <TableCell>
-                         <Badge variant={getStatusVariant(request.status)} className="capitalize">
-                            {request.status}
-                         </Badge>
+                        <Badge variant={getStatusVariant(request.status)} className="capitalize">
+                          {request.status}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         {request.status === 'approved' && (
-                            <Button variant="secondary" size="sm" asChild>
-                                <Link href="/student/leases">
-                                    View Leases
-                                </Link>
-                            </Button>
+                          <Button variant="secondary" size="sm" asChild>
+                            <Link href="/student/leases">
+                              View Leases
+                            </Link>
+                          </Button>
                         )}
                       </TableCell>
                     </TableRow>
@@ -191,7 +191,7 @@ export default function StudentRequestsPage() {
               </TableBody>
             </Table>
           ) : (
-             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
                 <BellRing className="h-10 w-10 text-muted-foreground" />
               </div>
@@ -199,11 +199,11 @@ export default function StudentRequestsPage() {
               <p className="mt-2 text-sm text-muted-foreground">
                 When you apply for a property, your requests will appear here.
               </p>
-               <Button asChild className="mt-4">
-                    <Link href="/student/properties">
-                        <Search className="mr-2 h-4 w-4" /> Find a Property
-                    </Link>
-                </Button>
+              <Button asChild className="mt-4">
+                <Link href="/student/properties">
+                  <Search className="mr-2 h-4 w-4" /> Find a Property
+                </Link>
+              </Button>
             </div>
           )}
         </CardContent>
@@ -211,3 +211,5 @@ export default function StudentRequestsPage() {
     </div>
   );
 }
+
+

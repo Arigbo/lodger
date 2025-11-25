@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
-import type { Property } from "@/lib/definitions";
+import type { Property } from "@/types";
 import Loading from '@/app/loading';
 
 
@@ -84,3 +84,4 @@ export default function StudentDashboardPage() {
 }
 
     
+

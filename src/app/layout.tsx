@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 import { Toaster } from "@/components/ui/toaster";
 import { HeaderAndFooterProvider } from "@/components/header-and-footer-provider";
 import { FirebaseClientProvider } from "@/firebase";
@@ -14,7 +14,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: {
-    default: "Lodger - Find Your Perfect Student Home",
+    default: "Lodger",
     template: "%s | Lodger",
   },
   description: "The easiest way for university students to find and book their next rental property.",
@@ -88,3 +88,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+

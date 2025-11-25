@@ -1,0 +1,30 @@
+﻿
+> nextn@0.1.0 dev
+> run dev --turbopack -p 9002
+
+node.exe : 'run' is 
+not recognized as 
+an internal or 
+external command,
+At line:1 char:1
++ & "C:\Program File
+s\nodejs/node.exe" "
+C:\Users\user\AppDat
+a\Roaming\n ...
++ ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo  
+            : NotS  
+  pecified: ('run   
+ ' is not re...t    
+ernal command,:    
+String) [], Rem    
+oteException
+    + FullyQualifie 
+   dErrorId : Nati  
+  veCommandError
+ 
+operable program or 
+batch file.

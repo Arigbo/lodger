@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, Building2, Users, Bell, Wrench } from "lucide-react";
 import { Badge } from "./ui/badge";
@@ -44,3 +44,5 @@ export default function DashboardSidebar() {
     </nav>
   );
 }
+
+

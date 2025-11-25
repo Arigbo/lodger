@@ -1,5 +1,5 @@
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 import Logo from "@/components/logo";
 
 export default function Loading() {
@@ -31,3 +31,5 @@ export default function Loading() {
     </div>
   );
 }
+
+

@@ -18,7 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/utils';
 import { MoreHorizontal, PlusCircle, Building } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -32,7 +32,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Separator } from '@/components/ui/separator';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc, getDoc } from 'firebase/firestore';
-import type { Property, User } from '@/lib/definitions';
+import type { Property, UserProfile as User } from '@/types';
 import { useEffect, useState } from 'react';
 import Loading from '@/app/loading';
 
@@ -46,7 +46,7 @@ export default function LandlordPropertiesPage() {
     if (!user) return null;
     return query(collection(firestore, 'properties'), where('landlordId', '==', user.uid));
   }, [user, firestore]);
-  
+
   const { data: properties, isLoading } = useCollection<Property>(propertiesQuery);
 
   const [propertiesWithTenants, setPropertiesWithTenants] = useState<PropertyWithTenant[]>([]);
@@ -89,10 +89,10 @@ export default function LandlordPropertiesPage() {
           </p>
         </div>
         <Button asChild>
-            <Link href="/landlord/properties/new">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add New Property
-            </Link>
+          <Link href="/landlord/properties/new">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add New Property
+          </Link>
         </Button>
       </div>
       <Separator className="my-6" />
@@ -121,79 +121,80 @@ export default function LandlordPropertiesPage() {
                 {propertiesWithTenants.map((property) => {
                   const isOccupied = property.status === 'occupied';
                   return (
-                  <TableRow key={property.id}>
-                    <TableCell className="font-medium">
-                      <Link href={`/landlord/properties/${property.id}`} className="hover:underline">
+                    <TableRow key={property.id}>
+                      <TableCell className="font-medium">
+                        <Link href={`/landlord/properties/${property.id}`} className="hover:underline">
                           {property.title}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={isOccupied ? 'secondary' : 'default'}>
-                        {property.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatPrice(property.price)}/mo</TableCell>
-                    <TableCell>{property.tenantName || 'N/A'}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem asChild>
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={isOccupied ? 'secondary' : 'default'}>
+                          {property.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{formatPrice(property.price)}/mo</TableCell>
+                      <TableCell>{property.tenantName || 'N/A'}</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem asChild>
                               <Link href={`/landlord/properties/edit/${property.id}`}>Edit</Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
                               <Link href={`/landlord/properties/${property.id}`}>View Requests</Link>
-                          </DropdownMenuItem>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
+                            </DropdownMenuItem>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
                                   <div className="relative w-full">
-                                    <DropdownMenuItem 
-                                        className="text-destructive" 
-                                        disabled={isOccupied}
-                                        onSelect={(e) => {
-                                          if (isOccupied) e.preventDefault();
-                                        }}
+                                    <DropdownMenuItem
+                                      className="text-destructive"
+                                      disabled={isOccupied}
+                                      onSelect={(e) => {
+                                        if (isOccupied) e.preventDefault();
+                                      }}
                                     >
                                       Delete
                                     </DropdownMenuItem>
                                   </div>
-                              </TooltipTrigger>
-                              {isOccupied && (
-                                <TooltipContent>
-                                  <p>Cannot delete a property with an active tenant.</p>
-                                </TooltipContent>
-                              )}
-                            </Tooltip>
-                          </TooltipProvider>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                )})}
+                                </TooltipTrigger>
+                                {isOccupied && (
+                                  <TooltipContent>
+                                    <p>Cannot delete a property with an active tenant.</p>
+                                  </TooltipContent>
+                                )}
+                              </Tooltip>
+                            </TooltipProvider>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           ) : (
-             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
-                    <Building className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <h3 className="mt-4 text-lg font-semibold">No Properties Found</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                    Get started by listing your first property.
-                </p>
-                <Button asChild className="mt-4">
-                    <Link href="/landlord/properties/new">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        List a Property
-                    </Link>
-                </Button>
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
+                <Building className="h-10 w-10 text-muted-foreground" />
+              </div>
+              <h3 className="mt-4 text-lg font-semibold">No Properties Found</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Get started by listing your first property.
+              </p>
+              <Button asChild className="mt-4">
+                <Link href="/landlord/properties/new">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  List a Property
+                </Link>
+              </Button>
             </div>
           )}
         </CardContent>
@@ -201,3 +202,5 @@ export default function LandlordPropertiesPage() {
     </div>
   );
 }
+
+

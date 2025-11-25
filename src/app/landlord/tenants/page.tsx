@@ -26,7 +26,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { User, Property } from '@/lib/definitions';
+import type { UserProfile as User, Property } from '@/types';
 import { MoreHorizontal, Users, Mail, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore } from '@/firebase';
@@ -68,7 +68,7 @@ export default function TenantsPage() {
         where('landlordId', '==', landlord.uid)
       );
       const propertiesSnapshot = await getDocs(propertiesQuery);
-      const landlordProperties = propertiesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+      const landlordProperties: Property[] = propertiesSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as Property));
 
       // 2. Filter for occupied properties and get unique tenant IDs.
       const occupiedProperties = landlordProperties.filter(p => p.currentTenantId);
@@ -79,14 +79,14 @@ export default function TenantsPage() {
         setIsLoading(false);
         return;
       }
-      
+
       // 3. Fetch user data for all unique tenants.
       const usersMap = new Map<string, User>();
       const userChunks = chunkArray(tenantIds, 30);
       await Promise.all(userChunks.map(async chunk => {
         const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
         const usersSnapshot = await getDocs(usersQuery);
-        usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+        usersSnapshot.forEach((doc: any) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
       }));
 
       // 4. Combine the data.
@@ -95,7 +95,7 @@ export default function TenantsPage() {
         if (!tenant) return null;
         return { tenant, property };
       }).filter((item): item is TenantWithProperty => item !== null);
-      
+
       setTenantsWithProperties(combinedData);
       setIsLoading(false);
     };
@@ -103,10 +103,10 @@ export default function TenantsPage() {
     fetchTenants();
 
   }, [landlord, firestore]);
-  
+
 
   if (isLoading || isUserLoading) {
-      return <Loading />;
+    return <Loading />;
   }
 
   return (
@@ -129,77 +129,77 @@ export default function TenantsPage() {
         </CardHeader>
         <CardContent>
           {tenantsWithProperties.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tenant</TableHead>
-                <TableHead>Property</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tenantsWithProperties.map(({ tenant, property }) => (
-                <TableRow key={`${tenant.id}-${property.id}`}>
-                  <TableCell>
-                     <Link href={`/landlord/tenants/${tenant.id}`} className="hover:underline">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tenant</TableHead>
+                  <TableHead>Property</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tenantsWithProperties.map(({ tenant, property }) => (
+                  <TableRow key={`${tenant.id}-${property.id}`}>
+                    <TableCell>
+                      <Link href={`/landlord/tenants/${tenant.id}`} className="hover:underline">
                         <div className="flex items-center gap-3">
-                        <Avatar>
+                          <Avatar>
                             <AvatarImage src={tenant.profileImageUrl} />
                             <AvatarFallback>
-                                <UserIcon className="h-4 w-4" />
+                              <UserIcon className="h-4 w-4" />
                             </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{tenant.name}</span>
+                          </Avatar>
+                          <span className="font-medium">{tenant.name}</span>
                         </div>
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <Link
-                      href={`/landlord/properties/${property.id}`}
-                      className="hover:underline"
-                    >
-                      {property.title}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={'secondary'}>{property.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{tenant.email}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup="true"
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/landlord/properties/${property.id}`}
+                        className="hover:underline"
+                      >
+                        {property.title}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={'secondary'}>{property.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{tenant.email}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup="true"
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem asChild>
                             <Link href={`/landlord/tenants/${tenant.id}`}>View Details</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/landlord/messages?conversationId=${tenant.id}`} className="flex items-center">
-                            <Mail className="mr-2 h-4 w-4" /> Message Tenant
-                          </Link>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/landlord/messages?conversationId=${tenant.id}`} className="flex items-center">
+                              <Mail className="mr-2 h-4 w-4" /> Message Tenant
+                            </Link>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           ) : (
-             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
                 <Users className="h-10 w-10 text-muted-foreground" />
               </div>
@@ -214,3 +214,5 @@ export default function TenantsPage() {
     </div>
   );
 }
+
+

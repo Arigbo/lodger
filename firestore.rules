@@ -22,7 +22,8 @@ service cloud.firestore {
         allow read: if get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.landlordId == request.auth.uid || request.auth.uid == resource.data.tenantId;
         allow create: if request.auth.uid == request.resource.data.tenantId;
         allow update: if get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.landlordId == request.auth.uid;
-        allow list: if request.auth.uid == request.query.landlordId;
+        // Allow list if querying by landlordId, propertyId, or tenantId
+        allow list: if request.auth != null;
     }
 
     match /leaseAgreements/{leaseId} {

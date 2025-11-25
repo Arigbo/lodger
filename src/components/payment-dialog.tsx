@@ -13,9 +13,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/utils';
 import { CreditCard, Lock, CheckCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
 import { collection, addDoc } from 'firebase/firestore';
@@ -168,3 +168,5 @@ export default function PaymentDialog({
     </Dialog>
   );
 }
+
+

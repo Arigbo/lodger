@@ -20,7 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import type { LeaseAgreement, User, Property } from '@/lib/definitions';
+import type { LeaseAgreement, UserProfile as User, Property } from '@/types';
 import { FileText } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -49,10 +49,10 @@ export default function LandlordLeasesPage() {
   const firestore = useFirestore();
   const [aggregatedLeases, setAggregatedLeases] = React.useState<AggregatedLease[]>([]);
   const [isAggregating, setIsAggregating] = React.useState(true);
-  
+
   const leasesQuery = useMemoFirebase(() => {
-      if (!landlord) return null;
-      return query(collection(firestore, 'leaseAgreements'), where('landlordId', '==', landlord.uid));
+    if (!landlord) return null;
+    return query(collection(firestore, 'leaseAgreements'), where('landlordId', '==', landlord.uid));
   }, [landlord, firestore]);
 
   const { data: landlordLeases, isLoading: areLeasesLoading } = useCollection<LeaseAgreement>(leasesQuery);
@@ -82,28 +82,28 @@ export default function LandlordLeasesPage() {
       if (tenantIds.length > 0) {
         const userChunks = chunkArray(tenantIds, 30);
         for (const chunk of userChunks) {
-            const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-            const userSnapshots = await getDocs(usersQuery);
-            userSnapshots.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+          const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+          const userSnapshots = await getDocs(usersQuery);
+          userSnapshots.forEach((doc: any) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
         }
       }
 
       if (propertyIds.length > 0) {
         const propertyChunks = chunkArray(propertyIds, 30);
         for (const chunk of propertyChunks) {
-            const propertyPromises = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
-            const propertySnapshots = await getDocs(propertyPromises);
-            propertySnapshots.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+          const propertyPromises = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
+          const propertySnapshots = await getDocs(propertyPromises);
+          propertySnapshots.forEach((doc: any) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
         }
       }
-      
+
       const finalData = landlordLeases.map(lease => ({
         lease,
         tenant: usersMap.get(lease.tenantId) || null,
         property: propertiesMap.get(lease.propertyId) || null,
       }));
 
-      setAggregatedLeases(finalData.sort((a,b) => new Date(b.lease.startDate).getTime() - new Date(a.lease.startDate).getTime()));
+      setAggregatedLeases(finalData.sort((a, b) => new Date(b.lease.startDate).getTime() - new Date(a.lease.startDate).getTime()));
       setIsAggregating(false);
     };
 
@@ -160,7 +160,7 @@ export default function LandlordLeasesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {aggregatedLeases.map(({lease, tenant, property}) => {
+                {aggregatedLeases.map(({ lease, tenant, property }) => {
                   return (
                     <TableRow key={lease.id}>
                       <TableCell>
@@ -176,15 +176,15 @@ export default function LandlordLeasesPage() {
                       <TableCell>{new Date(lease.startDate).toLocaleDateString()}</TableCell>
                       <TableCell>{new Date(lease.endDate).toLocaleDateString()}</TableCell>
                       <TableCell>
-                         <Badge variant={getStatusVariant(lease.status)}>
-                            {lease.status}
-                         </Badge>
+                        <Badge variant={getStatusVariant(lease.status)}>
+                          {lease.status}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <Button variant="outline" size="sm" asChild>
-                            <Link href={`/landlord/leases/${lease.id}`}>
-                                <FileText className="mr-2 h-4 w-4" /> View
-                            </Link>
+                          <Link href={`/landlord/leases/${lease.id}`}>
+                            <FileText className="mr-2 h-4 w-4" /> View
+                          </Link>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -193,7 +193,7 @@ export default function LandlordLeasesPage() {
               </TableBody>
             </Table>
           ) : (
-             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
                 <FileText className="h-10 w-10 text-muted-foreground" />
               </div>
@@ -208,3 +208,5 @@ export default function LandlordLeasesPage() {
     </div>
   );
 }
+
+

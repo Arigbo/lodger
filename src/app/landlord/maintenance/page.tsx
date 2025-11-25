@@ -27,7 +27,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import type { MaintenanceRequest, User, Property } from '@/lib/definitions';
+import type { MaintenanceRequest, UserProfile as User, Property } from '@/types';
 import { MoreHorizontal, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -64,7 +64,7 @@ export default function MaintenancePage() {
 
       const requestsQuery = query(collection(firestore, 'maintenanceRequests'), where('landlordId', '==', landlord.uid));
       const requestsSnapshot = await getDocs(requestsQuery);
-      const landlordRequests = requestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MaintenanceRequest));
+      const landlordRequests: MaintenanceRequest[] = requestsSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as MaintenanceRequest));
 
       if (landlordRequests.length === 0) {
         setRequests([]);
@@ -74,7 +74,7 @@ export default function MaintenancePage() {
 
       const tenantIds = [...new Set(landlordRequests.map(r => r.tenantId))];
       const propertyIds = [...new Set(landlordRequests.map(r => r.propertyId))];
-      
+
       const usersMap = new Map<string, User>();
       const propertiesMap = new Map<string, Property>();
 
@@ -83,16 +83,16 @@ export default function MaintenancePage() {
         for (const chunk of userChunks) {
           const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
           const usersSnapshot = await getDocs(usersQuery);
-          usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+          usersSnapshot.forEach((doc: any) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
         }
       }
-      
+
       if (propertyIds.length > 0) {
         const propertyChunks = chunkArray(propertyIds, 30);
         for (const chunk of propertyChunks) {
           const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
           const propertiesSnapshot = await getDocs(propertiesQuery);
-          propertiesSnapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+          propertiesSnapshot.forEach((doc: any) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
         }
       }
 
@@ -122,7 +122,7 @@ export default function MaintenancePage() {
     }
   };
 
-   const getStatusVariant = (status: MaintenanceRequest['status']) => {
+  const getStatusVariant = (status: MaintenanceRequest['status']) => {
     switch (status) {
       case 'Completed':
         return 'secondary';
@@ -130,7 +130,7 @@ export default function MaintenancePage() {
         return 'default';
       case 'Pending':
         return 'outline';
-       case 'Cancelled':
+      case 'Cancelled':
         return 'destructive';
       default:
         return 'outline';
@@ -196,7 +196,7 @@ export default function MaintenancePage() {
                       </TableCell>
                       <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
                       <TableCell>
-                         <Badge variant={getStatusVariant(request.status)}>{request.status}</Badge>
+                        <Badge variant={getStatusVariant(request.status)}>{request.status}</Badge>
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -222,7 +222,7 @@ export default function MaintenancePage() {
               </TableBody>
             </Table>
           ) : (
-             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
                 <Wrench className="h-10 w-10 text-muted-foreground" />
               </div>
@@ -238,4 +238,6 @@ export default function MaintenancePage() {
   );
 }
 
-    
+
+
+

@@ -3,13 +3,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { Property } from "@/lib/definitions";
-import { formatPrice } from "@/lib/utils";
+import type { Property } from "@/types";
+import { formatPrice } from "@/utils";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BedDouble, Bath, Ruler, MapPin } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 
 
 type PropertyCardProps = {
@@ -90,3 +90,5 @@ export default function PropertyCard({ property, as = 'link', className }: Prope
     </Link>
   );
 }
+
+

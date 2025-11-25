@@ -20,7 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import type { LeaseAgreement, User, Property } from '@/lib/definitions';
+import type { LeaseAgreement, UserProfile as User, Property } from '@/types';
 import { FileText, Signature } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -75,7 +75,7 @@ export default function StudentLeasesPage() {
 
       const landlordIds = [...new Set(studentLeases.map(l => l.landlordId))].filter(Boolean);
       const propertyIds = [...new Set(studentLeases.map(l => l.propertyId))].filter(Boolean);
-      
+
       const usersMap = new Map<string, User>();
       const propertiesMap = new Map<string, Property>();
 
@@ -84,17 +84,17 @@ export default function StudentLeasesPage() {
         for (const chunk of userChunks) {
           const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
           const usersSnapshot = await getDocs(usersQuery);
-          usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+          usersSnapshot.forEach((doc: any) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
         }
       }
 
       if (propertyIds.length > 0) {
-         const propertyChunks = chunkArray(propertyIds, 30);
-         for (const chunk of propertyChunks) {
-            const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
-            const propertiesSnapshot = await getDocs(propertiesQuery);
-            propertiesSnapshot.forEach(doc => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
-         }
+        const propertyChunks = chunkArray(propertyIds, 30);
+        for (const chunk of propertyChunks) {
+          const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
+          const propertiesSnapshot = await getDocs(propertiesQuery);
+          propertiesSnapshot.forEach((doc: any) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+        }
       }
 
       const finalData = studentLeases.map(lease => ({
@@ -103,7 +103,7 @@ export default function StudentLeasesPage() {
         property: propertiesMap.get(lease.propertyId) || null,
       }));
 
-      setAggregatedLeases(finalData.sort((a,b) => new Date(b.lease.startDate).getTime() - new Date(a.lease.startDate).getTime()));
+      setAggregatedLeases(finalData.sort((a, b) => new Date(b.lease.startDate).getTime() - new Date(a.lease.startDate).getTime()));
       setIsAggregating(false);
     };
 
@@ -175,21 +175,21 @@ export default function StudentLeasesPage() {
                       <TableCell>{new Date(lease.startDate).toLocaleDateString()}</TableCell>
                       <TableCell>{new Date(lease.endDate).toLocaleDateString()}</TableCell>
                       <TableCell>
-                         <Badge variant={getStatusVariant(lease.status)}>{lease.status}</Badge>
+                        <Badge variant={getStatusVariant(lease.status)}>{lease.status}</Badge>
                       </TableCell>
                       <TableCell>
                         {lease.status === 'pending' ? (
-                            <Button variant="default" size="sm" asChild>
-                              <Link href={`/student/leases/${lease.id}`}>
-                                <Signature className="mr-2 h-4 w-4" /> View & Sign
-                              </Link>
-                            </Button>
-                        ) : (
-                           <Button variant="outline" size="sm" asChild>
-                           <Link href={`/student/leases/${lease.id}`}>
-                                <FileText className="mr-2 h-4 w-4" /> View
+                          <Button variant="default" size="sm" asChild>
+                            <Link href={`/student/leases/${lease.id}`}>
+                              <Signature className="mr-2 h-4 w-4" /> View & Sign
                             </Link>
-                        </Button>
+                          </Button>
+                        ) : (
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/student/leases/${lease.id}`}>
+                              <FileText className="mr-2 h-4 w-4" /> View
+                            </Link>
+                          </Button>
                         )}
                       </TableCell>
                     </TableRow>
@@ -198,7 +198,7 @@ export default function StudentLeasesPage() {
               </TableBody>
             </Table>
           ) : (
-             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
                 <FileText className="h-10 w-10 text-muted-foreground" />
               </div>
@@ -213,3 +213,5 @@ export default function StudentLeasesPage() {
     </div>
   );
 }
+
+

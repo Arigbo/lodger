@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
-import { amenities as allAmenities } from "@/lib/definitions";
+import { amenities as allAmenities } from "@/types";
 import { MapPin } from "lucide-react";
 import { Input } from "./ui/input";
 
@@ -240,3 +240,5 @@ export default function SearchFilters({
     </Card>
   );
 }
+
+

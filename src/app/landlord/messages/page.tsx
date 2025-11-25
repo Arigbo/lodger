@@ -10,10 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
-import type { User, Message } from '@/lib/definitions';
+import { cn } from '@/utils';
+import type { UserProfile as User, Message } from '@/types';
 import { Send, Phone, Video, User as UserIcon, ArrowLeft } from 'lucide-react';
-import { format } from 'date-fns';
+import format from "date-fns/format";
 import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp } from 'firebase/firestore';
 import Loading from '@/app/loading';
@@ -67,7 +67,7 @@ export default function MessagesPage() {
         const processConversations = async () => {
             setIsDataLoading(true);
             const conversationsMap = new Map<string, { lastMessage: Message, participantId: string }>();
-            
+
             allLandlordMessages.forEach(msg => {
                 const otherParticipantId = msg.participantIds.find(id => id !== landlord.uid);
                 if (otherParticipantId) {
@@ -87,7 +87,7 @@ export default function MessagesPage() {
             const usersQuery = query(collection(firestore, 'users'), where('id', 'in', participantIds));
             const usersSnapshot = await getDocs(usersQuery);
             const usersMap = new Map<string, User>();
-            usersSnapshot.forEach(docSnap => usersMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as User));
+            usersSnapshot.forEach((docSnap: any) => usersMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as User));
 
             const convos = Array.from(conversationsMap.values()).map(convoData => {
                 const participant = usersMap.get(convoData.participantId);
@@ -101,14 +101,14 @@ export default function MessagesPage() {
                 } as Conversation;
             }).filter(Boolean) as Conversation[];
 
-            convos.sort((a,b) => (b.lastMessageTimestamp?.getTime() || 0) - (a.lastMessageTimestamp?.getTime() || 0));
+            convos.sort((a, b) => (b.lastMessageTimestamp?.getTime() || 0) - (a.lastMessageTimestamp?.getTime() || 0));
             setConversations(convos);
             setIsDataLoading(false);
         };
 
         processConversations();
     }, [landlord, allLandlordMessages, isUserLoading, messagesLoading, firestore]);
-    
+
     // Effect to set the selected conversation based on URL param
     useEffect(() => {
         if (selectedConversationId) {
@@ -117,10 +117,10 @@ export default function MessagesPage() {
         } else if (conversations.length > 0 && !selectedParticipant) {
             // Default to first conversation
             setSelectedParticipant(conversations[0].participant);
-             router.replace(`${pathname}?conversationId=${conversations[0].participant.id}`, { scroll: false });
+            router.replace(`${pathname}?conversationId=${conversations[0].participant.id}`, { scroll: false });
         }
     }, [selectedConversationId, conversations, selectedParticipant, router, pathname]);
-    
+
     // Memoized messages for the selected conversation, filtered from all messages
     const messages = useMemo(() => {
         if (!allLandlordMessages || !selectedParticipant) return [];
@@ -133,7 +133,7 @@ export default function MessagesPage() {
                 return 0;
             });
     }, [allLandlordMessages, selectedParticipant]);
-    
+
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !landlord || !selectedParticipant || !firestore) return;
@@ -149,15 +149,15 @@ export default function MessagesPage() {
         };
 
         addDoc(messagesRef, messageData)
-          .catch(serverError => {
-            const permissionError = new FirestorePermissionError({
-              path: messagesRef.path,
-              operation: 'create',
-              requestResourceData: messageData,
+            .catch((serverError: any) => {
+                const permissionError = new FirestorePermissionError({
+                    path: messagesRef.path,
+                    operation: 'create',
+                    requestResourceData: messageData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
             });
-            errorEmitter.emit('permission-error', permissionError);
-          });
-        
+
         setNewMessage('');
     };
 
@@ -286,7 +286,7 @@ export default function MessagesPage() {
                                 </ScrollArea>
                                 {/* Message Input */}
                                 <div className="border-t p-4">
-                                     <form onSubmit={handleSendMessage} className="relative">
+                                    <form onSubmit={handleSendMessage} className="relative">
                                         <Input
                                             placeholder="Type your message..."
                                             className="pr-12"
@@ -314,3 +314,5 @@ export default function MessagesPage() {
         </div>
     );
 }
+
+

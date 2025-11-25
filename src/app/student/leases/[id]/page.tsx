@@ -12,7 +12,7 @@ import { Signature, CheckCircle2, FileClock, Hourglass, Check } from 'lucide-rea
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import type { LeaseAgreement, Property, User } from '@/lib/definitions';
+import type { LeaseAgreement, Property, UserProfile as User } from '@/types';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Loading from '@/app/loading';
@@ -27,7 +27,7 @@ export default function ViewStudentLeasePage() {
 
     const leaseRef = useMemoFirebase(() => id ? doc(firestore, 'leaseAgreements', id) : null, [firestore, id]);
     const { data: lease, isLoading: isLeaseLoading } = useDoc<LeaseAgreement>(leaseRef);
-    
+
     const landlordRef = useMemoFirebase(() => lease ? doc(firestore, 'users', lease.landlordId) : null, [firestore, lease]);
     const { data: landlord, isLoading: isLandlordLoading } = useDoc<User>(landlordRef);
 
@@ -36,17 +36,18 @@ export default function ViewStudentLeasePage() {
 
     const propertyRef = useMemoFirebase(() => lease ? doc(firestore, 'properties', lease.propertyId) : null, [firestore, lease]);
     const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
-    
+
     const isLoading = isUserLoading || isLeaseLoading || isLandlordLoading || isTenantLoading || isPropertyLoading;
 
     if (isLoading) {
         return <Loading />;
     }
-    
+
     if (!lease || !currentUser || (currentUser.uid !== lease.tenantId)) {
         notFound();
+        return null;
     }
-    
+
     const handleSignLease = async () => {
         if (!leaseRef) return;
         try {
@@ -60,7 +61,7 @@ export default function ViewStudentLeasePage() {
             });
             // After signing, redirect the student to their new tenancy page
             router.push(`/student/tenancy/${lease.propertyId}`);
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Error signing lease:", error);
             toast({
                 variant: "destructive",
@@ -77,7 +78,7 @@ export default function ViewStudentLeasePage() {
             case 'pending': return 'default';
         }
     };
-     const getStatusIcon = (status: 'active' | 'expired' | 'pending') => {
+    const getStatusIcon = (status: 'active' | 'expired' | 'pending') => {
         switch (status) {
             case 'active': return <CheckCircle2 className="h-5 w-5 text-green-600" />;
             case 'expired': return <FileClock className="h-5 w-5 text-muted-foreground" />;
@@ -91,7 +92,7 @@ export default function ViewStudentLeasePage() {
                 {getStatusIcon(lease.status)}
                 <h1 className="font-headline text-3xl font-bold">Lease Agreement</h1>
             </div>
-                <p className="text-muted-foreground">
+            <p className="text-muted-foreground">
                 Review the details of the lease for <Link href={`/student/properties/${property?.id}`} className="font-medium text-primary hover:underline">{property?.title}</Link>.
             </p>
             <Separator className="my-4" />
@@ -106,7 +107,7 @@ export default function ViewStudentLeasePage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
                         <div>
                             <h3 className="font-semibold text-muted-foreground">Landlord</h3>
                             <p>{landlord?.name}</p>
@@ -120,10 +121,10 @@ export default function ViewStudentLeasePage() {
                             <p>{format(new Date(lease.startDate), 'MMM dd, yyyy')} - {format(new Date(lease.endDate), 'MMM dd, yyyy')}</p>
                         </div>
                     </div>
-                    <Separator className="my-6"/>
+                    <Separator className="my-6" />
                     <h3 className="font-semibold mb-2">Lease Document</h3>
                     <ScrollArea className="h-96 rounded-md border bg-secondary/30 p-4">
-                            <div className="prose prose-sm max-w-none whitespace-pre-wrap">{lease.leaseText}</div>
+                        <div className="prose prose-sm max-w-none whitespace-pre-wrap">{lease.leaseText}</div>
                     </ScrollArea>
 
                     {/* Signature Section */}
@@ -133,18 +134,18 @@ export default function ViewStudentLeasePage() {
                             <div className="flex flex-col items-center gap-2">
                                 <span className="font-semibold">Landlord</span>
                                 {lease.landlordSigned ? (
-                                    <span className="font-serif italic text-green-600 flex items-center gap-1"><Check className="h-4 w-4"/> Digitally Signed</span>
+                                    <span className="font-serif italic text-green-600 flex items-center gap-1"><Check className="h-4 w-4" /> Digitally Signed</span>
                                 ) : (
-                                        <span className="font-serif italic text-amber-600 flex items-center gap-1"><Hourglass className="h-4 w-4"/> Pending Signature</span>
+                                    <span className="font-serif italic text-amber-600 flex items-center gap-1"><Hourglass className="h-4 w-4" /> Pending Signature</span>
                                 )}
                                 <span className="text-xs text-muted-foreground">{landlord?.name}</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <span className="font-semibold">Tenant</span>
                                 {lease.tenantSigned ? (
-                                    <span className="font-serif italic text-green-600 flex items-center gap-1"><Check className="h-4 w-4"/> Digitally Signed</span>
+                                    <span className="font-serif italic text-green-600 flex items-center gap-1"><Check className="h-4 w-4" /> Digitally Signed</span>
                                 ) : (
-                                        <span className="font-serif italic text-amber-600 flex items-center gap-1"><Hourglass className="h-4 w-4"/> Pending Signature</span>
+                                    <span className="font-serif italic text-amber-600 flex items-center gap-1"><Hourglass className="h-4 w-4" /> Pending Signature</span>
                                 )}
                                 <span className="text-xs text-muted-foreground">{tenant?.name}</span>
                             </div>
@@ -156,15 +157,15 @@ export default function ViewStudentLeasePage() {
                             <h3 className="font-bold">Action Required</h3>
                             <p className="text-center text-sm text-muted-foreground">Review the lease agreement above. By clicking "Sign Lease", you are digitally signing and agreeing to all terms and conditions.</p>
                             <Button onClick={handleSignLease}>
-                                <Signature className="mr-2 h-4 w-4"/>
+                                <Signature className="mr-2 h-4 w-4" />
                                 Sign Lease Agreement
                             </Button>
                         </div>
                     )}
-                    
+
                 </CardContent>
             </Card>
-                <div className="mt-4 text-center">
+            <div className="mt-4 text-center">
                 <Button variant="outline" asChild>
                     <Link href={"/student/leases"}>
                         Back to All Leases

@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import type { UserProfile, Property } from '@/lib/definitions';
+import type { UserProfile, Property } from '@/types';
 import { ScrollArea } from './ui/scroll-area';
 import { Signature, Send } from 'lucide-react';
 
@@ -77,3 +77,5 @@ export default function LeaseGenerationDialog({
     </Dialog>
   );
 }
+
+

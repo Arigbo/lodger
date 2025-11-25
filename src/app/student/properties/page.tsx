@@ -4,10 +4,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import PropertyCard from "@/components/property-card";
 import SearchFilters from "@/components/search-filters";
-import type { Property, UserProfile } from '@/lib/definitions';
+import type { Property, UserProfile } from '@/types';
 import type { FilterState } from '@/components/search-filters';
 import { Home } from 'lucide-react';
-import { haversineDistance } from '@/lib/utils';
+import { haversineDistance } from '@/utils';
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import Loading from '@/app/loading';
@@ -228,3 +228,5 @@ export default function PropertiesPage() {
     </div>
   );
 }
+
+

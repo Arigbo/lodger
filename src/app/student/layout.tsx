@@ -7,7 +7,7 @@ import StudentSidebar from "@/components/student-sidebar";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { doc } from 'firebase/firestore';
-import type { User as UserProfile } from '@/lib/definitions';
+import type { UserProfile } from '@/types';
 import Loading from '@/app/loading';
 
 
@@ -51,7 +51,7 @@ export default function StudentLayout({
             </div>
             <div className="flex-1">
               <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-                  <StudentSidebar />
+                <StudentSidebar />
               </nav>
             </div>
           </div>
@@ -71,3 +71,5 @@ export default function StudentLayout({
   // Render loading state as a fallback while redirects are happening
   return <Loading />;
 }
+
+
