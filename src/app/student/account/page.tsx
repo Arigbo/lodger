@@ -40,7 +40,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { useEffect } from 'react';
 import Loading from '@/app/loading';
 import { useToast } from '@/hooks/use-toast';
-import { countries } from '@/lib/countries';
+import { countries } from '@/types/countries';
 
 const profileFormSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters.'),
