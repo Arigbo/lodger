@@ -3,9 +3,9 @@
 
 import { notFound, useParams, useRouter } from "next/navigation";
 import { formatPrice, cn } from "@/utils";
-import { add, format, isPast, isBefore } from "date-fns/";
+import { add } from "date-fns/add";
+import { format, isPast } from "date-fns";
 import PaymentDialog from '@/components/payment-dialog';
-import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import TenancySkeleton from "@/components/tenancy-skeleton";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
