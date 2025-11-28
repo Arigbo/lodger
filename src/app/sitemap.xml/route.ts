@@ -1,4 +1,3 @@
-import { collection, getDocs } from "firebase/firestore";
 import { firestore } from "@/firebase/server";
 import { Property } from "@/types";
 
@@ -45,8 +44,7 @@ export async function GET() {
     '/student/properties'
   ];
 
-  const propertiesRef = collection(firestore, 'properties');
-  const propertiesSnapshot = await getDocs(propertiesRef);
+  const propertiesSnapshot = await firestore.collection('properties').get();
   const properties = propertiesSnapshot.docs.map((doc: any) => doc.data() as Property);
 
   const body = generateSitemap(properties, staticPages);
@@ -59,4 +57,3 @@ export async function GET() {
     },
   });
 }
-

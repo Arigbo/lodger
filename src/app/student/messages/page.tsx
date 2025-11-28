@@ -1,6 +1,5 @@
 
 'use client';
-
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -195,7 +194,7 @@ export default function MessagesPage() {
                 <h1 className="font-headline text-3xl font-bold">Messages</h1>
                 <p className="text-muted-foreground">Communicate with your landlords.</p>
             </div>
-            <Card className="h-[calc(80vh)]">
+            <Card className="h-[calc(100vh)]">
                 <div className="grid h-full grid-cols-1 md:grid-cols-3">
                     <div className={cn(
                         "flex flex-col border-r",
@@ -270,7 +269,7 @@ export default function MessagesPage() {
                                         <Button variant="ghost" size="icon"><Video /></Button>
                                     </div>
                                 </div>
-                                <ScrollArea className="flex-grow p-6">
+                                <ScrollArea className="flex-grow p-6 overflow-y-auto h-[calc(70vh)]">
                                     <div className="space-y-6">
                                         {messages?.map(msg => (
                                             <div key={msg.id} className={cn("flex flex-col gap-1", msg.senderId === student.uid ? "items-end" : "items-start")}>

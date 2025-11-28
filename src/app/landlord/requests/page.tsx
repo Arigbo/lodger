@@ -25,7 +25,7 @@ import Link from 'next/link';
 import React, { useState } from 'react';
 import LeaseGenerationDialog from '@/components/lease-generation-dialog';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, where, getDocs, addDoc, updateDoc, documentId } from 'firebase/firestore';
+import { collection, doc, query, where, getDocs, addDoc, updateDoc, documentId, getDoc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Loading from '@/app/loading';
 
@@ -53,12 +53,27 @@ export default function RentalRequestsPage() {
   const [selectedRequest, setSelectedRequest] = useState<AggregatedRequest | null>(null);
   const [aggregatedRequests, setAggregatedRequests] = useState<AggregatedRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [landlordProfile, setLandlordProfile] = useState<UserProfile | null>(null);
 
   React.useEffect(() => {
     if (!landlord || !firestore) {
       if (!isUserLoading) setIsLoading(false);
       return;
     }
+
+    const fetchLandlordProfile = async () => {
+      try {
+        const userDocRef = doc(firestore, 'users', landlord.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          setLandlordProfile({ id: userDocSnap.id, ...userDocSnap.data() } as UserProfile);
+        }
+      } catch (error) {
+        console.error("Error fetching landlord profile:", error);
+      }
+    };
+
+    fetchLandlordProfile();
 
     const fetchRequests = async () => {
       setIsLoading(true);
@@ -263,12 +278,12 @@ export default function RentalRequestsPage() {
           </Card>
         </div>
       )}
-      {selectedRequest && landlord && selectedRequest.property?.leaseTemplate && (
+      {selectedRequest && landlordProfile && selectedRequest.property?.leaseTemplate && (
         <LeaseGenerationDialog
           isOpen={dialogOpen}
           onClose={() => setDialogOpen(false)}
           onLeaseSigned={handleLeaseSigned}
-          landlord={landlord}
+          landlord={landlordProfile}
           leaseText={selectedRequest.property.leaseTemplate}
         />
       )}
