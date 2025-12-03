@@ -34,13 +34,14 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useUser, useFirestore, useDoc, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase, errorEmitter, FirestorePermissionError, useFirebaseApp } from '@/firebase';
 import type { UserProfile } from '@/types';
 import { doc, setDoc } from 'firebase/firestore';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Loading from '@/app/loading';
 import { useToast } from '@/hooks/use-toast';
 import { countries } from '@/types/countries';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const profileFormSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -67,6 +68,8 @@ export default function AccountPage() {
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+    const firebaseApp = useFirebaseApp();
+    const [isUploading, setIsUploading] = useState(false);
 
     const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
@@ -102,6 +105,30 @@ export default function AccountPage() {
             confirmPassword: '',
         }
     })
+
+    async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file || !user) return;
+
+        setIsUploading(true);
+        const storage = getStorage(firebaseApp);
+        const storageRef = ref(storage, `users/${user.uid}/profile_${Date.now()}`);
+
+        try {
+            const snapshot = await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+
+            if (userDocRef) {
+                await setDoc(userDocRef, { profileImageUrl: downloadURL }, { merge: true });
+                toast({ title: "Profile Picture Updated", description: "Your profile picture has been updated." });
+            }
+        } catch (error) {
+            console.error("Error uploading image: ", error);
+            toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload image." });
+        } finally {
+            setIsUploading(false);
+        }
+    }
 
     function onProfileSubmit(values: ProfileFormValues) {
         if (!userDocRef) return;
@@ -176,7 +203,19 @@ export default function AccountPage() {
                                         </Avatar>
                                         <div className="grid gap-2">
                                             <p className="text-sm text-muted-foreground">Update your profile picture.</p>
-                                            <Button type="button" variant="outline"><Upload className="mr-2 h-4 w-4" /> Upload Image</Button>
+                                            <div className="flex items-center gap-2">
+                                                <Button type="button" variant="outline" disabled={isUploading} onClick={() => document.getElementById('profile-upload')?.click()}>
+                                                    <Upload className="mr-2 h-4 w-4" />
+                                                    {isUploading ? 'Uploading...' : 'Upload Image'}
+                                                </Button>
+                                                <input
+                                                    id="profile-upload"
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={handleImageUpload}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 

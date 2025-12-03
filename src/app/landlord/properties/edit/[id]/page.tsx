@@ -222,6 +222,23 @@ export default function EditPropertyPage() {
         <CardDescription>Make changes to your property listing.</CardDescription>
       </CardHeader>
       <CardContent>
+        {property?.status === 'rented' && (
+          <div className="mb-6 rounded-lg border border-amber-500/50 bg-amber-50 p-4">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-amber-100 p-2">
+                <svg className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-amber-900">Property Currently Rented</h4>
+                <p className="mt-1 text-sm text-amber-700">
+                  This property has an active tenant. Most fields are disabled to prevent changes that could affect the current lease agreement. You can only update images.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <h3 className="font-headline text-xl font-semibold">Basic Information</h3>
@@ -501,8 +518,8 @@ export default function EditPropertyPage() {
             </div>
 
             <Separator />
-            <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+            <Button type="submit" size="lg" disabled={form.formState.isSubmitting || property?.status === 'rented'}>
+              {form.formState.isSubmitting ? "Saving..." : property?.status === 'rented' ? "Cannot Edit Rented Property" : "Save Changes"}
             </Button>
           </form>
         </Form>

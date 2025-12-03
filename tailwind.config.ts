@@ -1,5 +1,5 @@
 
-import type {Config} from 'tailwindcss';
+import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: ['class'],
@@ -85,10 +85,10 @@ export default {
           '100%': { transform: 'translateX(0)', opacity: '1' },
         },
         'slide-and-fade': {
-          '0%': { transform: 'translateX(-200%) scale(0.8)', opacity: '0'},
-          '40%': { transform: 'translateX(0) scale(1)', opacity: '1'},
-          '80%': { transform: 'translateX(0) scale(1)', opacity: '1'},
-          '100%': { transform: 'translateX(200%) scale(0.8)', opacity: '0'},
+          '0%': { transform: 'translateY(100%) translateX(-50%)', opacity: '0' },
+          '30%': { transform: 'translateY(0) translateX(20px)', opacity: '1' },
+          '70%': { transform: 'translateY(0) translateX(20px)', opacity: '1' },
+          '100%': { transform: 'translateY(100%) translateX(-50%)', opacity: '0' },
         },
         pulse: {
           '50%': {

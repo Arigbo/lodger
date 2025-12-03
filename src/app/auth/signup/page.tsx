@@ -104,7 +104,7 @@ export default function SignupPage() {
         [
             { id: 1, name: 'Choose Account Type', fields: ['userType'] },
             { id: 2, name: 'Account Details', fields: ['name', 'email', 'password', 'confirmPassword'] },
-            { id: 3, name: 'Contact Methods', fields: ['phone', 'whatsappUrl', 'twitterUrl'] },
+            { id: 3, name: 'Location & Contact', fields: ['country', 'state', 'phone', 'whatsappUrl', 'twitterUrl'] },
         ];
     const totalSteps = steps.length;
 
@@ -301,7 +301,35 @@ export default function SignupPage() {
                             <div className={cn("space-y-6", currentStep === 3 ? "block" : "hidden")}>
                                 {userType === 'landlord' && (
                                     <>
-                                        <p className="text-sm text-muted-foreground">How can tenants contact you? Your email is already included.</p>
+                                        <p className="text-sm text-muted-foreground">Tell us where you're based and how tenants can contact you.</p>
+                                        <FormField control={form.control} name="country" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Country</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select Country" /></SelectTrigger></FormControl>
+                                                    <SelectContent className="max-h-60">
+                                                        {countries.map(country => (
+                                                            <SelectItem key={country.iso2} value={country.name}>{country.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
+                                        <FormField control={form.control} name="state" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>State/Province</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!countryValue}>
+                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select State/Province" /></SelectTrigger></FormControl>
+                                                    <SelectContent className="max-h-60">
+                                                        {states.map(state => (
+                                                            <SelectItem key={state.name} value={state.name}>{state.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
                                         <FormField control={form.control} name="phone" render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Phone Number (Required)</FormLabel>

@@ -12,6 +12,7 @@ import React, { useState, useEffect } from "react";
 import { amenities as allAmenities } from "@/types";
 import { MapPin } from "lucide-react";
 import { Input } from "./ui/input";
+import { countries } from "@/types/countries";
 
 export type FilterState = {
   country?: string;
@@ -27,35 +28,35 @@ export type FilterState = {
 };
 
 type SearchFiltersProps = {
-    onFilterChange: (filters: FilterState) => void;
-    onReset: () => void;
-    initialFilters?: FilterState;
-    onLocationSuccess: (coords: { lat: number; lng: number }) => void;
-    schoolsInArea?: string[] | null;
-    availableStates: string[];
-    availableSchools: string[];
+  onFilterChange: (filters: FilterState) => void;
+  onReset: () => void;
+  initialFilters?: FilterState;
+  onLocationSuccess: (coords: { lat: number; lng: number }) => void;
+  schoolsInArea?: string[] | null;
+  availableStates: string[];
+  availableSchools: string[];
 };
 
 
-export default function SearchFilters({ 
-    onFilterChange, 
-    onReset, 
-    initialFilters, 
-    onLocationSuccess, 
-    schoolsInArea, 
-    availableStates,
-    availableSchools
+export default function SearchFilters({
+  onFilterChange,
+  onReset,
+  initialFilters,
+  onLocationSuccess,
+  schoolsInArea,
+  availableStates,
+  availableSchools
 }: SearchFiltersProps) {
   const [filters, setFilters] = useState<FilterState>(initialFilters || {});
   const [price, setPrice] = useState(initialFilters?.price || 3000);
 
   useEffect(() => {
     if (initialFilters) {
-        setFilters(initialFilters);
-        setPrice(initialFilters.price || 3000);
+      setFilters(initialFilters);
+      setPrice(initialFilters.price || 3000);
     }
   }, [initialFilters]);
-  
+
   const handleInputChange = (field: keyof FilterState, value: any) => {
     const newFilters = { ...filters, [field]: value };
     // If a manual location filter is changed, turn off `useCurrentLocation`
@@ -64,7 +65,7 @@ export default function SearchFilters({
     }
     setFilters(newFilters);
   };
-  
+
   const handleAmenityChange = (amenity: string, checked: boolean) => {
     const currentAmenities = filters.amenities || [];
     const newAmenities = checked ? [...currentAmenities, amenity] : currentAmenities.filter(a => a !== amenity);
@@ -72,34 +73,34 @@ export default function SearchFilters({
   }
 
   const handleApplyFilters = () => {
-    onFilterChange({...filters, price});
+    onFilterChange({ ...filters, price });
   };
 
   const handleReset = () => {
-      setPrice(3000);
-      onReset();
+    setPrice(3000);
+    onReset();
   }
 
   const handleCurrentLocation = () => {
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                onLocationSuccess({
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                });
-            },
-            (error) => {
-                console.error("Geolocation error:", error);
-                alert("Could not get your location. Please ensure location services are enabled and try again.");
-                // Reset location state if it fails
-                const newFilters = { ...filters, useCurrentLocation: false };
-                setFilters(newFilters);
-                onFilterChange(newFilters);
-            }
-        );
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          onLocationSuccess({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          alert("Could not get your location. Please ensure location services are enabled and try again.");
+          // Reset location state if it fails
+          const newFilters = { ...filters, useCurrentLocation: false };
+          setFilters(newFilters);
+          onFilterChange(newFilters);
+        }
+      );
     } else {
-        alert("Geolocation is not supported by this browser.");
+      alert("Geolocation is not supported by this browser.");
     }
   }
 
@@ -115,65 +116,67 @@ export default function SearchFilters({
             <SelectTrigger id="country">
               <SelectValue placeholder="Select Country" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="USA">United States</SelectItem>
+            <SelectContent className="max-h-60">
+              {countries.map(country => (
+                <SelectItem key={country.iso2} value={country.name}>{country.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
         <div className="grid grid-cols-2 gap-2">
-            <div className="grid gap-2">
+          <div className="grid gap-2">
             <Label htmlFor="state">State</Label>
             <Select value={filters.state} onValueChange={(value) => handleInputChange('state', value)} disabled={filters.useCurrentLocation}>
-                <SelectTrigger id="state">
+              <SelectTrigger id="state">
                 <SelectValue placeholder="Select State" />
-                </SelectTrigger>
-                <SelectContent>
+              </SelectTrigger>
+              <SelectContent>
                 {availableStates.map(state => (
-                    <SelectItem key={state} value={state}>{state}</SelectItem>
+                  <SelectItem key={state} value={state}>{state}</SelectItem>
                 ))}
-                </SelectContent>
+              </SelectContent>
             </Select>
-            </div>
-             <div className="grid gap-2">
-                <Label htmlFor="city">City</Label>
-                <Input id="city" placeholder="Enter city" value={filters.city || ''} onChange={(e) => handleInputChange('city', e.target.value)} disabled={filters.useCurrentLocation} />
-            </div>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="city">City</Label>
+            <Input id="city" placeholder="Enter city" value={filters.city || ''} onChange={(e) => handleInputChange('city', e.target.value)} disabled={filters.useCurrentLocation} />
+          </div>
         </div>
         <div className="grid gap-2">
-            <Label htmlFor="school">School</Label>
-            <div className="flex gap-2">
-                <Select value={filters.school} onValueChange={(value) => handleInputChange('school', value)} disabled={filters.useCurrentLocation}>
-                    <SelectTrigger id="school">
-                    <SelectValue placeholder="Select School" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {schoolsInArea === null && availableSchools.map(school => (
-                        <SelectItem key={school} value={school}>{school}</SelectItem>
-                      ))}
-                      {schoolsInArea && schoolsInArea.length > 0 && schoolsInArea.map(school => (
-                        <SelectItem key={school} value={school}>{school}</SelectItem>
-                      ))}
-                      {schoolsInArea && schoolsInArea.length === 0 && (
-                        <div className="p-2 text-sm text-muted-foreground text-center">No schools found in area.</div>
-                      )}
-                    </SelectContent>
-                </Select>
-                <Button variant="outline" size="icon" onClick={handleCurrentLocation}>
-                    <MapPin className="h-4 w-4" />
-                    <span className="sr-only">Use current location</span>
-                </Button>
-            </div>
-             {filters.useCurrentLocation && <p className="text-xs text-primary">Showing properties near you.</p>}
+          <Label htmlFor="school">School</Label>
+          <div className="flex gap-2">
+            <Select value={filters.school} onValueChange={(value) => handleInputChange('school', value)} disabled={filters.useCurrentLocation}>
+              <SelectTrigger id="school">
+                <SelectValue placeholder="Select School" />
+              </SelectTrigger>
+              <SelectContent>
+                {schoolsInArea === null && availableSchools.map(school => (
+                  <SelectItem key={school} value={school}>{school}</SelectItem>
+                ))}
+                {schoolsInArea && schoolsInArea.length > 0 && schoolsInArea.map(school => (
+                  <SelectItem key={school} value={school}>{school}</SelectItem>
+                ))}
+                {schoolsInArea && schoolsInArea.length === 0 && (
+                  <div className="p-2 text-sm text-muted-foreground text-center">No schools found in area.</div>
+                )}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="icon" onClick={handleCurrentLocation}>
+              <MapPin className="h-4 w-4" />
+              <span className="sr-only">Use current location</span>
+            </Button>
+          </div>
+          {filters.useCurrentLocation && <p className="text-xs text-primary">Showing properties near you.</p>}
         </div>
         <div className="grid gap-2">
           <Label>Max Price: ${price.toLocaleString()}</Label>
-          <Slider 
-            value={[price]} 
+          <Slider
+            value={[price]}
             onValueChange={(value) => setPrice(value[0])}
-            max={5000} 
-            min={500} 
-            step={50} 
-           />
+            max={5000}
+            min={500}
+            step={50}
+          />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="property-type">Property Type</Label>
@@ -191,41 +194,41 @@ export default function SearchFilters({
           </Select>
         </div>
         <div className="grid grid-cols-2 gap-2">
-             <div className="grid gap-2">
-                <Label htmlFor="bedrooms">Beds</Label>
-                <Select value={filters.bedrooms} onValueChange={(value) => handleInputChange('bedrooms', value)}>
-                    <SelectTrigger id="bedrooms"><SelectValue placeholder="Any" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="any">Any</SelectItem>
-                        <SelectItem value="1">1</SelectItem>
-                        <SelectItem value="2">2</SelectItem>
-                        <SelectItem value="3">3</SelectItem>
-                        <SelectItem value="4">4+</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-             <div className="grid gap-2">
-                <Label htmlFor="bathrooms">Baths</Label>
-                <Select value={filters.bathrooms} onValueChange={(value) => handleInputChange('bathrooms', value)}>
-                    <SelectTrigger id="bathrooms"><SelectValue placeholder="Any" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="any">Any</SelectItem>
-                        <SelectItem value="1">1</SelectItem>
-                        <SelectItem value="2">2</SelectItem>
-                        <SelectItem value="3">3+</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
+          <div className="grid gap-2">
+            <Label htmlFor="bedrooms">Beds</Label>
+            <Select value={filters.bedrooms} onValueChange={(value) => handleInputChange('bedrooms', value)}>
+              <SelectTrigger id="bedrooms"><SelectValue placeholder="Any" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="any">Any</SelectItem>
+                <SelectItem value="1">1</SelectItem>
+                <SelectItem value="2">2</SelectItem>
+                <SelectItem value="3">3</SelectItem>
+                <SelectItem value="4">4+</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="bathrooms">Baths</Label>
+            <Select value={filters.bathrooms} onValueChange={(value) => handleInputChange('bathrooms', value)}>
+              <SelectTrigger id="bathrooms"><SelectValue placeholder="Any" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="any">Any</SelectItem>
+                <SelectItem value="1">1</SelectItem>
+                <SelectItem value="2">2</SelectItem>
+                <SelectItem value="3">3+</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="grid gap-2">
           <Label>Amenities</Label>
           <div className="grid grid-cols-2 gap-2">
             {allAmenities.slice(0, 6).map(amenity => (
               <div key={amenity} className="flex items-center space-x-2">
-                <Checkbox 
-                    id={amenity.toLowerCase().replace(/[\s-]/g, '')}
-                    checked={filters.amenities?.includes(amenity)}
-                    onCheckedChange={(checked) => handleAmenityChange(amenity, !!checked)}
+                <Checkbox
+                  id={amenity.toLowerCase().replace(/[\s-]/g, '')}
+                  checked={filters.amenities?.includes(amenity)}
+                  onCheckedChange={(checked) => handleAmenityChange(amenity, !!checked)}
                 />
                 <Label htmlFor={amenity.toLowerCase().replace(/[\s-]/g, '')} className="text-sm font-normal">{amenity}</Label>
               </div>
