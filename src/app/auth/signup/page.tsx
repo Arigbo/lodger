@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -15,13 +14,14 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
-import { Eye, EyeOff, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, ArrowRight, UploadCloud, UserCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/utils';
-import { useAuth, useFirestore } from '@/firebase/provider';
+import { useAuth, useFirebaseApp } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { initiateEmailSignUp } from '@/firebase';
 import { countries, Country } from '@/types/countries';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 
 const formSchema = z.object({
@@ -36,6 +36,7 @@ const formSchema = z.object({
     country: z.string().optional(),
     state: z.string().optional(),
     school: z.string().optional(),
+    profileImage: z.any().optional(),
 }).refine(data => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
@@ -65,6 +66,7 @@ export default function SignupPage() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const router = useRouter();
     const auth = useAuth();
+    const firebaseApp = useFirebaseApp();
     const { toast } = useToast();
     const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
     const [states, setStates] = useState<{ name: string }[]>([]);
@@ -100,11 +102,13 @@ export default function SignupPage() {
             { id: 1, name: 'Choose Account Type', fields: ['userType'] },
             { id: 2, name: 'Account Details', fields: ['name', 'email', 'password', 'confirmPassword'] },
             { id: 3, name: 'Location Information', fields: ['country', 'state', 'school'] },
+            { id: 4, name: 'Profile Photo', fields: ['profileImage'] },
         ] :
         [
             { id: 1, name: 'Choose Account Type', fields: ['userType'] },
             { id: 2, name: 'Account Details', fields: ['name', 'email', 'password', 'confirmPassword'] },
             { id: 3, name: 'Location & Contact', fields: ['country', 'state', 'phone', 'whatsappUrl', 'twitterUrl'] },
+            { id: 4, name: 'Profile Photo', fields: ['profileImage'] },
         ];
     const totalSteps = steps.length;
 
@@ -137,7 +141,28 @@ export default function SignupPage() {
         }
 
         try {
+            // Initiate sign up (creates auth user)
             const userCredential = await initiateEmailSignUp(auth, values.email, values.password);
+
+            let profileImageUrl = `https://i.pravatar.cc/150?u=${userCredential.user.uid}`;
+
+            // Upload profile image if selected
+            if (values.profileImage && values.profileImage.length > 0) {
+                try {
+                    const file = values.profileImage[0];
+                    const storage = getStorage(firebaseApp);
+                    const storageRef = ref(storage, `users/${userCredential.user.uid}/profile_${Date.now()}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    profileImageUrl = await getDownloadURL(snapshot.ref);
+                } catch (uploadError) {
+                    console.error("Failed to upload profile image:", uploadError);
+                    toast({
+                        variant: "destructive",
+                        title: "Image Upload Failed",
+                        description: "Could not upload profile picture. Using default.",
+                    });
+                }
+            }
 
             // Store user details temporarily to pass to the login page
             // In a real app, you might use a state management library or query params
@@ -146,7 +171,7 @@ export default function SignupPage() {
                 name: values.name,
                 email: values.email,
                 role: values.userType,
-                profileImageUrl: `https://i.pravatar.cc/150?u=${userCredential.user.uid}`,
+                profileImageUrl: profileImageUrl,
                 country: values.country || null,
                 state: values.state || null,
                 school: values.school || null,
@@ -399,6 +424,54 @@ export default function SignupPage() {
                                 )}
                             </div>
 
+                            {/* Step 4: Profile Photo */}
+                            <div className={cn("space-y-6", currentStep === 4 ? "block" : "hidden")}>
+                                <div className="text-center">
+                                    <h3 className="font-headline text-lg font-semibold">Upload Profile Picture</h3>
+                                    <p className="text-sm text-muted-foreground">Add a photo to help others recognize you.</p>
+                                </div>
+
+                                <FormField
+                                    control={form.control}
+                                    name="profileImage"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormControl>
+                                                <div className="mt-4 flex flex-col justify-center items-center rounded-lg border border-dashed border-input py-12">
+                                                    {field.value?.[0] ? (
+                                                        <div className="flex flex-col items-center gap-4">
+                                                            <div className="h-32 w-32 rounded-full overflow-hidden bg-secondary">
+                                                                <img src={URL.createObjectURL(field.value[0])} alt="Profile Preview" className="h-full w-full object-cover" />
+                                                            </div>
+                                                            <p className="text-sm font-medium text-green-600 truncate max-w-[200px]">{field.value[0].name}</p>
+                                                            <Button type="button" variant="outline" size="sm" onClick={(e) => { e.preventDefault(); field.onChange(null); }}>Change Photo</Button>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="h-32 w-32 rounded-full bg-secondary flex items-center justify-center mb-4">
+                                                                <UserCircle className="h-16 w-16 text-muted-foreground" />
+                                                            </div>
+                                                            <label
+                                                                htmlFor="profileImage"
+                                                                className="relative cursor-pointer rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 transition-colors"
+                                                            >
+                                                                <span>Choose Photo</span>
+                                                                <input id="profileImage" name="profileImage" type="file" className="sr-only"
+                                                                    accept="image/png, image/jpeg, image/webp"
+                                                                    onChange={(e) => field.onChange(e.target.files)}
+                                                                />
+                                                            </label>
+                                                            <p className="text-xs text-muted-foreground mt-4">PNG, JPG up to 5MB</p>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
                             <div className="mt-12 flex justify-between">
                                 <Button type="button" variant="outline" onClick={prevStep} className={cn(currentStep === 1 && "invisible")}>
                                     <ArrowLeft className="mr-2 h-4 w-4" /> Back
@@ -440,5 +513,3 @@ export default function SignupPage() {
         </div>
     );
 }
-
-

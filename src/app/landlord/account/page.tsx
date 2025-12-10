@@ -68,6 +68,7 @@ export default function AccountPage() {
     const firebaseApp = useFirebaseApp();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [refetchKey, setRefetchKey] = useState(0);
 
     const refetchProfile = useCallback(() => {
@@ -123,22 +124,28 @@ export default function AccountPage() {
 
             await setDoc(userDocRef, { profileImageUrl: downloadURL }, { merge: true });
 
+            // Optimistic update
+            setPreviewImage(downloadURL);
+
             toast({
                 title: "Profile Picture Updated",
                 description: "Your new profile picture has been saved.",
             });
 
-            refetchProfile(); // Manually trigger a refetch
-
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error("Error uploading image: ", error);
             toast({
                 variant: "destructive",
                 title: "Upload Failed",
-                description: "Could not upload your new profile picture.",
+                description: error.message || "Could not upload your new profile picture.",
             });
+            setPreviewImage(null); // Revert on failure
         } finally {
             setIsUploading(false);
+            // Reset input so same file can be selected again if needed
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     };
 
@@ -192,7 +199,7 @@ export default function AccountPage() {
                                 <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
                                     <div className="flex items-center gap-6">
                                         <Avatar className="h-24 w-24">
-                                            <AvatarImage src={userProfile.profileImageUrl} />
+                                            <AvatarImage src={previewImage || userProfile.profileImageUrl} />
                                             <AvatarFallback>
                                                 <User className="h-12 w-12 text-muted-foreground" />
                                             </AvatarFallback>
@@ -385,4 +392,3 @@ export default function AccountPage() {
         </div>
     );
 }
-
