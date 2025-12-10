@@ -78,58 +78,6 @@ export default async function Home() {
           </p>
         </div>
       </section>
-
-      {/* Search Bar Section */}
-      <div className="-mt-32">
-        <div className="container mx-auto px-4">
-          <Card className="shadow-2xl max-w-4xl mx-auto">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4 items-center">
-                <div className="md:col-span-2 lg:col-span-2">
-                  <label htmlFor="search" className="sr-only">Search</label>
-                  <Input id="search" placeholder="Enter a city, address, or school..." />
-                </div>
-                <div>
-                  <label htmlFor="type" className="sr-only">Property Type</label>
-                  <Select>
-                    <SelectTrigger id="type">
-                      <SelectValue placeholder="Property Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="any">Any Type</SelectItem>
-                      <SelectItem value="apartment">Apartment</SelectItem>
-                      <SelectItem value="house">House</SelectItem>
-                      <SelectItem value="studio">Studio</SelectItem>
-                      <SelectItem value="loft">Loft</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label htmlFor="price" className="sr-only">Price Range</label>
-                  <Select>
-                    <SelectTrigger id="price">
-                      <SelectValue placeholder="Price Range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="any">Any Price</SelectItem>
-                      <SelectItem value="<1000">{'< $1,000'}</SelectItem>
-                      <SelectItem value="1000-1500">$1,000 - $1,500</SelectItem>
-                      <SelectItem value="1500-2000">$1,500 - $2,000</SelectItem>
-                      <SelectItem value=">2000">{'> $2,000'}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button className="md:col-span-4 lg:col-span-1 w-full" asChild>
-                  <Link href="/student/properties">
-                    <Search className="mr-2 h-4 w-4" /> Search
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
       {/* How it works Section */}
       <section id="how-it-works" className="py-20 bg-secondary/50 mt-20">
         <div className="container mx-auto px-4">
