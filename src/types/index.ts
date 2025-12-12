@@ -24,6 +24,7 @@ export type Property = {
     type: 'Apartment' | 'House' | 'Studio' | 'Loft';
     location: {
         address: string;
+        country: string;
         city: string;
         state: string;
         zip: string;

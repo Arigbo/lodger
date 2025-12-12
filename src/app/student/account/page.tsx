@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -41,7 +39,8 @@ import { useEffect, useState } from 'react';
 import Loading from '@/app/loading';
 import { useToast } from '@/hooks/use-toast';
 import { countries } from '@/types/countries';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getStorage } from 'firebase/storage';
+import { uploadProfileImage } from '@/firebase/storage';
 
 const profileFormSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -70,6 +69,7 @@ export default function AccountPage() {
     const { toast } = useToast();
     const firebaseApp = useFirebaseApp();
     const [isUploading, setIsUploading] = useState(false);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
 
     const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
@@ -111,22 +111,24 @@ export default function AccountPage() {
         if (!file || !user) return;
 
         setIsUploading(true);
-        const storage = getStorage(firebaseApp);
-        const storageRef = ref(storage, `users/${user.uid}/profile_${Date.now()}`);
-
         try {
-            const snapshot = await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(snapshot.ref);
+            const storage = getStorage(firebaseApp);
+            const downloadURL = await uploadProfileImage(storage, user.uid, file);
 
             if (userDocRef) {
                 await setDoc(userDocRef, { profileImageUrl: downloadURL }, { merge: true });
+                setPreviewImage(downloadURL); // Optimistic update
                 toast({ title: "Profile Picture Updated", description: "Your profile picture has been updated." });
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error uploading image: ", error);
-            toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload image." });
+            toast({ variant: "destructive", title: "Upload Failed", description: error.message || "Could not upload image." });
+            setPreviewImage(null);
         } finally {
             setIsUploading(false);
+            // Reset the input by ID since we don't have a ref in this component
+            const input = document.getElementById('profile-upload') as HTMLInputElement;
+            if (input) input.value = '';
         }
     }
 
@@ -196,7 +198,7 @@ export default function AccountPage() {
                                 <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
                                     <div className="flex items-center gap-6">
                                         <Avatar className="h-24 w-24">
-                                            <AvatarImage src={userProfile.profileImageUrl} />
+                                            <AvatarImage src={previewImage || userProfile.profileImageUrl} />
                                             <AvatarFallback>
                                                 <UserIcon className="h-12 w-12 text-muted-foreground" />
                                             </AvatarFallback>
@@ -408,6 +410,3 @@ export default function AccountPage() {
         </div>
     );
 }
-
-
-

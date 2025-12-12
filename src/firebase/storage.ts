@@ -11,8 +11,9 @@ import { FirebaseStorage, ref, uploadBytes, getDownloadURL } from 'firebase/stor
  * @returns A promise that resolves with the public download URL of the uploaded image.
  */
 export async function uploadProfileImage(storage: FirebaseStorage, userId: string, file: File): Promise<string> {
-  // Create a storage reference
-  const storageRef = ref(storage, `profileImages/${userId}/${file.name}`);
+  // Use a fixed filename to avoid storage rule violations if wildcard paths aren't allowed
+  // We'll rely on the download URL token change or client-side cache busting
+  const storageRef = ref(storage, `users/${userId}/profile-picture`);
 
   // Upload the file
   const snapshot = await uploadBytes(storageRef, file);

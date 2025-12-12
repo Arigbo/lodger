@@ -32,6 +32,8 @@ import { Badge } from '@/components/ui/badge';
 import React, { useEffect, useState } from 'react';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, where } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Loading from '@/app/loading';
 
 
@@ -62,6 +64,7 @@ export default function TenantDetailPage() {
 
     const transactionsQuery = useMemoFirebase(() => tenant ? query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.id)) : null, [tenant, firestore]);
     const { data: tenantTransactions, isLoading: areTransactionsLoading } = useCollection<Transaction>(transactionsQuery);
+    const { toast } = useToast();
 
     const [rentStatus, setRentStatus] = useState<{
         status: 'Paid' | 'Due' | 'Inactive';
@@ -72,6 +75,43 @@ export default function TenantDetailPage() {
         leaseDaysRemaining: number;
         compassionFee: number;
     } | null>(null);
+
+    const handleEndTenancy = async () => {
+        if (!lease || !property || !tenant) return;
+
+        try {
+            // 1. Expire the lease
+            const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
+            await updateDocumentNonBlocking(leaseRef, {
+                status: 'expired',
+                endDate: new Date().toISOString()
+            });
+
+            // 2. Free up the property
+            const propertyRef = doc(firestore, 'properties', property.id);
+            // We use deleteField() for fields we want to remove, but updateDocumentNonBlocking takes a Partial<T>
+            // For now, we'll set them to null/empty values as per the type definition (some are optional)
+            await updateDocumentNonBlocking(propertyRef, {
+                status: 'available',
+                currentTenantId: null,
+                leaseStartDate: null as any // Type assertion if needed, or update type to allow null
+            });
+
+            toast({
+                title: "Tenancy Ended",
+                description: "The tenancy has been successfully terminated.",
+            });
+
+            // Optional: Close dialog if it was controlled state, but here it's uncontrolled trigger
+        } catch (error) {
+            console.error("Error ending tenancy:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Could not end tenancy. Please try again.",
+            });
+        }
+    };
 
     useEffect(() => {
         if (!lease || !property || !tenantTransactions) {
@@ -274,7 +314,7 @@ export default function TenantDetailPage() {
                                     </Card>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction className="bg-destructive hover:bg-destructive/90">Confirm & End Tenancy</AlertDialogAction>
+                                        <AlertDialogAction onClick={handleEndTenancy} className="bg-destructive hover:bg-destructive/90">Confirm & End Tenancy</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
