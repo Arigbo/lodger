@@ -39,7 +39,7 @@ export default function Footer() {
         </div>
         <div className="mt-12 flex flex-col items-center justify-between border-t pt-8 sm:flex-row">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} RentU. All rights reserved.
+            &copy; {new Date().getFullYear()} Lodger. All rights reserved.
           </p>
           <div className="mt-4 flex items-center space-x-4 sm:mt-0">
             <Link href="#" className="text-muted-foreground hover:text-foreground">

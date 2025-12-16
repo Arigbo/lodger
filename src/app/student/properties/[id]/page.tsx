@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon, Building, Users } from "lucide-react";
+import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon, Building, Users, GraduationCap } from "lucide-react";
 import type { Property, UserProfile, PropertyReview, ImagePlaceholder, RentalApplication } from "@/types";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
@@ -25,9 +25,14 @@ import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, errorEmi
 import { doc, collection, query, where, addDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import Loading from "@/app/loading";
 import type { Metadata } from 'next';
-import { firestore as adminFirestore } from "@/firebase/server";
-
-
+import { sendNotification } from '@/lib/notifications';
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from "@/components/ui/carousel";
 // This function is for generating dynamic metadata and is commented out
 // because this is a client component. For SEO on dynamic client-rendered pages,
 // you would typically fetch data in a parent Server Component and pass it down,
@@ -107,8 +112,14 @@ export default function PropertyDetailPage() {
     const reviewsQuery = useMemoFirebase(() => id ? query(collection(firestore, 'propertyReviews'), where('propertyId', '==', id)) : null, [firestore, id]);
     const { data: reviews, isLoading: areReviewsLoading } = useCollection<PropertyReview>(reviewsQuery);
 
-    const applicationsQuery = useMemoFirebase(() => id ? query(collection(firestore, 'rentalApplications'), where('propertyId', '==', id), where('status', '==', 'pending')) : null, [firestore, id]);
-    const { data: applications, isLoading: areApplicationsLoading } = useCollection<RentalApplication>(applicationsQuery);
+    // Fetch current user's profile to get their name for notifications
+    const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
+    const { data: userProfile, isLoading: isUserProfileLoading } = useDoc<UserProfile>(userProfileRef);
+
+    // const applicationsQuery = useMemoFirebase(() => id ? query(collection(firestore, 'rentalApplications'), where('propertyId', '==', id), where('status', '==', 'pending')) : null, [firestore, id]);
+    // const { data: applications, isLoading: areApplicationsLoading } = useCollection<RentalApplication>(applicationsQuery);
+    const applications: RentalApplication[] = []; // Default to empty to prevent UI errors
+    const areApplicationsLoading = false;
 
     // SEO effect for client components
     useEffect(() => {
@@ -121,7 +132,7 @@ export default function PropertyDetailPage() {
         }
     }, [property]);
 
-    const isLoading = isPropertyLoading || isLandlordLoading || areReviewsLoading || isUserLoading || areApplicationsLoading;
+    const isLoading = isPropertyLoading || isLandlordLoading || areReviewsLoading || isUserLoading || areApplicationsLoading || isUserProfileLoading;
 
     if (isLoading) {
         return <Loading />;
@@ -203,6 +214,26 @@ export default function PropertyDetailPage() {
                 participantIds: [user.uid, landlord.id].sort(),
                 timestamp: serverTimestamp(),
                 read: false,
+            });
+
+            // Notify Landlord: New Request
+            await sendNotification({
+                toUserId: landlord.id,
+                type: 'NEW_REQUEST',
+                firestore: firestore,
+                senderName: userProfile?.name || 'A student',
+                propertyName: property.title,
+                link: `/landlord/requests`
+            });
+
+            // Notify Landlord: New Message
+            await sendNotification({
+                toUserId: landlord.id,
+                type: 'NEW_MESSAGE',
+                firestore: firestore,
+                senderName: userProfile?.name || 'A student',
+                customMessage: requestMessage || `Hi, I'm interested in renting ${property.title}.`,
+                link: `/landlord/messages?conversationId=${user.uid}`
             });
 
             toast({
@@ -308,12 +339,33 @@ export default function PropertyDetailPage() {
             />
             <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-12">
                 <div className="lg:col-span-2">
-                    <div className="grid grid-cols-2 grid-rows-2 gap-2 h-[500px] mb-8">
-                        <div className="col-span-2 row-span-2 relative">
-                            {images[0] && <Image src={images[0].imageUrl} alt={property.title} fill className="object-cover rounded-lg" data-ai-hint={images[0].imageHint} />}
-                        </div>
-                        {images[1] && <div className="hidden md:block relative"><Image src={images[1].imageUrl} alt={property.title} fill className="object-cover rounded-lg" data-ai-hint={images[1].imageHint} /></div>}
-                        {images[2] && <div className="hidden md:block relative"><Image src={images[2].imageUrl} alt={property.title} fill className="object-cover rounded-lg" data-ai-hint={images[2].imageHint} /></div>}
+                    <div className="mb-8">
+                        {images.length > 0 ? (
+                            <Carousel className="w-full max-w-5xl mx-auto">
+                                <CarouselContent>
+                                    {images.map((image, index) => (
+                                        <CarouselItem key={image.id}>
+                                            <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                                                <Image
+                                                    src={image.imageUrl}
+                                                    alt={`${property.title} - Image ${index + 1}`}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            </div>
+                                        </CarouselItem>
+                                    ))}
+                                </CarouselContent>
+                                <CarouselPrevious className="left-2" />
+                                <CarouselNext className="right-2" />
+                            </Carousel>
+                        ) : (
+                            <div className="flex h-[400px] w-full items-center justify-center rounded-lg bg-secondary text-muted-foreground">
+                                <div className="text-center">
+                                    <h3 className="text-lg font-semibold">No Images Available</h3>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between">
@@ -325,6 +377,12 @@ export default function PropertyDetailPage() {
                                     <MapPin className="h-4 w-4" />
                                     <span>{property.location.address}, {property.location.city}</span>
                                 </div>
+                                {property.location.school && (
+                                    <div className="flex items-center gap-1 text-muted-foreground/90">
+                                        <GraduationCap className="h-4 w-4" />
+                                        <span>Near {property.location.school}</span>
+                                    </div>
+                                )}
                                 <div className="flex items-center gap-1">
                                     <Star className="h-4 w-4 text-accent fill-current" />
                                     <span>{averageRating.toFixed(1)} ({reviews?.length || 0} reviews)</span>

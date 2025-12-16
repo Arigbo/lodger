@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,17 +10,20 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from '@/components/ui/label';
+import { Combobox } from '@/components/ui/combobox';
 import Link from 'next/link';
-import { Eye, EyeOff, ArrowLeft, ArrowRight, UploadCloud, UserCircle } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, ArrowRight, UploadCloud, UserCircle, Loader2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/utils';
-import { useAuth, useFirebaseApp } from '@/firebase/provider';
+import { useAuth, useFirebaseApp, useFirestore } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { initiateEmailSignUp } from '@/firebase';
 import { countries, Country } from '@/types/countries';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, setDoc, collection, addDoc } from 'firebase/firestore';
+import { schools } from '@/data/schools';
+import { SchoolCombobox } from '@/components/school-combobox';
 
 
 const formSchema = z.object({
@@ -66,6 +68,7 @@ export default function SignupPage() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const router = useRouter();
     const auth = useAuth();
+    const firestore = useFirestore(); // Get Firestore instance
     const firebaseApp = useFirebaseApp();
     const { toast } = useToast();
     const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
@@ -131,43 +134,60 @@ export default function SignupPage() {
     }
 
     const onSubmit = async (values: FormValues) => {
-        if (!auth) {
+        // Prevent premature submission if triggered (e.g., by Enter key) before the final step
+        if (currentStep < totalSteps) {
+            setCurrentStep(step => step + 1);
+            return;
+        }
+
+        if (!auth || !firestore) {
             toast({
                 variant: "destructive",
-                title: "Uh oh! Something went wrong.",
-                description: "Firebase is not initialized. Please try again later.",
+                title: "System Error",
+                description: "Firebase services are not available.",
             });
             return;
         }
 
         try {
-            // Initiate sign up (creates auth user)
+            // 1. Initiate sign up (creates auth user)
             const userCredential = await initiateEmailSignUp(auth, values.email, values.password);
+            const uid = userCredential.user.uid;
 
-            let profileImageUrl = `https://i.pravatar.cc/150?u=${userCredential.user.uid}`;
+            let profileImageUrl = null;
 
-            // Upload profile image if selected
+            // 2. Upload profile image if selected
             if (values.profileImage && values.profileImage.length > 0) {
                 try {
                     const file = values.profileImage[0];
-                    const storage = getStorage(firebaseApp);
-                    const storageRef = ref(storage, `users/${userCredential.user.uid}/profile_${Date.now()}`);
-                    const snapshot = await uploadBytes(storageRef, file);
-                    profileImageUrl = await getDownloadURL(snapshot.ref);
+                    if (file.size > 1024 * 1024) {
+                        toast({
+                            variant: "destructive",
+                            title: "Image too large",
+                            description: "Profile picture must be less than 1MB. Account created without image.",
+                        });
+                        // Don't throw, just skip upload
+                    } else {
+                        const storage = getStorage(firebaseApp);
+                        // Use a clean path: users/{uid}/profile_{timestamp}
+                        const storageRef = ref(storage, `users/${uid}/profile_${Date.now()}`);
+                        const snapshot = await uploadBytes(storageRef, file);
+                        profileImageUrl = await getDownloadURL(snapshot.ref);
+                    }
                 } catch (uploadError) {
                     console.error("Failed to upload profile image:", uploadError);
                     toast({
                         variant: "destructive",
                         title: "Image Upload Failed",
-                        description: "Could not upload profile picture. Using default.",
+                        description: "Could not upload profile picture. Using default avatar.",
                     });
+                    // Proceed with default image, don't block account creation
                 }
             }
 
-            // Store user details temporarily to pass to the login page
-            // In a real app, you might use a state management library or query params
-            sessionStorage.setItem('newUserProfile', JSON.stringify({
-                id: userCredential.user.uid,
+            // 3. Create Firestore User Document directly
+            const userData = {
+                id: uid,
                 name: values.name,
                 email: values.email,
                 role: values.userType,
@@ -178,28 +198,48 @@ export default function SignupPage() {
                 phone: values.phone || null,
                 whatsappUrl: values.whatsappUrl || null,
                 twitterUrl: values.twitterUrl || null,
-                bio: ''
-            }));
+                bio: '',
+                createdAt: new Date().toISOString(),
+            };
 
+            await setDoc(doc(firestore, 'users', uid), userData);
+
+            // Create Welcome Notification
+            /*
+            await sendNotification({
+               toUserId: uid,
+               type: 'WELCOME',
+               firestore: firestore,
+               link: '/profile' 
+            });
+            */
             toast({
                 title: "Account Created!",
-                description: "Please sign in to continue.",
+                description: "Welcome to Lodger! Please sign in.",
             });
 
             router.push('/auth/login');
 
         } catch (error: any) {
+            console.error("Signup error:", error);
             if (error.code === 'auth/email-already-in-use') {
                 setError('email', {
                     type: 'manual',
                     message: 'This email address is already in use. Please try another one.',
                 });
                 setCurrentStep(2); // Go back to the relevant step
-            } else {
+            } else if (error.code && error.code.includes('permission-denied')) {
                 toast({
                     variant: "destructive",
-                    title: "Uh oh! Something went wrong.",
-                    description: error.message || "There was a problem with your request.",
+                    title: "Access Denied",
+                    description: "Your account was authenticated but we couldn't create your profile due to permission rules. Please contact support.",
+                });
+            } else {
+                // Ensure we catch non-Firebase errors too
+                toast({
+                    variant: "destructive",
+                    title: "Registration Failed",
+                    description: error.message || "There was a problem creating your account. Please try again.",
                 });
             }
         }
@@ -222,7 +262,17 @@ export default function SignupPage() {
                     </div>
 
                     <FormProvider {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                        {/* Prevent implicit submission on Enter by not having a submit button inside unless it's the last step */}
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            // Block implicit submission (e.g., Enter key) on the final step.
+                            // The final step should only be submitted via the "Create Account" button.
+                            if (currentStep === totalSteps) {
+                                return;
+                            }
+                            form.handleSubmit(onSubmit)(e);
+                        }} className="space-y-8">
+
                             {/* Step 1: User Type */}
                             <div className={cn(currentStep === 1 ? "block" : "hidden")}>
                                 <FormField
@@ -330,28 +380,31 @@ export default function SignupPage() {
                                         <FormField control={form.control} name="country" render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Country</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select Country" /></SelectTrigger></FormControl>
-                                                    <SelectContent className="max-h-60">
-                                                        {countries.map(country => (
-                                                            <SelectItem key={country.iso2} value={country.name}>{country.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                <FormControl>
+                                                    <Combobox
+                                                        options={countries.map(c => ({ label: c.name, value: c.name }))}
+                                                        value={field.value}
+                                                        onChange={field.onChange}
+                                                        placeholder="Select Country"
+                                                        emptyText="No country found."
+                                                    />
+                                                </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )} />
                                         <FormField control={form.control} name="state" render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>State/Province</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!countryValue}>
-                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select State/Province" /></SelectTrigger></FormControl>
-                                                    <SelectContent className="max-h-60">
-                                                        {states.map(state => (
-                                                            <SelectItem key={state.name} value={state.name}>{state.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                <FormControl>
+                                                    <Combobox
+                                                        options={states.map(s => ({ label: s.name, value: s.name }))}
+                                                        value={field.value}
+                                                        onChange={field.onChange}
+                                                        placeholder="Select State"
+                                                        emptyText="No state found."
+                                                        disabled={!countryValue}
+                                                    />
+                                                </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )} />
@@ -384,14 +437,15 @@ export default function SignupPage() {
                                         <FormField control={form.control} name="country" render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Country</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select Country" /></SelectTrigger></FormControl>
-                                                    <SelectContent className="max-h-60">
-                                                        {countries.map(country => (
-                                                            <SelectItem key={country.iso2} value={country.name}>{country.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                <FormControl>
+                                                    <Combobox
+                                                        options={countries.map(c => ({ label: c.name, value: c.name }))}
+                                                        value={field.value}
+                                                        onChange={field.onChange}
+                                                        placeholder="Select Country"
+                                                        emptyText="No country found."
+                                                    />
+                                                </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )} />
@@ -399,14 +453,16 @@ export default function SignupPage() {
                                             <FormField control={form.control} name="state" render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>State/Province</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!countryValue}>
-                                                        <FormControl><SelectTrigger><SelectValue placeholder="Select State/Province" /></SelectTrigger></FormControl>
-                                                        <SelectContent className="max-h-60">
-                                                            {states.map(state => (
-                                                                <SelectItem key={state.name} value={state.name}>{state.name}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <FormControl>
+                                                        <Combobox
+                                                            options={states.map(s => ({ label: s.name, value: s.name }))}
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            placeholder="Select State"
+                                                            emptyText="No state found."
+                                                            disabled={!countryValue}
+                                                        />
+                                                    </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )} />
@@ -414,7 +470,12 @@ export default function SignupPage() {
                                                 <FormItem>
                                                     <FormLabel>School</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Enter your school name" {...field} />
+                                                        <SchoolCombobox
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            placeholder="Select School"
+                                                            emptyText="No school found."
+                                                        />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -482,8 +543,17 @@ export default function SignupPage() {
                                         Next <ArrowRight className="ml-2 h-4 w-4" />
                                     </Button>
                                 ) : (
-                                    <Button type="submit" disabled={form.formState.isSubmitting}>
-                                        {form.formState.isSubmitting ? 'Creating Account...' : 'Create Account'}
+                                    <Button
+                                        type="button"
+                                        onClick={form.handleSubmit(onSubmit)}
+                                        disabled={form.formState.isSubmitting}
+                                    >
+                                        {form.formState.isSubmitting ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Creating Account...
+                                            </>
+                                        ) : 'Create Account'}
                                     </Button>
                                 )}
                             </div>
@@ -510,6 +580,6 @@ export default function SignupPage() {
                     </p>
                 </CardFooter>
             </Card>
-        </div>
+        </div >
     );
 }

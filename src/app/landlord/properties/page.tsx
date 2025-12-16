@@ -18,8 +18,10 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/utils';
-import { MoreHorizontal, PlusCircle, Building } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Building, Search } from 'lucide-react';
 import Link from 'next/link';
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,6 +64,8 @@ export default function LandlordPropertiesPage() {
 
   const [propertiesWithTenants, setPropertiesWithTenants] = useState<PropertyWithTenant[]>([]);
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('title-asc');
 
   useEffect(() => {
     if (!properties || !firestore) return;
@@ -106,6 +110,31 @@ export default function LandlordPropertiesPage() {
     }
   };
 
+  const displayedProperties = propertiesWithTenants.filter(property => {
+    const query = searchQuery.toLowerCase();
+    return (
+      property.title.toLowerCase().includes(query) ||
+      (property.tenantName && property.tenantName.toLowerCase().includes(query))
+    );
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'title-asc':
+        return a.title.localeCompare(b.title);
+      case 'title-desc':
+        return b.title.localeCompare(a.title);
+      case 'price-asc':
+        return a.price - b.price;
+      case 'price-desc':
+        return b.price - a.price;
+      case 'status-asc':
+        return a.status.localeCompare(b.status);
+      case 'status-desc':
+        return b.status.localeCompare(a.status);
+      default:
+        return 0;
+    }
+  });
+
   if (isLoading) {
     return <Loading />;
   }
@@ -127,6 +156,35 @@ export default function LandlordPropertiesPage() {
         </Button>
       </div>
       <Separator className="my-6" />
+
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center mb-6">
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search properties or tenants..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <span className="text-sm text-muted-foreground whitespace-nowrap hidden sm:inline-block">Sort by:</span>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="title-asc">Title: A-Z</SelectItem>
+              <SelectItem value="title-desc">Title: Z-A</SelectItem>
+              <SelectItem value="price-asc">Price: Low to High</SelectItem>
+              <SelectItem value="price-desc">Price: High to Low</SelectItem>
+              <SelectItem value="status-asc">Status: Available First</SelectItem>
+              <SelectItem value="status-desc">Status: Occupied First</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Property List</CardTitle>
@@ -135,7 +193,7 @@ export default function LandlordPropertiesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {propertiesWithTenants && propertiesWithTenants.length > 0 ? (
+          {displayedProperties && displayedProperties.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -149,7 +207,7 @@ export default function LandlordPropertiesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {propertiesWithTenants.map((property) => {
+                {displayedProperties.map((property) => {
                   const isOccupied = property.status === 'occupied';
                   return (
                     <TableRow key={property.id}>

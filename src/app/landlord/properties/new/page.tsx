@@ -17,6 +17,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Combobox } from '@/components/ui/combobox';
+import { SchoolCombobox } from '@/components/school-combobox';
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -106,8 +115,9 @@ const formSchema = z.object({
     country: z.string().min(2, 'Country is required.'),
     city: z.string().min(2, 'City is required.'),
     state: z.string().min(2, 'State is required.'),
-    zip: z.string().min(5, 'ZIP code is required.'),
-    bedrooms: z.coerce.number().int().min(1, 'Must have at least 1 bedroom.'),
+    zip: z.string().min(2, 'Zip code is required.'),
+    school: z.string().optional(),
+    bedrooms: z.coerce.number().int().min(0, 'Bedrooms must be 0 or more.'),
     bathrooms: z.coerce.number().int().min(1, 'Must have at least 1 bathroom.'),
     area: z.coerce.number().positive('Area must be a positive number.'),
     amenities: z.array(z.string()).refine((value) => value.some((item) => item), {
@@ -126,7 +136,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const steps = [
     { id: 1, name: 'Basic Information', fields: ['title', 'description', 'price', 'type'] },
-    { id: 2, name: 'Location', fields: ['address', 'country', 'city', 'state', 'zip'] },
+    { id: 2, name: 'Location', fields: ['address', 'country', 'city', 'state', 'zip', 'school'] },
     { id: 3, name: 'Property Details', fields: ['bedrooms', 'bathrooms', 'area'] },
     { id: 4, name: 'Amenities & Rules', fields: ['amenities', 'rules'] },
     { id: 5, name: 'Lease Template', fields: ['leaseTemplate'] },
@@ -202,6 +212,7 @@ export default function AddPropertyPage() {
             city: '',
             state: '',
             zip: '',
+            school: '',
             bedrooms: 1,
             bathrooms: 1,
             area: 0,
@@ -267,10 +278,15 @@ export default function AddPropertyPage() {
     }
 
     async function uploadImage(file: File, path: string): Promise<string> {
-        const storage = getStorage(firebaseApp);
-        const storageRef = ref(storage, path);
-        const snapshot = await uploadBytes(storageRef, file);
-        return getDownloadURL(snapshot.ref);
+        try {
+            const storage = getStorage(firebaseApp);
+            const storageRef = ref(storage, path);
+            const snapshot = await uploadBytes(storageRef, file);
+            return await getDownloadURL(snapshot.ref);
+        } catch (error) {
+            console.error(`Upload failed for path: ${path}`, error);
+            throw error;
+        }
     }
 
     async function onSubmit(values: FormValues) {
@@ -289,6 +305,7 @@ export default function AddPropertyPage() {
         try {
             const uploadedImageUrls: string[] = [];
             const timestamp = Date.now();
+            // Store images under properties/{landlordId}/{timestamp}/...
             const basePath = `properties/${user.uid}/${timestamp}`;
 
             // Helper to upload if exists
@@ -302,22 +319,24 @@ export default function AddPropertyPage() {
                         toast({
                             variant: "destructive",
                             title: "Upload Warning",
-                            description: `Failed to upload ${name} image.`,
+                            description: `Failed to upload ${name} image. Please try editing the property later to add it.`,
                         });
+                        // We continue even if one image fails, but we warn the user.
                     }
                 }
             };
 
+            // Execute uploads sequentially to avoid flooding connection (or could use Promise.all for speed)
             await uploadField(values.kitchenImage, 'kitchen');
             await uploadField(values.livingRoomImage, 'livingRoom');
             await uploadField(values.bathroomImage, 'bathroom');
             await uploadField(values.bedroomImage, 'bedroom');
             await uploadField(values.otherImage, 'other');
 
-            // Fallback if no images uploaded
-            if (uploadedImageUrls.length === 0) {
-                uploadedImageUrls.push("https://images.unsplash.com/photo-1515263487990-61b07816b324?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
-            }
+            // Fallback if no images uploaded at all
+            // if (uploadedImageUrls.length === 0) {
+            //     uploadedImageUrls.push("https://images.unsplash.com/photo-1515263487990-61b07816b324?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+            // }
 
             const newPropertyData: Omit<Property, 'id'> = {
                 title: values.title,
@@ -330,6 +349,9 @@ export default function AddPropertyPage() {
                     city: values.city,
                     state: values.state,
                     zip: values.zip,
+                    lat: values.lat,
+                    lng: values.lng,
+                    school: values.school,
                 },
                 bedrooms: values.bedrooms,
                 bathrooms: values.bathrooms,
@@ -343,7 +365,7 @@ export default function AddPropertyPage() {
             };
 
             const docRef = await addDoc(collection(firestore, 'properties'), newPropertyData);
-            // Now update the document with its own ID
+            // Now update the document with its own ID - this is good practice
             await updateDoc(docRef, { id: docRef.id });
 
             toast({
@@ -351,12 +373,12 @@ export default function AddPropertyPage() {
                 description: `${values.title} is now available for rent.`,
             });
             router.push('/landlord/properties');
-        } catch (e: unknown) {
+        } catch (e: any) {
             console.error("Error adding document: ", e);
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: "Could not list property. Please try again.",
+                description: e.message || "Could not list property. Please try again.",
             });
         } finally {
             setIsSubmitting(false);
@@ -469,38 +491,51 @@ export default function AddPropertyPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Country</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select Country" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent className="max-h-60">
-                                                    {countries.map(country => (
-                                                        <SelectItem key={country.iso2} value={country.name}>{country.name}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            <FormControl>
+                                                <Combobox
+                                                    options={countries.map((c) => ({ label: c.name, value: c.name }))}
+                                                    value={field.value}
+                                                    onChange={(value) => {
+                                                        field.onChange(value);
+                                                        form.setValue('state', ''); // Reset state when country changes
+                                                        form.setValue('school', ''); // Reset school when country changes
+                                                    }}
+                                                    placeholder="Select country"
+                                                />
+                                            </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
+
                                 <FormField
                                     control={form.control}
                                     name="state"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>State</FormLabel>
+                                            <FormLabel>State/Province</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="CA" {...field} />
+                                                <Combobox
+                                                    options={
+                                                        countries.find((c) => c.name === form.watch('country'))?.states.map((s) => ({
+                                                            label: s.name,
+                                                            value: s.name,
+                                                        })) || []
+                                                    }
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Select state"
+                                                    disabled={!form.watch('country')}
+                                                    emptyText={!form.watch('country') ? "Select a country first" : "No states found"}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                             </div>
-                            <Separator className="my-8" />
-                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <FormField
                                     control={form.control}
                                     name="city"
@@ -508,26 +543,49 @@ export default function AddPropertyPage() {
                                         <FormItem>
                                             <FormLabel>City</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Urbanville" {...field} />
+                                                <Input placeholder="San Francisco" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
+
                                 <FormField
                                     control={form.control}
                                     name="zip"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>ZIP Code</FormLabel>
+                                            <FormLabel>ZIP / Postal Code</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="90210" {...field} />
+                                                <Input placeholder="94105" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                             </div>
+
+                            <FormField
+                                control={form.control}
+                                name="school"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Near School / University (Optional)</FormLabel>
+                                        <FormControl>
+                                            <SchoolCombobox
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Select or add a school..."
+                                                disabled={!form.watch('country')}
+                                            />
+                                        </FormControl>
+                                        <FormDescription>
+                                            This allows students to find your property by searching for their school.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
 
                         <div className={cn(currentStep === 3 ? "block" : "hidden")}>

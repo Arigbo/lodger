@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, FormEvent } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,6 +16,7 @@ import format from "date-fns/format";
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp, limit, documentId } from 'firebase/firestore';
 import Loading from '@/app/loading';
+import { sendNotification } from '@/lib/notifications';
 
 
 type Conversation = {
@@ -37,6 +38,7 @@ export default function MessagesPage() {
     const [isClient, setIsClient] = useState(false);
     const [newMessage, setNewMessage] = useState('');
     const [isDataLoading, setIsDataLoading] = useState(true);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const selectedConversationId = searchParams.get('conversationId');
     const contactId = searchParams.get('contact');
@@ -157,7 +159,12 @@ export default function MessagesPage() {
             });
     }, [allStudentMessages, selectedParticipant]);
 
-    const handleSendMessage = (e: React.FormEvent) => {
+    // Auto-scroll to bottom
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages, selectedConversationId]);
+
+    const handleSendMessage = (e: FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !student || !selectedParticipant || !firestore) return;
 
@@ -172,6 +179,16 @@ export default function MessagesPage() {
         };
 
         addDoc(messagesRef, messageData)
+            .then(() => {
+                return sendNotification({
+                    toUserId: selectedParticipant.id,
+                    type: 'NEW_MESSAGE',
+                    firestore: firestore,
+                    senderName: student.displayName || 'Student',
+                    customMessage: newMessage,
+                    link: `/landlord/messages?conversationId=${student.uid}`
+                });
+            })
             .catch((serverError: any) => {
                 const permissionError = new FirestorePermissionError({
                     path: messagesRef.path,
@@ -194,7 +211,8 @@ export default function MessagesPage() {
                 <h1 className="font-headline text-3xl font-bold">Messages</h1>
                 <p className="text-muted-foreground">Communicate with your landlords.</p>
             </div>
-            <Card className="h-[calc(100vh)]">
+            {/* Use dvh for mobile viewport height to handle address bars correctly */}
+            <Card className="h-[calc(100dvh-12rem)] md:h-[calc(100vh-12rem)] overflow-hidden">
                 <div className="grid h-full grid-cols-1 md:grid-cols-3">
                     <div className={cn(
                         "flex flex-col border-r",
@@ -205,7 +223,7 @@ export default function MessagesPage() {
                             <CardTitle>Conversations</CardTitle>
                         </CardHeader>
                         <Separator />
-                        <ScrollArea className="flex-grow">
+                        <ScrollArea className="flex-1">
                             <CardContent className="p-0">
                                 {conversations.map(convo => (
                                     <Link
@@ -240,7 +258,7 @@ export default function MessagesPage() {
                     </div>
 
                     <div className={cn(
-                        "col-span-2 flex-col h-full",
+                        "col-span-2 flex-col h-full overflow-hidden",
                         selectedConversationId ? "flex" : "hidden",
                         "md:flex"
                     )}>
@@ -269,7 +287,7 @@ export default function MessagesPage() {
                                         <Button variant="ghost" size="icon"><Video /></Button>
                                     </div>
                                 </div>
-                                <ScrollArea className="flex-grow p-6 overflow-y-auto h-[calc(70vh)]">
+                                <ScrollArea className="flex-1 p-6">
                                     <div className="space-y-6">
                                         {messages?.map(msg => (
                                             <div key={msg.id} className={cn("flex flex-col gap-1", msg.senderId === student.uid ? "items-end" : "items-start")}>
@@ -299,6 +317,7 @@ export default function MessagesPage() {
                                                 </p>
                                             </div>
                                         ))}
+                                        <div ref={messagesEndRef} />
                                     </div>
                                 </ScrollArea>
                                 <div className="border-t p-4">

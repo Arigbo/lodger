@@ -13,6 +13,11 @@ import { amenities as allAmenities } from "@/types";
 import { MapPin } from "lucide-react";
 import { Input } from "./ui/input";
 import { countries } from "@/types/countries";
+import { Combobox } from "./ui/combobox";
+import { SchoolCombobox } from "@/components/school-combobox";
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
+import { cn } from "@/utils";
 
 export type FilterState = {
   country?: string;
@@ -34,7 +39,7 @@ type SearchFiltersProps = {
   onLocationSuccess: (coords: { lat: number; lng: number }) => void;
   schoolsInArea?: string[] | null;
   availableStates: string[];
-  availableSchools: string[];
+  className?: string; // SearchFiltersProps
 };
 
 
@@ -45,7 +50,7 @@ export default function SearchFilters({
   onLocationSuccess,
   schoolsInArea,
   availableStates,
-  availableSchools
+  className,
 }: SearchFiltersProps) {
   const [filters, setFilters] = useState<FilterState>(initialFilters || {});
   const [price, setPrice] = useState(initialFilters?.price || 3000);
@@ -105,37 +110,36 @@ export default function SearchFilters({
   }
 
   return (
-    <Card className="sticky top-24">
+    <Card className={cn("h-full", className)}>
       <CardHeader>
         <CardTitle className="font-headline">Filter & Sort</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-6">
         <div className="grid gap-2">
           <Label htmlFor="country">Country</Label>
-          <Select value={filters.country} onValueChange={(value) => handleInputChange('country', value)} disabled={filters.useCurrentLocation}>
-            <SelectTrigger id="country">
-              <SelectValue placeholder="Select Country" />
-            </SelectTrigger>
-            <SelectContent className="max-h-60">
-              {countries.map(country => (
-                <SelectItem key={country.iso2} value={country.name}>{country.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            options={countries.map(c => ({ label: c.name, value: c.name }))}
+            value={filters.country}
+            onChange={(value) => handleInputChange('country', value)}
+            placeholder="Select Country"
+            disabled={filters.useCurrentLocation}
+          />
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div className="grid gap-2">
             <Label htmlFor="state">State</Label>
-            <Select value={filters.state} onValueChange={(value) => handleInputChange('state', value)} disabled={filters.useCurrentLocation}>
-              <SelectTrigger id="state">
-                <SelectValue placeholder="Select State" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableStates.map(state => (
-                  <SelectItem key={state} value={state}>{state}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={
+                filters.country
+                  ? (countries.find(c => c.name === filters.country)?.states.map(s => ({ label: s.name, value: s.name })) || [])
+                  : availableStates.map(s => ({ label: s, value: s }))
+              }
+              value={filters.state}
+              onChange={(value) => handleInputChange('state', value)}
+              placeholder="Select State"
+              disabled={filters.useCurrentLocation}
+              emptyText={filters.country ? "No states found" : "Select a country or use existing properties"}
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="city">City</Label>
@@ -145,22 +149,27 @@ export default function SearchFilters({
         <div className="grid gap-2">
           <Label htmlFor="school">School</Label>
           <div className="flex gap-2">
-            <Select value={filters.school} onValueChange={(value) => handleInputChange('school', value)} disabled={filters.useCurrentLocation}>
-              <SelectTrigger id="school">
-                <SelectValue placeholder="Select School" />
-              </SelectTrigger>
-              <SelectContent>
-                {schoolsInArea === null && availableSchools.map(school => (
-                  <SelectItem key={school} value={school}>{school}</SelectItem>
-                ))}
-                {schoolsInArea && schoolsInArea.length > 0 && schoolsInArea.map(school => (
-                  <SelectItem key={school} value={school}>{school}</SelectItem>
-                ))}
-                {schoolsInArea && schoolsInArea.length === 0 && (
-                  <div className="p-2 text-sm text-muted-foreground text-center">No schools found in area.</div>
-                )}
-              </SelectContent>
-            </Select>
+            <div className="flex-grow">
+              {schoolsInArea !== null ? (
+                // When showing schools in area (from location detection), use a simple select or combobox restricted to those schools
+                <Combobox
+                  options={(schoolsInArea || []).map(school => ({ label: school, value: school }))}
+                  value={filters.school}
+                  onChange={(value) => handleInputChange('school', value)}
+                  placeholder="Select School"
+                  disabled={filters.useCurrentLocation && (schoolsInArea?.length || 0) === 0}
+                  emptyText="No schools found in this area."
+                />
+              ) : (
+                // Otherwise use the full SchoolCombobox fetching from Firestore
+                <SchoolCombobox
+                  value={filters.school}
+                  onChange={(value) => handleInputChange('school', value)}
+                  placeholder="Select School"
+                  disabled={filters.useCurrentLocation}
+                />
+              )}
+            </div>
             <Button variant="outline" size="icon" onClick={handleCurrentLocation}>
               <MapPin className="h-4 w-4" />
               <span className="sr-only">Use current location</span>

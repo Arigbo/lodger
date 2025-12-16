@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, User as UserIcon } from 'lucide-react';
+import { Upload, User as UserIcon, Trash2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
     AlertDialog,
@@ -41,6 +41,7 @@ import { useToast } from '@/hooks/use-toast';
 import { countries } from '@/types/countries';
 import { getStorage } from 'firebase/storage';
 import { uploadProfileImage } from '@/firebase/storage';
+import { SchoolCombobox } from '@/components/school-combobox';
 
 const profileFormSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -109,6 +110,15 @@ export default function AccountPage() {
     async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
         if (!file || !user) return;
+
+        if (file.size > 1024 * 1024) {
+            toast({
+                variant: "destructive",
+                title: "Image too large",
+                description: "Please upload an image smaller than 1MB.",
+            });
+            return;
+        }
 
         setIsUploading(true);
         try {
@@ -210,6 +220,29 @@ export default function AccountPage() {
                                                     <Upload className="mr-2 h-4 w-4" />
                                                     {isUploading ? 'Uploading...' : 'Upload Image'}
                                                 </Button>
+                                                {(previewImage || userProfile.profileImageUrl) && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                        onClick={async () => {
+                                                            if (!confirm("Are you sure you want to remove your profile picture?")) return;
+                                                            try {
+                                                                if (userDocRef) {
+                                                                    await setDoc(userDocRef, { profileImageUrl: null }, { merge: true });
+                                                                    setPreviewImage(null);
+                                                                    toast({ title: "Image Removed", description: "Profile picture deleted." });
+                                                                }
+                                                            } catch (error) {
+                                                                console.error("Error removing image:", error);
+                                                                toast({ variant: "destructive", title: "Error", description: "Failed to remove image." });
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                )}
                                                 <input
                                                     id="profile-upload"
                                                     type="file"
@@ -283,7 +316,12 @@ export default function AccountPage() {
                                             <FormItem>
                                                 <FormLabel>School</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Enter school name" {...field} />
+                                                    <SchoolCombobox
+                                                        value={field.value}
+                                                        onChange={field.onChange}
+                                                        placeholder="Select School"
+                                                        emptyText="No school found."
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>

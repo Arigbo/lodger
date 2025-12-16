@@ -18,7 +18,7 @@ import { initiateEmailSignIn, errorEmitter, FirestorePermissionError, initiateGo
 import { useAuth, useFirestore } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc, setDoc } from '@firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import type { UserProfile } from '@/types';
 
 const loginSchema = z.object({
@@ -198,7 +198,7 @@ export default function LoginPage() {
             <Card className="w-full max-w-md">
                 <CardHeader className="text-center">
                     <CardTitle className="font-headline text-3xl">Welcome Back</CardTitle>
-                    <CardDescription>Sign in to continue to Urban Nest</CardDescription>
+                    <CardDescription>Sign in to continue to Lodger</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Tabs defaultValue="student" onValueChange={(value) => setUserType(value as 'student' | 'landlord')} className="w-full">

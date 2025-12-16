@@ -28,6 +28,7 @@ import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, where, getDocs, addDoc, updateDoc, documentId, getDoc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Loading from '@/app/loading';
+import { sendNotification } from '@/lib/notifications';
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -135,6 +136,18 @@ export default function RentalRequestsPage() {
     const requestRef = doc(firestore, 'rentalApplications', requestId);
     updateDocumentNonBlocking(requestRef, { status: 'declined' });
 
+    // Notify Tenant
+    const request = aggregatedRequests.find(r => r.request.id === requestId);
+    if (request && request.request.tenantId) {
+      sendNotification({
+        toUserId: request.request.tenantId,
+        type: 'REQUEST_REJECTED',
+        firestore: firestore,
+        propertyName: request.property?.title,
+        link: `/student/requests`
+      });
+    }
+
     setAggregatedRequests(prev => prev.map(ar =>
       ar.request.id === requestId
         ? { ...ar, request: { ...ar.request, status: 'declined' } }
@@ -173,6 +186,24 @@ export default function RentalRequestsPage() {
         status: 'pending',
       });
       await updateDoc(leaseDocRef, { id: leaseDocRef.id });
+
+      // Notify Tenant: Request Accepted
+      await sendNotification({
+        toUserId: request.tenantId,
+        type: 'REQUEST_ACCEPTED',
+        firestore: firestore,
+        propertyName: property.title,
+        link: `/student/tenancy/${leaseDocRef.id}`
+      });
+
+      // Notify Tenant: Lease Generated (Ready to sign)
+      await sendNotification({
+        toUserId: request.tenantId,
+        type: 'LEASE_GENERATED',
+        firestore: firestore,
+        propertyName: property.title,
+        link: `/student/tenancy/${leaseDocRef.id}`
+      });
 
       // 4. Update local state to reflect the change
       setAggregatedRequests(prev => prev.map(ar =>

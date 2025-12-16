@@ -67,11 +67,11 @@ export default function LandlordPropertyDetailPage() {
   const [areRequestsLoading, setAreRequestsLoading] = useState(true);
 
   useEffect(() => {
-    if (!id || !firestore) return;
+    if (!id || !firestore || !user) return;
 
     const fetchRequestsAndApplicants = async () => {
       setAreRequestsLoading(true);
-      const requestsQuery = query(collection(firestore, 'rentalApplications'), where('propertyId', '==', id));
+      const requestsQuery = query(collection(firestore, 'rentalApplications'), where('propertyId', '==', id), where('landlordId', '==', user.uid));
       const requestsSnapshot = await getDocs(requestsQuery);
       const rentalRequests: RentalApplication[] = requestsSnapshot.docs.map((d: any) => ({ ...d.data(), id: d.id } as RentalApplication));
 
@@ -103,7 +103,7 @@ export default function LandlordPropertyDetailPage() {
     };
 
     fetchRequestsAndApplicants();
-  }, [id, firestore]);
+  }, [id, firestore, user]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<AggregatedRequest | null>(null);

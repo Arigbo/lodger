@@ -128,14 +128,14 @@ export default function EditPropertyPage() {
     const storage = getStorage(firebaseApp);
 
     for (const file of Array.from(files)) {
-      const imageRef = ref(storage, `properties/${property.id}/${Date.now()}_${file.name}`);
+      const imageRef = ref(storage, `properties/${property.landlordId}/${Date.now()}_${file.name}`);
       try {
         const snapshot = await uploadBytes(imageRef, file);
         const downloadURL = await getDownloadURL(snapshot.ref);
         newImageUrls.push(downloadURL);
-      } catch (error: unknown) {
+      } catch (error: any) {
         console.error("Error uploading image:", error);
-        toast({ variant: "destructive", title: "Upload Failed", description: `Could not upload ${file.name}.` });
+        toast({ variant: "destructive", title: "Upload Failed", description: `Could not upload ${file.name}: ${error.message}` });
       }
     }
 

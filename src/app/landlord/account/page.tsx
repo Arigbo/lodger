@@ -38,7 +38,7 @@ import { useToast } from '@/hooks/use-toast';
 import { uploadProfileImage } from '@/firebase/storage';
 import { getStorage } from 'firebase/storage';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Pencil, User } from 'lucide-react';
+import { Pencil, User, Trash2 } from 'lucide-react';
 import Loading from '@/app/loading';
 
 const profileFormSchema = z.object({
@@ -116,6 +116,15 @@ export default function AccountPage() {
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file || !user || !userDocRef) return;
+
+        if (file.size > 1024 * 1024) {
+            toast({
+                variant: "destructive",
+                title: "Image too large",
+                description: "Please upload an image smaller than 1MB.",
+            });
+            return;
+        }
 
         setIsUploading(true);
         try {
@@ -205,9 +214,34 @@ export default function AccountPage() {
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="grid gap-2">
-                                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                                                {isUploading ? 'Uploading...' : <><Pencil className="mr-2 h-4 w-4" /> Edit DP</>}
-                                            </Button>
+                                            <div className="flex items-center gap-2">
+                                                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                                                    {isUploading ? 'Uploading...' : <><Pencil className="mr-2 h-4 w-4" /> Edit DP</>}
+                                                </Button>
+                                                {(previewImage || userProfile.profileImageUrl) && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                        onClick={async () => {
+                                                            if (!confirm("Are you sure you want to remove your profile picture?")) return;
+                                                            try {
+                                                                if (userDocRef) {
+                                                                    await setDoc(userDocRef, { profileImageUrl: null }, { merge: true });
+                                                                    setPreviewImage(null);
+                                                                    toast({ title: "Image Removed", description: "Profile picture deleted." });
+                                                                }
+                                                            } catch (error) {
+                                                                console.error("Error removing image:", error);
+                                                                toast({ variant: "destructive", title: "Error", description: "Failed to remove image." });
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
                                             <p className="text-xs text-muted-foreground">Upload a real photo to build trust.</p>
                                             <input
                                                 type="file"

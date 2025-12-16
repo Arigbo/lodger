@@ -76,6 +76,18 @@ export default async function Home() {
           <p className="mt-4 max-w-3xl mx-auto text-lg text-primary-foreground/90">
             The easiest way for university students to find and book their next rental property.
           </p>
+          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <Button asChild size="lg" className="text-lg px-8 py-6">
+              <Link href="/student/properties">
+                Browse Properties <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="text-lg px-8 py-6 bg-background/10 backdrop-blur-sm border-white/20 text-white hover:bg-background/20">
+              <Link href="/landlord">
+                List Your Property
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
       {/* How it works Section */}

@@ -6,11 +6,17 @@ import PropertyCard from "@/components/property-card";
 import SearchFilters from "@/components/search-filters";
 import type { Property, UserProfile } from '@/types';
 import type { FilterState } from '@/components/search-filters';
-import { Home } from 'lucide-react';
+import { Home, Search } from 'lucide-react';
 import { haversineDistance } from '@/utils';
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import Loading from '@/app/loading';
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SlidersHorizontal } from "lucide-react";
 
 
 // Mock coordinates for major state centers to determine location
@@ -34,6 +40,8 @@ export default function PropertiesPage() {
     const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
     const [schoolsInArea, setSchoolsInArea] = useState<string[] | null>(null);
     const [hasAppliedDefaults, setHasAppliedDefaults] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortBy, setSortBy] = useState('newest');
 
     const availableStates = useMemo(() => {
         if (!allProperties) return [];
@@ -44,7 +52,6 @@ export default function PropertiesPage() {
         return [...new Set(props.map(p => p.location.state))];
     }, [allProperties, filters.country]);
 
-    const availableSchools = useMemo(() => allProperties ? [...new Set(allProperties.map(p => p.location.school).filter(Boolean as any as (value: string | undefined) => value is string))] : [], [allProperties]);
 
     useEffect(() => {
         if (userProfile && !hasAppliedDefaults) {
@@ -123,8 +130,38 @@ export default function PropertiesPage() {
             );
         }
 
+        if (searchQuery) {
+            const lowerQuery = searchQuery.toLowerCase();
+            properties = properties.filter(p =>
+                p.title.toLowerCase().includes(lowerQuery) ||
+                p.location.address.toLowerCase().includes(lowerQuery) ||
+                p.location.city.toLowerCase().includes(lowerQuery)
+            );
+        }
+
+        // Sorting
+        properties.sort((a, b) => {
+            switch (sortBy) {
+                case 'price-asc':
+                    return a.price - b.price;
+                case 'price-desc':
+                    return b.price - a.price;
+                case 'bedrooms-desc':
+                    return b.bedrooms - a.bedrooms;
+                case 'area-desc':
+                    return b.area - a.area;
+                case 'newest':
+                default:
+                    // Assuming higher ID means newer if no timestamp, or we could add createdAt to Property type
+                    // For now, let's just reverse the order (last created usually comes last in default fetch)
+                    // But if we want consistent sort without timestamp, we might need a createdAt field.
+                    // Let's assume natural order is oldest first, so reverse for newest
+                    return -1;
+            }
+        });
+
         setFilteredProperties(properties);
-    }, [filters, currentLocation, allProperties]);
+    }, [filters, currentLocation, allProperties, searchQuery, sortBy]);
 
 
     const handleFilterChange = (newFilters: FilterState) => {
@@ -196,23 +233,83 @@ export default function PropertiesPage() {
 
     return (
         <div>
-            <div className="text-center mb-12">
-                <h1 className="font-headline text-4xl font-bold">Find Your Next Home</h1>
-                <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">Browse through our curated list of student-friendly apartments and houses.</p>
-            </div>
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
-                <aside className="lg:col-span-1">
-                    <SearchFilters
-                        onFilterChange={handleFilterChange}
-                        onReset={resetFilters}
-                        initialFilters={filters}
-                        onLocationSuccess={handleLocationSuccess}
-                        schoolsInArea={schoolsInArea}
-                        availableStates={availableStates}
-                        availableSchools={availableSchools}
-                    />
-                </aside>
-                <main className="lg:col-span-3">
+            {/* Removed grid layout, using single column with responsive filters */}
+            <div>
+                <main>
+                    <div className="flex flex-col gap-4 mb-6">
+                        <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+                            <div className="relative w-full sm:w-72">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search by title, location..."
+                                    className="pl-8"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                                {/* Mobile Filter (Sheet) */}
+                                <div className="md:hidden">
+                                    <Sheet>
+                                        <SheetTrigger asChild>
+                                            <Button variant="outline" className="gap-2">
+                                                <SlidersHorizontal className="h-4 w-4" />
+                                                Filters
+                                            </Button>
+                                        </SheetTrigger>
+                                        <SheetContent side="left" className="w-full sm:w-[540px] overflow-y-auto p-0">
+                                            <SearchFilters
+                                                onFilterChange={handleFilterChange}
+                                                onReset={resetFilters}
+                                                initialFilters={filters}
+                                                onLocationSuccess={handleLocationSuccess}
+                                                schoolsInArea={schoolsInArea}
+                                                availableStates={availableStates}
+                                                className="border-0 shadow-none"
+                                            />
+                                        </SheetContent>
+                                    </Sheet>
+                                </div>
+
+                                {/* Desktop Filter (Popover) */}
+                                <div className="hidden md:block">
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className="gap-2">
+                                                <SlidersHorizontal className="h-4 w-4" />
+                                                Filters
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[480px] p-0" align="end">
+                                            <SearchFilters
+                                                onFilterChange={handleFilterChange}
+                                                onReset={resetFilters}
+                                                initialFilters={filters}
+                                                onLocationSuccess={handleLocationSuccess}
+                                                schoolsInArea={schoolsInArea}
+                                                availableStates={availableStates}
+                                                className="border-0 shadow-none max-h-[80vh] overflow-y-auto"
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+
+                                <span className="text-sm text-muted-foreground whitespace-nowrap hidden sm:inline-block ml-2">Sort by:</span>
+                                <Select value={sortBy} onValueChange={setSortBy}>
+                                    <SelectTrigger className="w-full sm:w-[180px]">
+                                        <SelectValue placeholder="Sort by" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="newest">Newest First</SelectItem>
+                                        <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                                        <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                                        <SelectItem value="bedrooms-desc">Bedrooms: Most First</SelectItem>
+                                        <SelectItem value="area-desc">Area: Largest First</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    </div>
                     <div className="mb-4">
                         <p className="text-sm text-muted-foreground">{filteredProperties.length} properties found</p>
                     </div>

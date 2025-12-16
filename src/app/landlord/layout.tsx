@@ -51,7 +51,13 @@ export default function LandlordLayout({
         <div className="hidden border-r bg-muted/40 md:block">
           <div className="flex h-full max-h-screen flex-col gap-2">
             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-              <Header />
+              {/* Header is now global, but we might want a logo here or just spacing. 
+                  If Global Header is above this layout, this sidebar top part is separate.
+                  Let's check if the layout needs adjustment. 
+                  Actually, if Global Header is sticky top, this whole layout might be scrollable underneath. 
+                  Adding a Logo here for sidebar context if needed. 
+               */}
+              <span className="font-semibold">Landlord Dashboard</span>
             </div>
             <div className="flex-1">
               <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
@@ -63,7 +69,7 @@ export default function LandlordLayout({
 
         {/* Main Content Area */}
         <div className="flex flex-col">
-          {/* Mobile Header */}
+          {/* Mobile Header - Renamed to Mobile Sidebar Trigger Area since Header is global */}
           <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 md:hidden">
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
@@ -79,7 +85,7 @@ export default function LandlordLayout({
               <SheetContent side="left" className="flex flex-col">
                 <nav className="grid gap-2 text-lg font-medium">
                   <div className="flex h-14 items-center border-b px-4 mb-4">
-                    <Header />
+                    <span className="font-semibold">Menu</span>
                   </div>
                   <div onClick={() => setMobileMenuOpen(false)}>
                     <LandlordSidebar />
@@ -88,7 +94,7 @@ export default function LandlordLayout({
               </SheetContent>
             </Sheet>
             <div className="flex-1">
-              <Header />
+              {/* Global Header handles title/logo */}
             </div>
           </header>
 

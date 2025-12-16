@@ -17,6 +17,7 @@ import format from "date-fns/format";
 import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp } from 'firebase/firestore';
 import Loading from '@/app/loading';
+import { sendNotification } from '@/lib/notifications';
 
 type Conversation = {
     participant: User;
@@ -149,6 +150,16 @@ export default function MessagesPage() {
         };
 
         addDoc(messagesRef, messageData)
+            .then(() => {
+                return sendNotification({
+                    toUserId: selectedParticipant.id,
+                    type: 'NEW_MESSAGE',
+                    firestore: firestore,
+                    senderName: landlord.name || 'Landlord',
+                    customMessage: newMessage,
+                    link: `/student/messages?conversationId=${landlord.uid}` // Assuming student messages route
+                });
+            })
             .catch((serverError: any) => {
                 const permissionError = new FirestorePermissionError({
                     path: messagesRef.path,

@@ -10,10 +10,10 @@ export default function TermsOfServicePage() {
         </CardHeader>
         <CardContent className="prose prose-lg max-w-none space-y-4">
           <p className="text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
-          
+
           <h2>1. Introduction</h2>
           <p>
-            Welcome to RentU! These Terms of Service ("Terms") govern your use of our website and services. By accessing or using RentU, you agree to be bound by these Terms.
+            Welcome to Lodger! These Terms of Service ("Terms") govern your use of our website and services. By accessing or using Lodger, you agree to be bound by these Terms.
           </p>
 
           <h2>2. Use of Our Services</h2>
@@ -41,7 +41,7 @@ export default function TermsOfServicePage() {
             These Terms shall be governed and construed in accordance with the laws of the State of California, without regard to its conflict of law provisions.
           </p>
 
-           <h2>7. Changes to Terms</h2>
+          <h2>7. Changes to Terms</h2>
           <p>
             We reserve the right, at our sole discretion, to modify or replace these Terms at any time. If a revision is material we will provide at least 30 days' notice prior to any new terms taking effect.
           </p>
