@@ -48,6 +48,7 @@ interface SchoolComboboxProps {
     value?: string;
     onChange: (value: string) => void;
     placeholder?: string;
+    emptyText?: string;
     className?: string;
     disabled?: boolean;
 }
@@ -56,6 +57,7 @@ export function SchoolCombobox({
     value,
     onChange,
     placeholder = 'Select university...',
+    emptyText = 'School not found.',
     className,
     disabled = false,
 }: SchoolComboboxProps) {
@@ -208,7 +210,7 @@ export function SchoolCombobox({
                         />
                         <CommandList>
                             <CommandEmpty className="p-2">
-                                <p className="text-sm text-muted-foreground mb-2">School not found.</p>
+                                <p className="text-sm text-muted-foreground mb-2">{emptyText}</p>
                                 <Button
                                     size="sm"
                                     variant="secondary"
