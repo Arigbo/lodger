@@ -38,8 +38,9 @@ import { useToast } from '@/hooks/use-toast';
 import { uploadProfileImage } from '@/firebase/storage';
 import { getStorage } from 'firebase/storage';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Pencil, User, Trash2 } from 'lucide-react';
+import { Pencil, User, Trash2, Wallet } from 'lucide-react';
 import Loading from '@/app/loading';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 const profileFormSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -70,6 +71,9 @@ export default function AccountPage() {
     const [isUploading, setIsUploading] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [refetchKey, setRefetchKey] = useState(0);
+
+    const searchParams = useSearchParams();
+    const router = useRouter();
 
     const refetchProfile = useCallback(() => {
         setRefetchKey(prev => prev + 1);
@@ -112,6 +116,56 @@ export default function AccountPage() {
             });
         }
     }, [user, userProfile, profileForm]);
+
+    // Handle Stripe Connect Return
+    useEffect(() => {
+        const connectSuccess = searchParams.get('stripe_connect_success');
+        const accountId = searchParams.get('account_id');
+
+        if (connectSuccess && accountId && userDocRef) {
+            // Save the Stripe Account ID to the user's profile
+            setDoc(userDocRef, { stripeAccountId: accountId }, { merge: true })
+                .then(() => {
+                    toast({
+                        title: "Payouts Enabled!",
+                        description: "Your Stripe account has been connected successfully.",
+                    });
+                    // Clean URL
+                    router.replace('/landlord/account');
+                })
+                .catch(err => {
+                    console.error("Error saving stripe ID:", err);
+                    toast({ variant: "destructive", title: "Connection Error", description: "Could not save Stripe Account ID." });
+                });
+        }
+    }, [searchParams, userDocRef, router, toast]);
+
+    const handleConnectStripe = async () => {
+        if (!user) return;
+        try {
+            const response = await fetch('/api/stripe/connect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.uid, email: user.email }),
+            });
+            const data = await response.json();
+            if (data.url) {
+                // If we got a new account ID, initiate save immediately or rely on return?
+                // The API returns { url, accountId }. Better to save accountId now IF it's new, 
+                // but simpler to rely on the return_url param logic we just added above.
+                // Actually, saving it now is safer in case they drop off during onboarding but account exists.
+                if (data.accountId && userDocRef) {
+                    await setDoc(userDocRef, { stripeAccountId: data.accountId }, { merge: true });
+                }
+                window.location.href = data.url;
+            } else {
+                throw new Error(data.error || "Failed to get onboarding link");
+            }
+        } catch (error: any) {
+            console.error("Stripe Connect Error:", error);
+            toast({ variant: "destructive", title: "Error", description: error.message });
+        }
+    }
 
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -314,6 +368,40 @@ export default function AccountPage() {
                 </TabsContent>
                 <TabsContent value="settings">
                     <div className="space-y-8">
+                        {/* Payout Settings Card */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Payout Settings</CardTitle>
+                                <CardDescription>Connect your bank account to receive rent payments directly.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {userProfile?.stripeAccountId ? (
+                                    <div className="flex items-center justify-between p-4 border rounded-lg bg-green-50 border-green-200">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-green-100 rounded-full">
+                                                <Wallet className="h-5 w-5 text-green-700" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-green-900">Stripe Connected</p>
+                                                <p className="text-sm text-green-700">You are ready to receive payouts.</p>
+                                            </div>
+                                        </div>
+                                        {/* Ideally add a "Login to Dashboard" button here involving stripe.accounts.createLoginLink */}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-4">
+                                        <p className="text-sm text-muted-foreground">
+                                            To receive payments from tenants, you must connect a Stripe account.
+                                            This allows funds to be transferred directly to your bank.
+                                        </p>
+                                        <Button onClick={handleConnectStripe} className="w-fit">
+                                            Connect with Stripe
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
                         <Card>
                             <CardHeader>
                                 <CardTitle>Change Password</CardTitle>

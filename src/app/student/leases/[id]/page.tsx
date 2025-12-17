@@ -8,16 +8,35 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Signature, CheckCircle2, FileClock, Hourglass, Check, DollarSign, Download, Printer } from 'lucide-react';
+import { Signature, CheckCircle2, FileClock, Hourglass, Check, DollarSign, Download, Printer, ShieldAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import StripeCheckoutForm from "@/components/stripe-checkout-form";
+
+// Make sure to add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to your .env.local
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 import type { LeaseAgreement, Property, UserProfile as User } from '@/types';
 import { doc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Loading from '@/app/loading';
 import { sendNotification } from '@/lib/notifications';
 import { formatPrice } from '@/utils';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
 
 export default function ViewStudentLeasePage() {
     const params = useParams();
@@ -91,6 +110,59 @@ export default function ViewStudentLeasePage() {
         );
     }
 
+    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+    const [clientSecret, setClientSecret] = useState("");
+
+    React.useEffect(() => {
+        if (isPaymentOpen && property?.price) {
+            fetch("/api/create-payment-intent", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    amount: property.price,
+                    destinationAccountId: landlord?.stripeAccountId
+                }),
+            })
+                .then((res) => res.json())
+                .then((data) => setClientSecret(data.clientSecret));
+        }
+    }, [isPaymentOpen, property?.price, landlord?.stripeAccountId]);
+
+    const handlePaymentSuccess = async () => {
+        try {
+            if (!leaseRef) return;
+            await updateDoc(leaseRef, { status: 'active' });
+
+            if (propertyRef) {
+                await updateDoc(propertyRef, {
+                    status: 'occupied',
+                    currentTenantId: currentUser.uid,
+                    leaseStartDate: lease.startDate
+                });
+            }
+
+            await addDoc(collection(firestore, 'transactions'), {
+                landlordId: lease.landlordId,
+                tenantId: currentUser.uid,
+                propertyId: lease.propertyId,
+                amount: property?.price || 0,
+                date: new Date().toISOString(),
+                type: 'Rent',
+                status: 'Completed'
+            });
+
+            setIsPaymentOpen(false);
+            toast({
+                title: "Payment Successful!",
+                description: "Your lease is now ACTIVE. Welcome to your new home!"
+            });
+            router.refresh();
+        } catch (error) {
+            console.error("Post-payment update failed:", error);
+            toast({ variant: "destructive", title: "Error", description: "Payment succeeded but status update failed. Contact support." });
+        }
+    };
+
     const handleSignLease = async () => {
         if (!leaseRef) return;
         try {
@@ -103,14 +175,14 @@ export default function ViewStudentLeasePage() {
                 tenantSigned: true,
                 leaseText: updatedLeaseText
                 // Do NOT set status 'active' yet. Wait for payment.
-                // status: 'active' 
             });
 
             toast({
                 title: "Lease Signed Successfully!",
                 description: "Signature recorded. Please proceed to payment."
             });
-            // Stay on page to pay
+            // Open payment modal immediately
+            setIsPaymentOpen(true);
         } catch (error: unknown) {
             console.error("Error signing lease:", error);
             toast({
@@ -121,14 +193,73 @@ export default function ViewStudentLeasePage() {
         }
     };
 
-    const handleMakePayment = () => {
-        if (!lease) return;
-        // Redirect to Tenancy Page to make payment
-        router.push(`/student/tenancy/${lease.propertyId}`);
-    }
-
     const handleDownloadLease = () => {
-        window.print();
+        if (!lease) return;
+        // Create a blob from the lease text
+        const element = document.createElement("a");
+        const file = new Blob([lease.leaseText], { type: 'text/plain' });
+        element.href = URL.createObjectURL(file);
+        element.download = `Lease_Agreement_${property?.title.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.txt`;
+        document.body.appendChild(element); // Required for this to work in FireFox
+        element.click();
+        document.body.removeChild(element);
+    };
+
+    const processPayment = async () => {
+        if (!cardNumber || !expiry || !cvc) {
+            toast({ variant: "destructive", title: "Missing Information", description: "Please fill in all payment details." });
+            return;
+        }
+
+        setIsProcessingPayment(true);
+
+        // SIMULATED PAYMENT PROCESSING
+        // In a real app, you would send this to your backend (Stripe/Paystack)
+        // See 'payment_integration_guide.md' for details.
+        setTimeout(async () => {
+            try {
+                if (!leaseRef) return;
+
+                // 1. Activate Lease
+                await updateDoc(leaseRef, {
+                    status: 'active'
+                });
+
+                // 2. Update Property Status to Occupied & Set Current Tenant
+                if (propertyRef) {
+                    await updateDoc(propertyRef, {
+                        status: 'occupied',
+                        currentTenantId: currentUser.uid,
+                        leaseStartDate: lease.startDate
+                    });
+                }
+
+                // 3. Record Transaction
+                await addDoc(collection(firestore, 'transactions'), {
+                    landlordId: lease.landlordId,
+                    tenantId: currentUser.uid,
+                    propertyId: lease.propertyId,
+                    amount: property?.price || 0,
+                    date: new Date().toISOString(),
+                    type: 'Rent',
+                    status: 'Completed'
+                });
+
+                setIsPaymentOpen(false);
+                toast({
+                    title: "Payment Successful!",
+                    description: "Your lease is now ACTIVE. Welcome to your new home!"
+                });
+
+                router.refresh();
+
+            } catch (error) {
+                console.error("Payment failed:", error);
+                toast({ variant: "destructive", title: "Payment Failed", description: "Something went wrong. Please try again." });
+            } finally {
+                setIsProcessingPayment(false);
+            }
+        }, 2000); // 2 second delay to simulate network request
     };
 
     const getStatusVariant = (status: 'active' | 'expired' | 'pending') => {
@@ -183,8 +314,8 @@ export default function ViewStudentLeasePage() {
                         <Badge variant={getStatusVariant(lease.status)} className="text-base capitalize hidden print:block border-2 p-1 px-4">{lease.status}</Badge>
                         <div className="flex gap-2 print:hidden">
                             <Button variant="outline" size="sm" onClick={handleDownloadLease}>
-                                <Printer className="h-4 w-4 mr-2" />
-                                Print / Download
+                                <Download className="h-4 w-4 mr-2" />
+                                Download Lease
                             </Button>
                             <Badge variant={getStatusVariant(lease.status)} className="text-base capitalize">{lease.status}</Badge>
                         </div>
@@ -257,9 +388,9 @@ export default function ViewStudentLeasePage() {
                                 Please make your first month's rent payment to finalize the tenancy and receive your keys.
                             </p>
                             <div className="flex gap-4">
-                                <Button size="lg" onClick={handleMakePayment}>
-                                    <DollarSign className="mr-2 h-4 w-4" />
-                                    Pay {formatPrice(property?.price || 0)}
+                                <Button className="w-full mt-4" size="lg" onClick={() => setIsPaymentOpen(true)}>
+                                    <DollarSign className="h-4 w-4 mr-2" />
+                                    Pay First Month's Rent
                                 </Button>
                             </div>
                         </div>
@@ -274,6 +405,23 @@ export default function ViewStudentLeasePage() {
                     </Link>
                 </Button>
             </div>
-        </div>
+
+            <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Complete Payment</DialogTitle>
+                        <DialogDescription>
+                            Securely pay your first month's rent via Stripe.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {clientSecret && (
+                        <Elements options={{ clientSecret, appearance: { theme: 'stripe' } }} stripe={stripePromise}>
+                            <StripeCheckoutForm amount={property?.price || 0} onSuccess={handlePaymentSuccess} />
+                        </Elements>
+                    )}
+                </DialogContent>
+            </Dialog>
+        </div >
     );
 }
+

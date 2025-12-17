@@ -13,6 +13,7 @@ export type UserProfile = {
     twitterUrl?: string;
     bio?: string;
     legalName?: string;
+    stripeAccountId?: string;
 };
 
 export type User = UserProfile;
