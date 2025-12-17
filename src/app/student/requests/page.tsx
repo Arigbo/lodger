@@ -26,6 +26,27 @@ import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import Loading from '@/app/loading';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -123,6 +144,53 @@ export default function StudentRequestsPage() {
     }
   };
 
+  const [requestToDelete, setRequestToDelete] = React.useState<string | null>(null);
+  const [requestToEdit, setRequestToEdit] = React.useState<RentalApplication | null>(null);
+  const [editMessage, setEditMessage] = React.useState('');
+  const { toast } = useToast();
+
+  const handleDeleteRequest = async () => {
+    if (!requestToDelete || !firestore) return;
+
+    try {
+      await deleteDoc(doc(firestore, 'rentalApplications', requestToDelete));
+      toast({
+        title: "Request Deleted",
+        description: "Your rental application has been cancelled.",
+      });
+      setRequestToDelete(null);
+    } catch (error) {
+      console.error("Error deleting request:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not delete request. Please try again.",
+      });
+    }
+  };
+
+  const handleUpdateRequest = async () => {
+    if (!requestToEdit || !firestore) return;
+
+    try {
+      await updateDoc(doc(firestore, 'rentalApplications', requestToEdit.id), {
+        messageToLandlord: editMessage
+      });
+      toast({
+        title: "Request Updated",
+        description: "Your application details have been updated.",
+      });
+      setRequestToEdit(null);
+    } catch (error) {
+      console.error("Error updating request:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not update request. Please try again.",
+      });
+    }
+  };
+
   if (isUserLoading || areRequestsLoading || isAggregating) {
     return <Loading />;
   }
@@ -155,7 +223,7 @@ export default function StudentRequestsPage() {
                   <TableHead>Landlord</TableHead>
                   <TableHead>Date Sent</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead><span className="sr-only">Actions</span></TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -177,13 +245,47 @@ export default function StudentRequestsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {request.status === 'approved' && (
-                          <Button variant="secondary" size="sm" asChild>
-                            <Link href="/student/leases">
-                              View Leases
-                            </Link>
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {request.status === 'approved' && (
+                            <Button variant="secondary" size="sm" asChild>
+                              <Link href="/student/leases">
+                                View Leases
+                              </Link>
+                            </Button>
+                          )}
+                          {request.status === 'pending' && (
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setRequestToEdit(request);
+                                  setEditMessage(request.messageToLandlord || '');
+                                }}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setRequestToDelete(request.id)}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          )}
+                          {/* Allow deletion even if declined/approved to clear list? User said "delete their request" */}
+                          {request.status !== 'pending' && request.status !== 'approved' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setRequestToDelete(request.id)}
+                            >
+                              Remove
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -208,6 +310,49 @@ export default function StudentRequestsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!requestToDelete} onOpenChange={(open) => !open && setRequestToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Request?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this rental application? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Request</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteRequest} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Cancel Request
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!requestToEdit} onOpenChange={(open) => !open && setRequestToEdit(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Application</DialogTitle>
+            <DialogDescription>
+              Update your message to the landlord.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="text-sm font-medium mb-2 block">Message</label>
+            <Textarea
+              value={editMessage}
+              onChange={(e) => setEditMessage(e.target.value)}
+              placeholder="Introduced yourself and explain why you're a good fit..."
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRequestToEdit(null)}>Cancel</Button>
+            <Button onClick={handleUpdateRequest}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

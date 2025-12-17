@@ -12,6 +12,7 @@ export type UserProfile = {
     whatsappUrl?: string;
     twitterUrl?: string;
     bio?: string;
+    legalName?: string;
 };
 
 export type User = UserProfile;
@@ -41,7 +42,7 @@ export type Property = {
     status: 'available' | 'occupied';
     rules: string[];
     currentTenantId?: string | null;
-    leaseStartDate?: string; // YYYY-MM-DD
+    leaseStartDate?: string | null; // YYYY-MM-DD
     leaseTemplate?: string;
 };
 
@@ -52,6 +53,8 @@ export type PropertyReview = {
     rating: number; // 1-5
     comment: string;
     reviewDate: string; // ISO 8601 date string
+    tenancyStartDate?: string;
+    tenancyEndDate?: string;
 };
 
 export type RentalApplication = {

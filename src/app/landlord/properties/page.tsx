@@ -47,6 +47,8 @@ import type { Property, UserProfile as User } from '@/types';
 import { useEffect, useState } from 'react';
 import Loading from '@/app/loading';
 import { useToast } from '@/hooks/use-toast';
+import { sendNotification } from '@/lib/notifications';
+import { getDocs } from 'firebase/firestore';
 
 type PropertyWithTenant = Property & { tenantName?: string };
 
@@ -94,10 +96,36 @@ export default function LandlordPropertiesPage() {
     if (!propertyToDelete || !firestore) return;
 
     try {
+      // 1. Notify all applicants
+      const propertyTitle = properties?.find(p => p.id === propertyToDelete)?.title || 'Property';
+
+      const requestsQuery = query(
+        collection(firestore, 'rentalApplications'),
+        where('propertyId', '==', propertyToDelete)
+      );
+      const requestsSnap = await getDocs(requestsQuery);
+
+      const notificationPromises = requestsSnap.docs.map(doc => {
+        const request = doc.data() as any; // Type assertion if needed, or use RentalApplication
+        return sendNotification({
+          toUserId: request.tenantId,
+          type: 'NEW_MESSAGE', // Fallback to NEW_MESSAGE as it supports customMessage and link
+          firestore,
+          propertyName: propertyTitle,
+          link: '/student/requests',
+          senderName: 'System', // Sender name for context
+          customMessage: `The property "${propertyTitle}" you requested has been removed by the landlord. Please delete your request.`
+        });
+      });
+
+      await Promise.all(notificationPromises);
+
+      // 2. Delete the property
       await deleteDoc(doc(firestore, 'properties', propertyToDelete));
+
       toast({
         title: "Property Deleted",
-        description: "The property has been successfully removed.",
+        description: "The property has been successfully removed and applicants notified.",
       });
       setPropertyToDelete(null);
     } catch (error) {

@@ -27,16 +27,20 @@ service cloud.firestore {
         
         allow create: if request.auth != null && request.resource.data.tenantId == request.auth.uid;
         
-        allow update: if request.auth != null && (
+        // Allow update/delete for both tenant and landlord
+        allow update, delete: if request.auth != null && (
             resource.data.tenantId == request.auth.uid ||
             get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.landlordId == request.auth.uid
         );
 
-        // Allow list if querying. Constraints should be applied in query but we can't fully enforce "OR" in list rules easily without caveats.
-        // A common pattern is to allow list if auth != null, and trust client queries + security rules on individual documents (which `list` doesn't purely check).
-        // Better: check if the query filters by tenantId OR property owner (harder).
-        // For now, let's keep it simple: Authenticated users can query, but results *should* be filtered by the query.
         allow list: if request.auth != null; 
+    }
+
+    match /notifications/{notificationId} {
+        allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+        // Allow anyone to create a notification (system/other users triggers)
+        // Ideally restricted to cloud functions or specific triggers, but for client-side app:
+        allow create: if request.auth != null; 
     }
 
     match /leaseAgreements/{leaseId} {
@@ -52,13 +56,18 @@ service cloud.firestore {
           request.resource.data.tenantId == request.auth.uid
       );
                        
-      allow update, delete: if request.auth != null && isParticipant();
+      allow update: if request.auth != null && isParticipant();
+      allow delete: if request.auth != null && isParticipant() && 
+                    resource.data.status != 'active' && 
+                    resource.data.landlordSigned == false && 
+                    resource.data.tenantSigned == false;
     }
 
     match /propertyReviews/{reviewId} {
       allow read: if true;
       allow create: if request.auth != null && request.resource.data.tenantId == request.auth.uid;
       allow list: if true; // Public reviews
+      allow update, delete: if request.auth != null && resource.data.tenantId == request.auth.uid;
     }
 
     match /maintenanceRequests/{requestId} {

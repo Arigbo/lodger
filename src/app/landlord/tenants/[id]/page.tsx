@@ -94,7 +94,7 @@ export default function TenantDetailPage() {
             await updateDocumentNonBlocking(propertyRef, {
                 status: 'available',
                 currentTenantId: null,
-                leaseStartDate: null as any // Type assertion if needed, or update type to allow null
+                leaseStartDate: null
             });
 
             toast({

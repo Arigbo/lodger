@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,9 +13,9 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/utils';
 import type { UserProfile as User, Message } from '@/types';
 import { Send, Phone, Video, User as UserIcon, ArrowLeft } from 'lucide-react';
-import format from "date-fns/format";
+import { format } from "date-fns";
 import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import Loading from '@/app/loading';
 import { sendNotification } from '@/lib/notifications';
 
@@ -38,6 +38,7 @@ export default function MessagesPage() {
     const [isClient, setIsClient] = useState(false);
     const [newMessage, setNewMessage] = useState('');
     const [isDataLoading, setIsDataLoading] = useState(true);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const selectedConversationId = searchParams.get('conversationId');
 
@@ -72,7 +73,7 @@ export default function MessagesPage() {
             allLandlordMessages.forEach(msg => {
                 const otherParticipantId = msg.participantIds.find(id => id !== landlord.uid);
                 if (otherParticipantId) {
-                    if (!conversationsMap.has(otherParticipantId) || (msg.timestamp && conversationsMap.get(otherParticipantId)!.lastMessage.timestamp && msg.timestamp.toMillis() > conversationsMap.get(otherParticipantId)!.lastMessage.timestamp.toMillis())) {
+                    if (!conversationsMap.has(otherParticipantId) || (msg.timestamp && conversationsMap.get(otherParticipantId)?.lastMessage?.timestamp && (msg.timestamp?.toMillis() || 0) > (conversationsMap.get(otherParticipantId)?.lastMessage?.timestamp?.toMillis() || 0))) {
                         conversationsMap.set(otherParticipantId, { lastMessage: msg, participantId: otherParticipantId });
                     }
                 }
@@ -118,6 +119,13 @@ export default function MessagesPage() {
         } else if (conversations.length > 0 && !selectedParticipant) {
             // Default to first conversation
             setSelectedParticipant(conversations[0].participant);
+            // Only replace URL if not on mobile or if we really want to force a selection state
+            // On mobile, auto-redirecting to a conversation might be annoying if they want to see the list first
+            // But for consistency with desktop, we'll keep it for now, or maybe only on desktop?
+            // Actually, for responsiveness, we usually want to show list first on mobile.
+            // Let's only auto-select if window width is large (hard to detect in SSR), or just rely on CSS hiding.
+            // A better UX for mobile is: don't auto-select if no param is present.
+            // But simpler logic for now:
             router.replace(`${pathname}?conversationId=${conversations[0].participant.id}`, { scroll: false });
         }
     }, [selectedConversationId, conversations, selectedParticipant, router, pathname]);
@@ -134,6 +142,11 @@ export default function MessagesPage() {
                 return 0;
             });
     }, [allLandlordMessages, selectedParticipant]);
+
+    // Auto-scroll to bottom
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages, selectedConversationId]);
 
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
@@ -182,11 +195,11 @@ export default function MessagesPage() {
                 <h1 className="font-headline text-3xl font-bold">Messages</h1>
                 <p className="text-muted-foreground">Communicate with your tenants.</p>
             </div>
-            <Card className="h-[calc(80vh)]">
+            <Card className="h-[calc(100dvh-12rem)] md:h-[calc(100vh-12rem)] overflow-hidden">
                 <div className="grid h-full grid-cols-1 md:grid-cols-3">
                     {/* Conversation List */}
                     <div className={cn(
-                        "flex flex-col border-r",
+                        "flex flex-col border-r h-full",
                         "md:flex",
                         selectedConversationId ? "hidden" : "flex"
                     )}>
@@ -194,7 +207,7 @@ export default function MessagesPage() {
                             <CardTitle>Conversations</CardTitle>
                         </CardHeader>
                         <Separator />
-                        <ScrollArea className="flex-grow">
+                        <ScrollArea className="flex-1">
                             <CardContent className="p-0">
                                 {conversations.map(convo => (
                                     <Link
@@ -230,7 +243,7 @@ export default function MessagesPage() {
 
                     {/* Chat Window */}
                     <div className={cn(
-                        "col-span-2 flex-col h-full",
+                        "col-span-2 flex-col h-full overflow-hidden",
                         selectedConversationId ? "flex" : "hidden",
                         "md:flex"
                     )}>
@@ -293,6 +306,7 @@ export default function MessagesPage() {
                                                 </p>
                                             </div>
                                         ))}
+                                        <div ref={messagesEndRef} />
                                     </div>
                                 </ScrollArea>
                                 {/* Message Input */}

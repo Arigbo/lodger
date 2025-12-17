@@ -10,7 +10,8 @@ export type NotificationType =
     | 'RENT_DUE'
     | 'LEASE_GENERATED'
     | 'LEASE_SIGNED'
-    | 'TENANCY_ENDED';
+    | 'TENANCY_ENDED'
+    | 'REVIEW_SUBMITTED';
 
 interface NotificationPayload {
     toUserId: string;
@@ -94,6 +95,12 @@ export const sendNotification = async ({
         case 'TENANCY_ENDED':
             title = 'Tenancy Ended';
             message = `The tenancy for ${propertyName} has explicitly ended.`;
+            uiType = 'info';
+            break;
+
+        case 'REVIEW_SUBMITTED':
+            title = 'New Review';
+            message = `${senderName || 'A tenant'} left a review for ${propertyName}.`;
             uiType = 'info';
             break;
     }

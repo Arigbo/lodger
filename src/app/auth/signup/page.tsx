@@ -29,6 +29,7 @@ import { SchoolCombobox } from '@/components/school-combobox';
 const formSchema = z.object({
     userType: z.enum(['student', 'landlord']),
     name: z.string().min(2, "Name must be at least 2 characters."),
+    legalName: z.string().min(2, "Legal Name is required for contracts."),
     email: z.string().email("Invalid email address."),
     password: z.string().min(8, "Password must be at least 8 characters."),
     confirmPassword: z.string(),
@@ -79,6 +80,7 @@ export default function SignupPage() {
         defaultValues: {
             userType: 'student',
             name: '',
+            legalName: '',
             email: '',
             password: '',
             confirmPassword: '',
@@ -103,13 +105,13 @@ export default function SignupPage() {
     const steps = userType === 'student' ?
         [
             { id: 1, name: 'Choose Account Type', fields: ['userType'] },
-            { id: 2, name: 'Account Details', fields: ['name', 'email', 'password', 'confirmPassword'] },
+            { id: 2, name: 'Account Details', fields: ['name', 'legalName', 'email', 'password', 'confirmPassword'] },
             { id: 3, name: 'Location Information', fields: ['country', 'state', 'school'] },
             { id: 4, name: 'Profile Photo', fields: ['profileImage'] },
         ] :
         [
             { id: 1, name: 'Choose Account Type', fields: ['userType'] },
-            { id: 2, name: 'Account Details', fields: ['name', 'email', 'password', 'confirmPassword'] },
+            { id: 2, name: 'Account Details', fields: ['name', 'legalName', 'email', 'password', 'confirmPassword'] },
             { id: 3, name: 'Location & Contact', fields: ['country', 'state', 'phone', 'whatsappUrl', 'twitterUrl'] },
             { id: 4, name: 'Profile Photo', fields: ['profileImage'] },
         ];
@@ -189,6 +191,7 @@ export default function SignupPage() {
             const userData = {
                 id: uid,
                 name: values.name,
+                legalName: values.legalName,
                 email: values.email,
                 role: values.userType,
                 profileImageUrl: profileImageUrl,
@@ -330,8 +333,15 @@ export default function SignupPage() {
                             <div className={cn("space-y-6", currentStep === 2 ? "block" : "hidden")}>
                                 <FormField control={form.control} name="name" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Full Name</FormLabel>
+                                        <FormLabel>Full Name (Display Name)</FormLabel>
                                         <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                                <FormField control={form.control} name="legalName" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Legal Name (For Contracts)</FormLabel>
+                                        <FormControl><Input placeholder="Johnathan Doe" {...field} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )} />

@@ -35,7 +35,7 @@ export default function TenancyDashboardPage() {
         return query(
             collection(firestore, 'leaseAgreements'),
             where('tenantId', '==', user.uid),
-            where('status', '==', 'active')
+            where('status', 'in', ['active', 'pending'])
         );
     }, [user, firestore]);
 

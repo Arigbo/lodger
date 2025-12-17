@@ -163,14 +163,15 @@ export default function RentalRequestsPage() {
       const requestRef = doc(firestore, 'rentalApplications', request.id);
       updateDocumentNonBlocking(requestRef, { status: 'approved' });
 
-      // 2. Update property status
-      const propertyRef = doc(firestore, 'properties', property.id);
+      // 2. Do NOT update property status yet. Wait for tenant to sign and pay.
+      // const propertyRef = doc(firestore, 'properties', property.id);
+      // const leaseStartDate = new Date().toISOString();
+      // updateDocumentNonBlocking(propertyRef, {
+      //   status: 'occupied',
+      //   currentTenantId: request.tenantId,
+      //   leaseStartDate,
+      // });
       const leaseStartDate = new Date().toISOString();
-      updateDocumentNonBlocking(propertyRef, {
-        status: 'occupied',
-        currentTenantId: request.tenantId,
-        leaseStartDate,
-      });
 
       // 3. Create a new lease agreement
       const leaseCollectionRef = collection(firestore, 'leaseAgreements');
@@ -183,7 +184,7 @@ export default function RentalRequestsPage() {
         tenantSigned: false,
         startDate: leaseStartDate,
         endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
-        status: 'pending',
+        status: 'pending', // Pending tenant signature and payment
       });
       await updateDoc(leaseDocRef, { id: leaseDocRef.id });
 
@@ -193,7 +194,7 @@ export default function RentalRequestsPage() {
         type: 'REQUEST_ACCEPTED',
         firestore: firestore,
         propertyName: property.title,
-        link: `/student/tenancy/${leaseDocRef.id}`
+        link: `/student/leases/${leaseDocRef.id}` // Correct Link to Lease Page
       });
 
       // Notify Tenant: Lease Generated (Ready to sign)
@@ -202,10 +203,10 @@ export default function RentalRequestsPage() {
         type: 'LEASE_GENERATED',
         firestore: firestore,
         propertyName: property.title,
-        link: `/student/tenancy/${leaseDocRef.id}`
+        link: `/student/leases/${leaseDocRef.id}` // Correct Link to Lease Page
       });
 
-      // 4. Update local state to reflect the change
+      // 4. Update local state
       setAggregatedRequests(prev => prev.map(ar =>
         ar.request.id === request.id
           ? { ...ar, request: { ...ar.request, status: 'approved' } }

@@ -99,9 +99,26 @@ export default function PropertyDetailPage() {
     const [requestMessage, setRequestMessage] = useState("");
     const [isClient, setIsClient] = useState(false);
 
+    const [api, setApi] = React.useState<any>();
+    const [current, setCurrent] = React.useState(0);
+    const [count, setCount] = React.useState(0);
+
     useEffect(() => {
         setIsClient(true);
     }, []);
+
+    useEffect(() => {
+        if (!api) {
+            return;
+        }
+
+        setCount(api.scrollSnapList().length);
+        setCurrent(api.selectedScrollSnap() + 1);
+
+        api.on("select", () => {
+            setCurrent(api.selectedScrollSnap() + 1);
+        });
+    }, [api]);
 
     const propertyRef = useMemoFirebase(() => id ? doc(firestore, 'properties', id) : null, [firestore, id]);
     const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
@@ -341,7 +358,10 @@ export default function PropertyDetailPage() {
                 <div className="lg:col-span-2">
                     <div className="mb-8">
                         {images.length > 0 ? (
-                            <Carousel className="w-full max-w-5xl mx-auto">
+                            <Carousel
+                                className="w-full max-w-5xl mx-auto"
+                                setApi={setApi} // Capture API to track slides
+                            >
                                 <CarouselContent>
                                     {images.map((image, index) => (
                                         <CarouselItem key={image.id}>
@@ -358,6 +378,9 @@ export default function PropertyDetailPage() {
                                 </CarouselContent>
                                 <CarouselPrevious className="left-2" />
                                 <CarouselNext className="right-2" />
+                                <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium">
+                                    {current} / {count}
+                                </div>
                             </Carousel>
                         ) : (
                             <div className="flex h-[400px] w-full items-center justify-center rounded-lg bg-secondary text-muted-foreground">
@@ -427,7 +450,17 @@ export default function PropertyDetailPage() {
                             </ul>
                         </TabsContent>
                         <TabsContent value="reviews" className="py-4 space-y-6">
-                            <h3 className="font-headline text-2xl font-semibold">Comments & Reviews</h3>
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-headline text-2xl font-semibold">Comments & Reviews</h3>
+                                {/* Only show review button to verified tenants */}
+                                <ReviewButton
+                                    propertyId={property.id}
+                                    userId={user?.uid}
+                                    firestore={firestore}
+                                    userProfile={userProfile}
+                                />
+                            </div>
+
                             {reviews && reviews.map(review => {
                                 return (
                                     <div key={review.id} className="flex gap-4 pt-6 border-t">
@@ -438,8 +471,15 @@ export default function PropertyDetailPage() {
                                         </Avatar>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <p className="font-semibold">{review.tenantId}</p>
-                                                <p className="text-xs text-muted-foreground">{new Date(review.reviewDate).toLocaleDateString()}</p>
+                                                <p className="font-semibold">{review.tenantName || 'Tenant'}</p>
+                                                <div className="flex flex-col">
+                                                    <p className="text-xs text-muted-foreground">{new Date(review.reviewDate).toLocaleDateString()}</p>
+                                                    {review.tenancyStartDate && review.tenancyEndDate && (
+                                                        <p className="text-[10px] text-muted-foreground">
+                                                            Tenant: {new Date(review.tenancyStartDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })} - {new Date(review.tenancyEndDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
                                             <div className="flex items-center gap-0.5 mt-1">
                                                 {[...Array(5)].map((_, i) => <Star key={i} className={cn("h-4 w-4", i < review.rating ? "text-accent fill-current" : "text-muted-foreground")} />)}
@@ -622,5 +662,180 @@ export default function PropertyDetailPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+function ReviewButton({ propertyId, userId, firestore, userProfile }: { propertyId: string, userId?: string, firestore: any, userProfile?: UserProfile | null }) {
+    const [isTenant, setIsTenant] = useState(false);
+    const [existingReview, setExistingReview] = useState<any>(null); // Store existing review
+    const [isOpen, setIsOpen] = useState(false);
+    const [rating, setRating] = useState(5);
+    const [comment, setComment] = useState("");
+    const [leaseDates, setLeaseDates] = useState<{ start: string, end: string } | null>(null);
+    const { toast } = useToast();
+
+    React.useEffect(() => {
+        if (!userId || !firestore) return;
+        const checkTenancy = async () => {
+            // Check leases where this user is tenant and property matches
+            const q = query(
+                collection(firestore, 'leaseAgreements'),
+                where('tenantId', '==', userId),
+                where('propertyId', '==', propertyId)
+            );
+
+            import('firebase/firestore').then(async ({ getDocs }) => {
+                try {
+                    const snap = await getDocs(q);
+                    if (!snap.empty) {
+                        setIsTenant(true);
+                        // Capture lease dates from the first matching lease (assuming most recent or relevant)
+                        const leaseData = snap.docs[0].data();
+                        if (leaseData.startDate && leaseData.endDate) {
+                            setLeaseDates({ start: leaseData.startDate, end: leaseData.endDate });
+                        }
+                    }
+                } catch (e) {
+                    console.error("Tenancy check failed", e);
+                }
+            });
+        };
+
+        const checkExistingReview = async () => {
+            const q = query(
+                collection(firestore, 'propertyReviews'),
+                where('propertyId', '==', propertyId),
+                where('tenantId', '==', userId)
+            );
+            import('firebase/firestore').then(async ({ getDocs }) => {
+                const snap = await getDocs(q);
+                if (!snap.empty) {
+                    const data = snap.docs[0].data();
+                    setExistingReview({ id: snap.docs[0].id, ...data });
+                    setRating(data.rating);
+                    setComment(data.comment);
+                } else {
+                    setExistingReview(null);
+                    setRating(5);
+                    setComment("");
+                }
+            });
+        }
+
+        checkTenancy();
+        checkExistingReview();
+    }, [userId, propertyId, firestore]);
+
+    const handleSubmit = async () => {
+        if (!comment.trim()) {
+            toast({ variant: "destructive", title: "Error", description: "Please write a comment." });
+            return;
+        }
+
+        try {
+            await addDoc(collection(firestore, 'propertyReviews'), {
+                propertyId,
+                tenantId: userId,
+                tenantName: userProfile?.name || "Anonymous",
+                rating,
+                comment,
+                reviewDate: new Date().toISOString(),
+                tenancyStartDate: leaseDates?.start,
+                tenancyEndDate: leaseDates?.end
+            });
+
+            // Notify Landlord
+            const propertySnap = await import('firebase/firestore').then(m => m.getDoc(import('firebase/firestore').then(mod => mod.doc(firestore, 'properties', propertyId))));
+            // We need to fetch property to get landlordId, but `ReviewButton` prop only has propertyId.
+            // Ideally parent passes landlordId. But let's fetch property here or rely on specific prop.
+            // Actually, checking how `ReviewButton` is called... it doesn't have landlordId prop.
+            // Let's do a quick fetch or update calling component. 
+            // Time Constraint: Fetch property here to get landlordId is safest without prop drilling.
+
+            import('firebase/firestore').then(async ({ doc, getDoc }) => {
+                const propRef = doc(firestore, 'properties', propertyId);
+                const propSnap = await getDoc(propRef);
+                if (propSnap.exists()) {
+                    const propData = propSnap.data();
+                    await import('@/lib/notifications').then(({ sendNotification }) => {
+                        sendNotification({
+                            toUserId: propData.landlordId,
+                            type: 'REVIEW_SUBMITTED',
+                            firestore: firestore,
+                            propertyName: propData.title,
+                            senderName: userProfile?.name || 'A tenant',
+                            link: `/landlord/properties/${propertyId}` // Link to property page where reviews are
+                        });
+                    });
+                }
+            });
+
+            toast({ title: "Review Submitted", description: "Thank you for your feedback!" });
+            setIsOpen(false);
+            setComment("");
+            setRating(5);
+        } catch (error) {
+            console.error(error);
+            toast({ variant: "destructive", title: "Error", description: "Failed to submit review." });
+        }
+    }
+
+    const handleDelete = async () => {
+        if (!existingReview) return;
+        if (!confirm("Are you sure you want to delete your review?")) return;
+
+        try {
+            await import('firebase/firestore').then(({ doc, deleteDoc }) =>
+                deleteDoc(doc(firestore, 'propertyReviews', existingReview.id))
+            );
+            toast({ title: "Review Deleted", description: "Your review has been removed." });
+            setExistingReview(null);
+            setRating(5);
+            setComment("");
+            setIsOpen(false);
+            window.location.reload();
+        } catch (error) {
+            console.error(error);
+            toast({ variant: "destructive", title: "Error", description: "Failed to delete review." });
+        }
+    }
+
+    if (!isTenant) return null;
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button variant={existingReview ? "secondary" : "default"}>
+                    {existingReview ? "Edit Your Review" : "Write a Review"}
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{existingReview ? "Edit Review" : "Rate this Property"}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="flex flex-col gap-2">
+                        <Label>Rating</Label>
+                        <div className="flex gap-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button key={star} onClick={() => setRating(star)} type="button">
+                                    <Star className={cn("h-6 w-6", star <= rating ? "text-accent fill-current" : "text-muted-foreground")} />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <Label>Comment</Label>
+                        <Textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Share your experience..." />
+                    </div>
+                </div>
+                <DialogFooter className="flex justify-between sm:justify-between">
+                    {existingReview && (
+                        <Button variant="destructive" onClick={handleDelete} type="button">Delete Review</Button>
+                    )}
+                    <Button onClick={handleSubmit}>{existingReview ? "Update Review" : "Submit Review"}</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }

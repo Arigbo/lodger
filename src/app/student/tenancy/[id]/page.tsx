@@ -117,13 +117,52 @@ export default function TenancyDetailPage() {
         return <TenancySkeleton />;
     }
 
-    if (!property || user?.uid !== property.currentTenantId) {
-        notFound();
+    // Allow access if:
+    // 1. User is the current tenant (property.currentTenantId)
+    // 2. OR User has a valid lease for this property (fetched above)
+    // 3. OR User is just a viewer? No, tenancy page implies tenancy.
+    const isTenant = user?.uid === property?.currentTenantId || (lease && lease.tenantId === user?.uid);
+
+    if (!property || !isTenant) {
+        if (!isLoading) notFound();
         return null;
     }
 
-    const handlePaymentSuccess = () => {
+    const handlePaymentSuccess = async () => {
         console.log("Payment successful!");
+        if (!lease || !property || !user) return;
+
+        try {
+            // 1. Activate Lease
+            const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
+            await updateDoc(leaseRef, { status: 'active' });
+
+            // 2. Update Property to Occupied
+            const propertyRef = doc(firestore, 'properties', property.id);
+            await updateDoc(propertyRef, {
+                status: 'occupied',
+                currentTenantId: user.uid,
+                leaseStartDate: new Date().toISOString(),
+            });
+
+            // 3. Notify Landlord
+            await import('@/lib/notifications').then(({ sendNotification }) => {
+                sendNotification({
+                    toUserId: lease.landlordId,
+                    type: 'LEASE_SIGNED',
+                    firestore: firestore,
+                    propertyName: property.title,
+                    link: `/landlord/leases/${lease.id}`,
+                    customMessage: `${user.displayName || 'Tenant'} has signed the lease and paid the first month's rent.`
+                });
+            });
+
+            // Refresh state
+            window.location.reload();
+
+        } catch (error) {
+            console.error("Error finalizing tenancy:", error);
+        }
     };
 
     const handleMessageLandlord = () => {
@@ -140,7 +179,25 @@ export default function TenancyDetailPage() {
             </div>
             <Separator />
 
-            {lease?.status === 'pending' && (
+            {lease?.status === 'pending' && !tenancyState?.isLeaseActive && (
+                <Card className="border-green-500/50 bg-green-50 mb-6">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-green-700">
+                            Please Complete Payment
+                        </CardTitle>
+                        <CardDescription>
+                            Your lease is signed! Please pay the first month's rent to finalize your tenancy.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button size="lg" onClick={() => setIsPaymentDialogOpen(true)}>
+                            Pay {formatPrice(property.price)} Now
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
+
+            {lease?.status === 'pending' && !lease.tenantSigned && (
                 <Card className="border-amber-500/50 bg-amber-50">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-amber-700">
@@ -174,7 +231,7 @@ export default function TenancyDetailPage() {
                                     <CardTitle>Payment History</CardTitle>
                                     <CardDescription>Review your past transactions.</CardDescription>
                                 </div>
-                                {tenancyState.showPayButton && tenancyState.paymentAmount > 0 && (
+                                {tenancyState?.showPayButton && tenancyState.paymentAmount > 0 && (
                                     <Button onClick={() => setIsPaymentDialogOpen(true)}>Pay Now {formatPrice(tenancyState.paymentAmount)}</Button>
                                 )}
                             </div>
@@ -225,25 +282,25 @@ export default function TenancyDetailPage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle className={cn("text-xl font-bold", tenancyState.isRentDue && tenancyState.isLeaseActive ? "text-destructive" : "text-primary")}>
-                                            {tenancyState.rentDueDateText}
+                                        <CardTitle className={cn("text-xl font-bold", tenancyState?.isRentDue && tenancyState.isLeaseActive ? "text-destructive" : "text-primary")}>
+                                            {tenancyState?.rentDueDateText || "N/A"}
                                         </CardTitle>
-                                        <CardDescription>{tenancyState.rentStatusText}</CardDescription>
+                                        <CardDescription>{tenancyState?.rentStatusText || "N/A"}</CardDescription>
                                     </CardHeader>
                                 </Card>
-                                <Card className={cn(tenancyState.isLeaseExpired ? "border-destructive/50 bg-destructive/5" : "")}>
+                                <Card className={cn(tenancyState?.isLeaseExpired ? "border-destructive/50 bg-destructive/5" : "")}>
                                     <CardHeader>
-                                        <CardTitle className={cn("text-xl font-bold", tenancyState.isLeaseExpired && "text-destructive")}>
-                                            {format(tenancyState.leaseEndDate, 'MMMM do, yyyy')}
+                                        <CardTitle className={cn("text-xl font-bold", tenancyState?.isLeaseExpired && "text-destructive")}>
+                                            {tenancyState?.leaseEndDate ? format(tenancyState.leaseEndDate, 'MMMM do, yyyy') : "N/A"}
                                         </CardTitle>
-                                        <CardDescription>{tenancyState.isLeaseExpired ? "Lease Expired On" : "Lease End Date"}</CardDescription>
+                                        <CardDescription>{tenancyState?.isLeaseExpired ? "Lease Expired On" : "Lease End Date"}</CardDescription>
                                     </CardHeader>
                                 </Card>
                             </div>
                             <div className="flex items-center justify-between rounded-lg border p-4">
                                 <div>
                                     <h4 className="font-semibold">Lease Started</h4>
-                                    <p className="text-sm text-muted-foreground">{format(tenancyState.leaseStartDate, 'MMMM do, yyyy')}</p>
+                                    <p className="text-sm text-muted-foreground">{tenancyState?.leaseStartDate ? format(tenancyState.leaseStartDate, 'MMMM do, yyyy') : "N/A"}</p>
                                 </div>
 
                                 {lease && (

@@ -85,6 +85,16 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
                 userData = userDoc.data() as UserProfile;
             }
 
+            // Verify role matches the selected user type
+            if (userData?.role && userData.role !== userType) {
+                toast({
+                    variant: "destructive",
+                    title: "Access Denied",
+                    description: `This account is registered as a ${userData.role}. Please sign in using the ${userData.role} tab.`,
+                });
+                return;
+            }
+
             // Redirect based on role
             if (userData?.role === 'landlord') {
                 router.push('/landlord');
@@ -94,7 +104,9 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
 
         } catch (error: unknown) {
             console.error("Error during login process:", error);
-            if (!(error instanceof FirestorePermissionError)) {
+            if (error instanceof FirestorePermissionError) {
+                // permission error handled by event
+            } else {
                 toast({
                     variant: "destructive",
                     title: "Login Error",

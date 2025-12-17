@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser, useAuth } from "@/firebase/provider";
 import { signOut } from "firebase/auth";
 import { LogoutModal } from "./logout-modal";
-// import { useNotifications } from "@/hooks/useNotifications";
+import { useNotifications } from "@/hooks/useNotifications";
 
 
 
@@ -30,11 +30,7 @@ export default function Header() {
   const router = useRouter();
   const auth = useAuth();
   const { user, role } = useUser();
-  // const { notifications, unreadCount, markAsRead } = useNotifications(user?.uid || null);
-  // Temporarily disabled notifications to fix build errors
-  const notifications: any[] = [];
-  const unreadCount = 0;
-  const markAsRead = (id: string) => { };
+  const { notifications, unreadCount, markAsRead } = useNotifications(user?.uid || null);
 
   const handleLogout = async () => {
     if (auth) {

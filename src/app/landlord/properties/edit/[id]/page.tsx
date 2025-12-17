@@ -27,9 +27,9 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { amenities as allAmenities } from '@/types/';
+import { amenities as allAmenities } from '@/types';
 import { useEffect, useState } from 'react';
-import type { Property } from '@/types/';
+import type { Property } from '@/types';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebaseApp } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';

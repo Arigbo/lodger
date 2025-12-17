@@ -119,9 +119,9 @@ export default function TransactionsPage() {
 
       const finalTransactions = allTransactions.map(t => ({
         transaction: t,
-        tenant: usersMap.get(t.tenantId)!,
-        property: propertiesMap.get(t.propertyId)!
-      })).filter(at => at.tenant && at.property);
+        tenant: usersMap.get(t.tenantId)!, // Will be undefined if not found, handled in render
+        property: propertiesMap.get(t.propertyId)! // Will be undefined if not found, handled in render
+      })); // Removed .filter(at => at.tenant && at.property) to prevent data loss
 
       setAggregatedTransactions(finalTransactions.sort((a, b) => new Date(b.transaction.date).getTime() - new Date(a.transaction.date).getTime()));
       setIsLoading(false);
@@ -155,15 +155,63 @@ export default function TransactionsPage() {
 
 
   const handleDownloadReport = () => {
-    // Placeholder for CSV generation logic
-    console.log("Downloading report for:", filteredTransactions);
-    alert('Generating CSV report...');
+    if (filteredTransactions.length === 0) {
+      alert("No transactions to export.");
+      return;
+    }
+
+    const headers = ["Date", "Type", "Status", "Amount", "Property", "Tenant"];
+    const rows = filteredTransactions.map(t => [
+      new Date(t.transaction.date).toLocaleDateString(),
+      t.transaction.type,
+      t.transaction.status,
+      t.transaction.amount,
+      t.property?.title || "Deleted Property",
+      t.tenant?.name || "Deleted User"
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `transactions_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   const handleDownloadReceipt = (transactionId: string) => {
-    // Placeholder for receipt generation logic
-    console.log("Downloading receipt for:", transactionId);
-    alert(`Generating receipt for transaction ${transactionId}...`);
+    // Basic text receipt for now
+    const transaction = aggregatedTransactions.find(t => t.transaction.id === transactionId);
+    if (!transaction) return;
+
+    const receiptContent = `
+RECEIPT
+--------------------------------
+ID: ${transaction.transaction.id}
+Date: ${new Date(transaction.transaction.date).toLocaleString()}
+Property: ${transaction.property?.title || "N/A"}
+Tenant: ${transaction.tenant?.name || "N/A"}
+Type: ${transaction.transaction.type}
+Status: ${transaction.transaction.status}
+--------------------------------
+Total: ${formatPrice(transaction.transaction.amount)}
+--------------------------------
+    `;
+
+    const blob = new Blob([receiptContent], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `receipt_${transactionId}.txt`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   const resetFilters = () => {
