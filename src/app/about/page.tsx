@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Globe, ShieldCheck, Users } from "lucide-react";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import AboutTeam from '@/components/about-team';
 
 export const metadata = {
     title: "About Us | Lodger",
@@ -136,6 +137,11 @@ export default function AboutPage() {
                         ))}
                     </div>
                 </div>
+            </section>
+
+            {/* Team & Testimonials Section */}
+            <section className="py-20 bg-background">
+                <AboutTeam />
             </section>
 
             {/* CTA Section */}

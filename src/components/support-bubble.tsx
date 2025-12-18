@@ -18,7 +18,7 @@ export function SupportBubble() {
             <DialogTrigger asChild>
                 <Button
                     size="icon"
-                    className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl z-[100] hover:scale-110 active:scale-95 transition-transform duration-200"
+                    className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-2xl z-[100] hover:scale-110 active:scale-95 transition-transform duration-200 sm:bottom-6 sm:right-6"
                     aria-label="Contact Support"
                 >
                     <HelpCircle className="h-7 w-7" />

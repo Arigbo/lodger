@@ -12,6 +12,7 @@ import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@
 import { doc, collection, query, where, updateDoc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 import type { Property, UserProfile as User, Transaction, LeaseAgreement } from "@/types";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -57,6 +58,87 @@ export default function TenancyDetailPage() {
         rentStatusText: string;
         rentDueDateText: string;
     } | null>(null);
+    const { toast } = useToast();
+
+    const handlePaymentSuccess = async () => {
+        console.log("Payment successful!");
+        if (!lease || !property || !user) return;
+
+        try {
+            // 1. Activate Lease
+            const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
+            await updateDoc(leaseRef, { status: 'active' });
+
+            // 2. Update Property to Occupied
+            const propertyRef = doc(firestore, 'properties', property.id);
+            await updateDoc(propertyRef, {
+                status: 'occupied',
+                currentTenantId: user.uid,
+                leaseStartDate: new Date().toISOString(),
+            });
+
+            // 3. Notify Landlord
+            await import('@/lib/notifications').then(({ sendNotification }) => {
+                sendNotification({
+                    toUserId: lease.landlordId,
+                    type: 'LEASE_SIGNED',
+                    firestore: firestore,
+                    propertyName: property.title,
+                    link: `/landlord/leases/${lease.id}`,
+                    customMessage: `${user.displayName || 'Tenant'} has signed the lease and paid the first month's rent.`
+                });
+            });
+
+            // Refresh state
+            window.location.reload();
+
+        } catch (error) {
+            console.error("Error finalizing tenancy:", error);
+        }
+    };
+
+    const handleConfirmCompensation = async () => {
+        if (!lease || !property || !user) return;
+        try {
+            const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
+            await updateDoc(leaseRef, {
+                status: 'expired',
+                endDate: new Date().toISOString()
+            });
+
+            const propertyUpdateRef = doc(firestore, 'properties', property.id);
+            await updateDoc(propertyUpdateRef, {
+                status: 'available',
+                currentTenantId: null,
+                leaseStartDate: null,
+                // @ts-ignore - Some properties might not have these yet
+                leaseEndDate: null
+            });
+
+            toast({
+                title: "Tenancy Finalized",
+                description: "You have confirmed receipt of compensation. The tenancy is now officially ended.",
+            });
+            window.location.reload();
+        } catch (error) {
+            console.error("Error confirming compensation:", error);
+        }
+    };
+
+    // Auto-cleanup logic
+    useEffect(() => {
+        if (lease?.status === 'terminating' && lease.terminationGracePeriodEnd) {
+            if (isPast(new Date(lease.terminationGracePeriodEnd))) {
+                handleConfirmCompensation();
+            }
+        }
+    }, [lease]);
+
+    const handleMessageLandlord = () => {
+        if (landlord) {
+            router.push(`/student/messages?contact=${landlord.id}`);
+        }
+    };
 
     useEffect(() => {
         if (areTransactionsLoading || isLeaseLoading || !property) return;
@@ -128,83 +210,7 @@ export default function TenancyDetailPage() {
         return null;
     }
 
-    const handlePaymentSuccess = async () => {
-        console.log("Payment successful!");
-        if (!lease || !property || !user) return;
 
-        try {
-            // 1. Activate Lease
-            const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
-            await updateDoc(leaseRef, { status: 'active' });
-
-            // 2. Update Property to Occupied
-            const propertyRef = doc(firestore, 'properties', property.id);
-            await updateDoc(propertyRef, {
-                status: 'occupied',
-                currentTenantId: user.uid,
-                leaseStartDate: new Date().toISOString(),
-            });
-
-            // 3. Notify Landlord
-            await import('@/lib/notifications').then(({ sendNotification }) => {
-                sendNotification({
-                    toUserId: lease.landlordId,
-                    type: 'LEASE_SIGNED',
-                    firestore: firestore,
-                    propertyName: property.title,
-                    link: `/landlord/leases/${lease.id}`,
-                    customMessage: `${user.displayName || 'Tenant'} has signed the lease and paid the first month's rent.`
-                });
-            });
-
-            // Refresh state
-            window.location.reload();
-
-        } catch (error) {
-            console.error("Error finalizing tenancy:", error);
-        }
-    };
-
-    const handleConfirmCompensation = async () => {
-        if (!lease || !property || !user) return;
-        try {
-            const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
-            await updateDoc(leaseRef, {
-                status: 'expired',
-                endDate: new Date().toISOString()
-            });
-
-            const propertyRef = doc(firestore, 'properties', property.id);
-            await updateDoc(propertyRef, {
-                status: 'available',
-                currentTenantId: null,
-                leaseStartDate: null
-            });
-
-            toast({
-                title: "Tenancy Finalized",
-                description: "You have confirmed receipt of compensation. The tenancy is now officially ended.",
-            });
-            window.location.reload();
-        } catch (error) {
-            console.error("Error confirming compensation:", error);
-        }
-    };
-
-    // Auto-cleanup logic
-    useEffect(() => {
-        if (lease?.status === 'terminating' && lease.terminationGracePeriodEnd) {
-            if (isPast(new Date(lease.terminationGracePeriodEnd))) {
-                handleConfirmCompensation();
-            }
-        }
-    }, [lease]);
-
-    const handleMessageLandlord = () => {
-        if (landlord) {
-            router.push(`/student/messages?contact=${landlord.id}`);
-        }
-    };
 
     return (
         <div className="space-y-8">
@@ -305,7 +311,7 @@ export default function TenancyDetailPage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto -mx-6 sm:mx-0 px-6 sm:px-0">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
@@ -378,21 +384,27 @@ export default function TenancyDetailPage() {
                                         <DialogTrigger asChild>
                                             <Button variant="outline"><FileText className="mr-2 h-4 w-4" /> View Lease Agreement</Button>
                                         </DialogTrigger>
-                                        <DialogContent className="sm:max-w-2xl w-[95vw]">
-                                            <DialogHeader>
-                                                <DialogTitle>Lease Agreement</DialogTitle>
-                                                <DialogDescription>
-                                                    This is the lease agreement for {property.title}.
-                                                </DialogDescription>
-                                            </DialogHeader>
-                                            <ScrollArea className="max-h-[60vh] rounded-md border p-4">
-                                                <div className="prose prose-sm whitespace-pre-wrap">{lease.leaseText}</div>
-                                            </ScrollArea>
-                                            <DialogFooter>
-                                                <DialogClose asChild>
-                                                    <Button>Close</Button>
-                                                </DialogClose>
-                                            </DialogFooter>
+                                        <DialogContent className="sm:max-w-2xl w-full h-[100dvh] sm:h-auto overflow-y-auto flex flex-col p-0 sm:p-6 gap-0 sm:gap-4">
+                                            <div className="p-6 sm:p-0">
+                                                <DialogHeader>
+                                                    <DialogTitle>Lease Agreement</DialogTitle>
+                                                    <DialogDescription>
+                                                        This is the lease agreement for {property.title}.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                            </div>
+                                            <div className="flex-1 overflow-hidden px-6 sm:px-0 pb-6 sm:pb-0">
+                                                <ScrollArea className="h-full sm:h-[60vh] rounded-md border p-4 bg-muted/50">
+                                                    <div className="prose prose-sm whitespace-pre-wrap max-w-none">{lease.leaseText}</div>
+                                                </ScrollArea>
+                                            </div>
+                                            <div className="p-6 sm:p-0 border-t sm:border-none mt-auto">
+                                                <DialogFooter>
+                                                    <DialogClose asChild>
+                                                        <Button className="w-full sm:w-auto text-lg py-6 sm:py-2">Close</Button>
+                                                    </DialogClose>
+                                                </DialogFooter>
+                                            </div>
                                         </DialogContent>
                                     </Dialog>
                                 )}

@@ -415,7 +415,7 @@ export default function PropertyDetailPage() {
                                     </div>
                                 )}
                                 <div className="flex items-center gap-1">
-                                    <Star className="h-4 w-4 text-accent fill-current" />
+                                    <Star className="h-4 w-4 text-yellow-400 fill-current" />
                                     <span>{averageRating.toFixed(1)} ({reviews?.length || 0} reviews)</span>
                                 </div>
                             </div>
@@ -500,7 +500,7 @@ export default function PropertyDetailPage() {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-0.5 mt-1">
-                                                {[...Array(5)].map((_, i) => <Star key={i} className={cn("h-4 w-4", i < review.rating ? "text-accent fill-current" : "text-muted-foreground")} />)}
+                                                {[...Array(5)].map((_, i) => <Star key={i} className={cn("h-4 w-4", i < review.rating ? "text-yellow-400 fill-current" : "text-muted-foreground")} />)}
                                             </div>
                                             <p className="mt-2 text-foreground/80">{review.comment}</p>
                                         </div>
@@ -527,7 +527,7 @@ export default function PropertyDetailPage() {
                                             <span className="text-xs">Share</span>
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent className="sm:max-w-md w-[95vw]">
+                                    <DialogContent className="sm:max-w-md w-full h-[100dvh] sm:h-auto overflow-y-auto">
                                         <DialogHeader>
                                             <DialogTitle>Share this Property</DialogTitle>
                                             <DialogDescription>
@@ -595,7 +595,7 @@ export default function PropertyDetailPage() {
                                                     Request to Rent
                                                 </Button>
                                             </DialogTrigger>
-                                            <DialogContent className="sm:max-w-lg w-[95vw]">
+                                            <DialogContent className="sm:max-w-lg w-full h-[100dvh] sm:h-auto overflow-y-auto">
                                                 <DialogHeader>
                                                     <DialogTitle>Request to Rent {property.title}</DialogTitle>
                                                     <DialogDescription>
@@ -634,7 +634,7 @@ export default function PropertyDetailPage() {
                                                         <Phone className="h-4 w-4" />
                                                     </Button>
                                                 </DialogTrigger>
-                                                <DialogContent className="sm:max-w-sm w-[95vw]">
+                                                <DialogContent className="sm:max-w-sm w-full h-[100dvh] sm:h-auto overflow-y-auto">
                                                     <DialogHeader>
                                                         <DialogTitle>Contact {landlord.name}</DialogTitle>
                                                         <DialogDescription>

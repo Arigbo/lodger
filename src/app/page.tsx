@@ -70,10 +70,10 @@ export default async function Home() {
           </div>
         )}
         <div className="relative container mx-auto px-4 text-center text-primary-foreground">
-          <h1 className="font-headline text-5xl font-bold md:text-7xl">
-            Find Your Perfect Student Home
+          <h1 className="font-headline text-3xl font-bold sm:text-5xl md:text-7xl leading-[1.1]">
+            Find Your Perfect <br className="sm:hidden" /> Student Home
           </h1>
-          <p className="mt-4 max-w-3xl mx-auto text-lg text-primary-foreground/90">
+          <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-primary-foreground/90 px-4">
             The easiest way for university students to find and book their next rental property.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">

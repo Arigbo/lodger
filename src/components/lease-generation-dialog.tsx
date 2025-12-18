@@ -43,7 +43,7 @@ export default function LeaseGenerationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-3xl w-[95vw]">
+      <DialogContent className="sm:max-w-3xl w-full h-[100dvh] sm:h-auto overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Review and Sign Lease Agreement</DialogTitle>
           <DialogDescription>
