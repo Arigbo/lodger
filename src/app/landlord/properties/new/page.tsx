@@ -47,6 +47,7 @@ import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { countries } from '@/types/countries';
+import { getCurrencyByCountry } from '@/utils/currencies';
 
 
 function generateLeaseTextForTemplate(propertyData: Partial<FormValues>): string {
@@ -109,6 +110,7 @@ const formSchema = z.object({
     title: z.string().min(5, 'Title must be at least 5 characters.'),
     description: z.string().min(10, 'Description is required.'),
     price: z.coerce.number().positive('Price must be a positive number.'),
+    currency: z.string().min(3, 'Currency is required.'),
     type: z.enum(['Apartment', 'House', 'Studio', 'Loft']),
     address: z.string().min(5, 'Address is required.'),
     country: z.string().min(2, 'Country is required.'),
@@ -136,8 +138,8 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const steps = [
-    { id: 1, name: 'Basic Information', fields: ['title', 'description', 'price', 'type'] },
-    { id: 2, name: 'Location', fields: ['address', 'country', 'city', 'state', 'zip', 'school'] },
+    { id: 1, name: 'Basic Information', fields: ['title', 'description', 'type'] },
+    { id: 2, name: 'Location & Price', fields: ['address', 'country', 'city', 'state', 'zip', 'school', 'price', 'currency'] },
     { id: 3, name: 'Property Details', fields: ['bedrooms', 'bathrooms', 'area'] },
     { id: 4, name: 'Amenities & Rules', fields: ['amenities', 'rules'] },
     { id: 5, name: 'Lease Template', fields: ['leaseTemplate'] },
@@ -220,6 +222,7 @@ export default function AddPropertyPage() {
             amenities: [],
             rules: '',
             leaseTemplate: '',
+            currency: 'USD',
         },
     });
 
@@ -247,6 +250,15 @@ export default function AddPropertyPage() {
             }
         }
     }, [userProfile, hasPrefilled, form, toast]);
+
+    // Auto-suggest currency based on country
+    const selectedCountry = form.watch('country');
+    useEffect(() => {
+        if (selectedCountry) {
+            const currency = getCurrencyByCountry(selectedCountry);
+            form.setValue('currency', currency);
+        }
+    }, [selectedCountry, form]);
 
 
     const nextStep = async () => {
@@ -430,44 +442,29 @@ export default function AddPropertyPage() {
                                 )}
                             />
                             <Separator className="my-8" />
-                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                                <FormField
-                                    control={form.control}
-                                    name="price"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Price (per month)</FormLabel>
+                            <FormField
+                                control={form.control}
+                                name="type"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Property Type</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
-                                                <Input type="number" placeholder="1200" {...field} />
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a property type" />
+                                                </SelectTrigger>
                                             </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="type"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Property Type</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select a property type" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="Apartment">Apartment</SelectItem>
-                                                    <SelectItem value="House">House</SelectItem>
-                                                    <SelectItem value="Studio">Studio</SelectItem>
-                                                    <SelectItem value="Loft">Loft</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                                            <SelectContent>
+                                                <SelectItem value="Apartment">Apartment</SelectItem>
+                                                <SelectItem value="House">House</SelectItem>
+                                                <SelectItem value="Studio">Studio</SelectItem>
+                                                <SelectItem value="Loft">Loft</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
 
                         <div className={cn(currentStep === 2 ? "block" : "hidden")}>
@@ -587,6 +584,54 @@ export default function AddPropertyPage() {
                                     </FormItem>
                                 )}
                             />
+
+                            <Separator className="my-8" />
+                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                                <FormField
+                                    control={form.control}
+                                    name="price"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Price (per month)</FormLabel>
+                                            <FormControl>
+                                                <Input type="number" placeholder="1200" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="currency"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Currency</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select currency" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="USD">USD ($)</SelectItem>
+                                                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                                                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                                                    <SelectItem value="NGN">NGN (₦)</SelectItem>
+                                                    <SelectItem value="GHS">GHS (GH₵)</SelectItem>
+                                                    <SelectItem value="KES">KES (KSh)</SelectItem>
+                                                    <SelectItem value="ZAR">ZAR (R)</SelectItem>
+                                                    <SelectItem value="INR">INR (₹)</SelectItem>
+                                                    <SelectItem value="CAD">CAD (C$)</SelectItem>
+                                                    <SelectItem value="AUD">AUD (A$)</SelectItem>
+                                                    <SelectItem value="JPY">JPY (¥)</SelectItem>
+                                                    <SelectItem value="CNY">CNY (¥)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                         </div>
 
                         <div className={cn(currentStep === 3 ? "block" : "hidden")}>
@@ -903,6 +948,6 @@ export default function AddPropertyPage() {
                     </form>
                 </Form>
             </CardContent>
-        </Card>
+        </Card >
     );
 }

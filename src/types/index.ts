@@ -15,6 +15,7 @@ export type UserProfile = {
     bio?: string;
     legalName?: string;
     stripeAccountId?: string;
+    currency?: string;
 };
 
 export type User = UserProfile;
@@ -24,6 +25,7 @@ export type Property = {
     title: string;
     description: string;
     price: number;
+    currency: string;
     type: 'Apartment' | 'House' | 'Studio' | 'Loft';
     location: {
         address: string;
@@ -76,6 +78,7 @@ export type Transaction = {
     tenantId: string;
     propertyId: string;
     amount: number;
+    currency: string;
     date: string; // YYYY-MM-DD
     type: 'Rent' | 'Deposit' | 'Late Fee' | 'Other';
     status: 'Completed' | 'Pending' | 'Failed';
@@ -112,6 +115,7 @@ export type LeaseAgreement = {
     tenantSigned: boolean;
     startDate: string;
     endDate: string;
+    currency: string;
     status: 'active' | 'expired' | 'pending';
     paymentMethod?: 'stripe' | 'offline' | null;
     paymentConfirmed?: boolean;

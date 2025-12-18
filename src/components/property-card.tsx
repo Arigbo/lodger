@@ -4,12 +4,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Property } from "@/types";
-import { formatPrice } from "@/utils";
+import { cn, formatPrice } from "@/utils";
+import { getCurrencyByCountry, convertCurrency } from "@/utils/currencies";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
+import { useMemo } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BedDouble, Bath, Ruler, MapPin } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { cn } from "@/utils";
 
 
 type PropertyCardProps = {
@@ -27,6 +30,17 @@ export default function PropertyCard({ property, as = 'link', className }: Prope
     linkHref = `/landlord/properties/${property.id}`;
   }
 
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userProfile } = useDoc<any>(userDocRef);
+
+  const userCurrency = useMemo(() => {
+    if (userProfile?.currency) return userProfile.currency;
+    if (userProfile?.country) return getCurrencyByCountry(userProfile.country);
+    return null;
+  }, [userProfile]);
+
   const CardContentComponent = (
     <Card className={cn("h-full overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1", className)}>
       <CardHeader className="p-0">
@@ -40,8 +54,13 @@ export default function PropertyCard({ property, as = 'link', className }: Prope
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           )}
-          <Badge className="absolute right-3 top-3 bg-primary text-primary-foreground">
-            {formatPrice(property.price)}/mo
+          <Badge className="absolute right-3 top-3 bg-primary text-primary-foreground flex flex-col items-end gap-0.5 px-3 py-1 h-auto">
+            <span>{formatPrice(property.price, property.currency)}/mo</span>
+            {userCurrency && userCurrency !== property.currency && (
+              <span className="text-[10px] opacity-90 font-normal border-t border-primary-foreground/20 pt-0.5">
+                ≈ {formatPrice(convertCurrency(property.price, property.currency, userCurrency), userCurrency)}
+              </span>
+            )}
           </Badge>
           {property.status === 'occupied' && (
             <Badge variant="destructive" className="absolute left-3 top-3">Occupied</Badge>
