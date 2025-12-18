@@ -191,7 +191,7 @@ export default function TenancyDetailPage() {
                     </CardHeader>
                     <CardContent>
                         <Button size="lg" onClick={() => setIsPaymentDialogOpen(true)}>
-                            Pay {formatPrice(property.price)} Now
+                            Pay {formatPrice(property.price, property.currency)} Now
                         </Button>
                     </CardContent>
                 </Card>
@@ -232,7 +232,7 @@ export default function TenancyDetailPage() {
                                     <CardDescription>Review your past transactions.</CardDescription>
                                 </div>
                                 {tenancyState?.showPayButton && tenancyState.paymentAmount > 0 && (
-                                    <Button onClick={() => setIsPaymentDialogOpen(true)}>Pay Now {formatPrice(tenancyState.paymentAmount)}</Button>
+                                    <Button onClick={() => setIsPaymentDialogOpen(true)}>Pay Now {formatPrice(tenancyState.paymentAmount, property.currency)}</Button>
                                 )}
                             </div>
                         </CardHeader>
@@ -251,7 +251,7 @@ export default function TenancyDetailPage() {
                                         <TableRow key={t.id}>
                                             <TableCell>{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
                                             <TableCell>{t.type}</TableCell>
-                                            <TableCell className="text-right">{formatPrice(t.amount)}</TableCell>
+                                            <TableCell className="text-right">{formatPrice(t.amount, t.currency)}</TableCell>
                                             <TableCell className="text-center">
                                                 <Badge variant={
                                                     t.status === 'Completed' ? 'secondary'
@@ -366,6 +366,7 @@ export default function TenancyDetailPage() {
                     tenantId={user.uid}
                     landlordId={property.landlordId}
                     propertyId={property.id}
+                    currency={property.currency}
                 />
             )}
         </div>

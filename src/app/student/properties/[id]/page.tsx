@@ -4,6 +4,7 @@
 import { notFound, usePathname, useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { formatPrice, cn } from "@/utils";
+import { getCurrencyByCountry, convertCurrency } from "@/utils/currencies";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -196,6 +197,12 @@ export default function PropertyDetailPage() {
 
     const propertyUrl = isClient ? `${window.location.origin}${pathname}` : '';
 
+    const userCurrency = React.useMemo(() => {
+        if (userProfile?.currency) return userProfile.currency;
+        if (userProfile?.country) return getCurrencyByCountry(userProfile.country);
+        return null;
+    }, [userProfile]);
+
     const handleSendRequest = async () => {
         if (!user || !landlord || !property) {
             toast({
@@ -338,7 +345,7 @@ export default function PropertyDetailPage() {
         "offers": {
             "@type": "Offer",
             "price": property.price,
-            "priceCurrency": "USD"
+            "priceCurrency": property.currency || "USD"
         },
         "landlord": {
             "@type": "Person",
@@ -413,7 +420,17 @@ export default function PropertyDetailPage() {
                             </div>
                         </div>
                         <div className="mt-4 md:mt-0 text-right shrink-0">
-                            <p className="text-3xl font-bold text-primary">{formatPrice(property.price)}<span className="text-base font-normal text-muted-foreground">/month</span></p>
+                            <div className="flex flex-col items-end">
+                                <p className="text-3xl font-bold text-primary">
+                                    {formatPrice(property.price, property.currency)}
+                                    <span className="text-base font-normal text-muted-foreground">/month</span>
+                                </p>
+                                {userCurrency && userCurrency !== property.currency && (
+                                    <p className="text-sm text-muted-foreground">
+                                        ≈ {formatPrice(convertCurrency(property.price, property.currency, userCurrency), userCurrency)}
+                                    </p>
+                                )}
+                            </div>
                             {property.status === 'occupied' && <Badge variant="destructive" className="mt-1">Occupied</Badge>}
                         </div>
                     </div>

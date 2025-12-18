@@ -306,7 +306,7 @@ export default function TenantDetailPage() {
                                             <Coins className="h-6 w-6 text-muted-foreground" />
                                         </CardHeader>
                                         <CardContent>
-                                            <p className="text-3xl font-bold text-destructive">{formatPrice(rentStatus.compassionFee)}</p>
+                                            <p className="text-3xl font-bold text-destructive">{formatPrice(rentStatus.compassionFee, property.currency)}</p>
                                             <p className="text-xs text-muted-foreground">
                                                 Based on remaining lease term + prorated fee.
                                             </p>

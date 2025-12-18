@@ -250,7 +250,7 @@ export default function LandlordPropertiesPage() {
                             {property.status}
                           </Badge>
                         </TableCell>
-                        <TableCell>{formatPrice(property.price)}/mo</TableCell>
+                        <TableCell>{formatPrice(property.price, property.currency)}/mo</TableCell>
                         <TableCell>{property.tenantName || 'N/A'}</TableCell>
                         <TableCell>
                           <DropdownMenu>

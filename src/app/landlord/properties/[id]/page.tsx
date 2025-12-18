@@ -161,6 +161,7 @@ export default function LandlordPropertyDetailPage() {
         tenantSigned: false,
         startDate: leaseStartDate,
         endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+        currency: property.currency,
         status: 'pending' // Pending tenant signature
       });
       // 4. Update the new lease with its own ID
@@ -207,7 +208,7 @@ export default function LandlordPropertyDetailPage() {
               <p>{property.area} sqft</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-primary">{formatPrice(property.price)}</p>
+              <p className="text-2xl font-bold text-primary">{formatPrice(property.price, property.currency)}</p>
               <p className="text-sm text-muted-foreground">/month</p>
             </div>
           </CardContent>

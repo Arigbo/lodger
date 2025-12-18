@@ -14,10 +14,11 @@ import { formatPrice } from "@/utils";
 
 interface StripeCheckoutFormProps {
     amount: number;
+    currency?: string;
     onSuccess: () => void;
 }
 
-export default function StripeCheckoutForm({ amount, onSuccess }: StripeCheckoutFormProps) {
+export default function StripeCheckoutForm({ amount, currency = 'USD', onSuccess }: StripeCheckoutFormProps) {
     const stripe = useStripe();
     const elements = useElements();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -56,7 +57,7 @@ export default function StripeCheckoutForm({ amount, onSuccess }: StripeCheckout
         <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex items-center justify-between p-4 border rounded-lg bg-secondary/10 mb-4">
                 <span>Total Due:</span>
-                <span className="font-bold text-xl">{formatPrice(amount)}</span>
+                <span className="font-bold text-xl">{formatPrice(amount, currency)}</span>
             </div>
 
             <PaymentElement />
@@ -75,7 +76,7 @@ export default function StripeCheckoutForm({ amount, onSuccess }: StripeCheckout
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
                     </>
                 ) : (
-                    `Pay ${formatPrice(amount)}`
+                    `Pay ${formatPrice(amount, currency)}`
                 )}
             </Button>
         </form>

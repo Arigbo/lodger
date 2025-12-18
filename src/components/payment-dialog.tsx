@@ -30,6 +30,7 @@ interface PaymentDialogProps {
   tenantId: string;
   landlordId: string;
   propertyId: string;
+  currency?: string;
 }
 
 export default function PaymentDialog({
@@ -41,6 +42,7 @@ export default function PaymentDialog({
   tenantId,
   landlordId,
   propertyId,
+  currency = 'USD',
 }: PaymentDialogProps) {
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -54,23 +56,24 @@ export default function PaymentDialog({
       try {
         const transactionsRef = collection(firestore, 'transactions');
         await addDoc(transactionsRef, {
-            landlordId: landlordId,
-            tenantId: tenantId,
-            propertyId: propertyId,
-            amount: amount,
-            date: new Date().toISOString(),
-            type: 'Rent',
-            status: 'Completed',
+          landlordId: landlordId,
+          tenantId: tenantId,
+          propertyId: propertyId,
+          amount: amount,
+          currency: currency,
+          date: new Date().toISOString(),
+          type: 'Rent',
+          status: 'Completed',
         });
-        
+
         setIsProcessing(false);
         setStep(2);
       } catch (error) {
         console.error("Error creating transaction:", error);
         toast({
-            variant: 'destructive',
-            title: "Payment Failed",
-            description: "Could not record your payment. Please try again."
+          variant: 'destructive',
+          title: "Payment Failed",
+          description: "Could not record your payment. Please try again."
         });
         setIsProcessing(false);
       }
@@ -80,13 +83,13 @@ export default function PaymentDialog({
   const handleFinish = () => {
     onPaymentSuccess();
     toast({
-        title: "Payment Successful",
-        description: `Your payment of ${formatPrice(amount)} has been processed.`,
+      title: "Payment Successful",
+      description: `Your payment of ${formatPrice(amount, currency)} has been processed.`,
     });
     // Reset and close
     setTimeout(() => {
-        setStep(1);
-        onClose();
+      setStep(1);
+      onClose();
     }, 500);
   };
 
@@ -106,32 +109,32 @@ export default function PaymentDialog({
                 <CreditCard /> Secure Rent Payment
               </DialogTitle>
               <DialogDescription>
-                You are paying rent for {tenantName}. The total amount due is {formatPrice(amount)}.
+                You are paying rent for {tenantName}. The total amount due is {formatPrice(amount, currency)}.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="card-name">Name on Card</Label>
+                <Input id="card-name" placeholder="John Doe" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="card-number">Card Number</Label>
+                <Input id="card-number" placeholder="**** **** **** 1234" />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
-                    <Label htmlFor="card-name">Name on Card</Label>
-                    <Input id="card-name" placeholder="John Doe" />
+                  <Label htmlFor="expiry">Expiry</Label>
+                  <Input id="expiry" placeholder="MM/YY" />
                 </div>
                 <div className="grid gap-2">
-                    <Label htmlFor="card-number">Card Number</Label>
-                    <Input id="card-number" placeholder="**** **** **** 1234" />
+                  <Label htmlFor="cvc">CVC</Label>
+                  <Input id="cvc" placeholder="123" />
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="expiry">Expiry</Label>
-                        <Input id="expiry" placeholder="MM/YY" />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="cvc">CVC</Label>
-                        <Input id="cvc" placeholder="123" />
-                    </div>
-                     <div className="grid gap-2">
-                        <Label htmlFor="zip">ZIP</Label>
-                        <Input id="zip" placeholder="12345" />
-                    </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="zip">ZIP</Label>
+                  <Input id="zip" placeholder="12345" />
                 </div>
+              </div>
             </div>
             <DialogFooter className="sm:justify-between">
               <Button type="button" variant="ghost" onClick={handleClose}>
@@ -139,30 +142,30 @@ export default function PaymentDialog({
               </Button>
               <Button type="button" onClick={handleProcessPayment} disabled={isProcessing}>
                 {isProcessing ? (
-                    <>
+                  <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                     Processing...
-                    </>
+                    Processing...
+                  </>
                 ) : (
-                    <>
-                     <Lock className="mr-2 h-4 w-4" /> Pay {formatPrice(amount)}
-                    </>
+                  <>
+                    <Lock className="mr-2 h-4 w-4" /> Pay {formatPrice(amount, currency)}
+                  </>
                 )}
               </Button>
             </DialogFooter>
           </>
         )}
         {step === 2 && (
-             <div className="flex flex-col items-center justify-center p-8 text-center">
-                <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
-                <DialogTitle className="text-2xl font-bold">Payment Successful!</DialogTitle>
-                <DialogDescription className="mt-2">
-                    Your rent payment of ${formatPrice(amount)} has been confirmed. A receipt has been sent to your email.
-                </DialogDescription>
-                <Button onClick={handleFinish} className="mt-6 w-full">
-                    Done
-                </Button>
-             </div>
+          <div className="flex flex-col items-center justify-center p-8 text-center">
+            <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
+            <DialogTitle className="text-2xl font-bold">Payment Successful!</DialogTitle>
+            <DialogDescription className="mt-2">
+              Your rent payment of {formatPrice(amount, currency)} has been confirmed. A receipt has been sent to your email.
+            </DialogDescription>
+            <Button onClick={handleFinish} className="mt-6 w-full">
+              Done
+            </Button>
+          </div>
         )}
       </DialogContent>
     </Dialog>

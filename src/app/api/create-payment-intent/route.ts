@@ -8,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(request: Request) {
     try {
-        const { amount, landlordId, destinationAccountId } = await request.json();
+        const { amount, currency, landlordId, destinationAccountId } = await request.json();
 
         // 1. Fetch Landlord's Stripe Account ID from Firestore (Admin SDK would be better, but we can't easily here without it)
         // Optimization: Pass it from frontend? No, insecure. 
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
         const paymentIntentData: Stripe.PaymentIntentCreateParams = {
             amount: Math.round(amount * 100),
-            currency: 'usd',
+            currency: (currency || 'usd').toLowerCase(),
             automatic_payment_methods: { enabled: true },
         };
 

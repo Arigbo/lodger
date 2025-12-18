@@ -80,6 +80,7 @@ export default function ViewStudentLeasePage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     amount: property.price,
+                    currency: property.currency,
                     destinationAccountId: landlord?.stripeAccountId
                 }),
             })
@@ -146,6 +147,7 @@ export default function ViewStudentLeasePage() {
                 tenantId: currentUser.uid,
                 propertyId: lease.propertyId,
                 amount: property?.price || 0,
+                currency: property?.currency || 'USD',
                 date: new Date().toISOString(),
                 type: 'Rent',
                 status: 'Completed'
@@ -408,7 +410,7 @@ export default function ViewStudentLeasePage() {
                     </DialogHeader>
                     {clientSecret && (
                         <Elements options={{ clientSecret, appearance: { theme: 'stripe' } }} stripe={stripePromise}>
-                            <StripeCheckoutForm amount={property?.price || 0} onSuccess={handlePaymentSuccess} />
+                            <StripeCheckoutForm amount={property?.price || 0} currency={property?.currency} onSuccess={handlePaymentSuccess} />
                         </Elements>
                     )}
                 </DialogContent>

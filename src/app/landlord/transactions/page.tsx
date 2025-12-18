@@ -200,7 +200,7 @@ Tenant: ${transaction.tenant?.name || "N/A"}
 Type: ${transaction.transaction.type}
 Status: ${transaction.transaction.status}
 --------------------------------
-Total: ${formatPrice(transaction.transaction.amount)}
+Total: ${formatPrice(transaction.transaction.amount, transaction.transaction.currency)}
 --------------------------------
     `;
 
@@ -393,7 +393,7 @@ Total: ${formatPrice(transaction.transaction.amount)}
                       </TableCell>
                       <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
                       <TableCell className="text-muted-foreground">{transaction.type}</TableCell>
-                      <TableCell className="text-right font-medium">{formatPrice(transaction.amount)}</TableCell>
+                      <TableCell className="text-right font-medium">{formatPrice(transaction.amount, transaction.currency)}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant={
                           transaction.status === 'Completed' ? 'secondary'

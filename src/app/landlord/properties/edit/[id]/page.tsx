@@ -42,6 +42,7 @@ const formSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
   description: z.string().min(10, 'Description is required.'),
   price: z.coerce.number().positive('Price must be a positive number.'),
+  currency: z.string().min(3, 'Currency is required.'),
   type: z.enum(['Apartment', 'House', 'Studio', 'Loft']),
   address: z.string().min(5, 'Address is required.'),
   city: z.string().min(2, 'City is required.'),
@@ -79,6 +80,7 @@ export default function EditPropertyPage() {
       title: '',
       description: '',
       price: 0,
+      currency: 'USD',
       type: 'Apartment',
       address: '',
       city: '',
@@ -98,6 +100,7 @@ export default function EditPropertyPage() {
         title: property.title || '',
         description: property.description || '',
         price: property.price || 0,
+        currency: property.currency || 'USD',
         type: property.type,
         address: property.location?.address || '',
         city: property.location?.city || '',
@@ -181,6 +184,7 @@ export default function EditPropertyPage() {
         title: values.title,
         description: values.description,
         price: values.price,
+        currency: values.currency,
         type: values.type,
         location: {
           address: values.address,
@@ -278,6 +282,31 @@ export default function EditPropertyPage() {
                     <FormControl>
                       <Input type="number" placeholder="1200" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="currency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Currency</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select currency" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                        <SelectItem value="NGN">NGN (₦)</SelectItem>
+                        <SelectItem value="GHS">GHS (₵)</SelectItem>
+                        <SelectItem value="KES">KES (KSh)</SelectItem>
+                        <SelectItem value="GBP">GBP (£)</SelectItem>
+                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
