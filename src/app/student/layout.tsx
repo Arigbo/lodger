@@ -9,7 +9,9 @@ import type { UserProfile } from '@/types';
 import Loading from '@/app/loading';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Link from 'next/link';
 
 export default function StudentLayout({
   children,
@@ -82,6 +84,15 @@ export default function StudentLayout({
             </div>
           </header>
           <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+            {!userProfile.phone && (
+              <Alert variant="destructive" className="bg-amber-50 border-amber-500 text-amber-900">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertTitle className="text-amber-800">Account Incomplete</AlertTitle>
+                <AlertDescription className="text-amber-700">
+                  Please <Link href="/student/account" className="font-bold underline hover:text-amber-900">add your phone number</Link> to your profile to ensure landlords can reach you easily.
+                </AlertDescription>
+              </Alert>
+            )}
             {children}
           </main>
         </div>

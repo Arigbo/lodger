@@ -116,12 +116,14 @@ export type LeaseAgreement = {
     startDate: string;
     endDate: string;
     currency: string;
-    status: 'active' | 'expired' | 'pending';
+    status: 'active' | 'expired' | 'pending' | 'terminating';
     paymentMethod?: 'stripe' | 'offline' | null;
     paymentConfirmed?: boolean;
     landlordApprovedOfflinePayment?: boolean;
     createdAt?: any; // Firestore timestamp
     expiresAt?: any; // Firestore timestamp (3 days from creation)
+    terminationGracePeriodEnd?: string; // ISO string
+    calculatedRefund?: number;
 };
 
 export type Conversation = {

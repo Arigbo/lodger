@@ -33,6 +33,13 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from 'lucide-react';
@@ -72,6 +79,7 @@ export default function ViewStudentLeasePage() {
 
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
     const [clientSecret, setClientSecret] = useState("");
+    const [monthsToPay, setMonthsToPay] = useState(1);
 
     React.useEffect(() => {
         if (isPaymentOpen && property?.price) {
@@ -79,7 +87,7 @@ export default function ViewStudentLeasePage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    amount: property.price,
+                    amount: property.price * monthsToPay,
                     currency: property.currency,
                     destinationAccountId: landlord?.stripeAccountId
                 }),
@@ -87,7 +95,7 @@ export default function ViewStudentLeasePage() {
                 .then((res) => res.json())
                 .then((data) => setClientSecret(data.clientSecret));
         }
-    }, [isPaymentOpen, property?.price, landlord?.stripeAccountId]);
+    }, [isPaymentOpen, property?.price, landlord?.stripeAccountId, monthsToPay]);
 
     if (isLoading) {
         return <Loading />;
@@ -146,7 +154,8 @@ export default function ViewStudentLeasePage() {
                 landlordId: lease.landlordId,
                 tenantId: currentUser.uid,
                 propertyId: lease.propertyId,
-                amount: property?.price || 0,
+                amount: (property?.price || 0) * monthsToPay,
+                monthsPaid: monthsToPay,
                 currency: property?.currency || 'USD',
                 date: new Date().toISOString(),
                 type: 'Rent',
@@ -171,7 +180,9 @@ export default function ViewStudentLeasePage() {
         try {
             await updateDoc(leaseRef, {
                 paymentMethod: 'offline',
-                paymentConfirmed: false
+                paymentConfirmed: false,
+                offlinePaymentAmount: (property?.price || 0) * monthsToPay,
+                offlinePaymentMonths: monthsToPay
             });
 
             // Send notification to landlord
@@ -366,6 +377,21 @@ export default function ViewStudentLeasePage() {
                             <p className="text-center text-sm text-muted-foreground">
                                 Choose your payment method to finalize the tenancy.
                             </p>
+                            <div className="flex flex-col gap-4 w-full max-w-sm mb-4">
+                                <Label htmlFor="months" className="text-sm font-semibold">How many months would you like to pay for?</Label>
+                                <Select value={monthsToPay.toString()} onValueChange={(val) => setMonthsToPay(parseInt(val))}>
+                                    <SelectTrigger id="months" className="w-full">
+                                        <SelectValue placeholder="Select months" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
+                                            <SelectItem key={m} value={m.toString()}>
+                                                {m} {m === 1 ? 'Month' : 'Months'} ({formatPrice((property?.price || 0) * m, property?.currency)})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                             <div className="flex flex-col sm:flex-row gap-4 w-full">
                                 <Button className="flex-1" size="lg" onClick={() => setIsPaymentOpen(true)}>
                                     <DollarSign className="h-4 w-4 mr-2" />
@@ -401,11 +427,11 @@ export default function ViewStudentLeasePage() {
             </div>
 
             <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md w-[95vw]">
                     <DialogHeader>
                         <DialogTitle>Complete Payment</DialogTitle>
                         <DialogDescription>
-                            Securely pay your first month's rent via Stripe.
+                            Securely pay {monthsToPay} {monthsToPay === 1 ? 'month' : 'months'} of rent ({formatPrice((property?.price || 0) * monthsToPay, property?.currency)}) via Stripe.
                         </DialogDescription>
                     </DialogHeader>
                     {clientSecret && (

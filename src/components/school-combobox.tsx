@@ -259,7 +259,7 @@ export function SchoolCombobox({
                 </PopoverContent>
             </Popover>
 
-            <DialogContent>
+            <DialogContent className="sm:max-w-md w-[95vw] border-2 shadow-lg">
                 <DialogHeader>
                     <DialogTitle>Add New School</DialogTitle>
                     <DialogDescription>

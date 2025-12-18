@@ -48,6 +48,7 @@ import { getCurrencyByCountry } from '@/utils/currencies';
 const profileFormSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters.'),
     email: z.string().email('Please enter a valid email address.'),
+    phone: z.string().min(10, 'Valid phone number is required.'),
     country: z.string().optional(),
     state: z.string().optional(),
     school: z.string().optional(),
@@ -95,6 +96,7 @@ export default function AccountPage() {
             profileForm.reset({
                 name: userProfile.name || '',
                 email: userProfile.email || '',
+                phone: userProfile.phone || '',
                 country: userProfile.country || '',
                 state: userProfile.state || '',
                 school: userProfile.school || '',
@@ -152,6 +154,7 @@ export default function AccountPage() {
 
         const dataToUpdate = {
             name: values.name,
+            phone: values.phone,
             country: values.country,
             state: values.state,
             school: values.school,
@@ -275,20 +278,35 @@ export default function AccountPage() {
                                             </FormItem>
                                         )}
                                     />
-                                    <FormField
-                                        control={profileForm.control}
-                                        name="email"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Email Address</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="your@email.com" {...field} disabled />
-                                                </FormControl>
-                                                <FormDescription>Your email address is used for login and notifications.</FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <FormField
+                                            control={profileForm.control}
+                                            name="email"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Email Address</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="your@email.com" {...field} disabled />
+                                                    </FormControl>
+                                                    <FormDescription>Used for login and notifications.</FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={profileForm.control}
+                                            name="phone"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Phone Number</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="(123) 456-7890" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <FormField control={profileForm.control} name="country" render={({ field }) => (
                                             <FormItem className="flex flex-col">

@@ -77,32 +77,57 @@ export default function TenantDetailPage() {
     } | null>(null);
 
     const handleEndTenancy = async () => {
-        if (!lease || !property || !tenant) return;
+        if (!lease || !property || !tenant || !rentStatus) return;
 
         try {
-            // 1. Expire the lease
             const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
-            await updateDocumentNonBlocking(leaseRef, {
-                status: 'expired',
-                endDate: new Date().toISOString()
-            });
 
-            // 2. Free up the property
-            const propertyRef = doc(firestore, 'properties', property.id);
-            // We use deleteField() for fields we want to remove, but updateDocumentNonBlocking takes a Partial<T>
-            // For now, we'll set them to null/empty values as per the type definition (some are optional)
-            await updateDocumentNonBlocking(propertyRef, {
-                status: 'available',
-                currentTenantId: null,
-                leaseStartDate: null
-            });
+            if (rentStatus.status === 'Paid') {
+                // Initiating termination with refund and grace period
+                const gracePeriodEnd = new Date();
+                gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 3);
 
-            toast({
-                title: "Tenancy Ended",
-                description: "The tenancy has been successfully terminated.",
-            });
+                await updateDocumentNonBlocking(leaseRef, {
+                    status: 'terminating',
+                    terminationGracePeriodEnd: gracePeriodEnd.toISOString(),
+                    calculatedRefund: rentStatus.calculatedRefund
+                });
 
-            // Optional: Close dialog if it was controlled state, but here it's uncontrolled trigger
+                // Notify tenant
+                await import('@/lib/notifications').then(({ sendNotification }) => {
+                    sendNotification({
+                        toUserId: tenant.id,
+                        type: 'TENANCY_TERMINATING',
+                        firestore: firestore,
+                        propertyName: property.title,
+                        link: `/student/tenancy/${property.id}`,
+                        customMessage: `Landlord has requested to end the tenancy. A refund of ${formatPrice(rentStatus.calculatedRefund, property.currency)} has been calculated. Please confirm receipt of compensation within 3 days.`
+                    });
+                });
+
+                toast({
+                    title: "Termination Initiated",
+                    description: `The tenant has been notified. A 3-day grace period has started for the refund of ${formatPrice(rentStatus.calculatedRefund, property.currency)}.`,
+                });
+            } else {
+                // Rent is due or tenancy inactive, end immediately
+                await updateDocumentNonBlocking(leaseRef, {
+                    status: 'expired',
+                    endDate: new Date().toISOString()
+                });
+
+                const propertyDocRef = doc(firestore, 'properties', property.id);
+                await updateDocumentNonBlocking(propertyDocRef, {
+                    status: 'available',
+                    currentTenantId: null,
+                    leaseStartDate: null
+                });
+
+                toast({
+                    title: "Tenancy Ended",
+                    description: "The tenancy has been successfully terminated as rent was overdue.",
+                });
+            }
         } catch (error) {
             console.error("Error ending tenancy:", error);
             toast({
@@ -137,7 +162,7 @@ export default function TenantDetailPage() {
             .filter(t => t.type === 'Rent' && t.status === 'Completed')
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
-        const isLeaseActive = lease.status === 'active';
+        const isLeaseActive = lease.status === 'active' || lease.status === 'terminating';
 
         let nextRentDueDate: Date;
         let status: 'Paid' | 'Due' | 'Inactive' = 'Inactive';
@@ -145,32 +170,35 @@ export default function TenantDetailPage() {
 
         if (isLeaseActive) {
             if (lastRentPayment) {
-                nextRentDueDate = addMonths(new Date(lastRentPayment.date), 1);
-                if (isPast(nextRentDueDate)) {
-                    status = 'Due';
-                    text = `Due on ${format(nextRentDueDate, 'MMM do, yyyy')}`;
-                } else {
-                    status = 'Paid';
-                    text = `Next due on ${format(nextRentDueDate, 'MMM do, yyyy')}`;
-                }
+                const monthsPaid = (lastRentPayment as any).months || 1;
+                nextRentDueDate = addMonths(new Date(lastRentPayment.date), monthsPaid);
             } else {
                 nextRentDueDate = leaseStartDate;
-                if (isPast(leaseStartDate)) {
-                    status = 'Due';
-                    text = `Due on ${format(nextRentDueDate, 'MMM do, yyyy')}`;
-                } else {
-                    status = 'Paid';
-                    text = `Next due on ${format(nextRentDueDate, 'MMM do, yyyy')}`;
-                }
+            }
+
+            if (isPast(nextRentDueDate)) {
+                status = 'Due';
+                text = `Due on ${format(nextRentDueDate, 'MMM do, yyyy')}`;
+            } else {
+                status = 'Paid';
+                text = `Next due on ${format(nextRentDueDate, 'MMM do, yyyy')}`;
             }
         }
 
         const leaseDaysRemaining = differenceInDays(leaseEndDate, today);
         const isLeaseEndingSoon = isLeaseActive && leaseDaysRemaining <= 90;
 
-        const monthsRemaining = isLeaseActive ? differenceInMonths(leaseEndDate, today) : 0;
-        const monthsPaid = isLeaseActive ? differenceInMonths(today, leaseStartDate) : 0;
-        const compassionFee = (property.price * monthsRemaining) + (property.price * 0.5 * monthsPaid);
+        // Pro-rated Refund Calculation
+        let calculatedRefund = 0;
+        if (status === 'Paid' && isLeaseActive) {
+            const dailyRate = property.price / 30;
+            const totalDaysRemaining = differenceInDays(nextRentDueDate, today);
+            if (totalDaysRemaining > 0) {
+                const fullMonths = Math.floor(totalDaysRemaining / 30);
+                const remainingDays = totalDaysRemaining % 30;
+                calculatedRefund = (fullMonths * property.price) + (remainingDays * dailyRate);
+            }
+        }
 
         setRentStatus({
             status,
@@ -179,7 +207,7 @@ export default function TenantDetailPage() {
             isLeaseEndingSoon,
             leaseEndDate,
             leaseDaysRemaining,
-            compassionFee
+            calculatedRefund
         });
 
     }, [lease, property, tenantTransactions, areLeasesLoading, isPropertyLoading]);
@@ -291,7 +319,9 @@ export default function TenantDetailPage() {
                             </Button>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" disabled={!rentStatus.isLeaseActive}>End Tenancy</Button>
+                                    <Button variant="destructive" disabled={!rentStatus.isLeaseActive || lease?.status === 'terminating'}>
+                                        {lease?.status === 'terminating' ? 'Termination Pending' : 'End Tenancy'}
+                                    </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
@@ -306,9 +336,9 @@ export default function TenantDetailPage() {
                                             <Coins className="h-6 w-6 text-muted-foreground" />
                                         </CardHeader>
                                         <CardContent>
-                                            <p className="text-3xl font-bold text-destructive">{formatPrice(rentStatus.compassionFee, property.currency)}</p>
+                                            <p className="text-3xl font-bold text-destructive">{formatPrice(rentStatus.calculatedRefund, property.currency)}</p>
                                             <p className="text-xs text-muted-foreground">
-                                                Based on remaining lease term + prorated fee.
+                                                Pro-rated based on days remaining in current paid period + any prepaid full months.
                                             </p>
                                         </CardContent>
                                     </Card>

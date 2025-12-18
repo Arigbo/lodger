@@ -10,6 +10,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,8 +53,11 @@ export default function PaymentDialog({
 }: PaymentDialogProps) {
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [months, setMonths] = useState(1);
   const { toast } = useToast();
   const firestore = useFirestore();
+
+  const totalAmount = amount * months;
 
   const handleProcessPayment = async () => {
     setIsProcessing(true);
@@ -59,8 +69,9 @@ export default function PaymentDialog({
           landlordId: landlordId,
           tenantId: tenantId,
           propertyId: propertyId,
-          amount: amount,
+          amount: totalAmount,
           currency: currency,
+          months: months,
           date: new Date().toISOString(),
           type: 'Rent',
           status: 'Completed',
@@ -84,7 +95,7 @@ export default function PaymentDialog({
     onPaymentSuccess();
     toast({
       title: "Payment Successful",
-      description: `Your payment of ${formatPrice(amount, currency)} has been processed.`,
+      description: `Your payment of ${formatPrice(totalAmount, currency)} has been processed for ${months} month${months > 1 ? 's' : ''}.`,
     });
     // Reset and close
     setTimeout(() => {
@@ -101,7 +112,7 @@ export default function PaymentDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md w-[95vw]">
         {step === 1 && (
           <>
             <DialogHeader>
@@ -109,10 +120,25 @@ export default function PaymentDialog({
                 <CreditCard /> Secure Rent Payment
               </DialogTitle>
               <DialogDescription>
-                You are paying rent for {tenantName}. The total amount due is {formatPrice(amount, currency)}.
+                You are paying rent for {tenantName}. The monthly rent is {formatPrice(amount, currency)}.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="months">Pay for How Many Months?</Label>
+                <Select value={months.toString()} onValueChange={(val) => setMonths(parseInt(val))}>
+                  <SelectTrigger id="months">
+                    <SelectValue placeholder="Select months" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
+                      <SelectItem key={m} value={m.toString()}>
+                        {m} {m === 1 ? 'Month' : 'Months'} - {formatPrice(amount * m, currency)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="card-name">Name on Card</Label>
                 <Input id="card-name" placeholder="John Doe" />
@@ -148,7 +174,7 @@ export default function PaymentDialog({
                   </>
                 ) : (
                   <>
-                    <Lock className="mr-2 h-4 w-4" /> Pay {formatPrice(amount, currency)}
+                    <Lock className="mr-2 h-4 w-4" /> Pay {formatPrice(totalAmount, currency)}
                   </>
                 )}
               </Button>
@@ -160,7 +186,7 @@ export default function PaymentDialog({
             <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
             <DialogTitle className="text-2xl font-bold">Payment Successful!</DialogTitle>
             <DialogDescription className="mt-2">
-              Your rent payment of {formatPrice(amount, currency)} has been confirmed. A receipt has been sent to your email.
+              Your rent payment of {formatPrice(totalAmount, currency)} for {months} month{months > 1 ? 's' : ''} has been confirmed. A receipt has been sent to your email.
             </DialogDescription>
             <Button onClick={handleFinish} className="mt-6 w-full">
               Done

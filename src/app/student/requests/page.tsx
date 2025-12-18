@@ -313,9 +313,8 @@ export default function StudentRequestsPage() {
         </CardContent>
       </Card>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!requestToDelete} onOpenChange={(open) => !open && setRequestToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="w-[95vw] sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel Request?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -333,7 +332,7 @@ export default function StudentRequestsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={!!requestToEdit} onOpenChange={(open) => !open && setRequestToEdit(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md w-[95vw] border-2 shadow-lg">
           <DialogHeader>
             <DialogTitle>Edit Application</DialogTitle>
             <DialogDescription>

@@ -31,7 +31,9 @@ import { amenities as allAmenities } from '@/types';
 import { useEffect, useState } from 'react';
 import type { Property } from '@/types';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebaseApp } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { sendNotification } from '@/lib/notifications';
+import type { LeaseAgreement } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import Image from 'next/image';
@@ -66,9 +68,7 @@ const formSchema = z.object({
   bedrooms: z.coerce.number().int().min(1, 'Must have at least 1 bedroom.'),
   bathrooms: z.coerce.number().int().min(1, 'Must have at least 1 bathroom.'),
   area: z.coerce.number().positive('Area must be a positive number.'),
-  amenities: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: 'You have to select at least one amenity.',
-  }),
+  amenities: z.array(z.string()).default([]),
   rules: z.string().optional(),
 });
 
@@ -279,9 +279,9 @@ export default function EditPropertyPage() {
           city: values.city,
           state: values.state,
           zip: values.zip,
-          lat: property?.location.lat,
-          lng: property?.location.lng,
-          school: property?.location.school,
+          lat: property?.location?.lat ?? null,
+          lng: property?.location?.lng ?? null,
+          school: property?.location?.school ?? null,
         },
         bedrooms: values.bedrooms,
         bathrooms: values.bathrooms,
@@ -289,7 +289,47 @@ export default function EditPropertyPage() {
         amenities: values.amenities,
         rules: values.rules ? values.rules.split(',').map(r => r.trim()).filter(Boolean) : [],
       };
+      const propertyTermChanged =
+        values.price !== property.price ||
+        values.currency !== property.currency ||
+        values.address !== property.location.address ||
+        values.city !== property.location.city ||
+        values.state !== property.location.state ||
+        values.zip !== property.location.zip ||
+        values.country !== property.location.country;
+
       await updateDoc(propertyRef, updatedData);
+
+      if (propertyTermChanged) {
+        toast({
+          title: "Syncing Lease Terms",
+          description: "Terms changed. Updating associated lease agreements...",
+        });
+
+        const leasesQuery = query(collection(firestore, 'leaseAgreements'), where('propertyId', '==', id));
+        const leasesSnapshot = await getDocs(leasesQuery);
+
+        for (const leaseDoc of leasesSnapshot.docs) {
+          const lease = { id: leaseDoc.id, ...leaseDoc.data() } as LeaseAgreement;
+          if (lease.status === 'active' || lease.status === 'pending') {
+            await updateDoc(leaseDoc.ref, {
+              landlordSigned: false,
+              tenantSigned: false,
+              currency: values.currency,
+              // We reset signatures to ensure both parties acknowledge the new price/terms
+            });
+
+            await sendNotification({
+              toUserId: lease.tenantId,
+              type: 'LEASE_TERMS_CHANGED',
+              firestore: firestore,
+              propertyTitle: values.title,
+              link: `/student/leases/${leaseDoc.id}`
+            });
+          }
+        }
+      }
+
       toast({
         title: "Property Updated",
         description: "Your property details have been saved.",
@@ -322,7 +362,15 @@ export default function EditPropertyPage() {
           </Alert>
         )}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+            console.error("Form Validation Errors:", errors, "Keys:", Object.keys(errors));
+            console.log("Current Form Values:", form.getValues());
+            toast({
+              variant: "destructive",
+              title: "Validation Error",
+              description: "Please check the form for errors and try again.",
+            });
+          })} className="space-y-8">
             <h3 className="font-headline text-xl font-semibold">Basic Information</h3>
             <FormField
               control={form.control}
@@ -360,6 +408,12 @@ export default function EditPropertyPage() {
                     <FormControl>
                       <Input type="number" placeholder="1200" {...field} />
                     </FormControl>
+                    <div className="mt-1 flex items-start gap-1 text-amber-600">
+                      <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                      <p className="text-[10px] font-medium leading-tight">
+                        Price changes take effect on the <strong>next rent payment</strong> for active tenants. New leases will use the updated price.
+                      </p>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -667,9 +721,8 @@ export default function EditPropertyPage() {
           </form>
         </Form>
 
-        {/* Currency Conversion Modal */}
         <Dialog open={showCurrencyModal} onOpenChange={setShowCurrencyModal}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md w-[95vw]">
             <DialogHeader>
               <DialogTitle>Update Currency</DialogTitle>
               <DialogDescription>
@@ -685,18 +738,22 @@ export default function EditPropertyPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => confirmCurrencyConversion(false)}
-                className="flex-1"
+                onClick={() => {
+                  confirmCurrencyConversion(false);
+                }}
+                className="w-full sm:flex-1"
               >
-                Keep Price (Change Symbol Only)
+                Keep Price (Symbol Only)
               </Button>
               <Button
                 type="button"
-                onClick={() => confirmCurrencyConversion(true)}
-                className="flex-1"
+                onClick={() => {
+                  confirmCurrencyConversion(true);
+                }}
+                className="w-full sm:flex-1"
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Convert Price Automatically
+                Convert Automatically
               </Button>
             </DialogFooter>
           </DialogContent>

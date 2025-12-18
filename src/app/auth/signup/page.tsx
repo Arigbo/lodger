@@ -33,7 +33,7 @@ const formSchema = z.object({
     email: z.string().email("Invalid email address."),
     password: z.string().min(8, "Password must be at least 8 characters."),
     confirmPassword: z.string(),
-    phone: z.string().optional(),
+    phone: z.string().min(10, "Valid phone number is required."),
     whatsappUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
     twitterUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
     country: z.string().optional(),
@@ -43,13 +43,9 @@ const formSchema = z.object({
     message: "Passwords don't match",
     path: ["confirmPassword"],
 }).refine(data => {
-    if (data.userType === 'landlord') return !!data.phone;
+    if (data.userType === 'student') return !!data.country;
     return true;
-}, { message: "Phone number is required.", path: ["phone"] })
-    .refine(data => {
-        if (data.userType === 'student') return !!data.country;
-        return true;
-    }, { message: "Country is required.", path: ["country"] })
+}, { message: "Country is required.", path: ["country"] })
     .refine(data => {
         if (data.userType === 'student') return !!data.state;
         return true;
@@ -105,7 +101,7 @@ export default function SignupPage() {
         [
             { id: 1, name: 'Choose Account Type', fields: ['userType'] },
             { id: 2, name: 'Account Details', fields: ['name', 'legalName', 'email', 'password', 'confirmPassword'] },
-            { id: 3, name: 'Location Information', fields: ['country', 'state', 'school'] },
+            { id: 3, name: 'Location & Contact', fields: ['country', 'state', 'school', 'phone'] },
         ] :
         [
             { id: 1, name: 'Choose Account Type', fields: ['userType'] },
@@ -456,6 +452,13 @@ export default function SignupPage() {
                                                             emptyText="No school found."
                                                         />
                                                     </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )} />
+                                            <FormField control={form.control} name="phone" render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Phone Number (Required)</FormLabel>
+                                                    <FormControl><Input type="tel" placeholder="(123) 456-7890" {...field} /></FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )} />

@@ -8,11 +8,12 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { format } from "date-fns";
-import { CheckCircle2, FileClock, Hourglass, Check } from 'lucide-react';
+import { CheckCircle2, FileClock, Hourglass, Check, Signature } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { doc, updateDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import type { LeaseAgreement, UserProfile as User, Property } from '@/types/';
-import { doc } from 'firebase/firestore';
+import type { LeaseAgreement, UserProfile as User, Property } from '@/types';
 import Loading from '@/app/loading';
 
 
@@ -21,6 +22,7 @@ export default function ViewLandlordLeasePage() {
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const { user: currentUser, isUserLoading } = useUser();
     const firestore = useFirestore();
+    const { toast } = useToast();
 
     const leaseRef = useMemoFirebase(() => id ? doc(firestore, 'leaseAgreements', id) : null, [firestore, id]);
     const { data: lease, isLoading: isLeaseLoading } = useDoc<LeaseAgreement>(leaseRef);
@@ -34,15 +36,99 @@ export default function ViewLandlordLeasePage() {
     const propertyRef = useMemoFirebase(() => lease ? doc(firestore, 'properties', lease.propertyId) : null, [firestore, lease]);
     const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
 
-    const isLoading = isUserLoading || isLeaseLoading || isLandlordLoading || isTenantLoading || isPropertyLoading;
+    // Unified loading state
+    const isLoading = isUserLoading || isLeaseLoading;
+    const isSupportingDataLoading = isLandlordLoading || isTenantLoading || isPropertyLoading;
+
+    const handleSignLease = async () => {
+        if (!leaseRef) return;
+        try {
+            const signedName = landlord?.legalName || landlord?.name || "Landlord";
+            const signatureLine = `\n\nDigitally Signed by Landlord: ${signedName} on ${new Date().toLocaleString()}`;
+            const updatedLeaseText = lease.leaseText + signatureLine;
+
+            await updateDoc(leaseRef, {
+                landlordSigned: true,
+                leaseText: updatedLeaseText
+            });
+
+            toast({
+                title: "Lease Signed Successfully!",
+                description: "Your signature has been recorded."
+            });
+        } catch (error: unknown) {
+            console.error("Error signing lease:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Could not sign the lease. Please try again."
+            })
+        }
+    };
+
+    console.log('Lease Detail Debug:', {
+        id,
+        isUserLoading,
+        isLeaseLoading,
+        currentUserUid: currentUser?.uid,
+        leaseExists: !!lease,
+        leaseLandlordId: lease?.landlordId,
+        match: currentUser && lease ? currentUser.uid === lease.landlordId : 'N/A'
+    });
 
     if (isLoading) {
         return <Loading />;
     }
 
+    // After main lease and user are loaded, check if they exist or if match fails
     if (!lease || !currentUser || currentUser.uid !== lease.landlordId) {
-        notFound();
-        return null;
+        console.warn("Landlord Lease not found or access denied", {
+            leaseId: id,
+            leaseExists: !!lease,
+            currentUserId: currentUser?.uid,
+            leaseLandlordId: lease?.landlordId
+        });
+
+        return (
+            <div className="container mx-auto max-w-2xl py-20 px-4 text-center">
+                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-8">
+                    <h1 className="text-2xl font-bold text-destructive mb-4">Unable to Load Lease</h1>
+                    <p className="mb-6 text-muted-foreground">
+                        We couldn't display this lease agreement. Here is the diagnostic info to help us fix it:
+                    </p>
+                    <div className="text-left bg-black/80 text-green-400 p-4 rounded-md font-mono text-xs overflow-auto mb-6">
+                        <p>Lease ID in URL: {id}</p>
+                        <p>Lease Document Found: {lease ? "YES" : "NO"}</p>
+                        <p>User Logged In: {currentUser ? "YES" : "NO"}</p>
+                        {currentUser && lease && (
+                            <>
+                                <p>Your User ID: {currentUser.uid}</p>
+                                <p>Lease Landlord ID: {lease.landlordId || "MISSING"}</p>
+                                <p>Match: {currentUser.uid === lease.landlordId ? "YES" : "FAIL"}</p>
+                            </>
+                        )}
+                        {lease && !lease.landlordId && <p className="mt-2 text-red-500 font-bold">CRITICAL: This lease agreement document has no landlordId field!</p>}
+                        {!lease && <p className="mt-2 text-amber-400">Note: If Found is NO, the ID might be wrong or the document was deleted. Database collection checked: 'leaseAgreements'</p>}
+                        {lease && currentUser && lease.landlordId && currentUser.uid !== lease.landlordId && (
+                            <p className="mt-2 text-amber-400">Note: Match is FAIL, which means you are logged in but don't own this lease.</p>
+                        )}
+                    </div>
+                    <div className="flex justify-center gap-4">
+                        <Button asChild variant="outline">
+                            <Link href="/landlord/leases">Return to Leases</Link>
+                        </Button>
+                        <Button variant="ghost" onClick={() => window.location.reload()}>
+                            Retry
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Wait for supporting data if we have the main lease
+    if (isSupportingDataLoading) {
+        return <Loading />;
     }
 
     const getStatusVariant = (status: 'active' | 'expired' | 'pending') => {
@@ -126,7 +212,16 @@ export default function ViewLandlordLeasePage() {
                         </div>
                     </div>
 
-                    {lease.status === 'pending' && (
+                    {lease.status === 'pending' && !lease.landlordSigned ? (
+                        <div className="mt-6 flex flex-col items-center gap-4 rounded-lg border border-primary/50 bg-primary/5 p-6">
+                            <h3 className="font-bold">Action Required: Sign Lease</h3>
+                            <p className="text-center text-sm text-muted-foreground">Confirm that the lease terms reflect the latest property updates. By clicking "Sign Lease", you acknowledge the agreement.</p>
+                            <Button onClick={handleSignLease}>
+                                <Signature className="mr-2 h-4 w-4" />
+                                Sign Lease Agreement
+                            </Button>
+                        </div>
+                    ) : lease.status === 'pending' && (
                         <div className="mt-6 text-center text-sm text-muted-foreground italic rounded-lg border p-4">
                             This lease has been sent to {tenant?.name} for their signature and is awaiting action.
                         </div>

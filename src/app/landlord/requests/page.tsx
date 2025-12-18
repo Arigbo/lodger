@@ -301,7 +301,9 @@ export default function RentalRequestsPage() {
         landlordId: landlord!.uid,
         tenantId: tenantId,
         propertyId: propertyId,
-        amount: property?.price || 0,
+        amount: leaseData.offlinePaymentAmount || property?.price || 0,
+        monthsPaid: leaseData.offlinePaymentMonths || 1,
+        currency: leaseData.currency || property?.currency || 'USD',
         date: new Date().toISOString(),
         type: 'Rent',
         status: 'Completed'
@@ -487,7 +489,12 @@ export default function RentalRequestsPage() {
                                 {property.title}
                               </Link>
                             </TableCell>
-                            <TableCell className="font-semibold">{formatPrice(property.price, property.currency)}</TableCell>
+                            <TableCell className="font-semibold">
+                              {formatPrice(lease.offlinePaymentAmount || property.price, property.currency)}
+                              {lease.offlinePaymentMonths && lease.offlinePaymentMonths > 1 && (
+                                <span className="ml-1 text-xs text-muted-foreground">({lease.offlinePaymentMonths} months)</span>
+                              )}
+                            </TableCell>
                             <TableCell>{lease.createdAt ? new Date(lease.createdAt.toDate()).toLocaleDateString() : 'N/A'}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">

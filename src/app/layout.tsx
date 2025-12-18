@@ -5,6 +5,7 @@ import { cn } from "@/utils";
 import { Toaster } from "@/components/ui/toaster";
 import { HeaderAndFooterProvider } from "@/components/header-and-footer-provider";
 import { FirebaseClientProvider } from "@/firebase";
+import { SupportBubble } from "@/components/support-bubble";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const spaceGrotesk = Space_Grotesk({
@@ -84,6 +85,7 @@ export default function RootLayout({
           <HeaderAndFooterProvider>{children}</HeaderAndFooterProvider>
         </FirebaseClientProvider>
         <Toaster />
+        <SupportBubble />
       </body>
     </html>
   );

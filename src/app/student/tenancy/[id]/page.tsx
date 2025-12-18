@@ -165,6 +165,41 @@ export default function TenancyDetailPage() {
         }
     };
 
+    const handleConfirmCompensation = async () => {
+        if (!lease || !property || !user) return;
+        try {
+            const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
+            await updateDoc(leaseRef, {
+                status: 'expired',
+                endDate: new Date().toISOString()
+            });
+
+            const propertyRef = doc(firestore, 'properties', property.id);
+            await updateDoc(propertyRef, {
+                status: 'available',
+                currentTenantId: null,
+                leaseStartDate: null
+            });
+
+            toast({
+                title: "Tenancy Finalized",
+                description: "You have confirmed receipt of compensation. The tenancy is now officially ended.",
+            });
+            window.location.reload();
+        } catch (error) {
+            console.error("Error confirming compensation:", error);
+        }
+    };
+
+    // Auto-cleanup logic
+    useEffect(() => {
+        if (lease?.status === 'terminating' && lease.terminationGracePeriodEnd) {
+            if (isPast(new Date(lease.terminationGracePeriodEnd))) {
+                handleConfirmCompensation();
+            }
+        }
+    }, [lease]);
+
     const handleMessageLandlord = () => {
         if (landlord) {
             router.push(`/student/messages?contact=${landlord.id}`);
@@ -192,6 +227,39 @@ export default function TenancyDetailPage() {
                     <CardContent>
                         <Button size="lg" onClick={() => setIsPaymentDialogOpen(true)}>
                             Pay {formatPrice(property.price, property.currency)} Now
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
+
+            {lease?.status === 'terminating' && (
+                <Card className="border-destructive/50 bg-destructive/5 mb-6">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-destructive">
+                            <AlertTriangle className="h-5 w-5" /> Tenancy Termination Initiated
+                        </CardTitle>
+                        <CardDescription>
+                            The landlord has requested to end your tenancy. You are entitled to a pro-rated refund.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 rounded-lg bg-background border gap-4">
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">Calculated Refund</p>
+                                <p className="text-2xl font-bold text-primary">{formatPrice(lease.calculatedRefund || 0, property.currency)}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">Grace Period Ends</p>
+                                <p className="text-md font-semibold text-amber-600">
+                                    {lease.terminationGracePeriodEnd ? format(new Date(lease.terminationGracePeriodEnd), 'MMMM do, p') : 'N/A'}
+                                </p>
+                            </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground italic">
+                            By clicking below, you confirm that you have received the compensation mentioned above or have agreed to alternative terms with the landlord. If no action is taken by the deadline, you will be automatically removed.
+                        </p>
+                        <Button variant="destructive" className="w-full" onClick={handleConfirmCompensation}>
+                            Confirm Compensation Received
                         </Button>
                     </CardContent>
                 </Card>
@@ -310,7 +378,7 @@ export default function TenancyDetailPage() {
                                         <DialogTrigger asChild>
                                             <Button variant="outline"><FileText className="mr-2 h-4 w-4" /> View Lease Agreement</Button>
                                         </DialogTrigger>
-                                        <DialogContent className="max-w-3xl">
+                                        <DialogContent className="sm:max-w-2xl w-[95vw]">
                                             <DialogHeader>
                                                 <DialogTitle>Lease Agreement</DialogTitle>
                                                 <DialogDescription>

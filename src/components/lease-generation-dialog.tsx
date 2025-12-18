@@ -35,7 +35,7 @@ export default function LeaseGenerationDialog({
   const handleSign = () => {
     setIsSigned(true);
   };
-  
+
   const handleSend = () => {
     onLeaseSigned();
     onClose();
@@ -43,7 +43,7 @@ export default function LeaseGenerationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="sm:max-w-3xl w-[95vw]">
         <DialogHeader>
           <DialogTitle>Review and Sign Lease Agreement</DialogTitle>
           <DialogDescription>
@@ -51,27 +51,27 @@ export default function LeaseGenerationDialog({
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[60vh] rounded-md border p-4">
-            <div className="prose prose-sm whitespace-pre-wrap">{leaseText}</div>
+          <div className="prose prose-sm whitespace-pre-wrap">{leaseText}</div>
         </ScrollArea>
-         <div className="mt-4 flex items-center justify-between rounded-lg border bg-secondary/50 p-4">
-            <div className='font-serif italic'>
-                {isSigned ? (
-                    <p className="text-green-600 font-semibold flex items-center gap-2">✓ Digitally Signed by {landlord.name}</p>
-                ) : (
-                    <p className="text-muted-foreground">Signature required to proceed.</p>
-                )}
-            </div>
-            <Button onClick={handleSign} disabled={isSigned}>
-                <Signature className="mr-2 h-4 w-4"/>
-                Sign as Landlord
-            </Button>
+        <div className="mt-4 flex items-center justify-between rounded-lg border bg-secondary/50 p-4">
+          <div className='font-serif italic'>
+            {isSigned ? (
+              <p className="text-green-600 font-semibold flex items-center gap-2">✓ Digitally Signed by {landlord.name}</p>
+            ) : (
+              <p className="text-muted-foreground">Signature required to proceed.</p>
+            )}
+          </div>
+          <Button onClick={handleSign} disabled={isSigned}>
+            <Signature className="mr-2 h-4 w-4" />
+            Sign as Landlord
+          </Button>
         </div>
         <DialogFooter>
-            <Button variant="ghost" onClick={onClose}>Cancel</Button>
-            <Button onClick={handleSend} disabled={!isSigned}>
-                <Send className="mr-2 h-4 w-4"/>
-                Sign and Send to Tenant
-            </Button>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSend} disabled={!isSigned}>
+            <Send className="mr-2 h-4 w-4" />
+            Sign and Send to Tenant
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
