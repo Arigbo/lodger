@@ -8,6 +8,7 @@ export type UserProfile = {
     country?: string;
     state?: string;
     school?: string;
+    city?: string;
     phone?: string;
     whatsappUrl?: string;
     twitterUrl?: string;
@@ -51,6 +52,7 @@ export type PropertyReview = {
     id: string;
     propertyId: string;
     tenantId: string;
+    tenantName?: string;
     rating: number; // 1-5
     comment: string;
     reviewDate: string; // ISO 8601 date string

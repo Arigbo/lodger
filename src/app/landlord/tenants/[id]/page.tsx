@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Phone, Mail, AlertTriangle, Coins, Pencil, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
-import { add, format, differenceInDays, isPast, isBefore, differenceInMonths } from "date-fns";
+import { format, differenceInDays, isPast, addMonths, differenceInMonths } from "date-fns";
 import { cn, formatPrice } from '@/utils';
 import {
     AlertDialog,
@@ -145,7 +145,7 @@ export default function TenantDetailPage() {
 
         if (isLeaseActive) {
             if (lastRentPayment) {
-                nextRentDueDate = add(new Date(lastRentPayment.date), { months: 1 });
+                nextRentDueDate = addMonths(new Date(lastRentPayment.date), 1);
                 if (isPast(nextRentDueDate)) {
                     status = 'Due';
                     text = `Due on ${format(nextRentDueDate, 'MMM do, yyyy')}`;

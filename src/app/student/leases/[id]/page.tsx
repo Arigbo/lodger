@@ -200,7 +200,7 @@ export default function ViewStudentLeasePage() {
         if (!leaseRef) return;
         try {
             // Inject Tenant Name into Lease
-            const signedName = currentUser.legalName || currentUser.name || "Tenant";
+            const signedName = tenant?.legalName || tenant?.name || "Tenant";
             const signatureLine = `\n\nDigitally Signed by Tenant: ${signedName} on ${new Date().toLocaleString()}`;
             const updatedLeaseText = lease.leaseText + signatureLine;
 
@@ -238,62 +238,6 @@ export default function ViewStudentLeasePage() {
         document.body.removeChild(element);
     };
 
-    const processPayment = async () => {
-        if (!cardNumber || !expiry || !cvc) {
-            toast({ variant: "destructive", title: "Missing Information", description: "Please fill in all payment details." });
-            return;
-        }
-
-        setIsProcessingPayment(true);
-
-        // SIMULATED PAYMENT PROCESSING
-        // In a real app, you would send this to your backend (Stripe/Paystack)
-        // See 'payment_integration_guide.md' for details.
-        setTimeout(async () => {
-            try {
-                if (!leaseRef) return;
-
-                // 1. Activate Lease
-                await updateDoc(leaseRef, {
-                    status: 'active'
-                });
-
-                // 2. Update Property Status to Occupied & Set Current Tenant
-                if (propertyRef) {
-                    await updateDoc(propertyRef, {
-                        status: 'occupied',
-                        currentTenantId: currentUser.uid,
-                        leaseStartDate: lease.startDate
-                    });
-                }
-
-                // 3. Record Transaction
-                await addDoc(collection(firestore, 'transactions'), {
-                    landlordId: lease.landlordId,
-                    tenantId: currentUser.uid,
-                    propertyId: lease.propertyId,
-                    amount: property?.price || 0,
-                    date: new Date().toISOString(),
-                    type: 'Rent',
-                    status: 'Completed'
-                });
-
-                setIsPaymentOpen(false);
-                toast({
-                    title: "Payment Successful!",
-                    description: "Your lease is now ACTIVE. Welcome to your new home!"
-                });
-
-                router.refresh();
-
-            } catch (error) {
-                console.error("Payment failed:", error);
-                toast({ variant: "destructive", title: "Payment Failed", description: "Something went wrong. Please try again." });
-            } finally {
-                setIsProcessingPayment(false);
-            }
-        }, 2000); // 2 second delay to simulate network request
-    };
 
     const getStatusVariant = (status: 'active' | 'expired' | 'pending') => {
         switch (status) {

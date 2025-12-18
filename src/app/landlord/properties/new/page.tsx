@@ -40,7 +40,7 @@ import { amenities as allAmenities } from '@/types';
 import { cn, formatPrice } from '@/utils';
 import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon } from 'lucide-react';
 import type { Property, UserProfile } from '@/types';
-import { format, add } from 'date-fns';
+import { format, addYears } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useUser, useFirebaseApp, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
@@ -51,7 +51,7 @@ import { countries } from '@/types/countries';
 
 function generateLeaseTextForTemplate(propertyData: Partial<FormValues>): string {
     const leaseStartDate = new Date();
-    const leaseEndDate = add(leaseStartDate, { years: 1 });
+    const leaseEndDate = addYears(leaseStartDate, 1);
 
     const landlordName = "[Landlord Name]"; // Placeholder
     const tenantName = "[Tenant Name]"; // Placeholder
@@ -233,7 +233,7 @@ export default function AddPropertyPage() {
                     ...currentValues,
                     country: userProfile.country || '',
                     state: userProfile.state || '',
-                    city: userProfile.city || '', // Assuming city might be in profile, strict check later
+                    city: userProfile.city || '',
                 });
 
                 // If the profile has these values, set the prefilled flag

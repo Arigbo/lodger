@@ -733,6 +733,8 @@ function ReviewButton({ propertyId, userId, firestore, userProfile }: { property
         }
 
         try {
+            const { collection, addDoc, doc, getDoc } = await import('firebase/firestore');
+
             await addDoc(collection(firestore, 'propertyReviews'), {
                 propertyId,
                 tenantId: userId,
@@ -745,30 +747,21 @@ function ReviewButton({ propertyId, userId, firestore, userProfile }: { property
             });
 
             // Notify Landlord
-            const propertySnap = await import('firebase/firestore').then(m => m.getDoc(import('firebase/firestore').then(mod => mod.doc(firestore, 'properties', propertyId))));
-            // We need to fetch property to get landlordId, but `ReviewButton` prop only has propertyId.
-            // Ideally parent passes landlordId. But let's fetch property here or rely on specific prop.
-            // Actually, checking how `ReviewButton` is called... it doesn't have landlordId prop.
-            // Let's do a quick fetch or update calling component. 
-            // Time Constraint: Fetch property here to get landlordId is safest without prop drilling.
+            const propRef = doc(firestore, 'properties', propertyId);
+            const propSnap = await getDoc(propRef);
 
-            import('firebase/firestore').then(async ({ doc, getDoc }) => {
-                const propRef = doc(firestore, 'properties', propertyId);
-                const propSnap = await getDoc(propRef);
-                if (propSnap.exists()) {
-                    const propData = propSnap.data();
-                    await import('@/lib/notifications').then(({ sendNotification }) => {
-                        sendNotification({
-                            toUserId: propData.landlordId,
-                            type: 'REVIEW_SUBMITTED',
-                            firestore: firestore,
-                            propertyName: propData.title,
-                            senderName: userProfile?.name || 'A tenant',
-                            link: `/landlord/properties/${propertyId}` // Link to property page where reviews are
-                        });
-                    });
-                }
-            });
+            if (propSnap.exists()) {
+                const propData = propSnap.data();
+                const { sendNotification } = await import('@/lib/notifications');
+                await sendNotification({
+                    toUserId: propData.landlordId,
+                    type: 'REVIEW_SUBMITTED',
+                    firestore: firestore,
+                    propertyName: propData.title,
+                    senderName: userProfile?.name || 'A tenant',
+                    link: `/landlord/properties/${propertyId}`
+                });
+            }
 
             toast({ title: "Review Submitted", description: "Thank you for your feedback!" });
             setIsOpen(false);

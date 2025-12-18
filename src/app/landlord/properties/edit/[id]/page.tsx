@@ -222,7 +222,7 @@ export default function EditPropertyPage() {
         <CardDescription>Make changes to your property listing.</CardDescription>
       </CardHeader>
       <CardContent>
-        {property?.status === 'rented' && (
+        {property?.status === 'occupied' && (
           <div className="mb-6 rounded-lg border border-amber-500/50 bg-amber-50 p-4">
             <div className="flex items-start gap-3">
               <div className="rounded-full bg-amber-100 p-2">
@@ -231,7 +231,7 @@ export default function EditPropertyPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h4 className="font-semibold text-amber-900">Property Currently Rented</h4>
+                <h4 className="font-semibold text-amber-900">Property Currently Occupied</h4>
                 <p className="mt-1 text-sm text-amber-700">
                   This property has an active tenant. Most fields are disabled to prevent changes that could affect the current lease agreement. You can only update images.
                 </p>
@@ -518,8 +518,8 @@ export default function EditPropertyPage() {
             </div>
 
             <Separator />
-            <Button type="submit" size="lg" disabled={form.formState.isSubmitting || property?.status === 'rented'}>
-              {form.formState.isSubmitting ? "Saving..." : property?.status === 'rented' ? "Cannot Edit Rented Property" : "Save Changes"}
+            <Button type="submit" size="lg" disabled={form.formState.isSubmitting || property?.status === 'occupied'}>
+              {form.formState.isSubmitting ? "Saving..." : property?.status === 'occupied' ? "Cannot Edit Occupied Property" : "Save Changes"}
             </Button>
           </form>
         </Form>

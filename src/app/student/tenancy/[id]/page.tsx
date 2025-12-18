@@ -9,7 +9,7 @@ import PaymentDialog from '@/components/payment-dialog';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import TenancySkeleton from "@/components/tenancy-skeleton";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
-import { doc, collection, query, where } from "firebase/firestore";
+import { doc, collection, query, where, updateDoc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import type { Property, UserProfile as User, Transaction, LeaseAgreement } from "@/types";
