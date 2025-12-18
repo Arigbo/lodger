@@ -139,6 +139,12 @@ export default function PropertyDetailPage() {
     const applications: RentalApplication[] = []; // Default to empty to prevent UI errors
     const areApplicationsLoading = false;
 
+    const userCurrency = React.useMemo(() => {
+        if (userProfile?.currency) return userProfile.currency;
+        if (userProfile?.country) return getCurrencyByCountry(userProfile.country);
+        return null;
+    }, [userProfile]);
+
     // SEO effect for client components
     useEffect(() => {
         if (property) {
@@ -197,11 +203,6 @@ export default function PropertyDetailPage() {
 
     const propertyUrl = isClient ? `${window.location.origin}${pathname}` : '';
 
-    const userCurrency = React.useMemo(() => {
-        if (userProfile?.currency) return userProfile.currency;
-        if (userProfile?.country) return getCurrencyByCountry(userProfile.country);
-        return null;
-    }, [userProfile]);
 
     const handleSendRequest = async () => {
         if (!user || !landlord || !property) {
@@ -362,7 +363,7 @@ export default function PropertyDetailPage() {
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
             <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-12">
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 min-w-0 overflow-hidden">
                     <div className="mb-8">
                         {images.length > 0 ? (
                             <Carousel
@@ -398,11 +399,11 @@ export default function PropertyDetailPage() {
                         )}
                     </div>
 
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between">
-                        <div>
+                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                        <div className="min-w-0 flex-1">
                             <Badge variant="secondary" className="mb-2">{property.type}</Badge>
-                            <h1 className="font-headline text-4xl font-bold">{property.title}</h1>
-                            <div className="mt-2 flex items-center gap-4 text-muted-foreground">
+                            <h1 className="font-headline text-3xl md:text-4xl font-bold truncate md:whitespace-normal md:overflow-visible break-words">{property.title}</h1>
+                            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-muted-foreground text-sm md:text-base">
                                 <div className="flex items-center gap-1">
                                     <MapPin className="h-4 w-4" />
                                     <span>{property.location.address}, {property.location.city}</span>
@@ -419,9 +420,9 @@ export default function PropertyDetailPage() {
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-4 md:mt-0 text-right shrink-0">
-                            <div className="flex flex-col items-end">
-                                <p className="text-3xl font-bold text-primary">
+                        <div className="mt-4 md:mt-0 text-left md:text-right shrink-0">
+                            <div className="flex flex-col items-start md:items-end">
+                                <p className="text-2xl md:text-3xl font-bold text-primary">
                                     {formatPrice(property.price, property.currency)}
                                     <span className="text-base font-normal text-muted-foreground">/month</span>
                                 </p>
@@ -436,10 +437,10 @@ export default function PropertyDetailPage() {
                     </div>
 
                     <Card className="my-8">
-                        <CardContent className="p-4 md:p-6 grid grid-cols-3 gap-2 text-center">
-                            <div><BedDouble className="mx-auto mb-2 h-6 md:h-7 w-6 md:w-7 text-primary" /><p className="text-xs md:text-sm">{property.bedrooms} Beds</p></div>
-                            <div><Bath className="mx-auto mb-2 h-6 md:h-7 w-6 md:w-7 text-primary" /><p className="text-xs md:text-sm">{property.bathrooms} Baths</p></div>
-                            <div><Ruler className="mx-auto mb-2 h-6 md:h-7 w-6 md:w-7 text-primary" /><p className="text-xs md:text-sm">{property.area} sqft</p></div>
+                        <CardContent className="p-4 md:p-6 grid grid-cols-2 md:grid-cols-3 gap-6 text-center">
+                            <div className="flex flex-col items-center"><BedDouble className="mb-2 h-7 w-7 text-primary" /><p className="text-sm font-medium">{property.bedrooms} Bedrooms</p></div>
+                            <div className="flex flex-col items-center"><Bath className="mb-2 h-7 w-7 text-primary" /><p className="text-sm font-medium">{property.bathrooms} Bathrooms</p></div>
+                            <div className="col-span-2 md:col-span-1 flex flex-col items-center"><Ruler className="mb-2 h-7 w-7 text-primary" /><p className="text-sm font-medium">{property.area} sqft</p></div>
                         </CardContent>
                     </Card>
 
@@ -452,11 +453,11 @@ export default function PropertyDetailPage() {
                         </TabsList>
                         <TabsContent value="description" className="py-4 text-foreground/80 leading-relaxed">{property.description}</TabsContent>
                         <TabsContent value="amenities" className="py-4">
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {property.amenities.map(amenity => (
-                                    <div key={amenity} className="flex items-center gap-3">
+                                    <div key={amenity} className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:shadow-sm transition-shadow">
                                         {amenityIcons[amenity] || <CheckCircle className="h-5 w-5 text-primary" />}
-                                        <span>{amenity}</span>
+                                        <span className="text-sm font-medium">{amenity}</span>
                                     </div>
                                 ))}
                             </div>
@@ -511,7 +512,7 @@ export default function PropertyDetailPage() {
                     </Tabs>
                 </div>
 
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 mt-12 lg:mt-0">
                     <div className="sticky top-24 space-y-6">
                         <Card>
                             <CardContent className="p-4 flex items-center justify-around">

@@ -149,54 +149,56 @@ export default function StudentLeasesPage() {
         </CardHeader>
         <CardContent>
           {aggregatedLeases.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Landlord</TableHead>
-                  <TableHead>Start Date</TableHead>
-                  <TableHead>End Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead><span className="sr-only">Actions</span></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {aggregatedLeases.map(({ lease, landlord, property }) => {
-                  return (
-                    <TableRow key={lease.id}>
-                      <TableCell>
-                        <Link href={`/student/properties/${property?.id}`} className="font-medium hover:underline">
-                          {property?.title || 'Unknown Property'}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-muted-foreground">{landlord?.name || 'Unknown Landlord'}</span>
-                      </TableCell>
-                      <TableCell>{new Date(lease.startDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{new Date(lease.endDate).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusVariant(lease.status)}>{lease.status}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {lease.status === 'pending' ? (
-                          <Button variant="default" size="sm" asChild>
-                            <Link href={`/student/leases/${lease.id}`}>
-                              <Signature className="mr-2 h-4 w-4" /> View & Sign
-                            </Link>
-                          </Button>
-                        ) : (
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/student/leases/${lease.id}`}>
-                              <FileText className="mr-2 h-4 w-4" /> View
-                            </Link>
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Landlord</TableHead>
+                    <TableHead>Start Date</TableHead>
+                    <TableHead>End Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {aggregatedLeases.map(({ lease, landlord, property }) => {
+                    return (
+                      <TableRow key={lease.id}>
+                        <TableCell>
+                          <Link href={`/student/properties/${property?.id}`} className="font-medium hover:underline">
+                            {property?.title || 'Unknown Property'}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-muted-foreground">{landlord?.name || 'Unknown Landlord'}</span>
+                        </TableCell>
+                        <TableCell>{new Date(lease.startDate).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(lease.endDate).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusVariant(lease.status)}>{lease.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {lease.status === 'pending' ? (
+                            <Button variant="default" size="sm" asChild>
+                              <Link href={`/student/leases/${lease.id}`}>
+                                <Signature className="mr-2 h-4 w-4" /> View & Sign
+                              </Link>
+                            </Button>
+                          ) : (
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href={`/student/leases/${lease.id}`}>
+                                <FileText className="mr-2 h-4 w-4" /> View
+                              </Link>
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">

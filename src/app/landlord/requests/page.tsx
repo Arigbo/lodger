@@ -29,6 +29,7 @@ import { collection, doc, query, where, getDocs, addDoc, updateDoc, documentId, 
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Loading from '@/app/loading';
 import { sendNotification } from '@/lib/notifications';
+import { formatPrice } from '@/utils/currencies';
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -486,7 +487,7 @@ export default function RentalRequestsPage() {
                                 {property.title}
                               </Link>
                             </TableCell>
-                            <TableCell className="font-semibold">${property.price}</TableCell>
+                            <TableCell className="font-semibold">{formatPrice(property.price, property.currency)}</TableCell>
                             <TableCell>{lease.createdAt ? new Date(lease.createdAt.toDate()).toLocaleDateString() : 'N/A'}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">

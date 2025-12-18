@@ -8,6 +8,7 @@ import type { Property, UserProfile } from '@/types';
 import type { FilterState } from '@/components/search-filters';
 import { Home, Search } from 'lucide-react';
 import { haversineDistance } from '@/utils';
+import { getCurrencyByCountry, convertCurrency } from "@/utils/currencies";
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import Loading from '@/app/loading';
@@ -42,6 +43,12 @@ export default function PropertiesPage() {
     const [hasAppliedDefaults, setHasAppliedDefaults] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('newest');
+
+    const userCurrency = useMemo(() => {
+        if (userProfile?.currency) return userProfile.currency;
+        if (userProfile?.country) return getCurrencyByCountry(userProfile.country);
+        return 'USD';
+    }, [userProfile]);
 
     const availableStates = useMemo(() => {
         if (!allProperties) return [];
@@ -101,7 +108,10 @@ export default function PropertiesPage() {
 
 
         if (filters.price) {
-            properties = properties.filter(p => p.price <= filters.price!);
+            properties = properties.filter(p => {
+                const priceInUserCurrency = convertCurrency(p.price, p.currency, userCurrency);
+                return priceInUserCurrency <= filters.price!;
+            });
         }
 
         if (filters.propertyType && filters.propertyType !== 'any') {
@@ -141,27 +151,26 @@ export default function PropertiesPage() {
 
         // Sorting
         properties.sort((a, b) => {
+            const priceA = convertCurrency(a.price, a.currency, userCurrency);
+            const priceB = convertCurrency(b.price, b.currency, userCurrency);
+
             switch (sortBy) {
                 case 'price-asc':
-                    return a.price - b.price;
+                    return priceA - priceB;
                 case 'price-desc':
-                    return b.price - a.price;
+                    return priceB - priceA;
                 case 'bedrooms-desc':
                     return b.bedrooms - a.bedrooms;
                 case 'area-desc':
                     return b.area - a.area;
                 case 'newest':
                 default:
-                    // Assuming higher ID means newer if no timestamp, or we could add createdAt to Property type
-                    // For now, let's just reverse the order (last created usually comes last in default fetch)
-                    // But if we want consistent sort without timestamp, we might need a createdAt field.
-                    // Let's assume natural order is oldest first, so reverse for newest
                     return -1;
             }
         });
 
         setFilteredProperties(properties);
-    }, [filters, currentLocation, allProperties, searchQuery, sortBy]);
+    }, [filters, currentLocation, allProperties, searchQuery, sortBy, userCurrency]);
 
 
     const handleFilterChange = (newFilters: FilterState) => {
@@ -265,6 +274,7 @@ export default function PropertiesPage() {
                                                 onLocationSuccess={handleLocationSuccess}
                                                 schoolsInArea={schoolsInArea}
                                                 availableStates={availableStates}
+                                                userCurrency={userCurrency}
                                                 className="border-0 shadow-none"
                                             />
                                         </SheetContent>
@@ -288,6 +298,7 @@ export default function PropertiesPage() {
                                                 onLocationSuccess={handleLocationSuccess}
                                                 schoolsInArea={schoolsInArea}
                                                 availableStates={availableStates}
+                                                userCurrency={userCurrency}
                                                 className="border-0 shadow-none max-h-[80vh] overflow-y-auto"
                                             />
                                         </PopoverContent>

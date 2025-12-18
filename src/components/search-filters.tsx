@@ -17,7 +17,7 @@ import { Combobox } from "./ui/combobox";
 import { SchoolCombobox } from "@/components/school-combobox";
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
-import { cn } from "@/utils";
+import { cn, formatPrice } from "@/utils";
 
 export type FilterState = {
   country?: string;
@@ -39,6 +39,7 @@ type SearchFiltersProps = {
   onLocationSuccess: (coords: { lat: number; lng: number }) => void;
   schoolsInArea?: string[] | null;
   availableStates: string[];
+  userCurrency?: string;
   className?: string; // SearchFiltersProps
 };
 
@@ -50,6 +51,7 @@ export default function SearchFilters({
   onLocationSuccess,
   schoolsInArea,
   availableStates,
+  userCurrency = 'USD',
   className,
 }: SearchFiltersProps) {
   const [filters, setFilters] = useState<FilterState>(initialFilters || {});
@@ -58,9 +60,9 @@ export default function SearchFilters({
   useEffect(() => {
     if (initialFilters) {
       setFilters(initialFilters);
-      setPrice(initialFilters.price || 3000);
+      setPrice(initialFilters.price || (userCurrency === 'NGN' ? 1000000 : userCurrency === 'GHS' ? 10000 : 3000));
     }
-  }, [initialFilters]);
+  }, [initialFilters, userCurrency]);
 
   const handleInputChange = (field: keyof FilterState, value: any) => {
     const newFilters = { ...filters, [field]: value };
@@ -82,7 +84,7 @@ export default function SearchFilters({
   };
 
   const handleReset = () => {
-    setPrice(3000);
+    setPrice(userCurrency === 'NGN' ? 1000000 : userCurrency === 'GHS' ? 10000 : 3000);
     onReset();
   }
 
@@ -178,13 +180,13 @@ export default function SearchFilters({
           {filters.useCurrentLocation && <p className="text-xs text-primary">Showing properties near you.</p>}
         </div>
         <div className="grid gap-2">
-          <Label>Max Price: ${price.toLocaleString()}</Label>
+          <Label>Max Price: {formatPrice(price, userCurrency)}</Label>
           <Slider
             value={[price]}
             onValueChange={(value) => setPrice(value[0])}
-            max={5000}
-            min={500}
-            step={50}
+            max={userCurrency === 'NGN' ? 5000000 : userCurrency === 'GHS' ? 50000 : 10000}
+            min={userCurrency === 'NGN' ? 50000 : userCurrency === 'GHS' ? 500 : 100}
+            step={userCurrency === 'NGN' ? 10000 : userCurrency === 'GHS' ? 100 : 50}
           />
         </div>
         <div className="grid gap-2">

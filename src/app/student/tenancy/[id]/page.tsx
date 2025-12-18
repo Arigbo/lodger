@@ -237,38 +237,40 @@ export default function TenancyDetailPage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Type</TableHead>
-                                        <TableHead className="text-right">Amount</TableHead>
-                                        <TableHead className="text-center">Status</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {transactions && transactions.length > 0 ? transactions.map(t => (
-                                        <TableRow key={t.id}>
-                                            <TableCell>{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
-                                            <TableCell>{t.type}</TableCell>
-                                            <TableCell className="text-right">{formatPrice(t.amount, t.currency)}</TableCell>
-                                            <TableCell className="text-center">
-                                                <Badge variant={
-                                                    t.status === 'Completed' ? 'secondary'
-                                                        : t.status === 'Pending' ? 'default'
-                                                            : 'destructive'
-                                                }>
-                                                    {t.status}
-                                                </Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    )) : (
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
                                         <TableRow>
-                                            <TableCell colSpan={4} className="text-center h-24">No transactions found.</TableCell>
+                                            <TableHead>Date</TableHead>
+                                            <TableHead>Type</TableHead>
+                                            <TableHead className="text-right">Amount</TableHead>
+                                            <TableHead className="text-center">Status</TableHead>
                                         </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {transactions && transactions.length > 0 ? transactions.map(t => (
+                                            <TableRow key={t.id}>
+                                                <TableCell>{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
+                                                <TableCell>{t.type}</TableCell>
+                                                <TableCell className="text-right">{formatPrice(t.amount, t.currency)}</TableCell>
+                                                <TableCell className="text-center">
+                                                    <Badge variant={
+                                                        t.status === 'Completed' ? 'secondary'
+                                                            : t.status === 'Pending' ? 'default'
+                                                                : 'destructive'
+                                                    }>
+                                                        {t.status}
+                                                    </Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        )) : (
+                                            <TableRow>
+                                                <TableCell colSpan={4} className="text-center h-24">No transactions found.</TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>

@@ -148,50 +148,52 @@ export default function LandlordLeasesPage() {
         </CardHeader>
         <CardContent>
           {aggregatedLeases.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Tenant</TableHead>
-                  <TableHead>Start Date</TableHead>
-                  <TableHead>End Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead><span className="sr-only">Actions</span></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {aggregatedLeases.map(({ lease, tenant, property }) => {
-                  return (
-                    <TableRow key={lease.id}>
-                      <TableCell>
-                        <Link href={`/landlord/properties/${property?.id}`} className="font-medium hover:underline">
-                          {property?.title || 'Unknown Property'}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <Link href={`/landlord/tenants/${tenant?.id}`} className="text-muted-foreground hover:underline">
-                          {tenant?.name || 'Unknown Tenant'}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{new Date(lease.startDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{new Date(lease.endDate).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusVariant(lease.status)}>
-                          {lease.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/landlord/leases/${lease.id}`}>
-                            <FileText className="mr-2 h-4 w-4" /> View
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Tenant</TableHead>
+                    <TableHead>Start Date</TableHead>
+                    <TableHead>End Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {aggregatedLeases.map(({ lease, tenant, property }) => {
+                    return (
+                      <TableRow key={lease.id}>
+                        <TableCell>
+                          <Link href={`/landlord/properties/${property?.id}`} className="font-medium hover:underline">
+                            {property?.title || 'Unknown Property'}
                           </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        </TableCell>
+                        <TableCell>
+                          <Link href={`/landlord/tenants/${tenant?.id}`} className="text-muted-foreground hover:underline">
+                            {tenant?.name || 'Unknown Tenant'}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{new Date(lease.startDate).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(lease.endDate).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusVariant(lease.status)}>
+                            {lease.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/landlord/leases/${lease.id}`}>
+                              <FileText className="mr-2 h-4 w-4" /> View
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">

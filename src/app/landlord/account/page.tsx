@@ -41,12 +41,25 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Pencil, User, Trash2, Wallet } from 'lucide-react';
 import Loading from '@/app/loading';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { countries } from '@/types/countries';
+import { Combobox } from '@/components/ui/combobox';
+import { getCurrencyByCountry } from '@/utils/currencies';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 const profileFormSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters.'),
     email: z.string().email('Please enter a valid email address.'),
     phone: z.string().min(10, 'Please enter a valid phone number.').optional(),
     bio: z.string().max(200, 'Bio must be less than 200 characters.').optional(),
+    country: z.string().optional(),
+    state: z.string().optional(),
+    currency: z.string().optional(),
 });
 
 const passwordFormSchema = z.object({
@@ -97,6 +110,9 @@ export default function AccountPage() {
             email: '',
             phone: '',
             bio: '',
+            country: '',
+            state: '',
+            currency: '',
         },
     });
 
@@ -117,6 +133,9 @@ export default function AccountPage() {
                 email: userProfile.email || user.email || '',
                 phone: userProfile.phone || '',
                 bio: userProfile.bio || '',
+                country: userProfile.country || '',
+                state: userProfile.state || '',
+                currency: userProfile.currency || '',
             });
         }
     }, [user, userProfile, profileForm]);
@@ -259,13 +278,14 @@ export default function AccountPage() {
     };
 
     function onProfileSubmit(values: ProfileFormValues) {
-        if (!userDocRef) return;
-        const { name, phone, bio } = values;
-        setDoc(userDocRef, { name, phone, bio }, { merge: true });
-        toast({
-            title: "Profile Updated",
-            description: "Your public profile has been successfully updated.",
-        })
+        const { name, phone, bio, country, state, currency } = values;
+        if (userDocRef) {
+            setDoc(userDocRef, { name, phone, bio, country, state, currency }, { merge: true });
+            toast({
+                title: "Profile Updated",
+                description: "Your public profile has been successfully updated.",
+            });
+        }
     }
 
     function onPasswordSubmit(values: PasswordFormValues) {
@@ -282,7 +302,7 @@ export default function AccountPage() {
         return <Loading />;
     }
 
-    if (!user || !userProfile) {
+    if (!user || !userProfile || !userDocRef) {
         return <div>Please log in to view your account settings.</div>;
     }
 
@@ -392,16 +412,71 @@ export default function AccountPage() {
                                             </FormItem>
                                         )}
                                     />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <FormField
+                                            control={profileForm.control}
+                                            name="country"
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-col">
+                                                    <FormLabel>Country</FormLabel>
+                                                    <Combobox
+                                                        options={countries.map(c => ({ label: c.name, value: c.name }))}
+                                                        value={field.value}
+                                                        onChange={(val) => {
+                                                            field.onChange(val);
+                                                            // Auto-suggest currency
+                                                            const suggestedCurrency = getCurrencyByCountry(val);
+                                                            if (suggestedCurrency) {
+                                                                profileForm.setValue('currency', suggestedCurrency);
+                                                            }
+                                                            profileForm.setValue('state', ''); // Reset state on country change
+                                                        }}
+                                                        placeholder="Select country"
+                                                    />
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={profileForm.control}
+                                            name="state"
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-col">
+                                                    <FormLabel>State/Province</FormLabel>
+                                                    <Combobox
+                                                        options={countries.find(c => c.name === profileForm.watch('country'))?.states.map(s => ({ label: s.name, value: s.name })) || []}
+                                                        value={field.value}
+                                                        onChange={field.onChange}
+                                                        placeholder="Select state"
+                                                        disabled={!profileForm.watch('country')}
+                                                    />
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                     <FormField
                                         control={profileForm.control}
-                                        name="bio"
+                                        name="currency"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Bio</FormLabel>
-                                                <FormControl>
-                                                    <Textarea placeholder="Tell us a little bit about yourself" className="resize-none" {...field} />
-                                                </FormControl>
-                                                <FormDescription>A brief description of yourself shown on your profile.</FormDescription>
+                                                <FormLabel>Preferred Currency</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value || 'USD'}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select currency" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="USD">USD - US Dollar</SelectItem>
+                                                        <SelectItem value="NGN">NGN - Nigerian Naira</SelectItem>
+                                                        <SelectItem value="GHS">GHS - Ghanaian Cedi</SelectItem>
+                                                        <SelectItem value="KES">KES - Kenyan Shilling</SelectItem>
+                                                        <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                                                        <SelectItem value="EUR">EUR - Euro</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormDescription>Your preferred currency for receiving payments and viewing dashboards.</FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}

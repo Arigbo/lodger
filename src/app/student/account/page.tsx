@@ -42,6 +42,8 @@ import { countries } from '@/types/countries';
 import { getStorage } from 'firebase/storage';
 import { uploadProfileImage } from '@/firebase/storage';
 import { SchoolCombobox } from '@/components/school-combobox';
+import { Combobox } from '@/components/ui/combobox';
+import { getCurrencyByCountry } from '@/utils/currencies';
 
 const profileFormSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -49,6 +51,7 @@ const profileFormSchema = z.object({
     country: z.string().optional(),
     state: z.string().optional(),
     school: z.string().optional(),
+    currency: z.string().optional(),
 });
 
 const passwordFormSchema = z.object({
@@ -83,6 +86,7 @@ export default function AccountPage() {
             country: '',
             state: '',
             school: '',
+            currency: '',
         },
     });
 
@@ -94,6 +98,7 @@ export default function AccountPage() {
                 country: userProfile.country || '',
                 state: userProfile.state || '',
                 school: userProfile.school || '',
+                currency: userProfile.currency || '',
             });
         }
     }, [userProfile, profileForm]);
@@ -150,6 +155,7 @@ export default function AccountPage() {
             country: values.country,
             state: values.state,
             school: values.school,
+            currency: values.currency,
         };
 
         setDoc(userDocRef, dataToUpdate, { merge: true })
@@ -283,32 +289,60 @@ export default function AccountPage() {
                                             </FormItem>
                                         )}
                                     />
-                                    <FormField control={profileForm.control} name="country" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Country</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl><SelectTrigger><SelectValue placeholder="Select Country" /></SelectTrigger></FormControl>
-                                                <SelectContent className="max-h-60">
-                                                    {countries.map(country => (
-                                                        <SelectItem key={country.iso2} value={country.name}>{country.name}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <FormField control={profileForm.control} name="country" render={({ field }) => (
+                                            <FormItem className="flex flex-col">
+                                                <FormLabel>Country</FormLabel>
+                                                <Combobox
+                                                    options={countries.map(c => ({ label: c.name, value: c.name }))}
+                                                    value={field.value}
+                                                    onChange={(val) => {
+                                                        field.onChange(val);
+                                                        const suggestedCurrency = getCurrencyByCountry(val);
+                                                        if (suggestedCurrency) {
+                                                            profileForm.setValue('currency', suggestedCurrency);
+                                                        }
+                                                        profileForm.setValue('state', '');
+                                                    }}
+                                                    placeholder="Select country"
+                                                />
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
                                         <FormField control={profileForm.control} name="state" render={({ field }) => (
-                                            <FormItem>
+                                            <FormItem className="flex flex-col">
                                                 <FormLabel>State</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!profileForm.watch('country')}>
-                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select State" /></SelectTrigger></FormControl>
-                                                    <SelectContent className="max-h-60">
-                                                        {countries.find(c => c.name === profileForm.watch('country'))?.states.map(state => (
-                                                            <SelectItem key={state.name} value={state.name}>{state.name}</SelectItem>
-                                                        ))}
+                                                <Combobox
+                                                    options={countries.find(c => c.name === profileForm.watch('country'))?.states.map(s => ({ label: s.name, value: s.name })) || []}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Select state"
+                                                    disabled={!profileForm.watch('country')}
+                                                />
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <FormField control={profileForm.control} name="currency" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Preferred Currency</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value || 'USD'}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select currency" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="USD">USD - US Dollar</SelectItem>
+                                                        <SelectItem value="NGN">NGN - Nigerian Naira</SelectItem>
+                                                        <SelectItem value="GHS">GHS - Ghanaian Cedi</SelectItem>
+                                                        <SelectItem value="KES">KES - Kenyan Shilling</SelectItem>
+                                                        <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                                                        <SelectItem value="EUR">EUR - Euro</SelectItem>
                                                     </SelectContent>
                                                 </Select>
+                                                <FormDescription>Used for price display across the site.</FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )} />

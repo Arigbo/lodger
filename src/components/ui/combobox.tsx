@@ -41,7 +41,7 @@ export function Combobox({
     const [open, setOpen] = React.useState(false);
 
     return (
-        <Popover open={open} onOpenChange={setOpen} modal={true}>
+        <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"
@@ -67,7 +67,7 @@ export function Combobox({
                                     key={option.value}
                                     value={option.label} // Search by label
                                     onSelect={() => {
-                                        onChange(option.value === value ? "" : option.value);
+                                        onChange(option.value);
                                         setOpen(false);
                                     }}
                                 >

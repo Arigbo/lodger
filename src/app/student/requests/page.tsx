@@ -216,82 +216,84 @@ export default function StudentRequestsPage() {
         </CardHeader>
         <CardContent>
           {aggregatedRequests.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Landlord</TableHead>
-                  <TableHead>Date Sent</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {aggregatedRequests.map(({ request, landlord, property }) => {
-                  return (
-                    <TableRow key={request.id}>
-                      <TableCell>
-                        <Link href={`/student/properties/${property?.id}`} className="font-medium hover:underline">
-                          {property?.title || 'Unknown Property'}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-muted-foreground">{landlord?.name || 'Unknown Landlord'}</span>
-                      </TableCell>
-                      <TableCell>{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusVariant(request.status)} className="capitalize">
-                          {request.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {request.status === 'approved' && (
-                            <Button variant="secondary" size="sm" asChild>
-                              <Link href="/student/leases">
-                                View Leases
-                              </Link>
-                            </Button>
-                          )}
-                          {request.status === 'pending' && (
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setRequestToEdit(request);
-                                  setEditMessage(request.messageToLandlord || '');
-                                }}
-                              >
-                                Edit
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Landlord</TableHead>
+                    <TableHead>Date Sent</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {aggregatedRequests.map(({ request, landlord, property }) => {
+                    return (
+                      <TableRow key={request.id}>
+                        <TableCell>
+                          <Link href={`/student/properties/${property?.id}`} className="font-medium hover:underline">
+                            {property?.title || 'Unknown Property'}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-muted-foreground">{landlord?.name || 'Unknown Landlord'}</span>
+                        </TableCell>
+                        <TableCell>{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusVariant(request.status)} className="capitalize">
+                            {request.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {request.status === 'approved' && (
+                              <Button variant="secondary" size="sm" asChild>
+                                <Link href="/student/leases">
+                                  View Leases
+                                </Link>
                               </Button>
+                            )}
+                            {request.status === 'pending' && (
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setRequestToEdit(request);
+                                    setEditMessage(request.messageToLandlord || '');
+                                  }}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => setRequestToDelete(request.id)}
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            )}
+                            {/* Allow deletion even if declined/approved to clear list? User said "delete their request" */}
+                            {request.status !== 'pending' && request.status !== 'approved' && (
                               <Button
-                                variant="destructive"
+                                variant="ghost"
                                 size="sm"
+                                className="text-destructive hover:text-destructive"
                                 onClick={() => setRequestToDelete(request.id)}
                               >
-                                Delete
+                                Remove
                               </Button>
-                            </div>
-                          )}
-                          {/* Allow deletion even if declined/approved to clear list? User said "delete their request" */}
-                          {request.status !== 'pending' && request.status !== 'approved' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => setRequestToDelete(request.id)}
-                            >
-                              Remove
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">

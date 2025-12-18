@@ -220,60 +220,69 @@ export default function LandlordPropertyDetailPage() {
             <CardDescription>Review and respond to rental applications for this property.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Applicant</TableHead>
-                  <TableHead>Message</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {areRequestsLoading ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={4}>
-                      <div className="flex items-center space-x-2">
-                        <Skeleton className="h-4 w-4" />
-                        <Skeleton className="h-4 w-24" />
-                      </div>
-                    </TableCell>
+                    <TableHead>Applicant</TableHead>
+                    <TableHead>Message</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ) : aggregatedRequests && aggregatedRequests.length > 0 ? (
-                  aggregatedRequests.map(({ request, applicant }) => {
-                    return (
-                      <TableRow key={request.id}>
-                        <TableCell className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={applicant?.profileImageUrl} />
-                            <AvatarFallback>
-                              <User className="h-4 w-4" />
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className='font-medium'>{applicant?.name || 'Unknown User'}</span>
-                        </TableCell>
-                        <TableCell className="max-w-xs truncate text-muted-foreground">{request.messageToLandlord}</TableCell>
-                        <TableCell>{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right">
-                          {request.status === 'pending' ? (
-                            <div className='flex justify-end gap-2'>
-                              <Button size="sm" variant="outline" onClick={() => handleAcceptClick({ request, applicant })}><Check className='h-4 w-4' /></Button>
-                              <Button size="sm" variant="destructive" onClick={() => handleDeclineClick(request.id)}><X className='h-4 w-4' /></Button>
+                </TableHeader>
+                <TableBody>
+                  {areRequestsLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={4}>
+                        <div className="flex items-center space-x-2">
+                          <Skeleton className="h-4 w-4" />
+                          <Skeleton className="h-4 w-24" />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : aggregatedRequests && aggregatedRequests.length > 0 ? (
+                    aggregatedRequests.map(({ request, applicant }) => {
+                      return (
+                        <TableRow key={request.id}>
+                          <TableCell className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={applicant?.profileImageUrl} />
+                              <AvatarFallback>
+                                <User className="h-4 w-4" />
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{applicant?.name || 'Unknown'}</p>
+                              <p className="text-xs text-muted-foreground">{applicant?.email}</p>
                             </div>
-                          ) : (
-                            <Badge variant={request.status === 'approved' ? 'secondary' : 'destructive'}>{request.status}</Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center h-24">No pending requests.</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">{request.messageToLandlord || 'No message provided.'}</TableCell>
+                          <TableCell>{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-right">
+                            {request.status === 'pending' ? (
+                              <div className="flex justify-end gap-2">
+                                <Button variant="outline" size="sm" onClick={() => handleAcceptClick({ request, applicant })}>
+                                  Approve
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeclineClick(request.id)}>
+                                  Decline
+                                </Button>
+                              </div>
+                            ) : (
+                              <Badge variant={request.status === 'approved' ? 'secondary' : 'destructive'}>{request.status}</Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center h-24">No pending requests.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 

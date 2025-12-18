@@ -35,8 +35,9 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import Image from 'next/image';
-import { UploadCloud, X, Loader2 } from 'lucide-react';
+import { UploadCloud, X, Loader2, Building } from 'lucide-react';
 import Loading from '@/app/loading';
+import Link from 'next/link';
 
 const formSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -119,7 +120,26 @@ export default function EditPropertyPage() {
     return <Loading />;
   }
 
-  if (!isPropertyLoading && (!property || (user && user.uid !== property.landlordId))) {
+  // If ID is not present (rare but possible in some router transitions), wait.
+  if (!id) return <Loading />;
+
+  // Authorization Check & Not Found
+  if (!property) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center py-20 bg-card rounded-lg border">
+        <div className="rounded-full bg-secondary p-4">
+          <Building className="h-10 w-10 text-muted-foreground" />
+        </div>
+        <h1 className="mt-6 text-2xl font-bold">Property Not Found</h1>
+        <p className="mt-2 text-muted-foreground">The property you are looking for does not exist or you do not have permission to edit it.</p>
+        <Button asChild className="mt-6">
+          <Link href="/landlord/properties">Back to My Properties</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (user && property.landlordId !== user.uid) {
     return notFound();
   }
 
@@ -216,8 +236,6 @@ export default function EditPropertyPage() {
       })
     }
   }
-
-  if (!property) return <Loading />;
 
   return (
     <Card>

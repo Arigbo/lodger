@@ -369,6 +369,7 @@ export default function AddPropertyPage() {
                 bedrooms: values.bedrooms,
                 bathrooms: values.bathrooms,
                 area: values.area,
+                currency: values.currency || 'USD',
                 amenities: values.amenities,
                 images: uploadedImageUrls,
                 landlordId: user.uid,

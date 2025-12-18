@@ -162,65 +162,67 @@ export default function MaintenancePage() {
         </CardHeader>
         <CardContent>
           {requests.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Tenant</TableHead>
-                  <TableHead>Request</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead><span className="sr-only">Actions</span></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {requests.map((request) => {
-                  return (
-                    <TableRow key={request.id}>
-                      <TableCell>
-                        <Link href={`/landlord/properties/${request.propertyId}`} className="font-medium hover:underline">
-                          {request.propertyName}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <Link href={`/landlord/tenants/${request.tenantId}`} className="text-muted-foreground hover:underline">
-                          {request.tenantName}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="font-medium max-w-xs truncate">{request.title}</TableCell>
-                      <TableCell>{request.category}</TableCell>
-                      <TableCell>
-                        <Badge variant={getPriorityVariant(request.priority)}>{request.priority}</Badge>
-                      </TableCell>
-                      <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusVariant(request.status)}>{request.status}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>Mark as In Progress</DropdownMenuItem>
-                            <DropdownMenuItem>Mark as Completed</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                              Cancel Request
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Tenant</TableHead>
+                    <TableHead>Request</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {requests.map((request) => {
+                    return (
+                      <TableRow key={request.id}>
+                        <TableCell>
+                          <Link href={`/landlord/properties/${request.propertyId}`} className="font-medium hover:underline">
+                            {request.propertyName}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Link href={`/landlord/tenants/${request.tenantId}`} className="text-muted-foreground hover:underline">
+                            {request.tenantName}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="font-medium max-w-xs truncate">{request.title}</TableCell>
+                        <TableCell>{request.category}</TableCell>
+                        <TableCell>
+                          <Badge variant={getPriorityVariant(request.priority)}>{request.priority}</Badge>
+                        </TableCell>
+                        <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusVariant(request.status)}>{request.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem>Mark as In Progress</DropdownMenuItem>
+                              <DropdownMenuItem>Mark as Completed</DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive">
+                                Cancel Request
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">

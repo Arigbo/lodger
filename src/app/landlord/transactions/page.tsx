@@ -365,66 +365,68 @@ Total: ${formatPrice(transaction.transaction.amount, transaction.transaction.cur
         </CardHeader>
         <CardContent>
           {filteredTransactions.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tenant</TableHead>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead><span className="sr-only">Actions</span></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTransactions.map(({ transaction, tenant, property }) => {
-                  return (
-                    <TableRow key={transaction.id}>
-                      <TableCell>
-                        <Link href={`/landlord/tenants/${tenant?.id}`} className="font-medium hover:underline flex items-center gap-2">
-                          {tenant?.name} <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <Link href={`/landlord/properties/${property?.id}`} className="text-muted-foreground hover:underline">
-                          {property?.title}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-muted-foreground">{transaction.type}</TableCell>
-                      <TableCell className="text-right font-medium">{formatPrice(transaction.amount, transaction.currency)}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant={
-                          transaction.status === 'Completed' ? 'secondary'
-                            : transaction.status === 'Pending' ? 'default'
-                              : 'destructive'
-                        }>
-                          {transaction.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleDownloadReceipt(transaction.id)}>
-                              <Download className="mr-2 h-4 w-4" />
-                              Download Receipt
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tenant</TableHead>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
+                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTransactions.map(({ transaction, tenant, property }) => {
+                    return (
+                      <TableRow key={transaction.id}>
+                        <TableCell>
+                          <Link href={`/landlord/tenants/${tenant?.id}`} className="font-medium hover:underline flex items-center gap-2">
+                            {tenant?.name} <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Link href={`/landlord/properties/${property?.id}`} className="text-muted-foreground hover:underline">
+                            {property?.title}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-muted-foreground">{transaction.type}</TableCell>
+                        <TableCell className="text-right font-medium">{formatPrice(transaction.amount, transaction.currency)}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={
+                            transaction.status === 'Completed' ? 'secondary'
+                              : transaction.status === 'Pending' ? 'default'
+                                : 'destructive'
+                          }>
+                            {transaction.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => handleDownloadReceipt(transaction.id)}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Download Receipt
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
