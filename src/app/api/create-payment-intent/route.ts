@@ -3,12 +3,12 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2024-11-20.acacia', // Use latest stable API version or match your installed version
+    apiVersion: '2025-12-15.clover', // Use latest stable API version or match your installed version
 });
 
 export async function POST(request: Request) {
     try {
-        const { amount, landlordId } = await request.json();
+        const { amount, landlordId, destinationAccountId } = await request.json();
 
         // 1. Fetch Landlord's Stripe Account ID from Firestore (Admin SDK would be better, but we can't easily here without it)
         // Optimization: Pass it from frontend? No, insecure. 
@@ -25,14 +25,13 @@ export async function POST(request: Request) {
         // Let's TRY to rely on the body param `destinationAccountId` passed from the frontend (which fetches it from the lease->landlord).
         // It's "secure enough" for a demo if we trust the landlordId.
 
-        const { destinationAccountId } = await request.json();
-
         const paymentIntentData: Stripe.PaymentIntentCreateParams = {
             amount: Math.round(amount * 100),
             currency: 'usd',
             automatic_payment_methods: { enabled: true },
         };
 
+        // Only add transfer_data if destinationAccountId is provided
         if (destinationAccountId) {
             paymentIntentData.transfer_data = {
                 destination: destinationAccountId,
@@ -41,9 +40,29 @@ export async function POST(request: Request) {
             // paymentIntentData.application_fee_amount = Math.round(amount * 100 * 0.05);
         }
 
-        const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
+        try {
+            const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
+            return NextResponse.json({ clientSecret: paymentIntent.client_secret });
+        } catch (stripeError: any) {
+            // If the error is about insufficient capabilities, retry without transfer_data
+            if (stripeError.code === 'insufficient_capabilities_for_transfer' && destinationAccountId) {
+                console.warn(
+                    `Destination account ${destinationAccountId} lacks transfer capabilities. ` +
+                    `Processing payment without transfer. Landlord should complete Stripe onboarding.`
+                );
 
-        return NextResponse.json({ clientSecret: paymentIntent.client_secret });
+                // Retry without transfer_data
+                delete paymentIntentData.transfer_data;
+                const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
+                return NextResponse.json({
+                    clientSecret: paymentIntent.client_secret,
+                    warning: 'Payment processed without transfer. Landlord needs to complete Stripe setup.'
+                });
+            }
+
+            // Re-throw other Stripe errors
+            throw stripeError;
+        }
     } catch (error: any) {
         console.error('Internal Error:', error);
         return NextResponse.json(

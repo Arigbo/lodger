@@ -419,10 +419,10 @@ export default function PropertyDetailPage() {
                     </div>
 
                     <Card className="my-8">
-                        <CardContent className="p-6 flex items-center justify-around">
-                            <div className="text-center"><BedDouble className="mx-auto mb-2 h-7 w-7 text-primary" /><p>{property.bedrooms} Beds</p></div>
-                            <div className="text-center"><Bath className="mx-auto mb-2 h-7 w-7 text-primary" /><p>{property.bathrooms} Baths</p></div>
-                            <div className="text-center"><Ruler className="mx-auto mb-2 h-7 w-7 text-primary" /><p>{property.area} sqft</p></div>
+                        <CardContent className="p-4 md:p-6 grid grid-cols-3 gap-2 text-center">
+                            <div><BedDouble className="mx-auto mb-2 h-6 md:h-7 w-6 md:w-7 text-primary" /><p className="text-xs md:text-sm">{property.bedrooms} Beds</p></div>
+                            <div><Bath className="mx-auto mb-2 h-6 md:h-7 w-6 md:w-7 text-primary" /><p className="text-xs md:text-sm">{property.bathrooms} Baths</p></div>
+                            <div><Ruler className="mx-auto mb-2 h-6 md:h-7 w-6 md:w-7 text-primary" /><p className="text-xs md:text-sm">{property.area} sqft</p></div>
                         </CardContent>
                     </Card>
 

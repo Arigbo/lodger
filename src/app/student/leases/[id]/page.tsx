@@ -70,6 +70,24 @@ export default function ViewStudentLeasePage() {
         });
     }, [id, lease, currentUser]);
 
+    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+    const [clientSecret, setClientSecret] = useState("");
+
+    React.useEffect(() => {
+        if (isPaymentOpen && property?.price) {
+            fetch("/api/create-payment-intent", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    amount: property.price,
+                    destinationAccountId: landlord?.stripeAccountId
+                }),
+            })
+                .then((res) => res.json())
+                .then((data) => setClientSecret(data.clientSecret));
+        }
+    }, [isPaymentOpen, property?.price, landlord?.stripeAccountId]);
+
     if (isLoading) {
         return <Loading />;
     }
@@ -110,24 +128,6 @@ export default function ViewStudentLeasePage() {
         );
     }
 
-    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-    const [clientSecret, setClientSecret] = useState("");
-
-    React.useEffect(() => {
-        if (isPaymentOpen && property?.price) {
-            fetch("/api/create-payment-intent", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    amount: property.price,
-                    destinationAccountId: landlord?.stripeAccountId
-                }),
-            })
-                .then((res) => res.json())
-                .then((data) => setClientSecret(data.clientSecret));
-        }
-    }, [isPaymentOpen, property?.price, landlord?.stripeAccountId]);
-
     const handlePaymentSuccess = async () => {
         try {
             if (!leaseRef) return;
@@ -160,6 +160,39 @@ export default function ViewStudentLeasePage() {
         } catch (error) {
             console.error("Post-payment update failed:", error);
             toast({ variant: "destructive", title: "Error", description: "Payment succeeded but status update failed. Contact support." });
+        }
+    };
+
+    const handleOfflinePayment = async () => {
+        if (!leaseRef) return;
+
+        try {
+            await updateDoc(leaseRef, {
+                paymentMethod: 'offline',
+                paymentConfirmed: false
+            });
+
+            // Send notification to landlord
+            await sendNotification({
+                toUserId: lease.landlordId,
+                type: 'OFFLINE_PAYMENT_PENDING',
+                firestore: firestore,
+                propertyTitle: property?.title || 'Property',
+                tenantName: currentUser.displayName || currentUser.email || 'Tenant',
+                link: `/landlord/requests`
+            });
+
+            toast({
+                title: "Payment Method Selected",
+                description: "Waiting for landlord to confirm payment receipt. You will be notified once approved."
+            });
+        } catch (error: any) {
+            console.error("Error selecting offline payment:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to select payment method. Please try again."
+            });
         }
     };
 
@@ -381,18 +414,33 @@ export default function ViewStudentLeasePage() {
                     {/* Show Payment Button if signed but not active (pending payment) */}
                     {/* Note: In our new flow, we might want a distinct 'signed_pending_payment' status, 
                     but sticking to 'pending' with tenantSigned=true works if we check flags. */}
-                    {lease.tenantSigned && lease.status === 'pending' && (
+                    {lease.tenantSigned && lease.status === 'pending' && !lease.paymentMethod && (
                         <div className="mt-6 flex flex-col items-center gap-4 rounded-lg border border-green-600/50 bg-green-50 p-6 dark:bg-green-950/20">
                             <h3 className="font-bold text-green-700 dark:text-green-400">Lease Signed! Next Step: Payment</h3>
                             <p className="text-center text-sm text-muted-foreground">
-                                Please make your first month's rent payment to finalize the tenancy and receive your keys.
+                                Choose your payment method to finalize the tenancy.
                             </p>
-                            <div className="flex gap-4">
-                                <Button className="w-full mt-4" size="lg" onClick={() => setIsPaymentOpen(true)}>
+                            <div className="flex flex-col sm:flex-row gap-4 w-full">
+                                <Button className="flex-1" size="lg" onClick={() => setIsPaymentOpen(true)}>
                                     <DollarSign className="h-4 w-4 mr-2" />
-                                    Pay First Month's Rent
+                                    Pay with Stripe
+                                </Button>
+                                <Button className="flex-1" size="lg" variant="outline" onClick={handleOfflinePayment}>
+                                    <DollarSign className="h-4 w-4 mr-2" />
+                                    Pay without Stripe
                                 </Button>
                             </div>
+                        </div>
+                    )}
+
+                    {/* Waiting for landlord approval */}
+                    {lease.paymentMethod === 'offline' && !lease.paymentConfirmed && (
+                        <div className="mt-6 flex flex-col items-center gap-4 rounded-lg border border-blue-600/50 bg-blue-50 p-6 dark:bg-blue-950/20">
+                            <Hourglass className="h-12 w-12 text-blue-600 animate-pulse" />
+                            <h3 className="font-bold text-blue-700 dark:text-blue-400">Awaiting Landlord Confirmation</h3>
+                            <p className="text-center text-sm text-muted-foreground">
+                                You selected offline payment. The landlord has been notified and will confirm receipt of your payment. This may take up to 3 days.
+                            </p>
                         </div>
                     )}
 

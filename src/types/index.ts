@@ -111,6 +111,11 @@ export type LeaseAgreement = {
     startDate: string;
     endDate: string;
     status: 'active' | 'expired' | 'pending';
+    paymentMethod?: 'stripe' | 'offline' | null;
+    paymentConfirmed?: boolean;
+    landlordApprovedOfflinePayment?: boolean;
+    createdAt?: any; // Firestore timestamp
+    expiresAt?: any; // Firestore timestamp (3 days from creation)
 };
 
 export type Conversation = {

@@ -19,7 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { UserProfile, Property, RentalApplication } from '@/types/';
+import type { UserProfile, Property, RentalApplication, LeaseAgreement } from '@/types/';
 import { Check, X, Bell, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import React, { useState } from 'react';
@@ -55,6 +55,11 @@ export default function RentalRequestsPage() {
   const [aggregatedRequests, setAggregatedRequests] = useState<AggregatedRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [landlordProfile, setLandlordProfile] = useState<UserProfile | null>(null);
+  const [pendingOfflinePayments, setPendingOfflinePayments] = useState<Array<{
+    lease: LeaseAgreement;
+    tenant: UserProfile | null;
+    property: Property | null;
+  }>>([]);
 
   React.useEffect(() => {
     if (!landlord || !firestore) {
@@ -123,6 +128,58 @@ export default function RentalRequestsPage() {
     };
 
     fetchRequests();
+
+    // Fetch pending offline payments
+    const fetchOfflinePayments = async () => {
+      const leasesQuery = query(
+        collection(firestore, 'leaseAgreements'),
+        where('landlordId', '==', landlord.uid),
+        where('paymentMethod', '==', 'offline'),
+        where('paymentConfirmed', '==', false)
+      );
+
+      const leasesSnapshot = await getDocs(leasesQuery);
+      const leases: LeaseAgreement[] = leasesSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as LeaseAgreement));
+
+      if (leases.length === 0) {
+        setPendingOfflinePayments([]);
+        return;
+      }
+
+      const tenantIds = [...new Set(leases.map(l => l.tenantId))].filter(Boolean);
+      const propertyIds = [...new Set(leases.map(l => l.propertyId))].filter(Boolean);
+
+      const tenantsMap = new Map<string, UserProfile>();
+      const propertiesMap = new Map<string, Property>();
+
+      if (tenantIds.length > 0) {
+        const tenantChunks = chunkArray(tenantIds, 30);
+        for (const chunk of tenantChunks) {
+          const tenantsQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+          const tenantSnapshots = await getDocs(tenantsQuery);
+          tenantSnapshots.forEach((doc: any) => tenantsMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile));
+        }
+      }
+
+      if (propertyIds.length > 0) {
+        const propertyChunks = chunkArray(propertyIds, 30);
+        for (const chunk of propertyChunks) {
+          const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
+          const propertySnapshots = await getDocs(propertiesQuery);
+          propertySnapshots.forEach((doc: any) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+        }
+      }
+
+      const payments = leases.map(lease => ({
+        lease,
+        tenant: tenantsMap.get(lease.tenantId) || null,
+        property: propertiesMap.get(lease.propertyId) || null,
+      }));
+
+      setPendingOfflinePayments(payments);
+    };
+
+    fetchOfflinePayments();
   }, [landlord, firestore, isUserLoading]);
 
   const pendingRequests = aggregatedRequests.filter(req => req.request.status === 'pending');
@@ -213,7 +270,83 @@ export default function RentalRequestsPage() {
           : ar
       ));
     }
-  }
+  };
+
+  const handleApproveOfflinePayment = async (leaseId: string, tenantId: string, propertyId: string, propertyTitle: string) => {
+    try {
+      const leaseRef = doc(firestore, 'leaseAgreements', leaseId);
+      const propertyRef = doc(firestore, 'properties', propertyId);
+
+      // Update lease
+      await updateDoc(leaseRef, {
+        paymentConfirmed: true,
+        landlordApprovedOfflinePayment: true,
+        status: 'active'
+      });
+
+      // Update property
+      const leaseDoc = await getDoc(leaseRef);
+      const leaseData = leaseDoc.data() as LeaseAgreement;
+
+      await updateDoc(propertyRef, {
+        status: 'occupied',
+        currentTenantId: tenantId,
+        leaseStartDate: leaseData.startDate
+      });
+
+      // Create transaction record
+      const property = pendingOfflinePayments.find(p => p.lease.id === leaseId)?.property;
+      await addDoc(collection(firestore, 'transactions'), {
+        landlordId: landlord!.uid,
+        tenantId: tenantId,
+        propertyId: propertyId,
+        amount: property?.price || 0,
+        date: new Date().toISOString(),
+        type: 'Rent',
+        status: 'Completed'
+      });
+
+      // Notify tenant
+      await sendNotification({
+        toUserId: tenantId,
+        type: 'OFFLINE_PAYMENT_APPROVED',
+        firestore: firestore,
+        propertyTitle: propertyTitle,
+        link: `/student/tenancy`
+      });
+
+      // Update local state
+      setPendingOfflinePayments(prev => prev.filter(p => p.lease.id !== leaseId));
+    } catch (error) {
+      console.error('Error approving offline payment:', error);
+    }
+  };
+
+  const handleRejectOfflinePayment = async (leaseId: string, tenantId: string, propertyTitle: string) => {
+    try {
+      const leaseRef = doc(firestore, 'leaseAgreements', leaseId);
+
+      // Reset payment method so tenant can choose again
+      await updateDoc(leaseRef, {
+        paymentMethod: null,
+        paymentConfirmed: false
+      });
+
+      // Notify tenant
+      await sendNotification({
+        toUserId: tenantId,
+        type: 'OFFLINE_PAYMENT_REJECTED',
+        firestore: firestore,
+        propertyTitle: propertyTitle,
+        link: `/student/leases/${leaseId}`
+      });
+
+      // Update local state
+      setPendingOfflinePayments(prev => prev.filter(p => p.lease.id !== leaseId));
+    } catch (error) {
+      console.error('Error rejecting offline payment:', error);
+    }
+  };
 
   if (isUserLoading || isLoading) {
     return <Loading />;
@@ -255,59 +388,132 @@ export default function RentalRequestsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Applicant</TableHead>
-                    <TableHead>Property</TableHead>
-                    <TableHead>Message</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingRequests.length > 0 ? (
-                    pendingRequests.map((aggregatedRequest) => {
-                      const { request, applicant, property } = aggregatedRequest;
-                      if (!applicant || !property) return null;
-                      return (
-                        <TableRow key={request.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <Avatar>
-                                <AvatarImage src={applicant?.profileImageUrl} />
-                                <AvatarFallback>
-                                  <UserIcon className="h-4 w-4" />
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="font-medium">{applicant?.name}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Link href={`/landlord/properties/${property?.id}`} className="hover:underline text-muted-foreground">
-                              {property?.title}
-                            </Link>
-                          </TableCell>
-                          <TableCell className="max-w-xs truncate text-muted-foreground">{request.messageToLandlord}</TableCell>
-                          <TableCell>{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button size="sm" variant="outline" onClick={() => handleAcceptClick(aggregatedRequest)}><Check className="h-4 w-4" /></Button>
-                              <Button size="sm" variant="destructive" onClick={() => handleDeclineClick(request.id)}><X className="h-4 w-4" /></Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })
-                  ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center h-24">No pending requests.</TableCell>
+                      <TableHead>Applicant</TableHead>
+                      <TableHead>Property</TableHead>
+                      <TableHead>Message</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingRequests.length > 0 ? (
+                      pendingRequests.map((aggregatedRequest) => {
+                        const { request, applicant, property } = aggregatedRequest;
+                        if (!applicant || !property) return null;
+                        return (
+                          <TableRow key={request.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar>
+                                  <AvatarImage src={applicant?.profileImageUrl} />
+                                  <AvatarFallback>
+                                    <UserIcon className="h-4 w-4" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium">{applicant?.name}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Link href={`/landlord/properties/${property?.id}`} className="hover:underline text-muted-foreground">
+                                {property?.title}
+                              </Link>
+                            </TableCell>
+                            <TableCell className="max-w-xs truncate text-muted-foreground">{request.messageToLandlord}</TableCell>
+                            <TableCell>{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button size="sm" variant="outline" onClick={() => handleAcceptClick(aggregatedRequest)}><Check className="h-4 w-4" /></Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleDeclineClick(request.id)}><X className="h-4 w-4" /></Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center h-24">No pending requests.</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
+
+          {/* Offline Payment Approvals */}
+          {pendingOfflinePayments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Offline Payment Confirmations</CardTitle>
+                <CardDescription>
+                  {pendingOfflinePayments.length} tenant(s) selected offline payment. Confirm receipt to activate their lease.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Tenant</TableHead>
+                        <TableHead>Property</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Date Selected</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pendingOfflinePayments.map(({ lease, tenant, property }) => {
+                        if (!tenant || !property) return null;
+                        return (
+                          <TableRow key={lease.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar>
+                                  <AvatarImage src={tenant.profileImageUrl} />
+                                  <AvatarFallback>
+                                    <UserIcon className="h-4 w-4" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium">{tenant.name}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Link href={`/landlord/properties/${property.id}`} className="hover:underline text-muted-foreground">
+                                {property.title}
+                              </Link>
+                            </TableCell>
+                            <TableCell className="font-semibold">${property.price}</TableCell>
+                            <TableCell>{lease.createdAt ? new Date(lease.createdAt.toDate()).toLocaleDateString() : 'N/A'}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleApproveOfflinePayment(lease.id, tenant.id, property.id, property.title)}
+                                >
+                                  <Check className="h-4 w-4 mr-1" /> Confirm Payment
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleRejectOfflinePayment(lease.id, tenant.id, property.title)}
+                                >
+                                  <X className="h-4 w-4 mr-1" /> Reject
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
       {selectedRequest && landlordProfile && selectedRequest.property?.leaseTemplate && (

@@ -71,6 +71,10 @@ export default function AccountPage() {
     const [isUploading, setIsUploading] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [refetchKey, setRefetchKey] = useState(0);
+    const [stripeAccountStatus, setStripeAccountStatus] = useState<{
+        status: 'incomplete' | 'pending' | 'active' | 'checking' | 'error';
+        message: string;
+    }>({ status: 'checking', message: '' });
 
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -139,6 +143,48 @@ export default function AccountPage() {
                 });
         }
     }, [searchParams, userDocRef, router, toast]);
+
+    // Check Stripe account status when stripeAccountId exists
+    useEffect(() => {
+        const checkStripeStatus = async () => {
+            if (!userProfile?.stripeAccountId) {
+                setStripeAccountStatus({ status: 'incomplete', message: '' });
+                return;
+            }
+
+            setStripeAccountStatus({ status: 'checking', message: 'Checking account status...' });
+
+            try {
+                const response = await fetch('/api/stripe/account-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accountId: userProfile.stripeAccountId }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    setStripeAccountStatus({
+                        status: data.status,
+                        message: data.message,
+                    });
+                } else {
+                    setStripeAccountStatus({
+                        status: 'error',
+                        message: data.error || 'Failed to check account status',
+                    });
+                }
+            } catch (error: any) {
+                console.error('Error checking Stripe status:', error);
+                setStripeAccountStatus({
+                    status: 'error',
+                    message: 'Failed to verify account status',
+                });
+            }
+        };
+
+        checkStripeStatus();
+    }, [userProfile?.stripeAccountId]);
 
     const handleConnectStripe = async () => {
         if (!user) return;
@@ -376,18 +422,72 @@ export default function AccountPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 {userProfile?.stripeAccountId ? (
-                                    <div className="flex items-center justify-between p-4 border rounded-lg bg-green-50 border-green-200">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-green-100 rounded-full">
-                                                <Wallet className="h-5 w-5 text-green-700" />
+                                    <>
+                                        {stripeAccountStatus.status === 'checking' && (
+                                            <div className="flex items-center gap-3 p-4 border rounded-lg">
+                                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                                                <p className="text-sm text-muted-foreground">{stripeAccountStatus.message}</p>
                                             </div>
-                                            <div>
-                                                <p className="font-medium text-green-900">Stripe Connected</p>
-                                                <p className="text-sm text-green-700">You are ready to receive payouts.</p>
+                                        )}
+                                        {stripeAccountStatus.status === 'active' && (
+                                            <div className="flex items-center justify-between p-4 border rounded-lg bg-green-50 border-green-200">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-green-100 rounded-full">
+                                                        <Wallet className="h-5 w-5 text-green-700" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-green-900">Stripe Connected</p>
+                                                        <p className="text-sm text-green-700">{stripeAccountStatus.message}</p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        {/* Ideally add a "Login to Dashboard" button here involving stripe.accounts.createLoginLink */}
-                                    </div>
+                                        )}
+                                        {stripeAccountStatus.status === 'incomplete' && (
+                                            <div className="flex flex-col gap-4 p-4 border rounded-lg bg-yellow-50 border-yellow-200">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-yellow-100 rounded-full">
+                                                        <Wallet className="h-5 w-5 text-yellow-700" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-yellow-900">Onboarding Incomplete</p>
+                                                        <p className="text-sm text-yellow-700">{stripeAccountStatus.message}</p>
+                                                    </div>
+                                                </div>
+                                                <Button onClick={handleConnectStripe} variant="outline" className="w-fit">
+                                                    Complete Stripe Setup
+                                                </Button>
+                                            </div>
+                                        )}
+                                        {stripeAccountStatus.status === 'pending' && (
+                                            <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50 border-blue-200">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-blue-100 rounded-full">
+                                                        <Wallet className="h-5 w-5 text-blue-700" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-blue-900">Account Pending</p>
+                                                        <p className="text-sm text-blue-700">{stripeAccountStatus.message}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {stripeAccountStatus.status === 'error' && (
+                                            <div className="flex flex-col gap-4 p-4 border rounded-lg bg-red-50 border-red-200">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-red-100 rounded-full">
+                                                        <Wallet className="h-5 w-5 text-red-700" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-red-900">Status Check Failed</p>
+                                                        <p className="text-sm text-red-700">{stripeAccountStatus.message}</p>
+                                                    </div>
+                                                </div>
+                                                <Button onClick={handleConnectStripe} variant="outline" className="w-fit">
+                                                    Retry Setup
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </>
                                 ) : (
                                     <div className="flex flex-col gap-4">
                                         <p className="text-sm text-muted-foreground">

@@ -222,85 +222,87 @@ export default function LandlordPropertiesPage() {
         </CardHeader>
         <CardContent>
           {displayedProperties && displayedProperties.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Tenant</TableHead>
-                  <TableHead>
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {displayedProperties.map((property) => {
-                  const isOccupied = property.status === 'occupied';
-                  return (
-                    <TableRow key={property.id}>
-                      <TableCell className="font-medium">
-                        <Link href={`/landlord/properties/${property.id}`} className="hover:underline">
-                          {property.title}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={isOccupied ? 'secondary' : 'default'}>
-                          {property.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{formatPrice(property.price)}/mo</TableCell>
-                      <TableCell>{property.tenantName || 'N/A'}</TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/landlord/properties/edit/${property.id}`}>Edit</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/landlord/properties/${property.id}`}>View Requests</Link>
-                            </DropdownMenuItem>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="relative w-full">
-                                    <DropdownMenuItem
-                                      className="text-destructive"
-                                      disabled={isOccupied}
-                                      onSelect={(e) => {
-                                        if (isOccupied) {
-                                          e.preventDefault();
-                                        } else {
-                                          setPropertyToDelete(property.id);
-                                        }
-                                      }}
-                                    >
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </div>
-                                </TooltipTrigger>
-                                {isOccupied && (
-                                  <TooltipContent>
-                                    <p>Cannot delete a property with an active tenant.</p>
-                                  </TooltipContent>
-                                )}
-                              </Tooltip>
-                            </TooltipProvider>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Tenant</TableHead>
+                    <TableHead>
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {displayedProperties.map((property) => {
+                    const isOccupied = property.status === 'occupied';
+                    return (
+                      <TableRow key={property.id}>
+                        <TableCell className="font-medium">
+                          <Link href={`/landlord/properties/${property.id}`} className="hover:underline">
+                            {property.title}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={isOccupied ? 'secondary' : 'default'}>
+                            {property.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{formatPrice(property.price)}/mo</TableCell>
+                        <TableCell>{property.tenantName || 'N/A'}</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/landlord/properties/edit/${property.id}`}>Edit</Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/landlord/properties/${property.id}`}>View Requests</Link>
+                              </DropdownMenuItem>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="relative w-full">
+                                      <DropdownMenuItem
+                                        className="text-destructive"
+                                        disabled={isOccupied}
+                                        onSelect={(e) => {
+                                          if (isOccupied) {
+                                            e.preventDefault();
+                                          } else {
+                                            setPropertyToDelete(property.id);
+                                          }
+                                        }}
+                                      >
+                                        Delete
+                                      </DropdownMenuItem>
+                                    </div>
+                                  </TooltipTrigger>
+                                  {isOccupied && (
+                                    <TooltipContent>
+                                      <p>Cannot delete a property with an active tenant.</p>
+                                    </TooltipContent>
+                                  )}
+                                </Tooltip>
+                              </TooltipProvider>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">

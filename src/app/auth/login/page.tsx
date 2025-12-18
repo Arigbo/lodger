@@ -89,8 +89,8 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
             if (userData?.role && userData.role !== userType) {
                 toast({
                     variant: "destructive",
-                    title: "Access Denied",
-                    description: `This account is registered as a ${userData.role}. Please sign in using the ${userData.role} tab.`,
+                    title: "Invalid Credentials",
+                    description: "The email or password you entered is incorrect. Please check your credentials and try again.",
                 });
                 return;
             }
@@ -203,30 +203,65 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
 }
 
 export default function LoginPage() {
-    const [userType, setUserType] = useState<'student' | 'landlord'>('student');
+    const [userType, setUserType] = useState<'student' | 'landlord' | null>(null);
+
+    // If no user type selected, show selection screen
+    if (!userType) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-background px-4">
+                <Card className="w-full max-w-md">
+                    <CardHeader className="text-center">
+                        <CardTitle className="font-headline text-3xl">Welcome Back</CardTitle>
+                        <CardDescription>Select your account type to continue</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Button
+                            className="w-full h-20 text-lg"
+                            onClick={() => setUserType('student')}
+                        >
+                            Sign in as Student
+                        </Button>
+                        <Button
+                            className="w-full h-20 text-lg"
+                            variant="outline"
+                            onClick={() => setUserType('landlord')}
+                        >
+                            Sign in as Landlord
+                        </Button>
+                    </CardContent>
+                    <CardFooter className="justify-center">
+                        <p className="text-sm text-muted-foreground">
+                            Don't have an account?{" "}
+                            <Link href="/auth/signup" className="font-medium text-primary underline-offset-4 hover:underline">
+                                Sign up
+                            </Link>
+                        </p>
+                    </CardFooter>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-background px-4">
             <Card className="w-full max-w-md">
                 <CardHeader className="text-center">
-                    <CardTitle className="font-headline text-3xl">Welcome Back</CardTitle>
+                    <CardTitle className="font-headline text-3xl">
+                        {userType === 'student' ? 'Student Login' : 'Landlord Login'}
+                    </CardTitle>
                     <CardDescription>Sign in to continue to Lodger</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue="student" onValueChange={(value) => setUserType(value as 'student' | 'landlord')} className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="student">Student</TabsTrigger>
-                            <TabsTrigger value="landlord">Landlord</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="student" className="pt-6">
-                            <LoginForm userType="student" />
-                        </TabsContent>
-                        <TabsContent value="landlord" className="pt-6">
-                            <LoginForm userType="landlord" />
-                        </TabsContent>
-                    </Tabs>
+                    <LoginForm userType={userType} />
                 </CardContent>
-                <CardFooter className="justify-center">
+                <CardFooter className="flex-col gap-4">
+                    <Button
+                        variant="ghost"
+                        className="w-full"
+                        onClick={() => setUserType(null)}
+                    >
+                        ← Back to account type selection
+                    </Button>
                     <p className="text-sm text-muted-foreground">
                         Don't have an account?{" "}
                         <Link href="/auth/signup" className="font-medium text-primary underline-offset-4 hover:underline">

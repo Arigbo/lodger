@@ -11,7 +11,11 @@ export type NotificationType =
     | 'LEASE_GENERATED'
     | 'LEASE_SIGNED'
     | 'TENANCY_ENDED'
-    | 'REVIEW_SUBMITTED';
+    | 'REVIEW_SUBMITTED'
+    | 'OFFLINE_PAYMENT_PENDING'
+    | 'OFFLINE_PAYMENT_APPROVED'
+    | 'OFFLINE_PAYMENT_REJECTED'
+    | 'LEASE_EXPIRED';
 
 interface NotificationPayload {
     toUserId: string;
@@ -20,6 +24,8 @@ interface NotificationPayload {
     // Dynamic data for messages
     senderName?: string;
     propertyName?: string;
+    propertyTitle?: string;
+    tenantName?: string;
     link?: string;
     customMessage?: string;
 }
@@ -30,6 +36,8 @@ export const sendNotification = async ({
     firestore,
     senderName,
     propertyName,
+    propertyTitle,
+    tenantName,
     link,
     customMessage
 }: NotificationPayload) => {
@@ -102,6 +110,30 @@ export const sendNotification = async ({
             title = 'New Review';
             message = `${senderName || 'A tenant'} left a review for ${propertyName}.`;
             uiType = 'info';
+            break;
+
+        case 'OFFLINE_PAYMENT_PENDING':
+            title = 'Offline Payment Pending';
+            message = `${tenantName || 'A tenant'} has selected offline payment for ${propertyTitle || 'a property'}. Please confirm receipt of payment.`;
+            uiType = 'warning';
+            break;
+
+        case 'OFFLINE_PAYMENT_APPROVED':
+            title = 'Payment Confirmed!';
+            message = `Your offline payment for ${propertyTitle || 'the property'} has been confirmed by the landlord. Your lease is now active!`;
+            uiType = 'success';
+            break;
+
+        case 'OFFLINE_PAYMENT_REJECTED':
+            title = 'Payment Not Confirmed';
+            message = `The landlord has not confirmed your offline payment for ${propertyTitle || 'the property'}. Please contact them directly.`;
+            uiType = 'error';
+            break;
+
+        case 'LEASE_EXPIRED':
+            title = 'Lease Expired';
+            message = customMessage || 'Your lease has expired due to non-payment within the 3-day window.';
+            uiType = 'warning';
             break;
     }
 

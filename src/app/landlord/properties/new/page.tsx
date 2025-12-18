@@ -881,21 +881,21 @@ export default function AddPropertyPage() {
                         </div>
 
 
-                        <div className="mt-12 flex justify-between">
-                            <Button type="button" variant="outline" onClick={prevStep} className={cn(currentStep === 1 && "invisible")}>
+                        <div className="mt-12 flex flex-col sm:flex-row justify-between gap-4">
+                            <Button type="button" variant="outline" onClick={prevStep} className={cn(currentStep === 1 && "invisible", "w-full sm:w-auto")}>
                                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
                             </Button>
 
                             {currentStep < totalSteps - 1 ? (
-                                <Button type="button" onClick={nextStep}>
+                                <Button type="button" onClick={nextStep} className="w-full sm:w-auto">
                                     Next <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>
                             ) : currentStep === totalSteps - 1 ? (
-                                <Button type="button" onClick={nextStep}>
+                                <Button type="button" onClick={nextStep} className="w-full sm:w-auto">
                                     Review <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>
                             ) : (
-                                <Button type="submit" size="lg" disabled={isSubmitting}>
+                                <Button type="submit" size="lg" disabled={isSubmitting} className="w-full sm:w-auto">
                                     {isSubmitting ? 'Creating Property...' : 'Create Property'}
                                 </Button>
                             )}

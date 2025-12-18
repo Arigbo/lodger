@@ -168,7 +168,7 @@ export default function MessagesPage() {
                     toUserId: selectedParticipant.id,
                     type: 'NEW_MESSAGE',
                     firestore: firestore,
-                    senderName: landlord.name || 'Landlord',
+                    senderName: landlord.displayName || 'Landlord',
                     customMessage: newMessage,
                     link: `/student/messages?conversationId=${landlord.uid}` // Assuming student messages route
                 });
