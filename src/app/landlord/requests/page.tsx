@@ -29,7 +29,7 @@ import { collection, doc, query, where, getDocs, addDoc, updateDoc, documentId, 
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Loading from '@/app/loading';
 import { sendNotification } from '@/lib/notifications';
-import { formatPrice } from '@/utils/currencies';
+import { formatPrice } from '@/utils';
 
 type AggregatedRequest = {
   request: RentalApplication;

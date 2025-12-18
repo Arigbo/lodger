@@ -185,7 +185,7 @@ export function SchoolCombobox({
 
     return (
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <Popover open={open} onOpenChange={setOpen} modal={true}>
+            <Popover open={open} onOpenChange={setOpen} modal={false}>
                 <PopoverTrigger asChild>
                     <Button
                         variant="outline"
@@ -200,7 +200,10 @@ export function SchoolCombobox({
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[300]">
+                <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0 z-[300]"
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                >
                     <Command shouldFilter={false}>
                         {/* Disable local filtering because we do server-side search */}
                         <CommandInput
@@ -229,8 +232,15 @@ export function SchoolCombobox({
                                     <CommandItem
                                         key={school.id}
                                         value={school.label}
+                                        onPointerDown={(e) => {
+                                            e.preventDefault();
+                                        }}
                                         onSelect={(currentValue) => {
                                             onChange(currentValue === value ? "" : currentValue);
+                                            setOpen(false);
+                                        }}
+                                        onClick={() => {
+                                            onChange(school.label === value ? "" : school.label);
                                             setOpen(false);
                                         }}
                                     >

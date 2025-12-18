@@ -35,9 +35,22 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import Image from 'next/image';
-import { UploadCloud, X, Loader2, Building } from 'lucide-react';
+import { UploadCloud, X, Loader2, Building, RefreshCw, AlertCircle } from 'lucide-react';
 import Loading from '@/app/loading';
 import Link from 'next/link';
+import { Combobox } from '@/components/ui/combobox';
+import { countries } from '@/types/countries';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import type { UserProfile } from '@/types';
+import { getCurrencyByCountry } from '@/utils/currencies';
 
 const formSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -46,6 +59,7 @@ const formSchema = z.object({
   currency: z.string().min(3, 'Currency is required.'),
   type: z.enum(['Apartment', 'House', 'Studio', 'Loft']),
   address: z.string().min(5, 'Address is required.'),
+  country: z.string().min(2, 'Country is required.'),
   city: z.string().min(2, 'City is required.'),
   state: z.string().min(2, 'State is required.'),
   zip: z.string().min(5, 'ZIP code is required.'),
@@ -72,8 +86,17 @@ export default function EditPropertyPage() {
   const propertyRef = useMemoFirebase(() => id ? doc(firestore, 'properties', id) : null, [firestore, id]);
   const { data: property, isLoading: isPropertyLoading, refetch } = useDoc<Property>(propertyRef);
 
+  // Fetch user profile for preferred currency
+  const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
+
   const [isUploading, setIsUploading] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+
+  // Currency Modal State
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [pendingCurrency, setPendingCurrency] = useState<string | null>(null);
+  const [previousCurrency, setPreviousCurrency] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -84,6 +107,7 @@ export default function EditPropertyPage() {
       currency: 'USD',
       type: 'Apartment',
       address: '',
+      country: '',
       city: '',
       state: '',
       zip: '',
@@ -104,6 +128,7 @@ export default function EditPropertyPage() {
         currency: property.currency || 'USD',
         type: property.type,
         address: property.location?.address || '',
+        country: property.location?.country || '',
         city: property.location?.city || '',
         state: property.location?.state || '',
         zip: property.location?.zip || '',
@@ -113,8 +138,50 @@ export default function EditPropertyPage() {
         amenities: property.amenities || [],
         rules: property.rules?.join(', ') || '',
       });
+      setPreviousCurrency(property.currency || 'USD');
     }
   }, [property, form]);
+
+  // Handle currency change with modal
+  const handleCurrencyChange = (newCurrency: string) => {
+    const currentPrice = form.getValues('price');
+    const currentCurrency = form.getValues('currency');
+
+    if (newCurrency === currentCurrency) return;
+
+    setPendingCurrency(newCurrency);
+    setPreviousCurrency(currentCurrency);
+    setShowCurrencyModal(true);
+  };
+
+  const confirmCurrencyConversion = (convertPrice: boolean) => {
+    if (!pendingCurrency || !previousCurrency) return;
+
+    if (convertPrice) {
+      // Simple mock conversion for demo purposes
+      // In a real app, you'd fetch real-time rates
+      const mockRates: Record<string, number> = {
+        'USD': 1,
+        'NGN': 1600,
+        'GHS': 15,
+        'KES': 130,
+        'GBP': 0.79,
+        'EUR': 0.92,
+      };
+
+      const currentPrice = form.getValues('price');
+      const rateFrom = mockRates[previousCurrency] || 1;
+      const rateTo = mockRates[pendingCurrency] || 1;
+
+      // Price in USD * rateTo / rateFrom
+      const newPrice = Math.round((currentPrice / rateFrom) * rateTo);
+      form.setValue('price', newPrice);
+    }
+
+    form.setValue('currency', pendingCurrency);
+    setShowCurrencyModal(false);
+    setPendingCurrency(null);
+  };
 
   if (isUserLoading || isPropertyLoading) {
     return <Loading />;
@@ -208,6 +275,7 @@ export default function EditPropertyPage() {
         type: values.type,
         location: {
           address: values.address,
+          country: values.country,
           city: values.city,
           state: values.state,
           zip: values.zip,
@@ -245,21 +313,13 @@ export default function EditPropertyPage() {
       </CardHeader>
       <CardContent>
         {property?.status === 'occupied' && (
-          <div className="mb-6 rounded-lg border border-amber-500/50 bg-amber-50 p-4">
-            <div className="flex items-start gap-3">
-              <div className="rounded-full bg-amber-100 p-2">
-                <svg className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h4 className="font-semibold text-amber-900">Property Currently Occupied</h4>
-                <p className="mt-1 text-sm text-amber-700">
-                  This property has an active tenant. Most fields are disabled to prevent changes that could affect the current lease agreement. You can only update images.
-                </p>
-              </div>
-            </div>
-          </div>
+          <Alert className="mb-6 border-amber-500/50 bg-amber-50">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertTitle className="text-amber-900">Property Currently Occupied</AlertTitle>
+            <AlertDescription className="text-amber-700">
+              This property has an active tenant. Any changes to the price or rules will only apply to <strong>future</strong> lease agreements. The current lease terms remain unchanged.
+            </AlertDescription>
+          </Alert>
         )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -310,7 +370,7 @@ export default function EditPropertyPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Currency</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                    <Select onValueChange={handleCurrencyChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select currency" />
@@ -369,7 +429,56 @@ export default function EditPropertyPage() {
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Country</FormLabel>
+                    <FormControl>
+                      <Combobox
+                        options={countries.map((c) => ({ label: c.name, value: c.name }))}
+                        value={field.value}
+                        onChange={(value) => {
+                          field.onChange(value);
+                          form.setValue('state', ''); // Reset state when country changes
+                        }}
+                        placeholder="Select country"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="state"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>State/Province</FormLabel>
+                    <FormControl>
+                      <Combobox
+                        options={
+                          countries.find((c) => c.name === form.watch('country'))?.states.map((s) => ({
+                            label: s.name,
+                            value: s.name,
+                          })) || []
+                        }
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select state"
+                        disabled={!form.watch('country')}
+                        emptyText={!form.watch('country') ? "Select a country first" : "No states found"}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="city"
@@ -378,19 +487,6 @@ export default function EditPropertyPage() {
                     <FormLabel>City</FormLabel>
                     <FormControl>
                       <Input placeholder="Urbanville" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="state"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>State</FormLabel>
-                    <FormControl>
-                      <Input placeholder="CA" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -565,11 +661,46 @@ export default function EditPropertyPage() {
             </div>
 
             <Separator />
-            <Button type="submit" size="lg" disabled={form.formState.isSubmitting || property?.status === 'occupied'}>
-              {form.formState.isSubmitting ? "Saving..." : property?.status === 'occupied' ? "Cannot Edit Occupied Property" : "Save Changes"}
+            <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
           </form>
         </Form>
+
+        {/* Currency Conversion Modal */}
+        <Dialog open={showCurrencyModal} onOpenChange={setShowCurrencyModal}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Update Currency</DialogTitle>
+              <DialogDescription>
+                You are changing the property currency from <strong>{previousCurrency}</strong> to <strong>{pendingCurrency}</strong>.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-4 py-4">
+              <p className="text-sm text-muted-foreground">
+                How would you like to handle the current price of <strong>{form.getValues('price')} {previousCurrency}</strong>?
+              </p>
+            </div>
+            <DialogFooter className="flex flex-col sm:flex-row gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => confirmCurrencyConversion(false)}
+                className="flex-1"
+              >
+                Keep Price (Change Symbol Only)
+              </Button>
+              <Button
+                type="button"
+                onClick={() => confirmCurrencyConversion(true)}
+                className="flex-1"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Convert Price Automatically
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

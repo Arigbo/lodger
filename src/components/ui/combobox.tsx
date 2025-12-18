@@ -41,7 +41,7 @@ export function Combobox({
     const [open, setOpen] = React.useState(false);
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={setOpen} modal={false}>
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"
@@ -56,7 +56,10 @@ export function Combobox({
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[300]">
+            <PopoverContent
+                className="w-[--radix-popover-trigger-width] p-0"
+                onOpenAutoFocus={(e) => e.preventDefault()} // Prevent stealing focus from input
+            >
                 <Command>
                     <CommandInput placeholder={`Search ${placeholder.toLowerCase()}...`} />
                     <CommandList>
@@ -65,8 +68,17 @@ export function Combobox({
                             {options.map((option) => (
                                 <CommandItem
                                     key={option.value}
-                                    value={option.label} // Search by label
+                                    value={option.label}
+                                    onPointerDown={(e) => {
+                                        // Standard workaround for focus theft in some environments
+                                        e.preventDefault();
+                                    }}
                                     onSelect={() => {
+                                        onChange(option.value);
+                                        setOpen(false);
+                                    }}
+                                    onClick={() => {
+                                        // Fallback for environments where onSelect might be swallowed
                                         onChange(option.value);
                                         setOpen(false);
                                     }}
