@@ -39,11 +39,12 @@ export default function Header() {
     }
   };
 
-  const isLanding = pathname === '/';
+  const isLanding = pathname === '/' || pathname === '/about';
 
   // Links for the Landing Page
   const landingLinks = [
     { href: "/student/properties", label: "See Listed Properties" },
+    { href: "/about", label: "About Us" },
     { href: "/auth/signup?type=landlord", label: "List Property" }, // Direct to signup for new landlords
   ];
 

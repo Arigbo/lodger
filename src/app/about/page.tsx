@@ -1,4 +1,6 @@
-import React from 'react';
+"use client";
+
+import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Globe, ShieldCheck, Users } from "lucide-react";
@@ -6,17 +8,15 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import AboutTeam from '@/components/about-team';
 
-export const metadata = {
-    title: "About Us | Lodger",
-    description: "Learn more about Lodger's mission to simplify student living and provide secure, verified rental solutions.",
-};
+import { StatCard } from '@/components/stat-card';
 
 const stats = [
-    { label: 'Verified Listings', value: '2,000+' },
-    { label: 'Student Users', value: '15,000+' },
-    { label: 'Partner Universities', value: '50+' },
-    { label: 'Secure Contracts', value: '100%' },
+    { label: 'Verified Listings', value: 2000, suffix: '+' },
+    { label: 'Student Users', value: 15000, suffix: '+' },
+    { label: 'Partner Universities', value: 50, suffix: '+' },
+    { label: 'Secure Contracts', value: 100, suffix: '%' },
 ];
+
 
 const values = [
     {
@@ -43,130 +43,126 @@ const values = [
 
 export default function AboutPage() {
     return (
-        <div className="flex flex-col min-h-screen">
-            {/* Hero Section */}
-            <section className="relative py-20 bg-primary overflow-hidden lg:py-32">
-                <div className="absolute inset-0 opacity-10">
-                    <svg className="h-full w-full" fill="none" viewBox="0 0 100 100" preserveAspectRatio="none">
-                        <defs>
-                            <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                                <path d="M 10 0 L 0 0 0 10" stroke="white" strokeWidth="0.5" />
-                            </pattern>
-                        </defs>
-                        <rect width="100" height="100" fill="url(#grid)" />
-                    </svg>
+        <div className="flex flex-col min-h-screen bg-background">
+            {/* Premium Hero Section */}
+            <section className="relative pt-32 pb-48 overflow-hidden">
+                <div className="absolute inset-0 z-0">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-secondary/20" />
+                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -mr-48 -mt-48 animate-pulse" />
+                    <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] -ml-48 -mb-48 animate-pulse" />
                 </div>
-                <div className="container relative mx-auto px-4 text-center">
-                    <h1 className="font-headline text-4xl font-extrabold tracking-tight text-white sm:text-6xl">
-                        Simplifying Student Living
+
+                <div className="container relative z-10 mx-auto px-4 text-center">
+                    <h1 className="font-headline text-5xl md:text-8xl font-extrabold tracking-tight text-foreground leading-[1.1] mb-8 animate-in fade-in slide-in-from-top-12 duration-1000 fill-mode-both">
+                        The New Standard of <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-600 to-primary bg-[length:200%_auto] animate-gradient-x">Student Living</span>
                     </h1>
-                    <p className="mt-6 mx-auto max-w-2xl text-xl text-primary-foreground/90">
-                        Lodger was founded on a simple idea: finding a student home should be as easy as booking a hotel.
+
+                    <p className="mt-6 mx-auto max-w-2xl text-xl md:text-2xl text-muted-foreground leading-relaxed animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-300 fill-mode-both">
+                        Lodger was born from a vision to redefine the student housing experience. We are building the bridge between ambition and the perfect living space.
                     </p>
+
+                    <div className="mt-12 flex flex-wrap justify-center gap-6 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-500 fill-mode-both">
+                        <Button asChild size="lg" className="h-16 px-10 text-xl rounded-2xl shadow-2xl shadow-primary/20 hover:shadow-primary/40 transition-all hover:-translate-y-1">
+                            <Link href="/student/properties">Find Your Home</Link>
+                        </Button>
+                        <Button asChild size="lg" variant="outline" className="h-16 px-10 text-xl rounded-2xl bg-background/50 backdrop-blur-sm border-2 hover:bg-background/80 transition-all hover:-translate-y-1">
+                            <Link href="/landlord">List for Free</Link>
+                        </Button>
+                    </div>
                 </div>
             </section>
 
             {/* Mission Section */}
-            <section className="py-20 lg:py-24">
+            <section className="py-32 bg-secondary/10 overflow-hidden">
                 <div className="container mx-auto px-4">
-                    <div className="grid gap-12 lg:grid-cols-2 items-center">
-                        <div>
-                            <h2 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl text-foreground">
-                                Our Mission
-                            </h2>
-                            <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-                                Finding the right accommodation is more than just getting a roof over your head; it's about finding a place where you can thrive during your most transformative years.
-                            </p>
-                            <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
-                                Lodger bridge the gap between students and landlords with a platform that prioritizes security, transparency, and ease of use. Whether you're moving across town or across the globe, we're here to make sure you land in the right spot.
-                            </p>
-                            <div className="mt-8">
-                                <Button asChild size="lg">
-                                    <Link href="/student/properties">Explore Properties</Link>
-                                </Button>
+                    <div className="grid gap-20 lg:grid-cols-2 items-center">
+                        <div className="relative animate-in fade-in slide-in-from-left-20 duration-1000 fill-mode-both">
+                            <div className="absolute -top-6 -left-6 w-24 h-24 bg-primary/20 rounded-2xl blur-2xl" />
+                            <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-blue-500/20 rounded-2xl blur-2xl" />
+                            <div className="relative aspect-[4/3] rounded-[3rem] overflow-hidden shadow-2xl border-8 border-background ring-1 ring-border group">
+                                <Image
+                                    src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2070&auto=format&fit=crop"
+                                    alt="Students studying together"
+                                    fill
+                                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                             </div>
                         </div>
-                        <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border-4 border-background">
-                            <Image
-                                src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2070&auto=format&fit=crop"
-                                alt="Students studying together"
-                                fill
-                                className="object-cover"
-                            />
+
+                        <div className="space-y-8 animate-in fade-in slide-in-from-right-20 duration-1000 fill-mode-both">
+                            <div>
+                                <h2 className="font-headline text-5xl font-bold tracking-tight text-foreground mb-6"> Our Mission </h2>
+                                <p className="text-xl text-muted-foreground leading-relaxed">
+                                    Lodger is more than a booking platform. We are a technology-driven ecosystem built by <span className="text-primary font-bold italic">Ancients</span>, dedicated to simplifying the housing journey and ensuring every student has a safe, verified place to call home.
+                                </p>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="flex gap-6 p-8 rounded-[2rem] bg-background/80 border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group">
+                                    <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                        <ShieldCheck className="h-7 w-7" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-xl mb-1">Uncompromising Safety</h4>
+                                        <p className="text-muted-foreground">Every property undergoes a rigorous verification process to ensure transparency and security.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-6 p-8 rounded-[2rem] bg-background/80 border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group">
+                                    <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                                        <Globe className="h-7 w-7" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-xl mb-1">Industry Innovation</h4>
+                                        <p className="text-muted-foreground">We empower landlords and students with smart tools designed to solve the complexities of modern student living.</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
             {/* Stats Section */}
-            <section className="bg-secondary/30 py-16">
-                <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <section className="py-32 border-y border-border/50 bg-background relative overflow-hidden">
+                <div className="container mx-auto px-4 relative z-10">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
                         {stats.map((stat, index) => (
-                            <div key={index} className="text-center">
-                                <div className="text-3xl font-bold text-primary sm:text-4xl">{stat.value}</div>
-                                <div className="mt-2 text-sm font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Values Section */}
-            <section className="py-20 lg:py-24">
-                <div className="container mx-auto px-4 text-center">
-                    <h2 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl text-foreground">
-                        Our Core Values
-                    </h2>
-                    <p className="mt-4 mx-auto max-w-2xl text-muted-foreground">
-                        These principles guide everything we do and every feature we build.
-                    </p>
-                    <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-                        {values.map((value, index) => (
-                            <Card key={index} className="border-none shadow-md hover:shadow-xl transition-shadow duration-300">
-                                <CardContent className="pt-8">
-                                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                                        <value.icon className="h-7 w-7" />
-                                    </div>
-                                    <h3 className="mt-6 text-xl font-bold">{value.title}</h3>
-                                    <p className="mt-4 text-muted-foreground">
-                                        {value.description}
-                                    </p>
-                                </CardContent>
-                            </Card>
+                            <StatCard key={index} {...stat} />
                         ))}
                     </div>
                 </div>
             </section>
 
             {/* Team & Testimonials Section */}
-            <section className="py-20 bg-background">
+            <section className="py-32">
                 <AboutTeam />
             </section>
 
             {/* CTA Section */}
-            <section className="py-20">
-                <div className="container mx-auto px-4">
-                    <div className="relative rounded-3xl bg-slate-900 px-8 py-16 shadow-2xl overflow-hidden text-center sm:px-16 sm:py-24">
-                        <div className="relative z-10">
-                            <h2 className="font-headline text-3xl font-bold tracking-tight text-white sm:text-5xl">
-                                Ready to find your next home?
-                            </h2>
-                            <p className="mt-6 mx-auto max-w-xl text-lg text-slate-300">
-                                Join thousands of students who have already found their perfect university stay with Lodger.
-                            </p>
-                            <div className="mt-10 flex flex-wrap justify-center gap-4">
-                                <Button size="lg" variant="default" className="h-14 px-8 text-lg" asChild>
-                                    <Link href="/auth/signup">Get Started Now</Link>
-                                </Button>
-                                <Button size="lg" variant="outline" className="h-14 px-8 text-lg bg-transparent text-white border-slate-700 hover:bg-slate-800" asChild>
-                                    <Link href="/landlord">For Landlords</Link>
-                                </Button>
-                            </div>
+            <section className="pb-32 container mx-auto px-4 overflow-hidden">
+                <div className="relative rounded-[3rem] bg-foreground text-background px-8 py-24 md:py-40 shadow-2xl overflow-hidden text-center group animate-in fade-in zoom-in-95 duration-1000 fill-mode-both">
+                    <div className="absolute inset-0 z-0">
+                        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_50%,rgba(59,130,246,0.3),transparent_50%)]" />
+                        <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_50%,rgba(147,51,234,0.3),transparent_50%)]" />
+                    </div>
+
+                    <div className="relative z-10 max-w-4xl mx-auto">
+                        <h2 className="font-headline text-4xl md:text-7xl font-bold tracking-tight mb-8">
+                            Ready to join the <br /> <span className="italic text-primary">Lodger</span> movement?
+                        </h2>
+                        <p className="text-xl md:text-2xl text-muted-foreground mb-16 max-w-2xl mx-auto opacity-80">
+                            Whether you're a student seeking safety or a landlord seeking efficiency, we're here to help you move forward.
+                        </p>
+                        <div className="flex flex-wrap justify-center gap-8">
+                            <Button size="lg" variant="default" className="h-20 px-12 text-2xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-[2rem] shadow-2xl shadow-primary/40 hover:-translate-y-1 transition-all" asChild>
+                                <Link href="/auth/signup">Get Started</Link>
+                            </Button>
+                            <Button size="lg" variant="outline" className="h-20 px-12 text-2xl font-bold bg-transparent border-white/20 hover:bg-white/10 rounded-[2rem] hover:-translate-y-1 transition-all" asChild>
+                                <Link href="/landlord">Learn More</Link>
+                            </Button>
                         </div>
-                        {/* Background elements */}
-                        <div className="absolute -top-24 -left-20 h-64 w-64 rounded-full bg-primary/20 blur-3xl opacity-50" />
-                        <div className="absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl opacity-50" />
                     </div>
                 </div>
             </section>

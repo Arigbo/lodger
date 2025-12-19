@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -20,12 +19,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { formatPrice } from '@/utils';
 import { CreditCard, Lock, CheckCircle } from 'lucide-react';
-import { cn } from '@/utils';
+import { cn, formatPrice } from '@/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import StripeCheckoutForm from './stripe-checkout-form';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 
 interface PaymentDialogProps {
@@ -38,6 +41,7 @@ interface PaymentDialogProps {
   landlordId: string;
   propertyId: string;
   currency?: string;
+  destinationAccountId?: string;
 }
 
 export default function PaymentDialog({
@@ -50,45 +54,81 @@ export default function PaymentDialog({
   landlordId,
   propertyId,
   currency = 'USD',
+  destinationAccountId,
 }: PaymentDialogProps) {
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [months, setMonths] = useState(1);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const { toast } = useToast();
   const firestore = useFirestore();
 
   const totalAmount = amount * months;
 
-  const handleProcessPayment = async () => {
-    setIsProcessing(true);
-    // Simulate API call
-    setTimeout(async () => {
+  // Fetch Payment Intent clientSecret
+  useEffect(() => {
+    if (!isOpen || totalAmount <= 0) return;
+
+    const fetchClientSecret = async () => {
       try {
-        const transactionsRef = collection(firestore, 'transactions');
-        await addDoc(transactionsRef, {
-          landlordId: landlordId,
-          tenantId: tenantId,
-          propertyId: propertyId,
-          amount: totalAmount,
-          currency: currency,
-          months: months,
-          date: new Date().toISOString(),
-          type: 'Rent',
-          status: 'Completed',
+        setClientSecret(null); // Reset
+        const response = await fetch('/api/create-payment-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: totalAmount,
+            currency: currency,
+            landlordId: landlordId,
+            destinationAccountId: destinationAccountId,
+          }),
         });
 
-        setIsProcessing(false);
-        setStep(2);
-      } catch (error) {
-        console.error("Error creating transaction:", error);
+        const data = await response.json();
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret);
+        } else {
+          throw new Error(data.error || "Failed to get payment intent");
+        }
+      } catch (err: any) {
+        console.error("Error fetching client secret:", err);
         toast({
-          variant: 'destructive',
-          title: "Payment Failed",
-          description: "Could not record your payment. Please try again."
+          variant: "destructive",
+          title: "Payment Error",
+          description: "Could not initialize secure payment. " + err.message,
         });
-        setIsProcessing(false);
       }
-    }, 2000);
+    };
+
+    fetchClientSecret();
+  }, [isOpen, totalAmount, currency, landlordId, destinationAccountId, toast]);
+
+  const handlePaymentSuccess = async () => {
+    setIsProcessing(true);
+    try {
+      const transactionsRef = collection(firestore, 'transactions');
+      await addDoc(transactionsRef, {
+        landlordId: landlordId,
+        tenantId: tenantId,
+        propertyId: propertyId,
+        amount: totalAmount,
+        currency: currency,
+        months: months,
+        date: new Date().toISOString(),
+        type: 'Rent',
+        status: 'Completed',
+      });
+
+      setIsProcessing(false);
+      setStep(2);
+    } catch (error) {
+      console.error("Error creating transaction:", error);
+      toast({
+        variant: 'destructive',
+        title: "Transaction Error",
+        description: "Payment was successful but we couldn't record it. Please contact support."
+      });
+      setIsProcessing(false);
+    }
   };
 
   const handleFinish = () => {
@@ -139,44 +179,33 @@ export default function PaymentDialog({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="card-name">Name on Card</Label>
-                <Input id="card-name" placeholder="John Doe" />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="card-number">Card Number</Label>
-                <Input id="card-number" placeholder="**** **** **** 1234" />
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="expiry">Expiry</Label>
-                  <Input id="expiry" placeholder="MM/YY" />
+
+              {clientSecret ? (
+                <div className="pt-4 border-t">
+                  <Elements
+                    stripe={stripePromise}
+                    options={{
+                      clientSecret,
+                      appearance: { theme: 'stripe' },
+                    }}
+                  >
+                    <StripeCheckoutForm
+                      amount={totalAmount}
+                      currency={currency}
+                      onSuccess={handlePaymentSuccess}
+                    />
+                  </Elements>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="cvc">CVC</Label>
-                  <Input id="cvc" placeholder="123" />
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 space-y-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <p className="text-sm text-muted-foreground">Initializing secure payment...</p>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="zip">ZIP</Label>
-                  <Input id="zip" placeholder="12345" />
-                </div>
-              </div>
+              )}
             </div>
-            <DialogFooter className="sm:justify-between">
-              <Button type="button" variant="ghost" onClick={handleClose}>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={handleClose} disabled={isProcessing}>
                 Cancel
-              </Button>
-              <Button type="button" onClick={handleProcessPayment} disabled={isProcessing}>
-                {isProcessing ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Lock className="mr-2 h-4 w-4" /> Pay {formatPrice(totalAmount, currency)}
-                  </>
-                )}
               </Button>
             </DialogFooter>
           </>

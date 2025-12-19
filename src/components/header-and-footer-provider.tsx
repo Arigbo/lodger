@@ -43,6 +43,7 @@ export function HeaderAndFooterProvider({ children }: { children: React.ReactNod
         <div className="flex min-h-screen flex-col">
             <Header />
             <main className="flex-grow">{children}</main>
+            {pathname === '/about' && <Footer />}
         </div>
     );
 }

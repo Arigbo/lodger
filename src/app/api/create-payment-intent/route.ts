@@ -1,14 +1,17 @@
-
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
+export const dynamic = 'force-dynamic';
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2025-12-15.clover', // Use latest stable API version or match your installed version
+    apiVersion: '2024-12-18.acacia' as any, // Updated to a stable version
 });
 
 export async function POST(request: Request) {
     try {
         const { amount, currency, landlordId, destinationAccountId } = await request.json();
+
+        console.log('Creating PaymentIntent for:', { amount, currency, landlordId, destinationAccountId });
 
         // 1. Fetch Landlord's Stripe Account ID from Firestore (Admin SDK would be better, but we can't easily here without it)
         // Optimization: Pass it from frontend? No, insecure. 

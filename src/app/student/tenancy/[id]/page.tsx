@@ -111,8 +111,7 @@ export default function TenancyDetailPage() {
                 status: 'available',
                 currentTenantId: null,
                 leaseStartDate: null,
-                // @ts-ignore - Some properties might not have these yet
-                leaseEndDate: null
+                leaseEndDate: null, // Ensuring this is cleared
             });
 
             toast({
@@ -201,9 +200,8 @@ export default function TenancyDetailPage() {
 
     // Allow access if:
     // 1. User is the current tenant (property.currentTenantId)
-    // 2. OR User has a valid lease for this property (fetched above)
-    // 3. OR User is just a viewer? No, tenancy page implies tenancy.
-    const isTenant = user?.uid === property?.currentTenantId || (lease && lease.tenantId === user?.uid);
+    // 2. AND the lease is NOT expired (as per user feedback)
+    const isTenant = user?.uid === property?.currentTenantId && lease?.status !== 'expired';
 
     if (!property || !isTenant) {
         if (!isLoading) notFound();
@@ -449,6 +447,7 @@ export default function TenancyDetailPage() {
                     landlordId={property.landlordId}
                     propertyId={property.id}
                     currency={property.currency}
+                    destinationAccountId={landlord?.stripeAccountId}
                 />
             )}
         </div>

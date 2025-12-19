@@ -84,6 +84,7 @@ export default function AccountPage() {
         defaultValues: {
             name: '',
             email: '',
+            phone: '',
             country: '',
             state: '',
             school: '',
@@ -100,7 +101,7 @@ export default function AccountPage() {
                 country: userProfile.country || '',
                 state: userProfile.state || '',
                 school: userProfile.school || '',
-                currency: userProfile.currency || '',
+                currency: userProfile.currency || 'USD',
             });
         }
     }, [userProfile, profileForm]);

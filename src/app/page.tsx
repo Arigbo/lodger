@@ -29,7 +29,7 @@ async function getFeaturedProperties(): Promise<Property[]> {
     }
 
     const propertiesRef = db.collection('properties');
-    const querySnapshot = await propertiesRef.where('status', '==', 'available').limit(3).get();
+    const querySnapshot = await propertiesRef.where('status', '==', 'available').limit(6).get();
     const properties: Property[] = [];
     querySnapshot.forEach((doc: any) => {
       properties.push({ id: doc.id, ...doc.data() } as Property);
@@ -43,150 +43,96 @@ async function getFeaturedProperties(): Promise<Property[]> {
 }
 
 
+import { LandingHero } from "@/components/landing-hero";
+import { LandingFeatures } from "@/components/landing-features";
+import { StatCard } from "@/components/stat-card";
+import PropertyCarousel from "@/components/property-carousel";
+
 export default async function Home() {
   const featuredProperties = await getFeaturedProperties();
-  const heroImage = {
-    imageUrl: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    description: "Modern apartment living room",
-    imageHint: "apartment living room"
-  }
 
+  const stats = [
+    { label: 'Verified Listings', value: 2000, suffix: '+' },
+    { label: 'Student Users', value: 15000, suffix: '+' },
+    { label: 'Verified Landlords', value: 100, suffix: '%' },
+    { label: 'Happy Move-ins', value: 5000, suffix: '+' },
+  ];
 
   return (
-    <div className="flex flex-col">
-      {/* Hero Section */}
-      <section className="relative bg-background pt-20 pb-48 md:pt-32">
-        {heroImage && (
-          <div className="absolute inset-0">
-            <Image
-              src={heroImage.imageUrl}
-              alt={heroImage.description}
-              fill
-              className="object-cover"
-              data-ai-hint={heroImage.imageHint}
-              priority
-            />
-            <div className="absolute inset-0 bg-black/60" />
-          </div>
-        )}
-        <div className="relative container mx-auto px-4 text-center text-primary-foreground">
-          <h1 className="font-headline text-3xl font-bold sm:text-5xl md:text-7xl leading-[1.1]">
-            Find Your Perfect <br className="sm:hidden" /> Student Home
-          </h1>
-          <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-primary-foreground/90 px-4">
-            The easiest way for university students to find and book their next rental property.
-          </p>
-          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="text-lg px-8 py-6">
-              <Link href="/student/properties">
-                Browse Properties <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="text-lg px-8 py-6 bg-background/10 backdrop-blur-sm border-white/20 text-white hover:bg-background/20">
-              <Link href="/landlord">
-                List Your Property
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-      {/* How it works Section */}
-      <section id="how-it-works" className="py-20 bg-secondary/50 mt-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h2 className="font-headline text-4xl font-bold">
-              Finding Your Next Home is Easy
-            </h2>
-            <p className="mx-auto mt-2 max-w-2xl text-muted-foreground">
-              Follow these simple steps to secure your perfect student rental.
-            </p>
-          </div>
-          <div className="mt-12 grid gap-8 md:grid-cols-3">
-            <Card className="bg-background">
-              <CardHeader className="flex flex-row items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <Search className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle>Search & Discover</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Browse thousands of verified listings near your university with powerful search filters.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="bg-background">
-              <CardHeader className="flex flex-row items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <Building className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle>View Properties</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Look at detailed photos, read descriptions, and even take virtual tours to find the right fit.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="bg-background">
-              <CardHeader className="flex flex-row items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <UserCheck className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle>Request to Rent</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Easily connect with landlords and submit your rental requests directly through our platform.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
+    <div className="flex flex-col min-h-screen">
+      {/* Premium Hero Section */}
+      <LandingHero
+        imageUrl="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop"
+        title="Find Your Perfect Student Home"
+        description="The easiest way for university students to find and book their next rental property. Join the new standard of student living."
+      />
 
-      {/* Featured Properties Section */}
-      <section id="featured" className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h2 className="font-headline text-4xl font-bold">
-              Featured Properties
-            </h2>
-            <p className="mx-auto mt-2 max-w-2xl text-muted-foreground">
-              Check out some of the top-rated student homes available right now.
-            </p>
-          </div>
-          <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {featuredProperties.map(property => (
-              <PropertyCard key={property.id} property={property} />
+      {/* Stats Section - Trust Builder */}
+      <section className="py-32 bg-background relative overflow-hidden border-y border-border/50">
+        <div className="container relative z-10 mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-24">
+            {stats.map((stat, index) => (
+              <StatCard key={index} {...stat} />
             ))}
           </div>
-          <div className="mt-12 text-center">
-            <Button asChild size="lg" variant="outline">
-              <Link href="/student/properties">View All Properties <ArrowRight className="ml-2 h-5 w-5" /></Link>
+        </div>
+      </section>
+
+      {/* How it works Section - Modern Features */}
+      <LandingFeatures />
+
+      {/* Featured Properties Section */}
+      <section id="featured" className="py-32 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-3xl mx-auto mb-20 animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both">
+            <h2 className="font-headline text-4xl md:text-5xl font-black mb-8">
+              Handpicked <span className="text-primary">Properties</span>
+            </h2>
+            <p className="text-xl text-muted-foreground leading-relaxed">
+              Check out some of the top-rated student homes available right now, verified for your safety.
+            </p>
+          </div>
+
+          <div className="animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-300 fill-mode-both">
+            <PropertyCarousel properties={featuredProperties} />
+          </div>
+
+          <div className="mt-20 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500 fill-mode-both">
+            <Button asChild size="lg" variant="outline" className="h-16 px-10 text-xl font-bold rounded-2xl border-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all">
+              <Link href="/student/properties" className="flex items-center">
+                View All Properties <ArrowRight className="ml-2 h-6 w-6" />
+              </Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="bg-primary text-primary-foreground p-12 rounded-lg text-center">
-            <h2 className="font-headline text-4xl font-bold">
-              Are You a Landlord?
+      {/* High-Impact Landlord CTA Section */}
+      <section className="py-32 container mx-auto px-4 overflow-hidden">
+        <div className="relative rounded-[4rem] bg-foreground text-background px-8 py-24 md:py-40 shadow-2xl overflow-hidden text-center group animate-in fade-in zoom-in-95 duration-1000 fill-mode-both">
+          <div className="absolute inset-0 z-0">
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_50%,rgba(59,130,246,0.4),transparent_50%)]" />
+            <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_50%,rgba(147,51,234,0.4),transparent_50%)]" />
+            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] pointer-events-none" />
+          </div>
+
+          <div className="relative z-10 max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-[10px] font-black uppercase tracking-[0.3em] mb-10">
+              Propel Your Business
+            </div>
+            <h2 className="font-headline text-5xl md:text-8xl font-black tracking-tight mb-10 leading-[0.95]">
+              Are You a <br /> <span className="text-primary italic animate-pulse">Landlord?</span>
             </h2>
-            <p className="mt-2 max-w-2xl mx-auto">
-              List your property on our platform and connect with thousands of qualified student tenants.
+            <p className="text-xl md:text-2xl text-muted-foreground mb-16 max-w-2xl mx-auto leading-relaxed">
+              List your property on our state-of-the-art platform and connect with thousands of ambitious student tenants instantly.
             </p>
-            <Button
-              asChild
-              size="lg"
-              variant="secondary"
-              className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90"
-            >
-              <Link href="/landlord">List Your Property <ArrowRight className="ml-2 h-5 w-5" /></Link>
-            </Button>
+            <div className="flex flex-wrap justify-center gap-8">
+              <Button size="lg" variant="default" className="h-20 px-12 text-2xl font-black bg-primary hover:bg-primary/90 text-primary-foreground rounded-[2rem] shadow-2xl shadow-primary/50 hover:-translate-y-2 transition-all active:scale-95" asChild>
+                <Link href="/landlord" className="flex items-center">
+                  Start Listing <ArrowRight className="ml-3 h-8 w-8" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
