@@ -235,22 +235,22 @@ Total: ${formatPrice(transaction.transaction.amount, transaction.transaction.cur
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-headline text-3xl font-bold">Transactions</h1>
-          <p className="text-muted-foreground">
+          <h1 className="font-headline text-2xl sm:text-3xl font-bold">Transactions</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             View, filter, and export your payment history.
           </p>
         </div>
-        <Button onClick={handleDownloadReport}>
+        <Button onClick={handleDownloadReport} className="w-full sm:w-auto">
           <Download className="mr-2 h-4 w-4" />
           Download Report
         </Button>
       </div>
-      <Separator className="my-6" />
+      <Separator className="my-4 sm:my-6" />
 
       {/* Overview Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -275,8 +275,8 @@ Total: ${formatPrice(transaction.transaction.amount, transaction.transaction.cur
 
 
       {/* Filter Controls */}
-      <div className="mb-6 rounded-lg border bg-card p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="mb-6 rounded-lg border bg-card p-3 sm:p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="grid gap-2">
             <label className="text-sm font-medium">Date Range</label>
             <Popover>
@@ -365,67 +365,69 @@ Total: ${formatPrice(transaction.transaction.amount, transaction.transaction.cur
         </CardHeader>
         <CardContent>
           {filteredTransactions.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tenant</TableHead>
-                    <TableHead>Property</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                    <TableHead><span className="sr-only">Actions</span></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTransactions.map(({ transaction, tenant, property }) => {
-                    return (
-                      <TableRow key={transaction.id}>
-                        <TableCell>
-                          <Link href={`/landlord/tenants/${tenant?.id}`} className="font-medium hover:underline flex items-center gap-2">
-                            {tenant?.name} <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                          </Link>
-                        </TableCell>
-                        <TableCell>
-                          <Link href={`/landlord/properties/${property?.id}`} className="text-muted-foreground hover:underline">
-                            {property?.title}
-                          </Link>
-                        </TableCell>
-                        <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-muted-foreground">{transaction.type}</TableCell>
-                        <TableCell className="text-right font-medium">{formatPrice(transaction.amount, transaction.currency)}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={
-                            transaction.status === 'Completed' ? 'secondary'
-                              : transaction.status === 'Pending' ? 'default'
-                                : 'destructive'
-                          }>
-                            {transaction.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button aria-haspopup="true" size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => handleDownloadReceipt(transaction.id)}>
-                                <Download className="mr-2 h-4 w-4" />
-                                Download Receipt
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+            <div className="w-full overflow-x-auto">
+              <div className="inline-block min-w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Tenant</TableHead>
+                      <TableHead className="hidden md:table-cell text-xs sm:text-sm whitespace-nowrap">Property</TableHead>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Date</TableHead>
+                      <TableHead className="hidden sm:table-cell text-xs sm:text-sm whitespace-nowrap">Type</TableHead>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap text-right">Amount</TableHead>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap text-center">Status</TableHead>
+                      <TableHead className="text-xs sm:text-sm"><span className="sr-only">Actions</span></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredTransactions.map(({ transaction, tenant, property }) => {
+                      return (
+                        <TableRow key={transaction.id}>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                            <Link href={`/landlord/tenants/${tenant?.id}`} className="font-medium hover:underline flex items-center gap-1 sm:gap-2 line-clamp-1">
+                              {tenant?.name} <ExternalLink className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                            </Link>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-xs sm:text-sm py-2 sm:py-4">
+                            <Link href={`/landlord/properties/${property?.id}`} className="text-muted-foreground hover:underline line-clamp-2">
+                              {property?.title}
+                            </Link>
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(transaction.date).toLocaleDateString()}</TableCell>
+                          <TableCell className="hidden sm:table-cell text-xs sm:text-sm py-2 sm:py-4 text-muted-foreground whitespace-nowrap">{transaction.type}</TableCell>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4 text-right font-medium whitespace-nowrap">{formatPrice(transaction.amount, transaction.currency)}</TableCell>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4 text-center">
+                            <Badge variant={
+                              transaction.status === 'Completed' ? 'secondary'
+                                : transaction.status === 'Pending' ? 'default'
+                                  : 'destructive'
+                            }>
+                              {transaction.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Toggle menu</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleDownloadReceipt(transaction.id)}>
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Download Receipt
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">

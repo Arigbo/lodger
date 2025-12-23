@@ -143,15 +143,15 @@ export default function MaintenancePage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-headline text-3xl font-bold">Maintenance</h1>
-          <p className="text-muted-foreground">
+          <h1 className="font-headline text-2xl sm:text-3xl font-bold">Maintenance</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Track and manage maintenance requests from tenants.
           </p>
         </div>
       </div>
-      <Separator className="my-6" />
+      <Separator className="my-4 sm:my-6" />
 
       <Card>
         <CardHeader>
@@ -160,68 +160,72 @@ export default function MaintenancePage() {
             You have {requests.length} total maintenance requests.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-2 sm:p-6">
           {requests.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Property</TableHead>
-                    <TableHead>Tenant</TableHead>
-                    <TableHead>Request</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead><span className="sr-only">Actions</span></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {requests.map((request) => {
-                    return (
-                      <TableRow key={request.id}>
-                        <TableCell>
-                          <Link href={`/landlord/properties/${request.propertyId}`} className="font-medium hover:underline">
-                            {request.propertyName}
-                          </Link>
-                        </TableCell>
-                        <TableCell>
-                          <Link href={`/landlord/tenants/${request.tenantId}`} className="text-muted-foreground hover:underline">
-                            {request.tenantName}
-                          </Link>
-                        </TableCell>
-                        <TableCell className="font-medium max-w-xs truncate">{request.title}</TableCell>
-                        <TableCell>{request.category}</TableCell>
-                        <TableCell>
-                          <Badge variant={getPriorityVariant(request.priority)}>{request.priority}</Badge>
-                        </TableCell>
-                        <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(request.status)}>{request.status}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button aria-haspopup="true" size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem>Mark as In Progress</DropdownMenuItem>
-                              <DropdownMenuItem>Mark as Completed</DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">
-                                Cancel Request
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+            <div className="w-full overflow-x-auto">
+              <div className="inline-block min-w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Property</TableHead>
+                      <TableHead className="hidden sm:table-cell text-xs sm:text-sm whitespace-nowrap">Tenant</TableHead>
+                      <TableHead className="hidden md:table-cell text-xs sm:text-sm whitespace-nowrap">Request</TableHead>
+                      <TableHead className="hidden lg:table-cell text-xs sm:text-sm whitespace-nowrap">Category</TableHead>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Priority</TableHead>
+                      <TableHead className="hidden sm:table-cell text-xs sm:text-sm whitespace-nowrap">Date</TableHead>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
+                      <TableHead className="text-xs sm:text-sm"><span className="sr-only">Actions</span></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {requests.map((request) => {
+                      return (
+                        <TableRow key={request.id}>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                            <Link href={`/landlord/properties/${request.propertyId}`} className="font-medium hover:underline line-clamp-2">
+                              {request.propertyName}
+                            </Link>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell text-xs sm:text-sm py-2 sm:py-4">
+                            <Link href={`/landlord/tenants/${request.tenantId}`} className="text-muted-foreground hover:underline line-clamp-1">
+                              {request.tenantName}
+                            </Link>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell font-medium text-xs sm:text-sm py-2 sm:py-4 max-w-xs">
+                            <span className="line-clamp-2">{request.title}</span>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{request.category}</TableCell>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                            <Badge variant={getPriorityVariant(request.priority)} className="text-xs">{request.priority}</Badge>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(request.requestDate).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                            <Badge variant={getStatusVariant(request.status)} className="text-xs">{request.status}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Toggle menu</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem>Mark as In Progress</DropdownMenuItem>
+                                <DropdownMenuItem>Mark as Completed</DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive">
+                                  Cancel Request
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">

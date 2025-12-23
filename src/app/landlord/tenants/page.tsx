@@ -111,15 +111,15 @@ export default function TenantsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-headline text-3xl font-bold">My Tenants</h1>
-          <p className="text-muted-foreground">
+          <h1 className="font-headline text-2xl sm:text-3xl font-bold">My Tenants</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Manage all tenants currently occupying your properties.
           </p>
         </div>
       </div>
-      <Separator className="my-6" />
+      <Separator className="my-4 sm:my-6" />
       <Card>
         <CardHeader>
           <CardTitle>Tenant List</CardTitle>
@@ -127,78 +127,79 @@ export default function TenantsPage() {
             You have {tenantsWithProperties.length} current tenants.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-2 sm:p-6">
           {tenantsWithProperties.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tenant</TableHead>
-                    <TableHead>Property</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>
-                      <span className="sr-only">Actions</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tenantsWithProperties.map(({ tenant, property }) => (
-                    <TableRow key={`${tenant.id}-${property.id}`}>
-                      <TableCell>
-                        <Link href={`/landlord/tenants/${tenant.id}`} className="hover:underline">
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarImage src={tenant.profileImageUrl} />
-                              <AvatarFallback>
-                                <UserIcon className="h-4 w-4" />
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="font-medium">{tenant.name}</span>
-                          </div>
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <Link
-                          href={`/landlord/properties/${property.id}`}
-                          className="hover:underline"
-                        >
-                          {property.title}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={'secondary'}>{property.status}</Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{tenant.email}</TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              aria-haspopup="true"
-                              size="icon"
-                              variant="ghost"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/landlord/tenants/${tenant.id}`}>View Details</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/landlord/messages?conversationId=${tenant.id}`} className="flex items-center">
-                                <Mail className="mr-2 h-4 w-4" /> Message Tenant
-                              </Link>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+            <div className="w-full overflow-x-auto">
+              <div className="inline-block min-w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Tenant</TableHead>
+                      <TableHead className="hidden md:table-cell text-xs sm:text-sm whitespace-nowrap">Property</TableHead>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
+                      <TableHead className="hidden lg:table-cell text-xs sm:text-sm whitespace-nowrap">Email</TableHead>
+                      <TableHead className="text-xs sm:text-sm"><span className="sr-only">Actions</span></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {tenantsWithProperties.map(({ tenant, property }) => (
+                      <TableRow key={`${tenant.id}-${property.id}`}>
+                        <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                          <Link href={`/landlord/tenants/${tenant.id}`} className="hover:underline">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                                <AvatarImage src={tenant.profileImageUrl} />
+                                <AvatarFallback>
+                                  <UserIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium line-clamp-1">{tenant.name}</span>
+                            </div>
+                          </Link>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-xs sm:text-sm py-2 sm:py-4">
+                          <Link
+                            href={`/landlord/properties/${property.id}`}
+                            className="hover:underline line-clamp-2"
+                          >
+                            {property.title}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                          <Badge variant={'secondary'} className="text-xs">{property.status}</Badge>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-xs sm:text-sm py-2 sm:py-4 text-muted-foreground whitespace-nowrap">{tenant.email}</TableCell>
+                        <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                aria-haspopup="true"
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/landlord/tenants/${tenant.id}`}>View Details</Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/landlord/messages?conversationId=${tenant.id}`} className="flex items-center">
+                                  <Mail className="mr-2 h-4 w-4" /> Message Tenant
+                                </Link>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">

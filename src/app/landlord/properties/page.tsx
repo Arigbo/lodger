@@ -169,24 +169,24 @@ export default function LandlordPropertiesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-headline text-3xl font-bold">My Properties</h1>
-          <p className="text-muted-foreground">
+          <h1 className="font-headline text-2xl sm:text-3xl font-bold">My Properties</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             View and manage all your listings.
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="w-full sm:w-auto">
           <Link href="/landlord/properties/new">
             <PlusCircle className="mr-2 h-4 w-4" />
             Add New Property
           </Link>
         </Button>
       </div>
-      <Separator className="my-6" />
+      <Separator className="my-4 sm:my-6" />
 
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center mb-6">
-        <div className="relative w-full sm:w-72">
+      <div className="flex flex-col gap-3 sm:gap-4 mb-6">
+        <div className="relative w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search properties or tenants..."
@@ -195,7 +195,7 @@ export default function LandlordPropertiesPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full">
           <span className="text-sm text-muted-foreground whitespace-nowrap hidden sm:inline-block">Sort by:</span>
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-full sm:w-[180px]">

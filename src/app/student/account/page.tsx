@@ -128,6 +128,16 @@ export default function AccountPage() {
             return;
         }
 
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            toast({
+                variant: "destructive",
+                title: "Invalid file type",
+                description: "Please upload a valid image file (JPG, PNG, WebP, etc.).",
+            });
+            return;
+        }
+
         setIsUploading(true);
         try {
             const storage = getStorage(firebaseApp);
@@ -140,7 +150,12 @@ export default function AccountPage() {
             }
         } catch (error: any) {
             console.error("Error uploading image: ", error);
-            toast({ variant: "destructive", title: "Upload Failed", description: error.message || "Could not upload image." });
+            const errorMsg = error.message || "Could not upload image. Please check that the file is a valid image and try again.";
+            toast({
+                variant: "destructive",
+                title: "Upload Failed",
+                description: errorMsg
+            });
             setPreviewImage(null);
         } finally {
             setIsUploading(false);
@@ -216,14 +231,14 @@ export default function AccountPage() {
                         <CardContent>
                             <Form {...profileForm}>
                                 <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
-                                    <div className="flex items-center gap-6">
-                                        <Avatar className="h-24 w-24">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+                                        <Avatar className="h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0">
                                             <AvatarImage src={previewImage || userProfile.profileImageUrl} />
                                             <AvatarFallback>
-                                                <UserIcon className="h-12 w-12 text-muted-foreground" />
+                                                <UserIcon className="h-10 w-10 text-muted-foreground" />
                                             </AvatarFallback>
                                         </Avatar>
-                                        <div className="grid gap-2">
+                                        <div className="grid gap-2 w-full">
                                             <p className="text-sm text-muted-foreground">Update your profile picture.</p>
                                             <div className="flex items-center gap-2">
                                                 <Button type="button" variant="outline" disabled={isUploading} onClick={() => document.getElementById('profile-upload')?.click()}>

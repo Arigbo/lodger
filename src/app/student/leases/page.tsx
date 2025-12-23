@@ -130,15 +130,15 @@ export default function StudentLeasesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-headline text-3xl font-bold">Lease Agreements</h1>
-          <p className="text-muted-foreground">
+          <h1 className="font-headline text-2xl sm:text-3xl font-bold">Lease Agreements</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             View all your current and past lease agreements.
           </p>
         </div>
       </div>
-      <Separator className="my-6" />
+      <Separator className="my-4 sm:my-6" />
 
       <Card>
         <CardHeader>
@@ -147,57 +147,59 @@ export default function StudentLeasesPage() {
             You have {aggregatedLeases.length} lease agreements on record.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-2 sm:p-6">
           {aggregatedLeases.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Property</TableHead>
-                    <TableHead>Landlord</TableHead>
-                    <TableHead>Start Date</TableHead>
-                    <TableHead>End Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead><span className="sr-only">Actions</span></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {aggregatedLeases.map(({ lease, landlord, property }) => {
-                    return (
-                      <TableRow key={lease.id}>
-                        <TableCell>
-                          <Link href={`/student/properties/${property?.id}`} className="font-medium hover:underline">
-                            {property?.title || 'Unknown Property'}
-                          </Link>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-muted-foreground">{landlord?.name || 'Unknown Landlord'}</span>
-                        </TableCell>
-                        <TableCell>{new Date(lease.startDate).toLocaleDateString()}</TableCell>
-                        <TableCell>{new Date(lease.endDate).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(lease.status)}>{lease.status}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {lease.status === 'pending' ? (
-                            <Button variant="default" size="sm" asChild>
-                              <Link href={`/student/leases/${lease.id}`}>
-                                <Signature className="mr-2 h-4 w-4" /> View & Sign
-                              </Link>
-                            </Button>
-                          ) : (
-                            <Button variant="outline" size="sm" asChild>
-                              <Link href={`/student/leases/${lease.id}`}>
-                                <FileText className="mr-2 h-4 w-4" /> View
-                              </Link>
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+            <div className="w-full overflow-x-auto">
+              <div className="inline-block min-w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Property</TableHead>
+                      <TableHead className="hidden sm:table-cell text-xs sm:text-sm whitespace-nowrap">Landlord</TableHead>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Start Date</TableHead>
+                      <TableHead className="hidden md:table-cell text-xs sm:text-sm whitespace-nowrap">End Date</TableHead>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
+                      <TableHead className="text-xs sm:text-sm"><span className="sr-only">Actions</span></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {aggregatedLeases.map(({ lease, landlord, property }) => {
+                      return (
+                        <TableRow key={lease.id}>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                            <Link href={`/student/properties/${property?.id}`} className="font-medium hover:underline line-clamp-2">
+                              {property?.title || 'Unknown Property'}
+                            </Link>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell text-xs sm:text-sm py-2 sm:py-4">
+                            <span className="text-muted-foreground line-clamp-1">{landlord?.name || 'Unknown Landlord'}</span>
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(lease.startDate).toLocaleDateString()}</TableCell>
+                          <TableCell className="hidden md:table-cell text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(lease.endDate).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                            <Badge variant={getStatusVariant(lease.status)} className="text-xs">{lease.status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                            {lease.status === 'pending' ? (
+                              <Button variant="default" size="xs" className="text-xs h-7 whitespace-nowrap" asChild>
+                                <Link href={`/student/leases/${lease.id}`}>
+                                  <Signature className="mr-1 h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">View & Sign</span><span className="sm:hidden">Sign</span>
+                                </Link>
+                              </Button>
+                            ) : (
+                              <Button variant="outline" size="xs" className="text-xs h-7 whitespace-nowrap" asChild>
+                                <Link href={`/student/leases/${lease.id}`}>
+                                  <FileText className="mr-1 h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">View</span>
+                                </Link>
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">

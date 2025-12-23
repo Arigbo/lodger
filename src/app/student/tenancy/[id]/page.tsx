@@ -100,18 +100,19 @@ export default function TenancyDetailPage() {
     const handleConfirmCompensation = async () => {
         if (!lease || !property || !user) return;
         try {
+            // Update lease to expired
             const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
             await updateDoc(leaseRef, {
                 status: 'expired',
                 endDate: new Date().toISOString()
             });
 
-            const propertyUpdateRef = doc(firestore, 'properties', property.id);
-            await updateDoc(propertyUpdateRef, {
+            // Clean up property - mark as available and remove tenant
+            const propertyRef = doc(firestore, 'properties', property.id);
+            await updateDoc(propertyRef, {
                 status: 'available',
                 currentTenantId: null,
-                leaseStartDate: null,
-                leaseEndDate: null, // Ensuring this is cleared
+                leaseStartDate: null
             });
 
             toast({
@@ -121,6 +122,11 @@ export default function TenancyDetailPage() {
             window.location.reload();
         } catch (error) {
             console.error("Error confirming compensation:", error);
+            toast({
+                title: "Error",
+                description: "Failed to finalize tenancy. Please try again.",
+                variant: "destructive",
+            });
         }
     };
 
@@ -308,36 +314,36 @@ export default function TenancyDetailPage() {
                                 )}
                             </div>
                         </CardHeader>
-                        <CardContent>
-                            <div className="overflow-x-auto -mx-6 sm:mx-0 px-6 sm:px-0">
+                        <CardContent className="p-2 sm:p-6">
+                            <div className="overflow-x-auto rounded-md border">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead>Type</TableHead>
-                                            <TableHead className="text-right">Amount</TableHead>
-                                            <TableHead className="text-center">Status</TableHead>
+                                            <TableHead className="text-xs sm:text-sm whitespace-nowrap">Date</TableHead>
+                                            <TableHead className="text-xs sm:text-sm whitespace-nowrap">Type</TableHead>
+                                            <TableHead className="text-xs sm:text-sm whitespace-nowrap text-right">Amount</TableHead>
+                                            <TableHead className="text-xs sm:text-sm whitespace-nowrap text-center">Status</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {transactions && transactions.length > 0 ? transactions.map(t => (
                                             <TableRow key={t.id}>
-                                                <TableCell>{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
-                                                <TableCell>{t.type}</TableCell>
-                                                <TableCell className="text-right">{formatPrice(t.amount, t.currency)}</TableCell>
-                                                <TableCell className="text-center">
+                                                <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
+                                                <TableCell className="text-xs sm:text-sm py-2 sm:py-4">{t.type}</TableCell>
+                                                <TableCell className="text-xs sm:text-sm py-2 sm:py-4 text-right whitespace-nowrap">{formatPrice(t.amount, t.currency)}</TableCell>
+                                                <TableCell className="text-xs sm:text-sm py-2 sm:py-4 text-center">
                                                     <Badge variant={
                                                         t.status === 'Completed' ? 'secondary'
                                                             : t.status === 'Pending' ? 'default'
                                                                 : 'destructive'
-                                                    }>
+                                                    } className="text-xs">
                                                         {t.status}
                                                     </Badge>
                                                 </TableCell>
                                             </TableRow>
                                         )) : (
                                             <TableRow>
-                                                <TableCell colSpan={4} className="text-center h-24">No transactions found.</TableCell>
+                                                <TableCell colSpan={4} className="text-center h-16 sm:h-24 text-xs sm:text-sm">No transactions found.</TableCell>
                                             </TableRow>
                                         )}
                                     </TableBody>

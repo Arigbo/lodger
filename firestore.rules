@@ -15,8 +15,15 @@ service cloud.firestore {
       // Allow creation if the authenticated user is setting themselves as the landlord
       allow create: if request.auth != null && request.resource.data.landlordId == request.auth.uid;
       
-      // Allow update/delete if the user is the landlord of the property
-      allow update, delete: if request.auth != null && resource.data.landlordId == request.auth.uid;
+      // Allow update if: user is landlord, OR user is current tenant updating specific termination fields
+      allow update: if request.auth != null && (
+          resource.data.landlordId == request.auth.uid || 
+          (resource.data.currentTenantId == request.auth.uid && 
+           request.resource.data.status == 'available' && 
+           request.resource.data.currentTenantId == null)
+      );
+      
+      allow delete: if request.auth != null && resource.data.landlordId == request.auth.uid;
     }
 
     match /rentalApplications/{rentalApplicationId} {

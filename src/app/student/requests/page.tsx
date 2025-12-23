@@ -197,15 +197,15 @@ export default function StudentRequestsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-headline text-3xl font-bold">My Rental Requests</h1>
-          <p className="text-muted-foreground">
+          <h1 className="font-headline text-2xl sm:text-3xl font-bold">My Rental Requests</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Track the status of your applications.
           </p>
         </div>
       </div>
-      <Separator className="my-6" />
+      <Separator className="my-4 sm:my-6" />
 
       <Card>
         <CardHeader>
@@ -214,85 +214,89 @@ export default function StudentRequestsPage() {
             You have sent {aggregatedRequests.length} rental requests.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-2 sm:p-6">
           {aggregatedRequests.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Property</TableHead>
-                    <TableHead>Landlord</TableHead>
-                    <TableHead>Date Sent</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {aggregatedRequests.map(({ request, landlord, property }) => {
-                    return (
-                      <TableRow key={request.id}>
-                        <TableCell>
-                          <Link href={`/student/properties/${property?.id}`} className="font-medium hover:underline">
-                            {property?.title || 'Unknown Property'}
-                          </Link>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-muted-foreground">{landlord?.name || 'Unknown Landlord'}</span>
-                        </TableCell>
-                        <TableCell>{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(request.status)} className="capitalize">
-                            {request.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {request.status === 'approved' && (
-                              <Button variant="secondary" size="sm" asChild>
-                                <Link href="/student/leases">
-                                  View Leases
-                                </Link>
-                              </Button>
-                            )}
-                            {request.status === 'pending' && (
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setRequestToEdit(request);
-                                    setEditMessage(request.messageToLandlord || '');
-                                  }}
-                                >
-                                  Edit
+            <div className="w-full overflow-x-auto">
+              <div className="inline-block min-w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Property</TableHead>
+                      <TableHead className="hidden sm:table-cell text-xs sm:text-sm whitespace-nowrap">Landlord</TableHead>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Date Sent</TableHead>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
+                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {aggregatedRequests.map(({ request, landlord, property }) => {
+                      return (
+                        <TableRow key={request.id}>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                            <Link href={`/student/properties/${property?.id}`} className="font-medium hover:underline line-clamp-2">
+                              {property?.title || 'Unknown Property'}
+                            </Link>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell text-xs sm:text-sm py-2 sm:py-4">
+                            <span className="text-muted-foreground">{landlord?.name || 'Unknown Landlord'}</span>
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                            <Badge variant={getStatusVariant(request.status)} className="capitalize text-xs">
+                              {request.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2"
+                              {request.status === 'approved' && (
+                                <Button variant="secondary" size="xs" className="text-xs w-full sm:w-auto" asChild>
+                                  <Link href="/student/leases">
+                                    View Leases
+                                  </Link>
                                 </Button>
+                              )}
+                              {request.status === 'pending' && (
+                                <div className="flex flex-col sm:flex-row gap-1 w-full sm:w-auto">
+                                  <Button
+                                    variant="outline"
+                                    size="xs"
+                                    className="text-xs"
+                                    onClick={() => {
+                                      setRequestToEdit(request);
+                                      setEditMessage(request.messageToLandlord || '');
+                                    }}
+                                  >
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="xs"
+                                    className="text-xs"
+                                    onClick={() => setRequestToDelete(request.id)}
+                                  >
+                                    Delete
+                                  </Button>
+                                </div>
+                              )}
+                              {/* Allow deletion even if declined/approved to clear list? User said "delete their request" */}
+                              {request.status !== 'pending' && request.status !== 'approved' && (
                                 <Button
-                                  variant="destructive"
-                                  size="sm"
+                                  variant="ghost"
+                                  size="xs"
+                                  className="text-destructive hover:text-destructive text-xs"
                                   onClick={() => setRequestToDelete(request.id)}
                                 >
-                                  Delete
+                                  Remove
                                 </Button>
-                              </div>
-                            )}
-                            {/* Allow deletion even if declined/approved to clear list? User said "delete their request" */}
-                            {request.status !== 'pending' && request.status !== 'approved' && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive hover:text-destructive"
-                                onClick={() => setRequestToDelete(request.id)}
-                              >
-                                Remove
-                              </Button>
-                            )}
+                              )}
                           </div>
                         </TableCell>
                       </TableRow>
-                    );
+                  );
                   })}
                 </TableBody>
               </Table>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
@@ -330,31 +334,31 @@ export default function StudentRequestsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit Dialog */}
-      <Dialog open={!!requestToEdit} onOpenChange={(open) => !open && setRequestToEdit(null)}>
-        <DialogContent className="sm:max-w-md w-[95vw] border-2 shadow-lg">
-          <DialogHeader>
-            <DialogTitle>Edit Application</DialogTitle>
-            <DialogDescription>
-              Update your message to the landlord.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <label className="text-sm font-medium mb-2 block">Message</label>
-            <Textarea
-              value={editMessage}
-              onChange={(e) => setEditMessage(e.target.value)}
-              placeholder="Introduced yourself and explain why you're a good fit..."
-              rows={4}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRequestToEdit(null)}>Cancel</Button>
-            <Button onClick={handleUpdateRequest}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+      {/* Edit Dialog */ }
+  <Dialog open={!!requestToEdit} onOpenChange={(open) => !open && setRequestToEdit(null)}>
+    <DialogContent className="sm:max-w-md w-[95vw] border-2 shadow-lg">
+      <DialogHeader>
+        <DialogTitle>Edit Application</DialogTitle>
+        <DialogDescription>
+          Update your message to the landlord.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="py-4">
+        <label className="text-sm font-medium mb-2 block">Message</label>
+        <Textarea
+          value={editMessage}
+          onChange={(e) => setEditMessage(e.target.value)}
+          placeholder="Introduced yourself and explain why you're a good fit..."
+          rows={4}
+        />
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => setRequestToEdit(null)}>Cancel</Button>
+        <Button onClick={handleUpdateRequest}>Save Changes</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+    </div >
   );
 }
 

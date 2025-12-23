@@ -68,9 +68,9 @@ export default async function Home() {
       />
 
       {/* Stats Section - Trust Builder */}
-      <section className="py-32 bg-background relative overflow-hidden border-y border-border/50">
+      <section className="py-16 sm:py-24 md:py-32 bg-background relative overflow-hidden border-y border-border/50">
         <div className="container relative z-10 mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-24">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-12 md:gap-24">
             {stats.map((stat, index) => (
               <StatCard key={index} {...stat} />
             ))}
@@ -82,13 +82,13 @@ export default async function Home() {
       <LandingFeatures />
 
       {/* Featured Properties Section */}
-      <section id="featured" className="py-32 bg-background">
+      <section id="featured" className="py-16 sm:py-24 md:py-32 bg-background">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto mb-20 animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both">
-            <h2 className="font-headline text-4xl md:text-5xl font-black mb-8">
+          <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-20 animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both">
+            <h2 className="font-headline text-2xl sm:text-4xl md:text-5xl font-black mb-4 sm:mb-8">
               Handpicked <span className="text-primary">Properties</span>
             </h2>
-            <p className="text-xl text-muted-foreground leading-relaxed">
+            <p className="text-sm sm:text-base md:text-xl text-muted-foreground leading-relaxed">
               Check out some of the top-rated student homes available right now, verified for your safety.
             </p>
           </div>
@@ -97,8 +97,8 @@ export default async function Home() {
             <PropertyCarousel properties={featuredProperties} />
           </div>
 
-          <div className="mt-20 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500 fill-mode-both">
-            <Button asChild size="lg" variant="outline" className="h-16 px-10 text-xl font-bold rounded-2xl border-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all">
+          <div className="mt-12 sm:mt-20 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500 fill-mode-both">
+            <Button asChild size="lg" variant="outline" className="h-14 sm:h-16 px-6 sm:px-10 text-base sm:text-xl font-bold rounded-xl sm:rounded-2xl border-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all w-full sm:w-auto">
               <Link href="/student/properties" className="flex items-center">
                 View All Properties <ArrowRight className="ml-2 h-6 w-6" />
               </Link>
@@ -108,8 +108,8 @@ export default async function Home() {
       </section>
 
       {/* High-Impact Landlord CTA Section */}
-      <section className="py-32 container mx-auto px-4 overflow-hidden">
-        <div className="relative rounded-[4rem] bg-foreground text-background px-8 py-24 md:py-40 shadow-2xl overflow-hidden text-center group animate-in fade-in zoom-in-95 duration-1000 fill-mode-both">
+      <section className="py-16 sm:py-24 md:py-32 px-4 container mx-auto overflow-hidden">
+        <div className="relative rounded-2xl sm:rounded-3xl md:rounded-[4rem] bg-foreground text-background px-4 sm:px-8 py-16 sm:py-24 md:py-40 shadow-2xl overflow-hidden text-center group animate-in fade-in zoom-in-95 duration-1000 fill-mode-both">
           <div className="absolute inset-0 z-0">
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_50%,rgba(59,130,246,0.4),transparent_50%)]" />
             <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_50%,rgba(147,51,234,0.4),transparent_50%)]" />
@@ -120,14 +120,14 @@ export default async function Home() {
             <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-[10px] font-black uppercase tracking-[0.3em] mb-10">
               Propel Your Business
             </div>
-            <h2 className="font-headline text-5xl md:text-8xl font-black tracking-tight mb-10 leading-[0.95]">
+            <h2 className="font-headline text-3xl sm:text-5xl md:text-8xl font-black tracking-tight mb-6 sm:mb-10 leading-[0.95]">
               Are You a <br /> <span className="text-primary italic animate-pulse">Landlord?</span>
             </h2>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-16 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-xl md:text-2xl text-muted-foreground mb-8 sm:mb-16 max-w-2xl mx-auto leading-relaxed">
               List your property on our state-of-the-art platform and connect with thousands of ambitious student tenants instantly.
             </p>
-            <div className="flex flex-wrap justify-center gap-8">
-              <Button size="lg" variant="default" className="h-20 px-12 text-2xl font-black bg-primary hover:bg-primary/90 text-primary-foreground rounded-[2rem] shadow-2xl shadow-primary/50 hover:-translate-y-2 transition-all active:scale-95" asChild>
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
+              <Button size="lg" variant="default" className="h-16 sm:h-20 px-8 sm:px-12 text-lg sm:text-2xl font-black bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl sm:rounded-[2rem] shadow-2xl shadow-primary/50 hover:-translate-y-2 transition-all active:scale-95 w-full sm:w-auto" asChild>
                 <Link href="/landlord" className="flex items-center">
                   Start Listing <ArrowRight className="ml-3 h-8 w-8" />
                 </Link>

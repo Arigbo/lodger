@@ -357,15 +357,15 @@ export default function RentalRequestsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-headline text-3xl font-bold">Rental Requests</h1>
-          <p className="text-muted-foreground">
+          <h1 className="font-headline text-2xl sm:text-3xl font-bold">Rental Requests</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Manage incoming applications from students.
           </p>
         </div>
       </div>
-      <Separator className="my-6" />
+      <Separator className="my-4 sm:my-6" />
 
       {aggregatedRequests.length === 0 && !isLoading ? (
         <Card>
@@ -391,58 +391,62 @@ export default function RentalRequestsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Applicant</TableHead>
-                      <TableHead>Property</TableHead>
-                      <TableHead>Message</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pendingRequests.length > 0 ? (
-                      pendingRequests.map((aggregatedRequest) => {
-                        const { request, applicant, property } = aggregatedRequest;
-                        if (!applicant || !property) return null;
-                        return (
-                          <TableRow key={request.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar>
-                                  <AvatarImage src={applicant?.profileImageUrl} />
-                                  <AvatarFallback>
-                                    <UserIcon className="h-4 w-4" />
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="font-medium">{applicant?.name}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Link href={`/landlord/properties/${property?.id}`} className="hover:underline text-muted-foreground">
-                                {property?.title}
-                              </Link>
-                            </TableCell>
-                            <TableCell className="max-w-xs truncate text-muted-foreground">{request.messageToLandlord}</TableCell>
-                            <TableCell>{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button size="sm" variant="outline" onClick={() => handleAcceptClick(aggregatedRequest)}><Check className="h-4 w-4" /></Button>
-                                <Button size="sm" variant="destructive" onClick={() => handleDeclineClick(request.id)}><X className="h-4 w-4" /></Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })
-                    ) : (
+              <div className="w-full overflow-x-auto">
+                <div className="inline-block min-w-full">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center h-24">No pending requests.</TableCell>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap">Applicant</TableHead>
+                        <TableHead className="hidden md:table-cell text-xs sm:text-sm whitespace-nowrap">Property</TableHead>
+                        <TableHead className="hidden lg:table-cell text-xs sm:text-sm whitespace-nowrap">Message</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap">Date</TableHead>
+                        <TableHead className="text-xs sm:text-sm whitespace-nowrap text-right">Actions</TableHead>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {pendingRequests.length > 0 ? (
+                        pendingRequests.map((aggregatedRequest) => {
+                          const { request, applicant, property } = aggregatedRequest;
+                          if (!applicant || !property) return null;
+                          return (
+                            <TableRow key={request.id}>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                                    <AvatarImage src={applicant?.profileImageUrl} />
+                                    <AvatarFallback>
+                                      <UserIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="font-medium line-clamp-1">{applicant?.name}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="hidden md:table-cell text-xs sm:text-sm py-2 sm:py-4">
+                                <Link href={`/landlord/properties/${property?.id}`} className="hover:underline text-muted-foreground line-clamp-2">
+                                  {property?.title}
+                                </Link>
+                              </TableCell>
+                              <TableCell className="hidden lg:table-cell text-xs sm:text-sm py-2 sm:py-4 max-w-xs">
+                                <span className="text-muted-foreground line-clamp-2">{request.messageToLandlord}</span>
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 text-right">
+                                <div className="flex justify-end gap-1 sm:gap-2">
+                                  <Button size="xs" variant="outline" onClick={() => handleAcceptClick(aggregatedRequest)} className="px-2 h-7"><Check className="h-3 w-3 sm:h-4 sm:w-4" /></Button>
+                                  <Button size="xs" variant="destructive" onClick={() => handleDeclineClick(request.id)} className="px-2 h-7"><X className="h-3 w-3 sm:h-4 sm:w-4" /></Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center h-16 sm:h-24 text-xs sm:text-sm">No pending requests.</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -457,67 +461,71 @@ export default function RentalRequestsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tenant</TableHead>
-                        <TableHead>Property</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Date Selected</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pendingOfflinePayments.map(({ lease, tenant, property }) => {
-                        if (!tenant || !property) return null;
-                        return (
-                          <TableRow key={lease.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar>
-                                  <AvatarImage src={tenant.profileImageUrl} />
-                                  <AvatarFallback>
-                                    <UserIcon className="h-4 w-4" />
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="font-medium">{tenant.name}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Link href={`/landlord/properties/${property.id}`} className="hover:underline text-muted-foreground">
-                                {property.title}
-                              </Link>
-                            </TableCell>
-                            <TableCell className="font-semibold">
-                              {formatPrice(lease.offlinePaymentAmount || property.price, property.currency)}
-                              {lease.offlinePaymentMonths && lease.offlinePaymentMonths > 1 && (
-                                <span className="ml-1 text-xs text-muted-foreground">({lease.offlinePaymentMonths} months)</span>
-                              )}
-                            </TableCell>
-                            <TableCell>{lease.createdAt ? new Date(lease.createdAt.toDate()).toLocaleDateString() : 'N/A'}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleApproveOfflinePayment(lease.id, tenant.id, property.id, property.title)}
-                                >
-                                  <Check className="h-4 w-4 mr-1" /> Confirm Payment
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleRejectOfflinePayment(lease.id, tenant.id, property.title)}
-                                >
-                                  <X className="h-4 w-4 mr-1" /> Reject
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
+                <div className="w-full overflow-x-auto">
+                  <div className="inline-block min-w-full">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs sm:text-sm whitespace-nowrap">Tenant</TableHead>
+                          <TableHead className="hidden md:table-cell text-xs sm:text-sm whitespace-nowrap">Property</TableHead>
+                          <TableHead className="text-xs sm:text-sm whitespace-nowrap">Amount</TableHead>
+                          <TableHead className="hidden sm:table-cell text-xs sm:text-sm whitespace-nowrap">Date Selected</TableHead>
+                          <TableHead className="text-xs sm:text-sm whitespace-nowrap text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {pendingOfflinePayments.map(({ lease, tenant, property }) => {
+                          if (!tenant || !property) return null;
+                          return (
+                            <TableRow key={lease.id}>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                                    <AvatarImage src={tenant.profileImageUrl} />
+                                    <AvatarFallback>
+                                      <UserIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="font-medium line-clamp-1">{tenant.name}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="hidden md:table-cell text-xs sm:text-sm py-2 sm:py-4">
+                                <Link href={`/landlord/properties/${property.id}`} className="hover:underline text-muted-foreground line-clamp-2">
+                                  {property.title}
+                                </Link>
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 font-semibold whitespace-nowrap">
+                                {formatPrice(lease.offlinePaymentAmount || property.price, property.currency)}
+                                {lease.offlinePaymentMonths && lease.offlinePaymentMonths > 1 && (
+                                  <span className="ml-1 text-xs text-muted-foreground">({lease.offlinePaymentMonths}m)</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="hidden sm:table-cell text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{lease.createdAt ? new Date(lease.createdAt.toDate()).toLocaleDateString() : 'N/A'}</TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 text-right">
+                                <div className="flex justify-end gap-1 sm:gap-2 flex-col sm:flex-row">
+                                  <Button
+                                    size="xs"
+                                    onClick={() => handleApproveOfflinePayment(lease.id, tenant.id, property.id, property.title)}
+                                    className="text-xs px-2 h-7"
+                                  >
+                                    <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" /> Confirm
+                                  </Button>
+                                  <Button
+                                    size="xs"
+                                    variant="outline"
+                                    onClick={() => handleRejectOfflinePayment(lease.id, tenant.id, property.title)}
+                                    className="text-xs px-2 h-7"
+                                  >
+                                    <X className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" /> Reject
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </Card>
