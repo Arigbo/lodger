@@ -247,7 +247,7 @@ export default function StudentRequestsPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2"
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2">
                               {request.status === 'approved' && (
                                 <Button variant="secondary" size="xs" className="text-xs w-full sm:w-auto" asChild>
                                   <Link href="/student/leases">
@@ -289,13 +289,13 @@ export default function StudentRequestsPage() {
                                   Remove
                                 </Button>
                               )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                  );
-                  })}
-                </TableBody>
-              </Table>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           ) : (
@@ -334,30 +334,30 @@ export default function StudentRequestsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit Dialog */ }
-  <Dialog open={!!requestToEdit} onOpenChange={(open) => !open && setRequestToEdit(null)}>
-    <DialogContent className="sm:max-w-md w-[95vw] border-2 shadow-lg">
-      <DialogHeader>
-        <DialogTitle>Edit Application</DialogTitle>
-        <DialogDescription>
-          Update your message to the landlord.
-        </DialogDescription>
-      </DialogHeader>
-      <div className="py-4">
-        <label className="text-sm font-medium mb-2 block">Message</label>
-        <Textarea
-          value={editMessage}
-          onChange={(e) => setEditMessage(e.target.value)}
-          placeholder="Introduced yourself and explain why you're a good fit..."
-          rows={4}
-        />
-      </div>
-      <DialogFooter>
-        <Button variant="outline" onClick={() => setRequestToEdit(null)}>Cancel</Button>
-        <Button onClick={handleUpdateRequest}>Save Changes</Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+      {/* Edit Dialog */}
+      <Dialog open={!!requestToEdit} onOpenChange={(open) => !open && setRequestToEdit(null)}>
+        <DialogContent className="sm:max-w-md w-[95vw] border-2 shadow-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Application</DialogTitle>
+            <DialogDescription>
+              Update your message to the landlord.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="text-sm font-medium mb-2 block">Message</label>
+            <Textarea
+              value={editMessage}
+              onChange={(e) => setEditMessage(e.target.value)}
+              placeholder="Introduced yourself and explain why you're a good fit..."
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRequestToEdit(null)}>Cancel</Button>
+            <Button onClick={handleUpdateRequest}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div >
   );
 }

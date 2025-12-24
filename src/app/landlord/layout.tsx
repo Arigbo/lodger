@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { doc } from 'firebase/firestore';
 import type { UserProfile } from '@/types';
 import Loading from '@/app/loading';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 
@@ -77,7 +77,9 @@ export default function LandlordLayout({
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="flex flex-col">
-                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                <SheetHeader>
+                  <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                </SheetHeader>
                 <nav className="grid gap-2 text-lg font-medium">
                   <div className="flex h-14 items-center border-b px-4 mb-4">
                     <span className="font-semibold">Menu</span>
