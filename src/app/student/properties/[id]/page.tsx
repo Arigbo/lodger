@@ -1,4 +1,3 @@
-
 'use client';
 
 import { notFound, usePathname, useParams, useRouter } from "next/navigation";
@@ -11,9 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon, Building, Users, GraduationCap, ChevronLeft } from "lucide-react";
+import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon, Building, Users, GraduationCap, ChevronLeft, Heart } from "lucide-react";
+import PropertyCard from "@/components/property-card";
 import type { Property, UserProfile, PropertyReview, ImagePlaceholder, RentalApplication } from "@/types";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import Link from "next/link";
 import { FaWhatsapp } from 'react-icons/fa';
@@ -141,8 +141,21 @@ export default function PropertyDetailPage() {
     const userCurrency = React.useMemo(() => {
         if (userProfile?.currency) return userProfile.currency;
         if (userProfile?.country) return getCurrencyByCountry(userProfile.country);
-        return null;
+        return 'USD';
     }, [userProfile]);
+
+    const allAvailablePropertiesQuery = useMemoFirebase(() => query(collection(firestore, 'properties'), where('status', '==', 'available')), [firestore]);
+    const { data: allAvailableProperties } = useCollection<Property>(allAvailablePropertiesQuery);
+
+    const similarProperties = React.useMemo(() => {
+        if (!property || !allAvailableProperties) return [];
+        return allAvailableProperties
+            .filter(p =>
+                p.id !== property.id &&
+                (p.type === property.type || p.location.city === property.location.city)
+            )
+            .slice(0, 3);
+    }, [property, allAvailableProperties]);
 
     // SEO effect for client components
     useEffect(() => {
@@ -154,6 +167,12 @@ export default function PropertyDetailPage() {
             }
         }
     }, [property]);
+
+    const isBookmarked = React.useMemo(() => {
+        if (!userProfile || !property) return false;
+        const bookmarkedIds = userProfile.bookmarkedPropertyIds || [];
+        return bookmarkedIds.includes(property.id);
+    }, [userProfile?.bookmarkedPropertyIds, property?.id]);
 
     const isLoading = isPropertyLoading || isLandlordLoading || areReviewsLoading || isUserLoading || areApplicationsLoading || isUserProfileLoading;
 
@@ -355,21 +374,16 @@ export default function PropertyDetailPage() {
     };
 
 
-    const isBookmarked = useMemo(() => {
-        if (!userProfile || !property) return false;
-        const bookmarkedIds = userProfile.bookmarkedPropertyIds || [];
-        return bookmarkedIds.includes(property.id);
-    }, [userProfile, property]);
 
     const toggleBookmark = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
-        if (!user || !userProfileRef) {
+        if (!user || !userProfileRef || !property) {
             toast({
                 variant: "destructive",
-                title: "Login Required",
-                description: "Please log in to bookmark properties",
+                title: property ? "Login Required" : "Property Not Found",
+                description: property ? "Please log in to bookmark properties" : "Wait for property to load",
             });
             return;
         }
@@ -391,7 +405,7 @@ export default function PropertyDetailPage() {
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: "Failed to update bookmarks",
+                description: "Failed to update bookmarks. Please try again.",
             });
         }
     };
@@ -807,6 +821,29 @@ export default function PropertyDetailPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Similar Properties Section */}
+                {similarProperties.length > 0 && (
+                    <div className="mt-20 border-t pt-20">
+                        <div className="flex items-center justify-between mb-8">
+                            <div>
+                                <h2 className="text-3xl font-bold tracking-tight">Similar Properties</h2>
+                                <p className="text-muted-foreground mt-2">Explore other homes you might be interested in.</p>
+                            </div>
+                            <Button variant="ghost" className="text-primary font-bold gap-2" asChild>
+                                <Link href="/student/properties">
+                                    View All Properties
+                                    <ChevronLeft className="h-4 w-4 rotate-180" />
+                                </Link>
+                            </Button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {similarProperties.map((similarProperty) => (
+                                <PropertyCard key={similarProperty.id} property={similarProperty} />
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

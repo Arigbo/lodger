@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, User, Bell } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/logo";
 import { cn } from "@/utils";
@@ -29,6 +29,7 @@ import type { UserProfile } from "@/types";
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isMounted, setIsMounted] = useState(false); // State for hydration fix
   const pathname = usePathname();
   const router = useRouter();
   const auth = useAuth();
@@ -42,6 +43,10 @@ export default function Header() {
     [user, firestore]
   );
   const { data: userProfile } = useDoc<UserProfile>(userDocRef);
+
+  useEffect(() => {
+    setIsMounted(true); // Set to true after initial render to fix hydration
+  }, []);
 
   const handleLogout = async () => {
     if (auth) {
@@ -116,59 +121,58 @@ export default function Header() {
           /* AUTHENTICATED / APP PAGES HEADER CONTENT */
           <div className="flex items-center gap-4">
             {/* Notification Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  <span className="sr-only">Notifications</span>
-                  {unreadCount > 0 && (
-                    <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-600 border-2 border-background" />
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-80" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Notifications</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      You have {unreadCount} new messages
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <div className="max-h-[300px] overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
-                      No notifications yet.
+            {isMounted && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative">
+                    <Bell className="h-5 w-5" />
+                    <span className="sr-only">Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-600 border-2 border-background" />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-80" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">Notifications</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        You have {unreadCount} new messages
+                      </p>
                     </div>
-                  ) : (
-                    notifications.map((notification) => (
-                      <DropdownMenuItem
-                        key={notification.id}
-                        className={cn(
-                          "flex flex-col items-start gap-1 p-3 cursor-pointer",
-                          !notification.read && "bg-muted/50"
-                        )}
-                        onClick={() => {
-                          markAsRead(notification.id);
-                          if (notification.link) router.push(notification.link);
-                        }}
-                      >
-                        <div className="flex w-full justify-between items-center">
-                          <span className="font-medium text-sm">{notification.title}</span>
-                          <span className="text-[10px] text-muted-foreground">
-                            {new Date(notification.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          {notification.message}
-                        </p>
-                      </DropdownMenuItem>
-                    ))
-                  )}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-sm text-muted-foreground">
+                        No new notifications
+                      </div>
+                    ) : (
+                      notifications.map((msg) => (
+                        <DropdownMenuItem key={msg.id} asChild>
+                          <Link
+                            href={pathname.startsWith('/landlord')
+                              ? `/landlord/messages?conversationId=${msg.senderId}`
+                              : `/student/messages?conversationId=${msg.senderId}`}
+                            className="flex flex-col items-start p-4 cursor-pointer"
+                          >
+                            <div className="flex w-full justify-between gap-2">
+                              <span className="font-semibold text-xs">New Message</span>
+                              <span className="text-[10px] text-muted-foreground">
+                                {msg.timestamp?.toDate ? msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                              </span>
+                            </div>
+                            <p className="text-xs line-clamp-2 mt-1 text-muted-foreground">
+                              {msg.text}
+                            </p>
+                          </Link>
+                        </DropdownMenuItem>
+                      ))
+                    )}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             {/* User Profile Dropdown */}
             {user && (
