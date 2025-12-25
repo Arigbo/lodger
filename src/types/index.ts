@@ -120,6 +120,8 @@ export type LeaseAgreement = {
     paymentMethod?: 'stripe' | 'offline' | null;
     paymentConfirmed?: boolean;
     landlordApprovedOfflinePayment?: boolean;
+    offlinePaymentAmount?: number;
+    offlinePaymentMonths?: number;
     createdAt?: any; // Firestore timestamp
     expiresAt?: any; // Firestore timestamp (3 days from creation)
     terminationGracePeriodEnd?: string; // ISO string

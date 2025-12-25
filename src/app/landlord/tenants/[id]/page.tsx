@@ -73,7 +73,7 @@ export default function TenantDetailPage() {
         isLeaseEndingSoon: boolean;
         leaseEndDate: Date | null;
         leaseDaysRemaining: number;
-        compassionFee: number;
+        calculatedRefund: number;
     } | null>(null);
 
     const handleEndTenancy = async () => {
@@ -148,7 +148,7 @@ export default function TenantDetailPage() {
                     isLeaseEndingSoon: false,
                     leaseEndDate: null,
                     leaseDaysRemaining: 0,
-                    compassionFee: 0,
+                    calculatedRefund: 0,
                 });
             }
             return;
@@ -164,7 +164,7 @@ export default function TenantDetailPage() {
 
         const isLeaseActive = lease.status === 'active' || lease.status === 'terminating';
 
-        let nextRentDueDate: Date;
+        let nextRentDueDate: Date = leaseStartDate;
         let status: 'Paid' | 'Due' | 'Inactive' = 'Inactive';
         let text = 'Lease Inactive';
 

@@ -252,18 +252,20 @@ export default function ViewStudentLeasePage() {
     };
 
 
-    const getStatusVariant = (status: 'active' | 'expired' | 'pending') => {
+    const getStatusVariant = (status: 'active' | 'expired' | 'pending' | 'terminating') => {
         switch (status) {
             case 'active': return 'secondary';
             case 'expired': return 'outline';
             case 'pending': return 'default';
+            case 'terminating': return 'destructive';
         }
     };
-    const getStatusIcon = (status: 'active' | 'expired' | 'pending') => {
+    const getStatusIcon = (status: 'active' | 'expired' | 'pending' | 'terminating') => {
         switch (status) {
             case 'active': return <CheckCircle2 className="h-5 w-5 text-green-600" />;
             case 'expired': return <FileClock className="h-5 w-5 text-muted-foreground" />;
             case 'pending': return <Hourglass className="h-5 w-5 text-primary" />;
+            case 'terminating': return <ShieldAlert className="h-5 w-5 text-destructive" />;
         }
     };
 

@@ -53,16 +53,22 @@ export default function PropertyCard({ property, as = 'link', className }: Prope
   const CardContentComponent = (
     <Card className={cn("h-full overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1", className)}>
       <CardHeader className="p-0">
-        <div className="relative h-56 w-full">
-          {image && (
+        <div className="relative h-56 w-full bg-muted flex items-center justify-center">
+          {image ? (
             <Image
               src={image}
               alt={property.title}
               fill
-              className="object-cover"
+              className="object-cover transition-transform duration-500 group-hover:scale-110"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
+          ) : (
+            <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
+              <Building className="h-12 w-12 opacity-20" />
+              <span className="text-xs font-medium uppercase tracking-wider opacity-50">No Image Available</span>
+            </div>
           )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <Badge className="absolute right-3 top-3 bg-primary text-primary-foreground flex flex-col items-end gap-0.5 px-3 py-1 h-auto">
             {userCurrency && userCurrency !== property.currency ? (
               <>

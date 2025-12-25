@@ -15,7 +15,9 @@ export type NotificationType =
     | 'OFFLINE_PAYMENT_PENDING'
     | 'OFFLINE_PAYMENT_APPROVED'
     | 'OFFLINE_PAYMENT_REJECTED'
-    | 'LEASE_EXPIRED';
+    | 'LEASE_EXPIRED'
+    | 'LEASE_TERMS_CHANGED'
+    | 'TENANCY_TERMINATING';
 
 interface NotificationPayload {
     toUserId: string;
@@ -133,6 +135,18 @@ export const sendNotification = async ({
         case 'LEASE_EXPIRED':
             title = 'Lease Expired';
             message = customMessage || 'Your lease has expired due to non-payment within the 3-day window.';
+            uiType = 'warning';
+            break;
+
+        case 'LEASE_TERMS_CHANGED':
+            title = 'Lease Terms Updated';
+            message = `The landlord has updated the terms for ${propertyTitle}. Previous signatures have been reset. Please review and sign the updated lease.`;
+            uiType = 'warning';
+            break;
+
+        case 'TENANCY_TERMINATING':
+            title = 'Tenancy Termination Requested';
+            message = customMessage || `The landlord has initiated termination of the tenancy for ${propertyName}.`;
             uiType = 'warning';
             break;
     }

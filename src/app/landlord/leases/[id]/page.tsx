@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { format } from "date-fns";
-import { CheckCircle2, FileClock, Hourglass, Check, Signature } from 'lucide-react';
+import { CheckCircle2, FileClock, Hourglass, Check, Signature, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc } from 'firebase/firestore';
 import Link from 'next/link';
@@ -41,7 +41,7 @@ export default function ViewLandlordLeasePage() {
     const isSupportingDataLoading = isLandlordLoading || isTenantLoading || isPropertyLoading;
 
     const handleSignLease = async () => {
-        if (!leaseRef) return;
+        if (!leaseRef || !lease) return;
         try {
             const signedName = landlord?.legalName || landlord?.name || "Landlord";
             const signatureLine = `\n\nDigitally Signed by Landlord: ${signedName} on ${new Date().toLocaleString()}`;
@@ -131,18 +131,20 @@ export default function ViewLandlordLeasePage() {
         return <Loading />;
     }
 
-    const getStatusVariant = (status: 'active' | 'expired' | 'pending') => {
+    const getStatusVariant = (status: 'active' | 'expired' | 'pending' | 'terminating') => {
         switch (status) {
             case 'active': return 'secondary';
             case 'expired': return 'outline';
             case 'pending': return 'default';
+            case 'terminating': return 'destructive';
         }
     };
-    const getStatusIcon = (status: 'active' | 'expired' | 'pending') => {
+    const getStatusIcon = (status: 'active' | 'expired' | 'pending' | 'terminating') => {
         switch (status) {
             case 'active': return <CheckCircle2 className="h-5 w-5 text-green-600" />;
             case 'expired': return <FileClock className="h-5 w-5 text-muted-foreground" />;
             case 'pending': return <Hourglass className="h-5 w-5 text-primary" />;
+            case 'terminating': return <AlertTriangle className="h-5 w-5 text-destructive" />;
         }
     };
 

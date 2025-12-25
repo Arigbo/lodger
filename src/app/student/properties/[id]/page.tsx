@@ -391,9 +391,17 @@ export default function PropertyDetailPage() {
                                 </div>
                             </Carousel>
                         ) : (
-                            <div className="flex h-[400px] w-full items-center justify-center rounded-lg bg-secondary text-muted-foreground">
-                                <div className="text-center">
-                                    <h3 className="text-lg font-semibold">No Images Available</h3>
+                            <div className="flex h-[300px] md:h-[450px] w-full items-center justify-center rounded-xl bg-muted border-2 border-dashed border-muted-foreground/20 text-muted-foreground transition-all duration-300 hover:bg-muted/80">
+                                <div className="text-center flex flex-col items-center gap-4">
+                                    <div className="p-4 rounded-full bg-background shadow-sm">
+                                        <Building className="h-12 w-12 opacity-40 text-primary" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h3 className="text-xl font-bold tracking-tight">No Photos Available</h3>
+                                        <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                                            The landlord hasn't uploaded photos for this property yet.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -489,7 +497,8 @@ export default function PropertyDetailPage() {
                             {reviews && reviews.map(review => {
                                 return (
                                     <div key={review.id} className="flex gap-4 pt-6 border-t">
-                                        <Avatar>
+                                        <Avatar className="ring-2 ring-primary/5">
+                                            <AvatarImage src={review.tenantImageUrl} className="object-cover" />
                                             <AvatarFallback>
                                                 <UserIcon className="h-4 w-4" />
                                             </AvatarFallback>
@@ -586,8 +595,8 @@ export default function PropertyDetailPage() {
                                     <CardTitle className="font-headline">Meet the Landlord</CardTitle>
                                 </CardHeader>
                                 <CardContent className="text-center">
-                                    <Avatar className="h-24 w-24 mx-auto mb-4">
-                                        <AvatarImage src={landlord.profileImageUrl} />
+                                    <Avatar className="h-24 w-24 mx-auto mb-4 ring-4 ring-primary/10 transition-transform hover:scale-105 duration-300">
+                                        <AvatarImage src={landlord.profileImageUrl} className="object-cover" />
                                         <AvatarFallback>
                                             <UserIcon className="h-12 w-12 text-muted-foreground" />
                                         </AvatarFallback>

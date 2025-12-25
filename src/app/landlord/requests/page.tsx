@@ -412,8 +412,8 @@ export default function RentalRequestsPage() {
                             <TableRow key={request.id}>
                               <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
                                 <div className="flex items-center gap-2 sm:gap-3">
-                                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
-                                    <AvatarImage src={applicant?.profileImageUrl} />
+                                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10 ring-2 ring-primary/10">
+                                    <AvatarImage src={applicant?.profileImageUrl} className="object-cover" />
                                     <AvatarFallback>
                                       <UserIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                                     </AvatarFallback>
@@ -480,8 +480,8 @@ export default function RentalRequestsPage() {
                             <TableRow key={lease.id}>
                               <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
                                 <div className="flex items-center gap-2 sm:gap-3">
-                                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
-                                    <AvatarImage src={tenant.profileImageUrl} />
+                                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10 ring-2 ring-primary/10">
+                                    <AvatarImage src={tenant.profileImageUrl} className="object-cover" />
                                     <AvatarFallback>
                                       <UserIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                                     </AvatarFallback>
