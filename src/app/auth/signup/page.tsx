@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Combobox } from '@/components/ui/combobox';
 import Link from 'next/link';
-import { Eye, EyeOff, ArrowLeft, ArrowRight, UploadCloud, UserCircle, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, ArrowRight, UploadCloud, UserCircle, Loader2, X } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/utils';
 import { useAuth, useFirebaseApp, useFirestore } from '@/firebase/provider';
@@ -62,6 +62,9 @@ export default function SignupPage() {
     const [currentStep, setCurrentStep] = useState(1);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [profileImage, setProfileImage] = useState<File | null>(null);
+    const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
     const auth = useAuth();
     const firestore = useFirestore(); // Get Firestore instance
@@ -102,11 +105,13 @@ export default function SignupPage() {
             { id: 1, name: 'Choose Account Type', fields: ['userType'] },
             { id: 2, name: 'Account Details', fields: ['name', 'legalName', 'email', 'password', 'confirmPassword'] },
             { id: 3, name: 'Location & Contact', fields: ['country', 'state', 'school', 'phone'] },
+            { id: 4, name: 'Profile Picture (Optional)', fields: [] },
         ] :
         [
             { id: 1, name: 'Choose Account Type', fields: ['userType'] },
             { id: 2, name: 'Account Details', fields: ['name', 'legalName', 'email', 'password', 'confirmPassword'] },
             { id: 3, name: 'Location & Contact', fields: ['country', 'state', 'phone', 'whatsappUrl', 'twitterUrl'] },
+            { id: 4, name: 'Profile Picture (Optional)', fields: [] },
         ];
     const totalSteps = steps.length;
 
@@ -127,6 +132,48 @@ export default function SignupPage() {
             setCurrentStep(step => step - 1);
         }
     }
+
+    const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            toast({
+                variant: "destructive",
+                title: "Invalid file type",
+                description: "Please upload a valid image file.",
+            });
+            return;
+        }
+
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            toast({
+                variant: "destructive",
+                title: "Image too large",
+                description: "Please upload an image smaller than 5MB.",
+            });
+            return;
+        }
+
+        setProfileImage(file);
+
+        // Create preview URL
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setProfileImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const removeProfileImage = () => {
+        setProfileImage(null);
+        setProfileImagePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
 
     const onSubmit = async (values: FormValues) => {
         // Prevent premature submission if triggered (e.g., by Enter key) before the final step
@@ -149,8 +196,26 @@ export default function SignupPage() {
             const userCredential = await initiateEmailSignUp(auth, values.email, values.password);
             const uid = userCredential.user.uid;
 
-            // Profile image will be null - users can upload later from their profile
-            const profileImageUrl = null;
+            // 2. Upload profile image if provided
+            let profileImageUrl = null;
+            if (profileImage) {
+                try {
+                    const storage = getStorage(firebaseApp);
+                    const imageRef = ref(storage, `users/${uid}/profile-picture`);
+                    await uploadBytes(imageRef, profileImage, {
+                        contentType: profileImage.type,
+                        cacheControl: 'public, max-age=3600'
+                    });
+                    profileImageUrl = await getDownloadURL(imageRef);
+                } catch (uploadError) {
+                    console.error('Error uploading profile image:', uploadError);
+                    // Continue with registration even if image upload fails
+                    toast({
+                        title: "Profile created",
+                        description: "Account created but profile picture upload failed. You can upload it later.",
+                    });
+                }
+            }
 
             // 3. Create Firestore User Document directly
             const userData = {
@@ -465,6 +530,65 @@ export default function SignupPage() {
                                         </div>
                                     </>
                                 )}
+                            </div>
+
+                            {/* Step 4: Profile Picture (Optional) */}
+                            <div className={cn("space-y-6", currentStep === 4 ? "block" : "hidden")}>
+                                <div className="text-center space-y-2">
+                                    <h3 className="text-lg font-semibold">Add a Profile Picture</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        Help others recognize you! You can skip this step and add it later.
+                                    </p>
+                                </div>
+
+                                <div className="flex flex-col items-center space-y-4">
+                                    {profileImagePreview ? (
+                                        <div className="relative">
+                                            <div className="h-32 w-32 rounded-full overflow-hidden border-4 border-primary">
+                                                <img
+                                                    src={profileImagePreview}
+                                                    alt="Profile preview"
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                variant="destructive"
+                                                size="icon"
+                                                className="absolute -top-2 -right-2 h-8 w-8 rounded-full"
+                                                onClick={removeProfileImage}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="h-32 w-32 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-muted-foreground/25">
+                                            <UserCircle className="h-16 w-16 text-muted-foreground/50" />
+                                        </div>
+                                    )}
+
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handleProfileImageChange}
+                                    />
+
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="w-full max-w-xs"
+                                    >
+                                        <UploadCloud className="mr-2 h-4 w-4" />
+                                        {profileImagePreview ? 'Change Picture' : 'Upload Picture'}
+                                    </Button>
+
+                                    <p className="text-xs text-muted-foreground text-center">
+                                        Accepted formats: JPG, PNG, WebP (Max 5MB)
+                                    </p>
+                                </div>
                             </div>
 
 

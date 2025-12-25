@@ -17,9 +17,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser, useAuth } from "@/firebase/provider";
+import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { LogoutModal } from "./logout-modal";
 import { useNotifications } from "@/hooks/useNotifications";
+import { doc } from "firebase/firestore";
+import type { UserProfile } from "@/types";
 
 
 
@@ -29,8 +32,16 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { user, role } = useUser();
   const { notifications, unreadCount, markAsRead } = useNotifications(user?.uid || null);
+
+  // Fetch user profile from Firestore
+  const userDocRef = useMemoFirebase(() =>
+    user ? doc(firestore, 'users', user.uid) : null,
+    [user, firestore]
+  );
+  const { data: userProfile } = useDoc<UserProfile>(userDocRef);
 
   const handleLogout = async () => {
     if (auth) {
@@ -163,17 +174,23 @@ export default function Header() {
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.photoURL || ""} alt={user.displayName || "User"} />
-                      <AvatarFallback>{user.displayName?.charAt(0) || "U"}</AvatarFallback>
+                  <Button variant="ghost" className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full">
+                    <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                      <AvatarImage
+                        src={userProfile?.profileImageUrl || user.photoURL || ""}
+                        alt={userProfile?.name || user.displayName || "User"}
+                        className="object-cover"
+                      />
+                      <AvatarFallback>
+                        <User className="h-4 w-4" />
+                      </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                      <p className="text-sm font-medium leading-none">{userProfile?.name || user.displayName}</p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user.email}
                       </p>

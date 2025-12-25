@@ -35,7 +35,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useUser, useFirestore, useDoc, useMemoFirebase, errorEmitter, FirestorePermissionError, useFirebaseApp } from '@/firebase';
 import type { UserProfile } from '@/types';
 import { doc, setDoc } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import Loading from '@/app/loading';
 import { useToast } from '@/hooks/use-toast';
 import { countries } from '@/types/countries';
@@ -75,6 +75,7 @@ export default function AccountPage() {
     const firebaseApp = useFirebaseApp();
     const [isUploading, setIsUploading] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
@@ -119,11 +120,11 @@ export default function AccountPage() {
         const file = e.target.files?.[0];
         if (!file || !user) return;
 
-        if (file.size > 1024 * 1024) {
+        if (file.size > 5 * 1024 * 1024) {
             toast({
                 variant: "destructive",
                 title: "Image too large",
-                description: "Please upload an image smaller than 1MB.",
+                description: "Please upload an image smaller than 5MB.",
             });
             return;
         }
@@ -159,9 +160,9 @@ export default function AccountPage() {
             setPreviewImage(null);
         } finally {
             setIsUploading(false);
-            // Reset the input by ID since we don't have a ref in this component
-            const input = document.getElementById('profile-upload') as HTMLInputElement;
-            if (input) input.value = '';
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     }
 
@@ -241,7 +242,7 @@ export default function AccountPage() {
                                         <div className="grid gap-2 w-full">
                                             <p className="text-sm text-muted-foreground">Update your profile picture.</p>
                                             <div className="flex items-center gap-2">
-                                                <Button type="button" variant="outline" disabled={isUploading} onClick={() => document.getElementById('profile-upload')?.click()}>
+                                                <Button type="button" variant="outline" disabled={isUploading} onClick={() => fileInputRef.current?.click()}>
                                                     <Upload className="mr-2 h-4 w-4" />
                                                     {isUploading ? 'Uploading...' : 'Upload Image'}
                                                 </Button>
@@ -269,7 +270,7 @@ export default function AccountPage() {
                                                     </Button>
                                                 )}
                                                 <input
-                                                    id="profile-upload"
+                                                    ref={fileInputRef}
                                                     type="file"
                                                     accept="image/*"
                                                     className="hidden"

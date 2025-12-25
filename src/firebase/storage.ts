@@ -25,19 +25,23 @@ export async function uploadProfileImage(
       throw new Error("Invalid file type. Please upload an image file.");
     }
 
-    if (file.size > 1 * 1024 * 1024) {
-      throw new Error("File is too large. Maximum size is 1MB.");
+    if (file.size > 5 * 1024 * 1024) { // Increased limit to 5MB based on typical user behavior
+      throw new Error("File is too large. Maximum size is 5MB.");
     }
 
-    // Use a fixed filename to avoid storage rule violations if wildcard paths aren't allowed
-    // We'll rely on the download URL token change or client-side cache busting
+    // Use a fixed filename but include metadata to ensure correct MIME type
     const storageRef = ref(storage, `users/${userId}/profile-picture`);
+
+    const metadata = {
+      contentType: file.type,
+      cacheControl: 'public, max-age=3600'
+    };
 
     // Upload the file
     console.log(
-      `Starting upload for user ${userId}, file: ${file.name}, size: ${file.size}`
+      `Starting upload for user ${userId}, file: ${file.name}, size: ${file.size}, type: ${file.type}`
     );
-    const snapshot = await uploadBytes(storageRef, file);
+    const snapshot = await uploadBytes(storageRef, file, metadata);
     console.log("Upload successful, retrieving download URL...");
 
     // Get the download URL

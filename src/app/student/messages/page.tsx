@@ -47,6 +47,13 @@ export default function MessagesPage() {
         useMemoFirebase(() => (contactId ? doc(firestore, 'users', contactId) : null), [contactId, firestore])
     );
 
+    // Fetch current student's profile for avatar
+    const studentDocRef = useMemoFirebase(
+        () => student ? doc(firestore, 'users', student.uid) : null,
+        [student, firestore]
+    );
+    const { data: studentProfile } = useDoc<User>(studentDocRef);
+
     useEffect(() => {
         setIsClient(true);
     }, []);
@@ -236,7 +243,10 @@ export default function MessagesPage() {
                                         scroll={false}
                                     >
                                         <Avatar>
-                                            <AvatarImage src={convo.participant.profileImageUrl} />
+                                            <AvatarImage
+                                                src={convo.participant.profileImageUrl}
+                                                className="object-cover"
+                                            />
                                             <AvatarFallback>
                                                 <UserIcon className="h-4 w-4" />
                                             </AvatarFallback>
@@ -272,7 +282,10 @@ export default function MessagesPage() {
                                             </Link>
                                         </Button>
                                         <Avatar>
-                                            <AvatarImage src={selectedParticipant.profileImageUrl} />
+                                            <AvatarImage
+                                                src={selectedParticipant.profileImageUrl}
+                                                className="object-cover"
+                                            />
                                             <AvatarFallback>
                                                 <UserIcon className="h-4 w-4" />
                                             </AvatarFallback>
@@ -294,7 +307,10 @@ export default function MessagesPage() {
                                                 <div className={cn("flex items-end gap-3", msg.senderId === student.uid ? "justify-end" : "justify-start")}>
                                                     {msg.senderId !== student.uid && (
                                                         <Avatar className="h-8 w-8">
-                                                            <AvatarImage src={selectedParticipant.profileImageUrl} />
+                                                            <AvatarImage
+                                                                src={selectedParticipant.profileImageUrl}
+                                                                className="object-cover"
+                                                            />
                                                             <AvatarFallback>
                                                                 <UserIcon className="h-4 w-4" />
                                                             </AvatarFallback>
@@ -305,7 +321,10 @@ export default function MessagesPage() {
                                                     </div>
                                                     {msg.senderId === student.uid && (
                                                         <Avatar className="h-8 w-8">
-                                                            <AvatarImage src={student.photoURL || undefined} />
+                                                            <AvatarImage
+                                                                src={studentProfile?.profileImageUrl || student.photoURL || undefined}
+                                                                className="object-cover"
+                                                            />
                                                             <AvatarFallback>
                                                                 <UserIcon className="h-4 w-4" />
                                                             </AvatarFallback>

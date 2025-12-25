@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { BedDouble, Bath, Ruler, Check, X, Pencil, User, Building } from 'lucide-react';
+import { BedDouble, Bath, Ruler, Check, X, Pencil, User, Building, ImageIcon } from 'lucide-react';
 import type { Property, UserProfile, RentalApplication } from '@/types/';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -32,6 +32,7 @@ import { doc, collection, query, where, addDoc, updateDoc, getDocs, documentId }
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Loading from '@/app/loading';
 import { Skeleton } from '@/components/ui/skeleton';
+import Image from 'next/image';
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -213,6 +214,37 @@ export default function LandlordPropertyDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Property Images */}
+        {property.images && property.images.length > 0 && (
+          <Card className="my-6">
+            <CardHeader>
+              <CardTitle>Property Photos</CardTitle>
+              <CardDescription>Images of this property</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {property.images.map((imageUrl, index) => (
+                  <div key={index} className="relative aspect-video rounded-lg overflow-hidden border bg-secondary">
+                    <Image
+                      src={imageUrl}
+                      alt={`${property.title} - Image ${index + 1}`}
+                      fill
+                      className="object-cover hover:scale-105 transition-transform duration-300"
+                      sizes="(max-width: 768px) 50vw, 33vw"
+                    />
+                  </div>
+                ))}
+              </div>
+              {property.images.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No images uploaded yet</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>

@@ -14,8 +14,8 @@ import { cn } from '@/utils';
 import type { UserProfile as User, Message } from '@/types';
 import { Send, Phone, Video, User as UserIcon, ArrowLeft } from 'lucide-react';
 import { format } from "date-fns";
-import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import Loading from '@/app/loading';
 import { sendNotification } from '@/lib/notifications';
 
@@ -41,6 +41,13 @@ export default function MessagesPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const selectedConversationId = searchParams.get('conversationId');
+
+    // Fetch current landlord's profile for avatar
+    const landlordDocRef = useMemoFirebase(
+        () => landlord ? doc(firestore, 'users', landlord.uid) : null,
+        [landlord, firestore]
+    );
+    const { data: landlordProfile } = useDoc<User>(landlordDocRef);
 
     useEffect(() => {
         setIsClient(true);
@@ -220,7 +227,10 @@ export default function MessagesPage() {
                                         scroll={false}
                                     >
                                         <Avatar>
-                                            <AvatarImage src={convo.participant.profileImageUrl} />
+                                            <AvatarImage
+                                                src={convo.participant.profileImageUrl}
+                                                className="object-cover"
+                                            />
                                             <AvatarFallback>
                                                 <UserIcon className="h-4 w-4" />
                                             </AvatarFallback>
@@ -259,7 +269,10 @@ export default function MessagesPage() {
                                         </Button>
                                         <Link href={`/landlord/tenants/${selectedParticipant.id}`} className="flex items-center gap-4 group">
                                             <Avatar>
-                                                <AvatarImage src={selectedParticipant.profileImageUrl} />
+                                                <AvatarImage
+                                                    src={selectedParticipant.profileImageUrl}
+                                                    className="object-cover"
+                                                />
                                                 <AvatarFallback>
                                                     <UserIcon className="h-4 w-4" />
                                                 </AvatarFallback>
@@ -283,7 +296,10 @@ export default function MessagesPage() {
                                                 <div className={cn("flex items-end gap-3", msg.senderId === landlord.uid ? "justify-end" : "justify-start")}>
                                                     {msg.senderId !== landlord.uid && (
                                                         <Avatar className="h-8 w-8">
-                                                            <AvatarImage src={selectedParticipant.profileImageUrl} />
+                                                            <AvatarImage
+                                                                src={selectedParticipant.profileImageUrl}
+                                                                className="object-cover"
+                                                            />
                                                             <AvatarFallback>
                                                                 <UserIcon className="h-4 w-4" />
                                                             </AvatarFallback>
@@ -294,7 +310,10 @@ export default function MessagesPage() {
                                                     </div>
                                                     {msg.senderId === landlord.uid && (
                                                         <Avatar className="h-8 w-8">
-                                                            <AvatarImage src={landlord.photoURL || undefined} />
+                                                            <AvatarImage
+                                                                src={landlordProfile?.profileImageUrl || landlord.photoURL || undefined}
+                                                                className="object-cover"
+                                                            />
                                                             <AvatarFallback>
                                                                 <UserIcon className="h-4 w-4" />
                                                             </AvatarFallback>

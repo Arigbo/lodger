@@ -422,13 +422,20 @@ export default function PropertyDetailPage() {
                         </div>
                         <div className="mt-4 md:mt-0 text-left md:text-right shrink-0">
                             <div className="flex flex-col items-start md:items-end">
-                                <p className="text-2xl md:text-3xl font-bold text-primary">
-                                    {formatPrice(property.price, property.currency)}
-                                    <span className="text-base font-normal text-muted-foreground">/month</span>
-                                </p>
-                                {userCurrency && userCurrency !== property.currency && (
-                                    <p className="text-sm text-muted-foreground">
-                                        ≈ {formatPrice(convertCurrency(property.price, property.currency, userCurrency), userCurrency)}
+                                {userCurrency && userCurrency !== property.currency ? (
+                                    <>
+                                        <p className="text-2xl md:text-3xl font-bold text-primary">
+                                            {formatPrice(convertCurrency(property.price, property.currency, userCurrency), userCurrency)}
+                                            <span className="text-base font-normal text-muted-foreground">/month</span>
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                            ≈ {formatPrice(property.price, property.currency)}
+                                        </p>
+                                    </>
+                                ) : (
+                                    <p className="text-2xl md:text-3xl font-bold text-primary">
+                                        {formatPrice(property.price, property.currency)}
+                                        <span className="text-base font-normal text-muted-foreground">/month</span>
                                     </p>
                                 )}
                             </div>

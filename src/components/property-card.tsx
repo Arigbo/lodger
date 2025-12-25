@@ -11,8 +11,10 @@ import { doc } from "firebase/firestore";
 import { useMemo } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BedDouble, Bath, Ruler, MapPin } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BedDouble, Bath, Ruler, MapPin, User } from "lucide-react";
 import { usePathname } from "next/navigation";
+import type { UserProfile } from "@/types";
 
 
 type PropertyCardProps = {
@@ -33,7 +35,14 @@ export default function PropertyCard({ property, as = 'link', className }: Prope
   const { user } = useUser();
   const firestore = useFirestore();
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-  const { data: userProfile } = useDoc<any>(userDocRef);
+  const { data: userProfile } = useDoc<UserProfile>(userDocRef);
+
+  // Fetch landlord profile
+  const landlordDocRef = useMemoFirebase(
+    () => property.landlordId ? doc(firestore, 'users', property.landlordId) : null,
+    [property.landlordId, firestore]
+  );
+  const { data: landlordProfile } = useDoc<UserProfile>(landlordDocRef);
 
   const userCurrency = useMemo(() => {
     if (userProfile?.currency) return userProfile.currency;
@@ -55,11 +64,15 @@ export default function PropertyCard({ property, as = 'link', className }: Prope
             />
           )}
           <Badge className="absolute right-3 top-3 bg-primary text-primary-foreground flex flex-col items-end gap-0.5 px-3 py-1 h-auto">
-            <span>{formatPrice(property.price, property.currency)}/mo</span>
-            {userCurrency && userCurrency !== property.currency && (
-              <span className="text-[10px] opacity-90 font-normal border-t border-primary-foreground/20 pt-0.5">
-                ≈ {formatPrice(convertCurrency(property.price, property.currency, userCurrency), userCurrency)}
-              </span>
+            {userCurrency && userCurrency !== property.currency ? (
+              <>
+                <span>{formatPrice(convertCurrency(property.price, property.currency, userCurrency), userCurrency)}/mo</span>
+                <span className="text-[10px] opacity-90 font-normal border-t border-primary-foreground/20 pt-0.5">
+                  ≈ {formatPrice(property.price, property.currency)}
+                </span>
+              </>
+            ) : (
+              <span>{formatPrice(property.price, property.currency)}/mo</span>
             )}
           </Badge>
           {property.status === 'occupied' && (
@@ -68,6 +81,25 @@ export default function PropertyCard({ property, as = 'link', className }: Prope
         </div>
       </CardHeader>
       <CardContent className="p-6">
+        {/* Landlord Info */}
+        {landlordProfile && (
+          <div className="flex items-center gap-2 mb-4 pb-4 border-b">
+            <Avatar className="h-8 w-8">
+              <AvatarImage
+                src={landlordProfile.profileImageUrl || ""}
+                alt={landlordProfile.name}
+                className="object-cover"
+              />
+              <AvatarFallback>
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">{landlordProfile.name}</span>
+              <span className="text-xs text-muted-foreground">Landlord</span>
+            </div>
+          </div>
+        )}
         <h3 className="font-headline text-xl font-semibold group-hover:text-primary">
           {property.title}
         </h3>

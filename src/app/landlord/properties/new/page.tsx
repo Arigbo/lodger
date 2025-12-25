@@ -38,7 +38,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { amenities as allAmenities } from '@/types';
 import { cn, formatPrice } from '@/utils';
-import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon, Sparkles } from 'lucide-react';
 import type { Property, UserProfile } from '@/types';
 import { format, addYears } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -138,13 +138,14 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const steps = [
-    { id: 1, name: 'Basic Information', fields: ['title', 'description', 'type'] },
+    { id: 1, name: 'Basic Information', fields: ['title', 'type'] },
     { id: 2, name: 'Location & Price', fields: ['address', 'country', 'city', 'state', 'zip', 'school', 'price', 'currency'] },
     { id: 3, name: 'Property Details', fields: ['bedrooms', 'bathrooms', 'area'] },
     { id: 4, name: 'Amenities & Rules', fields: ['amenities', 'rules'] },
     { id: 5, name: 'Lease Template', fields: ['leaseTemplate'] },
     { id: 6, name: 'Upload Photos', fields: ['kitchenImage', 'livingRoomImage', 'bathroomImage', 'bedroomImage', 'otherImage'] },
-    { id: 7, name: 'Review' }
+    { id: 7, name: 'Description', fields: ['description'] },
+    { id: 8, name: 'Review' }
 ];
 
 const FileUpload = ({ field, label, description, icon: Icon }: { field: any, label: string, description: string, icon: any }) => (
@@ -198,6 +199,7 @@ export default function AddPropertyPage() {
     const { user } = useUser();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
     // Fetch user profile for pre-filling location
     const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -290,6 +292,52 @@ export default function AddPropertyPage() {
         }
     }
 
+    const generateDescription = async () => {
+        setIsGeneratingDescription(true);
+        try {
+            const formData = form.getValues();
+
+            // Create a description based on the property details
+            const response = await fetch('/api/generate-description', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: formData.title,
+                    type: formData.type,
+                    bedrooms: formData.bedrooms,
+                    bathrooms: formData.bathrooms,
+                    area: formData.area,
+                    amenities: formData.amenities,
+                    city: formData.city,
+                    state: formData.state,
+                    country: formData.country,
+                    school: formData.school,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate description');
+            }
+
+            const { description } = await response.json();
+            form.setValue('description', description);
+
+            toast({
+                title: "Description Generated!",
+                description: "AI has created a description for your property. Feel free to edit it.",
+            });
+        } catch (error) {
+            console.error('Error generating description:', error);
+            toast({
+                variant: "destructive",
+                title: "Generation Failed",
+                description: "Could not generate description. Please write one manually.",
+            });
+        } finally {
+            setIsGeneratingDescription(false);
+        }
+    };
+
     async function uploadImage(file: File, path: string): Promise<string> {
         try {
             const storage = getStorage(firebaseApp);
@@ -362,9 +410,9 @@ export default function AddPropertyPage() {
                     city: values.city,
                     state: values.state,
                     zip: values.zip,
-                    lat: values.lat,
-                    lng: values.lng,
                     school: values.school,
+                    ...(values.lat !== undefined && { lat: values.lat }),
+                    ...(values.lng !== undefined && { lng: values.lng }),
                 },
                 bedrooms: values.bedrooms,
                 bathrooms: values.bathrooms,
@@ -423,20 +471,6 @@ export default function AddPropertyPage() {
                                         <FormLabel>Property Title</FormLabel>
                                         <FormControl>
                                             <Input placeholder="e.g., Modern Downtown Loft" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <Separator className="my-8" />
-                            <FormField
-                                control={form.control}
-                                name="description"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Description</FormLabel>
-                                        <FormControl>
-                                            <Textarea placeholder="Describe your property in detail..." {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -843,7 +877,51 @@ export default function AddPropertyPage() {
                         </div>
 
 
+                        {/* Step 7: Description */}
                         <div className={cn(currentStep === 7 ? "block" : "hidden")}>
+                            <div className="mb-6">
+                                <h3 className="font-headline text-lg font-semibold">Property Description</h3>
+                                <p className="text-sm text-muted-foreground">Add a compelling description to attract tenants. Use the auto-generate feature to create one based on your property details.</p>
+                            </div>
+
+                            <FormField
+                                control={form.control}
+                                name="description"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <div className="flex items-center justify-between">
+                                            <FormLabel>Description</FormLabel>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={generateDescription}
+                                                disabled={isGeneratingDescription || !form.watch('title')}
+                                                className="gap-2"
+                                            >
+                                                <Sparkles className="h-4 w-4" />
+                                                {isGeneratingDescription ? 'Generating...' : 'Auto-Generate'}
+                                            </Button>
+                                        </div>
+                                        <FormControl>
+                                            <Textarea
+                                                placeholder="Describe your property in detail..."
+                                                {...field}
+                                                rows={8}
+                                            />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Click "Auto-Generate" to create a description based on all your property details, or write your own.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+
+                        {/* Step 8: Review */}
+                        <div className={cn(currentStep === 8 ? "block" : "hidden")}>
                             <h3 className="font-headline text-xl font-semibold">Review Your Listing</h3>
                             <p className="text-muted-foreground">Please review all the information below before submitting.</p>
                             <div className="mt-6 space-y-6 rounded-lg border bg-secondary/50 p-6">

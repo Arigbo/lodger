@@ -174,30 +174,51 @@ export default function AccountPage() {
             setStripeAccountStatus({ status: 'checking', message: 'Checking account status...' });
 
             try {
+                console.log('Fetching Stripe status for:', userProfile.stripeAccountId);
                 const response = await fetch('/api/stripe/account-status', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ accountId: userProfile.stripeAccountId }),
                 });
 
-                const data = await response.json();
+                console.log('Stripe status response:', response.status, response.statusText);
 
-                if (response.ok) {
-                    setStripeAccountStatus({
-                        status: data.status,
-                        message: data.message,
-                    });
-                } else {
-                    setStripeAccountStatus({
-                        status: 'error',
-                        message: data.error || 'Failed to check account status',
-                    });
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error('Stripe status error body:', text);
+                    try {
+                        const data = JSON.parse(text);
+                        setStripeAccountStatus({
+                            status: 'error',
+                            message: data.error || `Error: ${response.statusText}`,
+                        });
+                    } catch (e) {
+                        setStripeAccountStatus({
+                            status: 'error',
+                            message: `Server Error: ${response.status} ${response.statusText}`,
+                        });
+                    }
+                    return;
                 }
+
+                const data = await response.json();
+                setStripeAccountStatus({
+                    status: data.status,
+                    message: data.message,
+                });
             } catch (error: any) {
-                console.error('Error checking Stripe status:', error);
+                console.error('Error checking Stripe status (FULL):', error);
+
+                let errorMessage = 'Failed to verify account status';
+                if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                    errorMessage = 'Network error: Could not reach server. Check your connection.';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+
                 setStripeAccountStatus({
                     status: 'error',
-                    message: 'Failed to verify account status',
+                    message: errorMessage,
                 });
             }
         };
@@ -236,11 +257,11 @@ export default function AccountPage() {
         const file = event.target.files?.[0];
         if (!file || !user || !userDocRef) return;
 
-        if (file.size > 1024 * 1024) {
+        if (file.size > 5 * 1024 * 1024) {
             toast({
                 variant: "destructive",
                 title: "Image too large",
-                description: "Please upload an image smaller than 1MB.",
+                description: "Please upload an image smaller than 5MB.",
             });
             return;
         }
