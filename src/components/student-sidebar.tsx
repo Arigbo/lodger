@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/utils";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Building2, UserCog, MessageSquare, Search, FileText, Bell, Icon, DollarSign } from "lucide-react";
+import { LayoutDashboard, Building2, UserCog, MessageSquare, Search, FileText, Bell, Icon, DollarSign, Heart } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { useUser } from "@/firebase";
 import React from 'react';
@@ -23,6 +23,7 @@ const navLinks: NavLink[] = [
   { href: "/student", label: "Dashboard", icon: LayoutDashboard },
   { href: "/student/tenancy", label: "My Tenancy", icon: Building2 },
   { href: "/student/properties", label: "Find a Property", icon: Search },
+  { href: "/student/bookmarks", label: "Bookmarks", icon: Heart },
   { href: "/student/requests", label: "My Requests", icon: Bell },
   { href: "/student/messages", label: "Messages", icon: MessageSquare },
   { href: "/student/leases", label: "Lease Agreements", icon: FileText },

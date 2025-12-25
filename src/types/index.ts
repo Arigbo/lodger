@@ -16,6 +16,7 @@ export type UserProfile = {
     legalName?: string;
     stripeAccountId?: string;
     currency?: string;
+    bookmarkedPropertyIds?: string[];
 };
 
 export type User = UserProfile;
@@ -55,6 +56,7 @@ export type PropertyReview = {
     propertyId: string;
     tenantId: string;
     tenantName?: string;
+    tenantImageUrl?: string;
     rating: number; // 1-5
     comment: string;
     reviewDate: string; // ISO 8601 date string

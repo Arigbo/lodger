@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon, Building, Users, GraduationCap } from "lucide-react";
+import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon, Building, Users, GraduationCap, ChevronLeft } from "lucide-react";
 import type { Property, UserProfile, PropertyReview, ImagePlaceholder, RentalApplication } from "@/types";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
@@ -23,9 +23,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import TenancySkeleton from "@/components/tenancy-skeleton";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
-import { doc, collection, query, where, addDoc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { doc, collection, query, where, addDoc, serverTimestamp, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import Loading from "@/app/loading";
-import type { Metadata } from 'next';
 import { sendNotification } from '@/lib/notifications';
 import {
     Carousel,
@@ -356,348 +355,464 @@ export default function PropertyDetailPage() {
     };
 
 
+    const isBookmarked = useMemo(() => {
+        if (!userProfile || !property) return false;
+        const bookmarkedIds = userProfile.bookmarkedPropertyIds || [];
+        return bookmarkedIds.includes(property.id);
+    }, [userProfile, property]);
+
+    const toggleBookmark = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!user || !userProfileRef) {
+            toast({
+                variant: "destructive",
+                title: "Login Required",
+                description: "Please log in to bookmark properties",
+            });
+            return;
+        }
+
+        try {
+            if (isBookmarked) {
+                await updateDoc(userProfileRef, {
+                    bookmarkedPropertyIds: arrayRemove(property.id)
+                });
+                toast({ title: "Removed from bookmarks" });
+            } else {
+                await updateDoc(userProfileRef, {
+                    bookmarkedPropertyIds: arrayUnion(property.id)
+                });
+                toast({ title: "Added to bookmarks" });
+            }
+        } catch (error) {
+            console.error("Error toggling bookmark:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to update bookmarks",
+            });
+        }
+    };
+
     return (
-        <div className="container mx-auto max-w-7xl px-4 py-12">
+        <div className="min-h-screen pb-20">
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
-            <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-12">
-                <div className="lg:col-span-2 min-w-0 overflow-hidden">
-                    <div className="mb-8">
-                        {images.length > 0 ? (
-                            <Carousel
-                                className="w-full max-w-5xl mx-auto"
-                                setApi={setApi} // Capture API to track slides
-                            >
-                                <CarouselContent>
-                                    {images.map((image, index) => (
-                                        <CarouselItem key={image.id}>
-                                            <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-                                                <Image
-                                                    src={image.imageUrl}
-                                                    alt={`${property.title} - Image ${index + 1}`}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            </div>
-                                        </CarouselItem>
-                                    ))}
-                                </CarouselContent>
-                                <CarouselPrevious className="left-2" />
-                                <CarouselNext className="right-2" />
-                                <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                    {current} / {count}
-                                </div>
-                            </Carousel>
-                        ) : (
-                            <div className="flex h-[300px] md:h-[450px] w-full items-center justify-center rounded-xl bg-muted border-2 border-dashed border-muted-foreground/20 text-muted-foreground transition-all duration-300 hover:bg-muted/80">
-                                <div className="text-center flex flex-col items-center gap-4">
-                                    <div className="p-4 rounded-full bg-background shadow-sm">
-                                        <Building className="h-12 w-12 opacity-40 text-primary" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <h3 className="text-xl font-bold tracking-tight">No Photos Available</h3>
-                                        <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                                            The landlord hasn't uploaded photos for this property yet.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
 
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-                        <div className="min-w-0 flex-1">
-                            <Badge variant="secondary" className="mb-2">{property.type}</Badge>
-                            <h1 className="font-headline text-3xl md:text-4xl font-bold truncate md:whitespace-normal md:overflow-visible break-words">{property.title}</h1>
-                            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-muted-foreground text-sm md:text-base">
-                                <div className="flex items-center gap-1">
-                                    <MapPin className="h-4 w-4" />
-                                    <span>{property.location.address}, {property.location.city}</span>
-                                </div>
-                                {property.location.school && (
-                                    <div className="flex items-center gap-1 text-muted-foreground/90">
-                                        <GraduationCap className="h-4 w-4" />
-                                        <span>Near {property.location.school}</span>
-                                    </div>
-                                )}
-                                <div className="flex items-center gap-1">
-                                    <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                                    <span>{averageRating.toFixed(1)} ({reviews?.length || 0} reviews)</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="mt-4 md:mt-0 text-left md:text-right shrink-0">
-                            <div className="flex flex-col items-start md:items-end">
-                                {userCurrency && userCurrency !== property.currency ? (
-                                    <>
-                                        <p className="text-2xl md:text-3xl font-bold text-primary">
-                                            {formatPrice(convertCurrency(property.price, property.currency, userCurrency), userCurrency)}
-                                            <span className="text-base font-normal text-muted-foreground">/month</span>
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            ≈ {formatPrice(property.price, property.currency)}
-                                        </p>
-                                    </>
-                                ) : (
-                                    <p className="text-2xl md:text-3xl font-bold text-primary">
-                                        {formatPrice(property.price, property.currency)}
-                                        <span className="text-base font-normal text-muted-foreground">/month</span>
-                                    </p>
-                                )}
-                            </div>
-                            {property.status === 'occupied' && <Badge variant="destructive" className="mt-1">Occupied</Badge>}
-                        </div>
-                    </div>
-
-                    <Card className="my-8">
-                        <CardContent className="p-4 md:p-6 grid grid-cols-2 md:grid-cols-3 gap-6 text-center">
-                            <div className="flex flex-col items-center"><BedDouble className="mb-2 h-7 w-7 text-primary" /><p className="text-sm font-medium">{property.bedrooms} Bedrooms</p></div>
-                            <div className="flex flex-col items-center"><Bath className="mb-2 h-7 w-7 text-primary" /><p className="text-sm font-medium">{property.bathrooms} Bathrooms</p></div>
-                            <div className="col-span-2 md:col-span-1 flex flex-col items-center"><Ruler className="mb-2 h-7 w-7 text-primary" /><p className="text-sm font-medium">{property.area} sqft</p></div>
-                        </CardContent>
-                    </Card>
-
-                    <Tabs defaultValue="description" className="w-full">
-                        <TabsList>
-                            <TabsTrigger value="description">Description</TabsTrigger>
-                            <TabsTrigger value="amenities">Amenities</TabsTrigger>
-                            <TabsTrigger value="rules">Rules</TabsTrigger>
-                            <TabsTrigger value="reviews">Reviews</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="description" className="py-4 text-foreground/80 leading-relaxed">{property.description}</TabsContent>
-                        <TabsContent value="amenities" className="py-4">
-                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {property.amenities.map(amenity => (
-                                    <div key={amenity} className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:shadow-sm transition-shadow">
-                                        {amenityIcons[amenity] || <CheckCircle className="h-5 w-5 text-primary" />}
-                                        <span className="text-sm font-medium">{amenity}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </TabsContent>
-                        <TabsContent value="rules" className="py-4">
-                            <ul className="list-disc list-inside space-y-2 text-foreground/80">
-                                {property.rules.map(rule => <li key={rule}>{rule}</li>)}
-                            </ul>
-                        </TabsContent>
-                        <TabsContent value="reviews" className="py-4 space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h3 className="font-headline text-2xl font-semibold">Comments & Reviews</h3>
-                                {/* Only show review button to verified tenants */}
-                                <ReviewButton
-                                    propertyId={property.id}
-                                    userId={user?.uid}
-                                    firestore={firestore}
-                                    userProfile={userProfile}
-                                />
-                            </div>
-
-                            {reviews && reviews.map(review => {
-                                return (
-                                    <div key={review.id} className="flex gap-4 pt-6 border-t">
-                                        <Avatar className="ring-2 ring-primary/5">
-                                            <AvatarImage src={review.tenantImageUrl} className="object-cover" />
-                                            <AvatarFallback>
-                                                <UserIcon className="h-4 w-4" />
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-semibold">{review.tenantName || 'Tenant'}</p>
-                                                <div className="flex flex-col">
-                                                    <p className="text-xs text-muted-foreground">{new Date(review.reviewDate).toLocaleDateString()}</p>
-                                                    {review.tenancyStartDate && review.tenancyEndDate && (
-                                                        <p className="text-[10px] text-muted-foreground">
-                                                            Tenant: {new Date(review.tenancyStartDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })} - {new Date(review.tenancyEndDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-0.5 mt-1">
-                                                {[...Array(5)].map((_, i) => <Star key={i} className={cn("h-4 w-4", i < review.rating ? "text-yellow-400 fill-current" : "text-muted-foreground")} />)}
-                                            </div>
-                                            <p className="mt-2 text-foreground/80">{review.comment}</p>
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                            {(!reviews || reviews.length === 0) && <p className="text-muted-foreground pt-6 border-t">No reviews yet.</p>}
-                        </TabsContent>
-                    </Tabs>
+            {/* Gallery Section - Full Width on Mobile, Container on Desktop */}
+            <div className="relative w-full bg-[#0A0A0A] overflow-hidden lg:rounded-b-[3rem] shadow-2xl">
+                <div className="absolute inset-0 z-0 opacity-10">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#3b82f6_0%,transparent_50%)]" />
+                    <div className="absolute inset-0 h-full w-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]" />
                 </div>
 
-                <div className="lg:col-span-1 mt-12 lg:mt-0">
-                    <div className="sticky top-24 space-y-6">
-                        <Card>
-                            <CardContent className="p-4 flex items-center justify-around">
-                                <Button variant="ghost" className="flex flex-col h-auto gap-1">
-                                    <Bookmark className="h-5 w-5" />
-                                    <span className="text-xs">Save</span>
+                <div className="container mx-auto px-0 lg:px-8 py-0 lg:py-8">
+                    {images.length > 0 ? (
+                        <Carousel
+                            className="w-full relative group"
+                            setApi={setApi}
+                        >
+                            <CarouselContent>
+                                {images.map((image, index) => (
+                                    <CarouselItem key={image.id}>
+                                        <div className="relative aspect-[16/10] md:aspect-[21/9] w-full overflow-hidden lg:rounded-3xl">
+                                            <Image
+                                                src={image.imageUrl}
+                                                alt={`${property.title} - Image ${index + 1}`}
+                                                fill
+                                                className="object-cover transition-transform duration-700 hover:scale-105"
+                                                priority={index === 0}
+                                            />
+                                            {/* Gradient Overlay for better text readability and depth */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
+                                        </div>
+                                    </CarouselItem>
+                                ))}
+                            </CarouselContent>
+
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <CarouselPrevious className="h-12 w-12 bg-white/10 border-white/20 text-white backdrop-blur-xl hover:bg-white/20" />
+                            </div>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <CarouselNext className="h-12 w-12 bg-white/10 border-white/20 text-white backdrop-blur-xl hover:bg-white/20" />
+                            </div>
+
+                            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
+                                <div className="bg-black/40 backdrop-blur-md border border-white/10 text-white px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase">
+                                    {current} <span className="text-white/40">/</span> {count}
+                                </div>
+                            </div>
+
+                            {/* Back Button for Detail Page */}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-6 left-6 h-10 w-10 rounded-full bg-white/10 border border-white/20 text-white backdrop-blur-md hover:bg-white/20 transition-all z-20"
+                                onClick={() => router.back()}
+                            >
+                                <ChevronLeft className="h-5 w-5" />
+                            </Button>
+
+                            {/* Action Buttons Top Right */}
+                            <div className="absolute top-6 right-6 flex items-center gap-3 z-20">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={cn(
+                                        "h-10 w-10 rounded-full border backdrop-blur-md transition-all",
+                                        isBookmarked
+                                            ? "bg-primary text-primary-foreground border-primary"
+                                            : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                                    )}
+                                    onClick={toggleBookmark}
+                                >
+                                    <Heart className={cn("h-5 w-5", isBookmarked && "fill-current")} />
                                 </Button>
+
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <Button variant="ghost" className="flex flex-col h-auto gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-10 w-10 rounded-full bg-white/10 border border-white/20 text-white backdrop-blur-md hover:bg-white/20 transition-all"
+                                        >
                                             <Share2 className="h-5 w-5" />
-                                            <span className="text-xs">Share</span>
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent className="sm:max-w-md w-full h-[100dvh] sm:h-auto overflow-y-auto">
+                                    <DialogContent className="sm:max-w-md">
                                         <DialogHeader>
-                                            <DialogTitle>Share this Property</DialogTitle>
+                                            <DialogTitle>Share Property</DialogTitle>
                                             <DialogDescription>
-                                                Share this listing with friends or on social media.
+                                                Spread the word about this amazing find!
                                             </DialogDescription>
                                         </DialogHeader>
-                                        {isClient && typeof navigator.share === 'function' && (
-                                            <Button onClick={handleNativeShare} className="w-full">
-                                                Share via...
-                                            </Button>
-                                        )}
-                                        <div className="flex items-center space-x-2">
-                                            <Input value={propertyUrl} readOnly />
-                                            <Button size="icon" onClick={handleCopyToClipboard}><LinkIcon /></Button>
+                                        <div className="flex items-center space-x-2 mt-4">
+                                            <Input value={propertyUrl} readOnly className="bg-muted" />
+                                            <Button size="icon" onClick={handleCopyToClipboard}><LinkIcon className="h-4 w-4" /></Button>
                                         </div>
-                                        <Separator />
-                                        <p className="text-sm font-medium text-center text-muted-foreground">Or share on</p>
-                                        <div className="flex justify-center gap-4">
-                                            <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-full">
-                                                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(propertyUrl)}&text=${encodeURIComponent(property.title)}`} target="_blank" rel="noopener noreferrer"><Twitter /></a>
+                                        <div className="grid grid-cols-4 gap-4 mt-6">
+                                            <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-2xl">
+                                                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(propertyUrl)}`} target="_blank"><Twitter className="h-5 w-5" /></a>
                                             </Button>
-                                            <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-full">
-                                                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(propertyUrl)}`} target="_blank" rel="noopener noreferrer"><Facebook /></a>
+                                            <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-2xl">
+                                                <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(propertyUrl)}`} target="_blank"><FaWhatsapp className="h-5 w-5" /></a>
                                             </Button>
-                                            <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-full">
-                                                <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${property.title}: ${propertyUrl}`)}`} target="_blank" rel="noopener noreferrer"><FaWhatsapp className="text-xl" /></a>
+                                            <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-2xl">
+                                                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(propertyUrl)}`} target="_blank"><Facebook className="h-5 w-5" /></a>
                                             </Button>
-                                            <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-full">
-                                                <a href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(propertyUrl)}&title=${encodeURIComponent(property.title)}`} target="_blank" rel="noopener noreferrer"><Linkedin /></a>
+                                            <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-2xl">
+                                                <a href={`https://www.linkedin.com/shareArticle?url=${encodeURIComponent(propertyUrl)}`} target="_blank"><Linkedin className="h-5 w-5" /></a>
                                             </Button>
                                         </div>
                                     </DialogContent>
                                 </Dialog>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </Carousel>
+                    ) : (
+                        <div className="flex h-[300px] md:h-[500px] w-full items-center justify-center lg:rounded-[3rem] bg-muted/10 border-2 border-dashed border-white/10 text-white/40">
+                            <Building className="h-16 w-16 opacity-20" />
+                        </div>
+                    )}
+                </div>
+            </div>
 
-                        {applications && applications.length > 0 && (
-                            <Card>
-                                <CardHeader className="flex-row items-center gap-2 space-y-0">
-                                    <Users className="h-5 w-5 text-muted-foreground" />
-                                    <CardTitle className="text-base font-semibold">{applications.length} Student{applications.length > 1 ? 's' : ''} on Waitlist</CardTitle>
-                                </CardHeader>
-                            </Card>
-                        )}
+            <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-12">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                    {/* Left Column: Property Info */}
+                    <div className="lg:col-span-2 space-y-10">
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-3">
+                                <Badge variant="secondary" className="bg-primary/10 text-primary border-none px-4 py-1 text-xs font-bold uppercase tracking-widest italic">{property.type}</Badge>
+                                {property.status === 'occupied' && (
+                                    <Badge variant="destructive" className="px-4 py-1 text-xs font-bold uppercase tracking-widest italic">Occupied</Badge>
+                                )}
+                            </div>
 
-                        {landlord && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="font-headline">Meet the Landlord</CardTitle>
+                            <div className="space-y-4">
+                                <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight text-foreground leading-[1.1]">
+                                    {property.title}
+                                </h1>
+                                <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-muted-foreground font-medium">
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="h-5 w-5 text-primary" />
+                                        <span>{property.location.address}, {property.location.city}</span>
+                                    </div>
+                                    {property.location.school && (
+                                        <div className="flex items-center gap-2">
+                                            <GraduationCap className="h-5 w-5 text-primary" />
+                                            <span>Near {property.location.school}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-2">
+                                        <Star className="h-5 w-5 text-yellow-500 fill-current" />
+                                        <span className="text-foreground">{averageRating.toFixed(1)}</span>
+                                        <span className="text-sm font-normal">({reviews?.length || 0} reviews)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Specs Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
+                                <BedDouble className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
+                                <p className="text-xl font-bold">{property.bedrooms}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Bedrooms</p>
+                            </div>
+                            <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
+                                <Bath className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
+                                <p className="text-xl font-bold">{property.bathrooms}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Bathrooms</p>
+                            </div>
+                            <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
+                                <Ruler className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
+                                <p className="text-xl font-bold">{property.area}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Square Feet</p>
+                            </div>
+                            <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
+                                <Building className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
+                                <p className="text-xl font-bold whitespace-nowrap">{property.type}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Property Type</p>
+                            </div>
+                        </div>
+
+                        {/* Tabs Content */}
+                        <Tabs defaultValue="overview" className="w-full">
+                            <TabsList className="w-full justify-start bg-transparent border-b rounded-none px-0 h-auto gap-8 mb-8">
+                                <TabsTrigger value="overview" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Overview</TabsTrigger>
+                                <TabsTrigger value="amenities" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Amenities</TabsTrigger>
+                                <TabsTrigger value="rules" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">House Rules</TabsTrigger>
+                                <TabsTrigger value="reviews" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Reviews</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="overview" className="mt-0 space-y-6">
+                                <h3 className="text-2xl font-bold tracking-tight">About this property</h3>
+                                <p className="text-lg text-muted-foreground leading-relaxed">
+                                    {property.description}
+                                </p>
+                            </TabsContent>
+                            <TabsContent value="amenities" className="mt-0">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                    {property.amenities.map(amenity => (
+                                        <div key={amenity} className="flex items-center gap-3 p-4 rounded-2xl border bg-card/50 backdrop-blur-sm group hover:border-primary/30 transition-all">
+                                            <div className="bg-primary/10 p-2 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                                                {amenityIcons[amenity] || <CheckCircle className="h-5 w-5" />}
+                                            </div>
+                                            <span className="font-bold text-sm tracking-tight">{amenity}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </TabsContent>
+                            <TabsContent value="rules" className="mt-0">
+                                <div className="bg-muted/20 p-8 rounded-[2rem] border-2 border-dashed border-border">
+                                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {property.rules.map(rule => (
+                                            <li key={rule} className="flex items-start gap-3 text-muted-foreground font-medium">
+                                                <div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+                                                {rule}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </TabsContent>
+                            <TabsContent value="reviews" className="mt-0 space-y-8">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-2xl font-bold tracking-tight">Student reviews</h3>
+                                        <p className="text-sm text-muted-foreground font-medium">Verified feedback from past tenants</p>
+                                    </div>
+                                    <ReviewButton
+                                        propertyId={property.id}
+                                        userId={user?.uid}
+                                        firestore={firestore}
+                                        userProfile={userProfile}
+                                    />
+                                </div>
+
+                                {reviews && reviews.length > 0 ? (
+                                    <div className="space-y-6">
+                                        {reviews.map(review => (
+                                            <div key={review.id} className="p-6 rounded-3xl border bg-card/50 backdrop-blur-sm space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <Avatar className="h-12 w-12 border-2 border-background shadow-lg">
+                                                            <AvatarImage src={review.tenantImageUrl} className="object-cover" />
+                                                            <AvatarFallback className="bg-primary/10 text-primary font-bold">{review.tenantName?.[0]}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <p className="font-bold text-lg leading-none">{review.tenantName}</p>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <div className="flex">
+                                                                    {[...Array(5)].map((_, i) => (
+                                                                        <Star key={i} className={cn("h-3 w-3", i < review.rating ? "text-yellow-500 fill-current" : "text-muted/30")} />
+                                                                    ))}
+                                                                </div>
+                                                                <span className="text-xs text-muted-foreground font-bold">{new Date(review.reviewDate).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <p className="text-muted-foreground leading-relaxed font-medium">{review.comment}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed flex flex-col items-center gap-3">
+                                        <Star className="h-8 w-8 text-muted/30" />
+                                        <p className="text-muted-foreground font-bold italic">No reviews yet for this property.</p>
+                                    </div>
+                                )}
+                            </TabsContent>
+                        </Tabs>
+                    </div>
+
+                    {/* Right Column: Pricing & Booking */}
+                    <div className="space-y-6">
+                        <div className="sticky top-12 space-y-6">
+                            <Card className="border-none bg-background shadow-[0_0_50px_-12px_rgba(0,0,0,0.12)] rounded-[2.5rem] overflow-hidden">
+                                <CardHeader className="bg-[#0A0A0A] text-white p-8">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <Badge variant="secondary" className="bg-white/10 text-white border-white/20 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest">Pricing</Badge>
+                                        <div className="flex items-center gap-1 text-white/60">
+                                            <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                            <span className="text-sm font-bold text-white">{averageRating.toFixed(1)}</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-4xl font-bold tracking-tight">
+                                        {userCurrency && userCurrency !== property.currency
+                                            ? formatPrice(convertCurrency(property.price, property.currency, userCurrency), userCurrency)
+                                            : formatPrice(property.price, property.currency)}
+                                        <span className="text-lg font-normal text-white/40 ml-1">/mo</span>
+                                    </p>
                                 </CardHeader>
-                                <CardContent className="text-center">
-                                    <Avatar className="h-24 w-24 mx-auto mb-4 ring-4 ring-primary/10 transition-transform hover:scale-105 duration-300">
-                                        <AvatarImage src={landlord.profileImageUrl} className="object-cover" />
-                                        <AvatarFallback>
-                                            <UserIcon className="h-12 w-12 text-muted-foreground" />
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <p className="font-semibold">{landlord.name}</p>
-                                    <p className="text-sm text-muted-foreground">Joined {new Date().getFullYear()}</p>
-                                    <Separator className="my-4" />
-                                    <div className="flex flex-col gap-2">
+                                <CardContent className="p-8 space-y-6">
+                                    <div className="space-y-4">
                                         <Dialog>
                                             <DialogTrigger asChild>
-                                                <Button className="w-full" disabled={property.status === 'occupied'}>
+                                                <Button className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform" disabled={property.status === 'occupied'}>
                                                     Request to Rent
                                                 </Button>
                                             </DialogTrigger>
-                                            <DialogContent className="sm:max-w-lg w-full h-[100dvh] sm:h-auto overflow-y-auto">
+                                            <DialogContent className="sm:max-w-lg rounded-3xl">
                                                 <DialogHeader>
-                                                    <DialogTitle>Request to Rent {property.title}</DialogTitle>
-                                                    <DialogDescription>
-                                                        Send a message to the landlord, {landlord.name}, with your rental request. You can include any questions or offer a different price.
+                                                    <DialogTitle className="text-2xl font-bold">Inquiry for {property.title}</DialogTitle>
+                                                    <DialogDescription className="text-base font-medium">
+                                                        Start a conversation with {landlord?.name}. Your request will include a text message.
                                                     </DialogDescription>
                                                 </DialogHeader>
-                                                <div className="grid gap-4 py-4">
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="message">Your Message</Label>
+                                                <div className="py-6 space-y-4">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="message" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Your Message</Label>
                                                         <Textarea
                                                             id="message"
-                                                            placeholder="Hi, I'm very interested in this property..."
+                                                            placeholder="Describe yourself and why you're interested..."
+                                                            className="min-h-[150px] rounded-2xl border-2 focus:ring-primary focus:border-primary text-base p-4"
                                                             value={requestMessage}
                                                             onChange={(e) => setRequestMessage(e.target.value)}
-                                                            rows={4}
                                                         />
                                                     </div>
                                                 </div>
-                                                <DialogFooter>
+                                                <DialogFooter className="gap-3">
                                                     <DialogClose asChild>
-                                                        <Button variant="ghost">Cancel</Button>
+                                                        <Button variant="outline" className="h-12 rounded-xl flex-1 border-2">Cancel</Button>
                                                     </DialogClose>
-                                                    <DialogClose asChild>
-                                                        <Button onClick={handleSendRequest}>Send Request</Button>
-                                                    </DialogClose>
+                                                    <Button onClick={handleSendRequest} className="h-12 rounded-xl flex-1 shadow-lg shadow-primary/20">Send Request</Button>
                                                 </DialogFooter>
                                             </DialogContent>
                                         </Dialog>
-                                        <div className="flex gap-2">
-                                            <Button variant="outline" className="flex-1" onClick={handleMessageLandlord}>
-                                                <MessageSquare className="mr-2 h-4 w-4" /> Message
-                                            </Button>
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <Button variant="outline" size="icon">
-                                                        <Phone className="h-4 w-4" />
-                                                    </Button>
-                                                </DialogTrigger>
-                                                <DialogContent className="sm:max-w-sm w-full h-[100dvh] sm:h-auto overflow-y-auto">
-                                                    <DialogHeader>
-                                                        <DialogTitle>Contact {landlord.name}</DialogTitle>
-                                                        <DialogDescription>
-                                                            Use these methods to get in touch.
-                                                        </DialogDescription>
-                                                    </DialogHeader>
-                                                    <div className="space-y-4 py-4">
-                                                        <Button variant="outline" className="w-full justify-start" asChild>
-                                                            <a href={`mailto:${landlord.email}`}>
-                                                                <Mail className="mr-2" /> {landlord.email}
-                                                            </a>
-                                                        </Button>
-                                                        {landlord.phone && (
-                                                            <Button variant="outline" className="w-full justify-start" asChild>
-                                                                <a href={`tel:${landlord.phone}`}>
-                                                                    <Phone className="mr-2" /> {landlord.phone}
-                                                                </a>
-                                                            </Button>
-                                                        )}
-                                                        {landlord.whatsappUrl && (
-                                                            <Button variant="outline" className="w-full justify-start" asChild>
-                                                                <Link href={landlord.whatsappUrl} target="_blank">
-                                                                    <FaWhatsapp className="mr-2 text-xl" /> Chat on WhatsApp
-                                                                </Link>
-                                                            </Button>
-                                                        )}
-                                                        {landlord.twitterUrl && (
-                                                            <Button variant="outline" className="w-full justify-start" asChild>
-                                                                <Link href={landlord.twitterUrl} target="_blank">
-                                                                    <Twitter className="mr-2" /> View X (Twitter) Profile
-                                                                </Link>
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </DialogContent>
-                                            </Dialog>
+
+                                        <Button variant="outline" className="w-full h-14 rounded-2xl text-lg font-bold border-2 hover:bg-muted/50 transition-colors" onClick={handleMessageLandlord}>
+                                            <MessageSquare className="mr-3 h-5 w-5" /> Message Host
+                                        </Button>
+                                    </div>
+
+                                    <div className="space-y-4 pt-4 border-t border-border/50">
+                                        <div className="flex items-center justify-between text-sm font-bold uppercase tracking-widest text-muted-foreground/60">
+                                            <span>Landlord Stats</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-xs text-muted-foreground font-medium">Response Rate</span>
+                                                <span className="font-bold">100%</span>
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-xs text-muted-foreground font-medium">Response Time</span>
+                                                <span className="font-bold">Under 1hr</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
-                        )}
+
+                            {/* Landlord Profile Mini Card */}
+                            {landlord && (
+                                <Card className="border-none bg-muted/30 rounded-[2rem] p-6 hover:bg-muted/40 transition-colors group">
+                                    <div className="flex items-center gap-4">
+                                        <Avatar className="h-16 w-16 shadow-xl border-2 border-background group-hover:scale-105 transition-transform">
+                                            <AvatarImage src={landlord.profileImageUrl} className="object-cover" />
+                                            <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">{landlord.name[0]}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-1 italic">Meet Your Host</p>
+                                            <h4 className="text-xl font-headline font-bold">{landlord.name}</h4>
+                                            <div className="flex items-center gap-3 mt-2">
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <button className="text-muted-foreground hover:text-primary transition-colors">
+                                                            <Phone className="h-4 w-4" />
+                                                        </button>
+                                                    </DialogTrigger>
+                                                    <DialogContent className="sm:max-w-sm rounded-[2rem]">
+                                                        <DialogHeader>
+                                                            <DialogTitle className="text-2xl font-bold">Contact Details</DialogTitle>
+                                                        </DialogHeader>
+                                                        <div className="space-y-4 py-4">
+                                                            <Button variant="outline" className="w-full h-12 rounded-xl justify-start border-2" asChild>
+                                                                <a href={`mailto:${landlord.email}`}><Mail className="mr-3 h-4 w-4" /> {landlord.email}</a>
+                                                            </Button>
+                                                            {landlord.phone && (
+                                                                <Button variant="outline" className="w-full h-12 rounded-xl justify-start border-2" asChild>
+                                                                    <a href={`tel:${landlord.phone}`}><Phone className="mr-3 h-4 w-4" /> {landlord.phone}</a>
+                                                                </Button>
+                                                            )}
+                                                            {landlord.whatsappUrl && (
+                                                                <Button variant="outline" className="w-full h-12 rounded-xl justify-start border-2" asChild>
+                                                                    <Link href={landlord.whatsappUrl} target="_blank"><FaWhatsapp className="mr-3 h-5 w-5" /> WhatsApp</Link>
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </DialogContent>
+                                                </Dialog>
+                                                <a href={`mailto:${landlord.email}`} className="text-muted-foreground hover:text-primary transition-colors">
+                                                    <Mail className="h-4 w-4" />
+                                                </a>
+                                                {landlord.whatsappUrl && (
+                                                    <Link href={landlord.whatsappUrl} target="_blank" className="text-muted-foreground hover:text-primary transition-colors">
+                                                        <FaWhatsapp className="h-4 w-4" />
+                                                    </Link>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {landlord.bio && (
+                                        <p className="mt-4 text-sm text-muted-foreground line-clamp-3 font-medium leading-relaxed italic">
+                                            "{landlord.bio}"
+                                        </p>
+                                    )}
+                                </Card>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+
+
 
 function ReviewButton({ propertyId, userId, firestore, userProfile }: { propertyId: string, userId?: string, firestore: any, userProfile?: UserProfile | null }) {
     const [isTenant, setIsTenant] = useState(false);
@@ -773,6 +888,7 @@ function ReviewButton({ propertyId, userId, firestore, userProfile }: { property
                 propertyId,
                 tenantId: userId,
                 tenantName: userProfile?.name || "Anonymous",
+                tenantImageUrl: userProfile?.profileImageUrl || "",
                 rating,
                 comment,
                 reviewDate: new Date().toISOString(),

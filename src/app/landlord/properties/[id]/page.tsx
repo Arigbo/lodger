@@ -177,195 +177,203 @@ export default function LandlordPropertyDetailPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-      <div className="lg:col-span-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-headline text-3xl font-bold">{property.title}</h1>
-            <p className="mt-1 text-muted-foreground">
-              {property.location.address}, {property.location.city}
-            </p>
-          </div>
+    <div className="container mx-auto px-4 py-4 md:py-8">
+      <div className="mb-0 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="font-headline text-3xl font-bold">{property.title}</h1>
+          <p className="mt-1 text-muted-foreground">
+            {property.location.address}, {property.location.city}
+          </p>
+        </div>
+        <div className="flex gap-2">
           <Button variant="outline" asChild>
             <Link href={`/landlord/properties/edit/${property.id}`}>
               <Pencil className="mr-2 h-4 w-4" /> Edit Listing
             </Link>
           </Button>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="lg:col-span-2">
 
 
-        <Card className="my-6">
-          <CardContent className="flex items-center justify-around p-6 text-center">
-            <div>
-              <BedDouble className="mx-auto mb-2 h-7 w-7 text-primary" />
-              <p>{property.bedrooms} Beds</p>
-            </div>
-            <div>
-              <Bath className="mx-auto mb-2 h-7 w-7 text-primary" />
-              <p>{property.bathrooms} Baths</p>
-            </div>
-            <div>
-              <Ruler className="mx-auto mb-2 h-7 w-7 text-primary" />
-              <p>{property.area} sqft</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-primary">{formatPrice(property.price, property.currency)}</p>
-              <p className="text-sm text-muted-foreground">/month</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Property Images */}
-        {property.images && property.images.length > 0 && (
           <Card className="my-6">
-            <CardHeader>
-              <CardTitle>Property Photos</CardTitle>
-              <CardDescription>Images of this property</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {property.images.map((imageUrl, index) => (
-                  <div key={index} className="relative aspect-video rounded-lg overflow-hidden border bg-secondary">
-                    <Image
-                      src={imageUrl}
-                      alt={`${property.title} - Image ${index + 1}`}
-                      fill
-                      className="object-cover hover:scale-105 transition-transform duration-300"
-                      sizes="(max-width: 768px) 50vw, 33vw"
-                    />
-                  </div>
-                ))}
+            <CardContent className="flex items-center justify-around p-6 text-center">
+              <div>
+                <BedDouble className="mx-auto mb-2 h-7 w-7 text-primary" />
+                <p>{property.bedrooms} Beds</p>
               </div>
-              {property.images.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No images uploaded yet</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Rental Requests</CardTitle>
-            <CardDescription>Review and respond to rental applications for this property.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Applicant</TableHead>
-                    <TableHead>Message</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {areRequestsLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={4}>
-                        <div className="flex items-center space-x-2">
-                          <Skeleton className="h-4 w-4" />
-                          <Skeleton className="h-4 w-24" />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : aggregatedRequests && aggregatedRequests.length > 0 ? (
-                    aggregatedRequests.map(({ request, applicant }) => {
-                      return (
-                        <TableRow key={request.id}>
-                          <TableCell className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={applicant?.profileImageUrl} />
-                              <AvatarFallback>
-                                <User className="h-4 w-4" />
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{applicant?.name || 'Unknown'}</p>
-                              <p className="text-xs text-muted-foreground">{applicant?.email}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell className="max-w-[200px] truncate">{request.messageToLandlord || 'No message provided.'}</TableCell>
-                          <TableCell>{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-right">
-                            {request.status === 'pending' ? (
-                              <div className="flex justify-end gap-2">
-                                <Button variant="outline" size="sm" onClick={() => handleAcceptClick({ request, applicant })}>
-                                  Approve
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeclineClick(request.id)}>
-                                  Decline
-                                </Button>
-                              </div>
-                            ) : (
-                              <Badge variant={request.status === 'approved' ? 'secondary' : 'destructive'}>{request.status}</Badge>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center h-24">No pending requests.</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-
-      </div>
-      <div className="lg:col-span-1">
-        <div className="sticky top-24 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Badge variant={property.status === 'occupied' ? 'secondary' : 'default'} className="text-base">
-                {property.status}
-              </Badge>
+              <div>
+                <Bath className="mx-auto mb-2 h-7 w-7 text-primary" />
+                <p>{property.bathrooms} Baths</p>
+              </div>
+              <div>
+                <Ruler className="mx-auto mb-2 h-7 w-7 text-primary" />
+                <p>{property.area} sqft</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-primary">{formatPrice(property.price, property.currency)}</p>
+                <p className="text-sm text-muted-foreground">/month</p>
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Current Tenant</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isTenantLoading ? <Skeleton className="h-16 w-full" /> : tenant ? (
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={tenant.profileImageUrl} />
-                    <AvatarFallback>
-                      <User className="h-8 w-8 text-muted-foreground" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold">{tenant.name}</p>
-                    <p className="text-sm text-muted-foreground">{tenant.email}</p>
+          {/* Property Images */}
+          {
+            property.images && property.images.length > 0 && (
+              <Card className="my-6">
+                <CardHeader>
+                  <CardTitle>Property Photos</CardTitle>
+                  <CardDescription>Images of this property</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {property.images.map((imageUrl, index) => (
+                      <div key={index} className="relative aspect-video rounded-lg overflow-hidden border bg-secondary">
+                        <Image
+                          src={imageUrl}
+                          alt={`${property.title} - Image ${index + 1}`}
+                          fill
+                          className="object-cover hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 768px) 50vw, 33vw"
+                        />
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ) : (
-                <p className="text-muted-foreground">This property is currently vacant.</p>
-              )}
+                  {property.images.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">No images uploaded yet</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          }
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Rental Requests</CardTitle>
+              <CardDescription>Review and respond to rental applications for this property.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Applicant</TableHead>
+                      <TableHead>Message</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {areRequestsLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={4}>
+                          <div className="flex items-center space-x-2">
+                            <Skeleton className="h-4 w-4" />
+                            <Skeleton className="h-4 w-24" />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : aggregatedRequests && aggregatedRequests.length > 0 ? (
+                      aggregatedRequests.map(({ request, applicant }) => {
+                        return (
+                          <TableRow key={request.id}>
+                            <TableCell className="flex items-center gap-2">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={applicant?.profileImageUrl} />
+                                <AvatarFallback>
+                                  <User className="h-4 w-4" />
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium">{applicant?.name || 'Unknown'}</p>
+                                <p className="text-xs text-muted-foreground">{applicant?.email}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="max-w-[200px] truncate">{request.messageToLandlord || 'No message provided.'}</TableCell>
+                            <TableCell>{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
+                            <TableCell className="text-right">
+                              {request.status === 'pending' ? (
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="outline" size="sm" onClick={() => handleAcceptClick({ request, applicant })}>
+                                    Approve
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeclineClick(request.id)}>
+                                    Decline
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Badge variant={request.status === 'approved' ? 'secondary' : 'destructive'}>{request.status}</Badge>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center h-24">No pending requests.</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
+
+        </div >
+        <div className="lg:col-span-1">
+          <div className="sticky top-24 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Badge variant={property.status === 'occupied' ? 'secondary' : 'default'} className="text-base">
+                  {property.status}
+                </Badge>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Current Tenant</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isTenantLoading ? <Skeleton className="h-16 w-full" /> : tenant ? (
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={tenant.profileImageUrl} />
+                      <AvatarFallback>
+                        <User className="h-8 w-8 text-muted-foreground" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold">{tenant.name}</p>
+                      <p className="text-sm text-muted-foreground">{tenant.email}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">This property is currently vacant.</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
+        {
+          selectedRequest && landlord && property.leaseTemplate && (
+            <LeaseGenerationDialog
+              isOpen={dialogOpen}
+              onClose={() => setDialogOpen(false)}
+              onLeaseSigned={handleLeaseSigned}
+              landlord={landlord}
+              leaseText={property.leaseTemplate}
+            />
+          )}
       </div>
-      {selectedRequest && landlord && property.leaseTemplate && (
-        <LeaseGenerationDialog
-          isOpen={dialogOpen}
-          onClose={() => setDialogOpen(false)}
-          onLeaseSigned={handleLeaseSigned}
-          landlord={landlord}
-          leaseText={property.leaseTemplate}
-        />
-      )}
     </div>
   );
 }
