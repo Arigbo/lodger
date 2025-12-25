@@ -7,7 +7,7 @@ import SearchFilters from "@/components/search-filters";
 import type { Property, UserProfile } from '@/types';
 import type { FilterState } from '@/components/search-filters';
 import { Home, Search } from 'lucide-react';
-import { haversineDistance } from '@/utils';
+import { haversineDistance, cn } from '@/utils';
 import { getCurrencyByCountry, convertCurrency } from "@/utils/currencies";
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
