@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { BedDouble, Bath, Ruler, Check, X, Pencil, User, Building, ImageIcon, MapPin, Loader2, CheckCircle2, MessageSquare, DollarSign } from 'lucide-react';
+import { BedDouble, Bath, Ruler, Check, X, Pencil, User, Users, Building, ImageIcon, MapPin, Loader2, CheckCircle2, MessageSquare, DollarSign } from 'lucide-react';
 import { cn } from "@/utils";
 import type { Property, UserProfile, RentalApplication } from '@/types/';
 import Link from 'next/link';
@@ -141,7 +141,7 @@ export default function LandlordPropertyDetailPage() {
     setDialogOpen(true);
   };
 
-  const handleLeaseSigned = async () => {
+  const handleLeaseSigned = async (finalText: string) => {
     if (selectedRequest?.request && property?.leaseTemplate && landlord) {
       // 1. Update the rental request to 'approved'
       const requestRef = doc(firestore, 'rentalApplications', selectedRequest.request.id);
@@ -158,7 +158,7 @@ export default function LandlordPropertyDetailPage() {
         propertyId: property.id,
         landlordId: landlord.id,
         tenantId: selectedRequest.request.tenantId,
-        leaseText: property.leaseTemplate,
+        leaseText: finalText,
         landlordSigned: true,
         tenantSigned: false,
         startDate: leaseStartDate,
@@ -182,7 +182,6 @@ export default function LandlordPropertyDetailPage() {
       {/* Cinematic Header/Gallery Section */}
       <div className="relative w-full bg-[#050505] overflow-hidden lg:rounded-b-[4rem] shadow-3xl">
         <div className="absolute inset-0 z-0 opacity-20">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,#3b82f6_0%,transparent_70%)]" />
           <div className="absolute inset-0 h-full w-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:60px_60px]" />
         </div>
 
@@ -232,136 +231,153 @@ export default function LandlordPropertyDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-20">
           {/* Left Column: Property Narrative & Requests */}
           <div className="lg:col-span-2 space-y-16">
-            <div className="space-y-8">
-              <div className="flex flex-wrap items-center gap-4">
-                <Badge className="bg-primary/10 text-primary border-none px-6 py-2 rounded-full text-xs font-black uppercase tracking-[0.2em] italic transition-all hover:bg-primary/20 cursor-default">
-                  {property.type}
-                </Badge>
-                <div className="flex items-center gap-2 bg-muted/30 px-6 py-2 rounded-full text-xs font-black uppercase tracking-[0.2em] italic border-2 border-white/50 shadow-sm">
-                  Property ID: {property.id.slice(0, 8).toUpperCase()}
-                </div>
-              </div>
-
+            <div className="space-y-12">
               <div className="space-y-6">
-                <h1 className="font-headline text-5xl md:text-7xl font-black tracking-tight text-foreground leading-[1.05]">
-                  {property.title}
-                </h1>
-                <div className="flex items-center gap-3 font-bold group">
-                  <div className="h-10 w-10 flex items-center justify-center rounded-2xl bg-primary/5 text-primary group-hover:scale-110 transition-transform">
-                    <MapPin className="h-5 w-5" />
+                <div className="flex flex-wrap items-center gap-3">
+                  <Badge className="bg-primary/10 text-primary border-2 border-primary/20 px-6 py-2 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] italic transition-all hover:bg-primary/20 cursor-default shadow-sm">
+                    {property.type}
+                  </Badge>
+                  <div className="flex items-center gap-2 bg-white/50 backdrop-blur-md px-6 py-2 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] italic border-2 border-foreground/5 shadow-sm">
+                    Property ID: {property.id.slice(0, 8).toUpperCase()}
                   </div>
-                  <span className="text-lg text-muted-foreground">{property.location.address}, {property.location.city}</span>
                 </div>
+
+                <div className="space-y-6">
+                  <h1 className="font-headline text-5xl md:text-8xl font-black tracking-tighter text-foreground leading-[0.95] uppercase">
+                    {property.title.split(' ').map((word, i) => (
+                      <span key={i} className={cn(i % 2 === 1 && "text-primary italic")}>
+                        {word}{' '}
+                      </span>
+                    ))}
+                  </h1>
+                  <div className="flex items-center gap-4 font-black group max-w-2xl bg-white/40 backdrop-blur-sm p-4 rounded-3xl border-2 border-foreground/5">
+                    <div className="h-12 w-12 flex items-center justify-center rounded-2xl bg-foreground text-white group-hover:bg-primary transition-all duration-500 shadow-xl">
+                      <MapPin className="h-6 w-6" />
+                    </div>
+                    <span className="text-xl text-foreground/80 tracking-tight lowercase font-medium">{property.location.address}, {property.location.city}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* High-End Specs Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4">
+                {[
+                  { icon: BedDouble, label: "Bedrooms", val: property.bedrooms, color: "bg-blue-500" },
+                  { icon: Bath, label: "Bathrooms", val: property.bathrooms, color: "bg-purple-500" },
+                  { icon: Ruler, label: "Area (Sq Ft)", val: property.area, color: "bg-amber-500" },
+                  { icon: DollarSign, label: "Monthly Rent", val: formatPrice(property.price, property.currency), color: "bg-green-500" }
+                ].map((spec, i) => (
+                  <div key={i} className="relative group overflow-hidden rounded-[3rem] bg-white p-8 border-2 border-foreground/5 shadow-xl shadow-black/[0.02] hover:shadow-primary/10 hover:-translate-y-2 transition-all duration-500">
+                    <div className={cn("absolute top-0 right-0 w-32 h-32 blur-3xl rounded-full -mr-16 -mt-16 opacity-0 group-hover:opacity-20 transition-opacity", spec.color)} />
+                    <div className="relative z-10 flex flex-col items-start text-left">
+                      <div className="h-14 w-14 rounded-2xl bg-muted/30 flex items-center justify-center mb-6 transition-all duration-500 group-hover:bg-primary group-hover:text-white group-hover:rotate-12 group-hover:scale-110">
+                        <spec.icon className="h-7 w-7" />
+                      </div>
+                      <p className="text-3xl font-black tracking-tighter">{spec.val}</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 mt-1 italic">{spec.label}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* High-End Specs Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {[
-                { icon: BedDouble, label: "Bedrooms", val: property.bedrooms },
-                { icon: Bath, label: "Bathrooms", val: property.bathrooms },
-                { icon: Ruler, label: "Area (Sq Ft)", val: property.area },
-                { icon: DollarSign, label: "Monthly Rent", val: formatPrice(property.price, property.currency) }
-              ].map((spec, i) => (
-                <div key={i} className="relative group overflow-hidden rounded-[2.5rem] bg-muted/30 p-8 border-2 border-white/50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="relative z-10 flex flex-col items-center text-center">
-                    <spec.icon className="h-10 w-10 text-primary mb-5 transition-transform duration-500 group-hover:scale-110" />
-                    <p className="text-2xl font-black">{spec.val}</p>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mt-1">{spec.label}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Modernized Rental Requests Table */}
-            <div className="space-y-8">
+            <div className="space-y-10">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-3xl font-black uppercase tracking-tight">Rental <span className="text-primary italic">Inquiries</span></h3>
-                  <p className="text-lg font-medium text-muted-foreground italic font-serif opacity-60">Manage prospective scholars for this sanctuary</p>
+                  <h3 className="text-4xl font-black uppercase tracking-tighter">Rental <span className="text-primary italic underline decoration-4 decoration-primary/20 underline-offset-8">Inquiries</span></h3>
+                  <p className="text-lg font-medium text-muted-foreground/60 italic font-serif mt-2">Manage prospective scholars for this sanctuary</p>
                 </div>
-                <div className="bg-primary/5 px-6 py-2 rounded-2xl border-2 border-primary/10">
-                  <p className="text-xs font-black uppercase tracking-widest text-primary">{aggregatedRequests.length} Total</p>
+                <div className="bg-primary/5 px-8 py-4 rounded-[2rem] border-2 border-primary/10 shadow-inner">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1 italic opacity-60">Protocol Queue</p>
+                  <p className="text-3xl font-black text-primary leading-none">{aggregatedRequests.length}</p>
                 </div>
               </div>
 
-              <Card className="rounded-[3rem] border-2 border-foreground/5 shadow-2xl overflow-hidden bg-white">
+              <Card className="rounded-[4rem] border-2 border-foreground/5 shadow-3xl overflow-hidden bg-white/80 backdrop-blur-xl">
                 <Table>
-                  <TableHeader className="bg-muted/30">
-                    <TableRow className="hover:bg-transparent border-b-2 border-muted/20">
-                      <TableHead className="h-16 px-10 text-[10px] font-black uppercase tracking-widest">Applicant Profile</TableHead>
-                      <TableHead className="h-16 px-6 text-[10px] font-black uppercase tracking-widest">Narrative</TableHead>
-                      <TableHead className="h-16 px-6 text-[10px] font-black uppercase tracking-widest">Status</TableHead>
-                      <TableHead className="h-16 px-10 text-right text-[10px] font-black uppercase tracking-widest">Orchestration</TableHead>
+                  <TableHeader className="bg-foreground/5">
+                    <TableRow className="hover:bg-transparent border-b-2 border-foreground/5">
+                      <TableHead className="h-20 px-12 text-[10px] font-black uppercase tracking-widest text-foreground">Scholar Identity</TableHead>
+                      <TableHead className="h-20 px-6 text-[10px] font-black uppercase tracking-widest text-foreground">Inquiry Narrative</TableHead>
+                      <TableHead className="h-20 px-6 text-[10px] font-black uppercase tracking-widest text-foreground">Status Protocol</TableHead>
+                      <TableHead className="h-20 px-12 text-right text-[10px] font-black uppercase tracking-widest text-foreground">Control Logic</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {areRequestsLoading ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="py-20 text-center">
-                          <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary opacity-20" />
+                        <TableCell colSpan={4} className="py-32 text-center">
+                          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+                          <p className="mt-4 text-[10px] font-black uppercase tracking-widest opacity-20">Synchronizing Data...</p>
                         </TableCell>
                       </TableRow>
                     ) : aggregatedRequests && aggregatedRequests.length > 0 ? (
                       aggregatedRequests.map(({ request, applicant }) => (
-                        <TableRow key={request.id} className="group hover:bg-muted/5 transition-colors border-b border-muted/10 last:border-0">
-                          <TableCell className="py-8 px-10">
-                            <div className="flex items-center gap-4">
-                              <Avatar className="h-14 w-14 border-2 border-white shadow-lg group-hover:scale-110 transition-transform">
-                                <AvatarImage src={applicant?.profileImageUrl} className="object-cover" />
-                                <AvatarFallback className="bg-primary/5 text-primary font-black uppercase">{applicant?.name?.[0]}</AvatarFallback>
-                              </Avatar>
+                        <TableRow key={request.id} className="group hover:bg-primary/[0.02] transition-colors border-b-2 border-foreground/[0.02] last:border-0">
+                          <TableCell className="py-10 px-12">
+                            <div className="flex items-center gap-6">
+                              <div className="relative">
+                                <Avatar className="h-16 w-16 border-4 border-white shadow-2xl group-hover:scale-110 transition-transform duration-500">
+                                  <AvatarImage src={applicant?.profileImageUrl} className="object-cover" />
+                                  <AvatarFallback className="bg-primary/5 text-primary font-black uppercase text-xl">{applicant?.name?.[0]}</AvatarFallback>
+                                </Avatar>
+                                <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-green-500 border-4 border-white rounded-full shadow-lg" />
+                              </div>
                               <div>
-                                <p className="font-black text-lg group-hover:text-primary transition-colors">{applicant?.name || 'Anonymous'}</p>
-                                <p className="text-xs font-medium text-muted-foreground italic">{applicant?.email}</p>
+                                <p className="font-black text-xl tracking-tight group-hover:text-primary transition-colors">{applicant?.name || 'Anonymous'}</p>
+                                <p className="text-xs font-bold text-muted-foreground/40 uppercase tracking-widest mt-1">{applicant?.email}</p>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="py-8 px-6 max-w-[250px]">
-                            <p className="text-sm font-serif italic text-muted-foreground leading-relaxed line-clamp-2">
+                          <TableCell className="py-10 px-6 max-w-[300px]">
+                            <p className="text-base font-serif italic text-muted-foreground/80 leading-relaxed line-clamp-2 selection:bg-primary/20">
                               &quot;{request.messageToLandlord || 'No introductory narrative provided.'}&quot;
                             </p>
                           </TableCell>
-                          <TableCell className="py-8 px-6">
-                            <Badge variant={request.status === 'approved' ? 'secondary' : request.status === 'declined' ? 'destructive' : 'outline'} className="rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest">
+                          <TableCell className="py-10 px-6">
+                            <Badge variant={request.status === 'approved' ? 'secondary' : request.status === 'declined' ? 'destructive' : 'outline'} className={cn(
+                              "rounded-full px-6 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] border-none shadow-sm",
+                              request.status === 'pending' ? "bg-amber-500/10 text-amber-600 animate-pulse" :
+                                request.status === 'approved' ? "bg-green-500/10 text-green-600" : "bg-destructive/10 text-destructive"
+                            )}>
                               {request.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="py-8 px-10 text-right">
+                          <TableCell className="py-10 px-12 text-right">
                             {request.status === 'pending' ? (
-                              <div className="flex justify-end gap-3">
+                              <div className="flex justify-end gap-4">
                                 <Button
                                   variant="outline"
-                                  size="sm"
-                                  className="h-10 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest hover:bg-primary/5 hover:text-primary transition-all"
+                                  size="lg"
+                                  className="h-14 px-8 rounded-2xl border-2 border-foreground/5 font-black text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-all shadow-xl hover:shadow-black/20"
                                   onClick={() => handleAcceptClick({ request, applicant })}
                                 >
-                                  Approve
+                                  Deploy Lease
                                 </Button>
                                 <Button
                                   variant="ghost"
-                                  size="sm"
-                                  className="h-10 rounded-xl font-black text-[10px] uppercase tracking-widest text-destructive/40 hover:text-destructive hover:bg-destructive/5 transition-all"
+                                  size="lg"
+                                  className="h-14 px-6 rounded-2xl font-black text-xs uppercase tracking-widest text-destructive/30 hover:text-destructive hover:bg-destructive/5 transition-all"
                                   onClick={() => handleDeclineClick(request.id)}
                                 >
-                                  Decline
+                                  Archive
                                 </Button>
                               </div>
                             ) : (
-                              <Button variant="ghost" disabled className="h-10 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest opacity-40">
-                                COMPLETED
-                              </Button>
+                              <div className="flex justify-end items-center gap-3 text-muted-foreground/30">
+                                <CheckCircle2 className="h-5 w-5" />
+                                <span className="font-black text-[10px] uppercase tracking-[0.3em]">Protocol Executed</span>
+                              </div>
                             )}
                           </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="py-24 text-center">
-                          <div className="flex flex-col items-center gap-4 opacity-20">
-                            <User className="h-12 w-12" />
-                            <p className="text-xl font-black italic font-serif">No incoming inquiries found.</p>
+                        <TableCell colSpan={4} className="py-32 text-center">
+                          <div className="flex flex-col items-center gap-6 opacity-10">
+                            <Building className="h-24 w-24" />
+                            <p className="text-4xl font-black italic font-serif">Empty Sanctuary Portfolio</p>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -373,98 +389,115 @@ export default function LandlordPropertyDetailPage() {
           </div>
 
           {/* Right Column: Status & Current Tenancy */}
-          <div className="relative">
-            <div className="sticky top-12 space-y-10">
-              {/* Asset Performance Card */}
-              <Card className="rounded-[2.5rem] border-none bg-[#050505] text-white shadow-3xl overflow-hidden p-10">
-                <CardHeader className="p-0 space-y-2 mb-8">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Asset Status</p>
-                  <CardTitle className="text-4xl font-black tracking-tight uppercase">{property.status}</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0 space-y-8">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="p-6 rounded-3xl bg-white/5 border border-white/10 text-center">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 italic">Yield</p>
-                      <p className="text-2xl font-black">{formatPrice(property.price, property.currency)}</p>
+          <div className="space-y-12">
+            {/* Asset Performance Card */}
+            <Card className="rounded-[3.5rem] border-none bg-foreground text-white shadow-3xl overflow-hidden p-12 relative">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-3xl rounded-full -mr-32 -mt-32" />
+              <CardHeader className="p-0 space-y-2 mb-10 relative z-10">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Intelligence Report</p>
+                <CardTitle className="text-5xl font-black tracking-tighter uppercase italic">{property.status}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 space-y-10 relative z-10">
+                <div className="grid grid-cols-1 gap-6">
+                  <div className="p-8 rounded-[2.5rem] bg-white/5 border-2 border-white/5 backdrop-blur-md">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-3 italic">Economic Yield</p>
+                    <p className="text-4xl font-black tracking-tight">{formatPrice(property.price, property.currency)}<span className="text-sm font-medium text-white/20 ml-2">/month</span></p>
+                  </div>
+                  <div className="p-8 rounded-[2.5rem] bg-white/5 border-2 border-white/5 backdrop-blur-md flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 italic">Active Inquiries</p>
+                      <p className="text-4xl font-black tracking-tight">{aggregatedRequests.length}</p>
                     </div>
-                    <div className="p-6 rounded-3xl bg-white/5 border border-white/10 text-center">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 italic">Inquiries</p>
-                      <p className="text-2xl font-black">{aggregatedRequests.length}</p>
+                    <div className="h-16 w-16 rounded-2xl bg-primary/20 flex items-center justify-center text-primary border-2 border-primary/20">
+                      <Users className="h-8 w-8" />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </CardContent>
+            </Card>
 
-              {/* Resident Spotlight Card */}
-              <Card className="relative overflow-hidden border-2 border-white bg-muted/30 rounded-[3rem] p-10 hover:bg-muted/40 transition-all group shadow-xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative z-10 space-y-8">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Current Resident</p>
-                    <div className="h-10 w-10 flex items-center justify-center rounded-2xl bg-white shadow-sm">
-                      <CheckCircle2 className={cn("h-5 w-5", tenant ? "text-green-500" : "text-muted-foreground/30")} />
+            {/* Resident Spotlight Card */}
+            <Card className="relative overflow-hidden border-4 border-foreground/[0.02] bg-white/40 backdrop-blur-xl rounded-[4rem] p-12 hover:bg-white/60 transition-all duration-700 group shadow-3xl shadow-black/[0.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative z-10 space-y-10">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-foreground italic opacity-40">Verified Resident</p>
+                  <div className={cn(
+                    "h-12 w-12 flex items-center justify-center rounded-2xl border-2 transition-all duration-500",
+                    tenant ? "bg-green-500/10 border-green-500/20 text-green-600 shadow-lg shadow-green-500/10" : "bg-muted/50 border-transparent text-muted-foreground/30"
+                  )}>
+                    <CheckCircle2 className="h-6 w-6" />
+                  </div>
+                </div>
+
+                {isTenantLoading ? (
+                  <div className="flex items-center gap-6">
+                    <Skeleton className="h-24 w-24 rounded-3xl" />
+                    <div className="space-y-4">
+                      <Skeleton className="h-8 w-48" />
+                      <Skeleton className="h-5 w-32" />
                     </div>
                   </div>
-
-                  {isTenantLoading ? (
-                    <div className="flex items-center gap-6">
-                      <Skeleton className="h-20 w-20 rounded-2xl" />
+                ) : tenant ? (
+                  <div className="space-y-8">
+                    <div className="flex items-center gap-8">
+                      <div className="relative">
+                        <Avatar className="h-28 w-28 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.3)] border-4 border-white transition-all duration-700 group-hover:scale-110 group-hover:rotate-3">
+                          <AvatarImage src={tenant.profileImageUrl} className="object-cover" />
+                          <AvatarFallback className="bg-foreground text-white font-black text-4xl">{tenant.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="absolute -top-2 -right-2 h-10 w-10 bg-primary text-white rounded-2xl border-4 border-white flex items-center justify-center shadow-xl">
+                          <Check className="h-5 w-5" />
+                        </div>
+                      </div>
                       <div className="space-y-2">
-                        <Skeleton className="h-6 w-32" />
-                        <Skeleton className="h-4 w-24" />
+                        <h4 className="text-3xl font-black tracking-tighter uppercase">{tenant.name}</h4>
+                        <p className="text-sm font-bold text-muted-foreground/60 tracking-widest uppercase truncate max-w-[200px]">{tenant.email}</p>
                       </div>
                     </div>
-                  ) : tenant ? (
-                    <div className="flex items-center gap-6">
-                      <Avatar className="h-24 w-24 shadow-2xl border-4 border-white transition-transform group-hover:scale-110 duration-500">
-                        <AvatarImage src={tenant.profileImageUrl} className="object-cover" />
-                        <AvatarFallback className="bg-primary/10 text-primary font-black text-3xl">{tenant.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="space-y-1">
-                        <h4 className="text-2xl font-black tracking-tight">{tenant.name}</h4>
-                        <p className="text-sm font-medium text-muted-foreground italic truncate max-w-[150px]">{tenant.email}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="py-10 text-center space-y-4">
-                      <div className="h-20 w-20 flex items-center justify-center rounded-[2rem] bg-white shadow-inner mx-auto opacity-40">
-                        <Building className="h-10 w-10 text-muted-foreground" />
-                      </div>
-                      <p className="text-lg font-black text-muted-foreground/40 italic font-serif">Asset currently vacant</p>
-                    </div>
-                  )}
 
-                  {tenant && (
-                    <div className="pt-8 border-t border-muted-foreground/10">
-                      <Link href={`/landlord/messages?contact=${tenant.id}`}>
-                        <Button className="w-full h-14 rounded-2xl font-black text-xs uppercase tracking-widest gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all">
-                          <MessageSquare className="h-4 w-4" /> Message Scholar
+                    <div className="pt-6 border-t-2 border-foreground/[0.05]">
+                      <Link href={`/landlord/messages?contact=${tenant.id}`} className="block">
+                        <Button className="w-full h-16 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] gap-4 shadow-2xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 active:translate-y-0 transition-all duration-500">
+                          <MessageSquare className="h-5 w-5" /> Open Channel
                         </Button>
                       </Link>
                     </div>
-                  )}
-                </div>
-              </Card>
+                  </div>
+                ) : (
+                  <div className="py-16 text-center space-y-6">
+                    <div className="h-24 w-24 flex items-center justify-center rounded-[2.5rem] bg-foreground/5 shadow-inner mx-auto group-hover:bg-primary/10 transition-colors duration-500">
+                      <Building className="h-10 w-10 text-foreground/20 group-hover:text-primary transition-colors" />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-2xl font-black uppercase tracking-tighter text-foreground/20">Status: Vacant</p>
+                      <p className="text-xs font-bold text-foreground/10 uppercase tracking-[0.2em]">Awaiting Quality Scholar</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
 
-              {/* Navigation Artifact */}
-              <Link href="/landlord/properties" className="block text-center">
-                <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.3em] hover:tracking-[0.4em] transition-all opacity-40 hover:opacity-100 italic">
-                  ← BACK TO PROPERTY PORTFOLIO
-                </Button>
-              </Link>
-            </div>
+            {/* Navigation Artifact */}
+            <Link href="/landlord/properties" className="block text-center pt-8">
+              <Button variant="ghost" className="h-12 px-10 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] hover:tracking-[0.5em] transition-all opacity-20 hover:opacity-100 italic hover:bg-transparent">
+                ← ARCHIVE COLLECTION
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
 
       {/* Lease Generation Dialogue Context */}
-      {selectedRequest && landlord && property.leaseTemplate && (
+      {selectedRequest && landlord && property.leaseTemplate && selectedRequest.applicant && (
         <LeaseGenerationDialog
           isOpen={dialogOpen}
           onClose={() => setDialogOpen(false)}
           onLeaseSigned={handleLeaseSigned}
           landlord={landlord}
-          leaseText={property.leaseTemplate}
+          tenant={selectedRequest.applicant}
+          property={property}
+          templateText={property.leaseTemplate}
         />
       )}
     </div>

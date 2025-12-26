@@ -420,7 +420,6 @@ export default function PropertyDetailPage() {
             {/* Gallery Section - Full Width on Mobile, Container on Desktop */}
             <div className="relative w-full bg-[#0A0A0A] overflow-hidden lg:rounded-b-[3rem] shadow-2xl">
                 <div className="absolute inset-0 z-0 opacity-10">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#3b82f6_0%,transparent_50%)]" />
                     <div className="absolute inset-0 h-full w-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]" />
                 </div>
 

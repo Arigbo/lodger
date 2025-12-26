@@ -205,9 +205,11 @@ export default function RentalRequestsPage() {
     toast({ title: "Inquiry Declined", description: "The applicant has been notified of your decision." });
   };
 
-  const handleLeaseSigned = async () => {
-    if (selectedRequest && landlord && selectedRequest.property?.leaseTemplate) {
+  const handleLeaseSigned = async (finalText: string) => {
+    if (selectedRequest && landlord) {
       const { request, property } = selectedRequest;
+      if (!property) return;
+
       const requestRef = doc(firestore, 'rentalApplications', request.id);
       updateDocumentNonBlocking(requestRef, { status: 'approved' });
 
@@ -217,7 +219,7 @@ export default function RentalRequestsPage() {
         propertyId: property.id,
         landlordId: landlord.uid,
         tenantId: request.tenantId,
-        leaseText: property.leaseTemplate,
+        leaseText: finalText,
         landlordSigned: true,
         tenantSigned: false,
         startDate: leaseStartDate,
@@ -527,13 +529,15 @@ export default function RentalRequestsPage() {
         </div>
       )}
 
-      {selectedRequest && landlordProfile && selectedRequest.property?.leaseTemplate && (
+      {selectedRequest && landlordProfile && selectedRequest.applicant && selectedRequest.property?.leaseTemplate && (
         <LeaseGenerationDialog
           isOpen={dialogOpen}
           onClose={() => setDialogOpen(false)}
           onLeaseSigned={handleLeaseSigned}
           landlord={landlordProfile}
-          leaseText={selectedRequest.property.leaseTemplate}
+          tenant={selectedRequest.applicant}
+          property={selectedRequest.property}
+          templateText={selectedRequest.property.leaseTemplate}
         />
       )}
     </div>

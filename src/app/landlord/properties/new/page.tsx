@@ -51,47 +51,35 @@ import { getCurrencyByCountry } from '@/utils/currencies';
 
 
 function generateLeaseTextForTemplate(propertyData: Partial<FormValues>): string {
-    const leaseStartDate = new Date();
-    const leaseEndDate = addYears(leaseStartDate, 1);
+    return `LEASE AGREEMENT
 
-    const landlordName = "[Landlord Name]"; // Placeholder
-    const tenantName = "[Tenant Name]"; // Placeholder
+This Lease Agreement (the "Agreement") is made and entered into on {{DATE_TODAY}}, by and between:
 
-    const rules = typeof propertyData.rules === 'string'
-        ? propertyData.rules.split(',').map(r => r.trim()).filter(Boolean)
-        : [];
+Landlord: {{LANDLORD_NAME}}
+Tenant: {{TENANT_NAME}}
 
-    return `
-    LEASE AGREEMENT
+1. PROPERTY. Landlord agrees to lease to Tenant the property located at:
+   {{PROPERTY_ADDRESS}}, {{PROPERTY_CITY}}, {{PROPERTY_STATE}}, {{PROPERTY_COUNTRY}}, {{PROPERTY_ZIP}}
 
-    This Lease Agreement (the "Agreement") is made and entered into on ${format(new Date(), 'MMMM do, yyyy')}, by and between:
+2. TERM. The lease term will begin on {{LEASE_START_DATE}} and will terminate on {{LEASE_END_DATE}}.
 
-    Landlord: ${landlordName}
-    Tenant: ${tenantName}
+3. RENT. Tenant agrees to pay Landlord the sum of {{MONTHLY_RENT}} per month, due on the 1st day of each month.
 
-    1. PROPERTY. Landlord agrees to lease to Tenant the property located at:
-       ${propertyData.address || '[Address]'}, ${propertyData.city || '[City]'}, ${propertyData.state || '[State]'}, ${propertyData.country || '[Country]'}, ${propertyData.zip || '[ZIP]'}
+4. SECURITY DEPOSIT. Upon execution of this Agreement, Tenant shall deposit with Landlord the sum of {{SECURITY_DEPOSIT}} as security for the faithful performance by Tenant of the terms hereof.
 
-    2. TERM. The lease term will begin on ${format(leaseStartDate, 'MMMM do, yyyy')} and will terminate on ${format(leaseEndDate, 'MMMM do, yyyy')}.
+5. UTILITIES. Tenant is responsible for the payment of all utilities and services for the Property.
 
-    3. RENT. Tenant agrees to pay Landlord the sum of ${formatPrice(propertyData.price || 0)} per month, due on the 1st day of each month.
+6. AMENITIES. The following amenities are included: {{AMENITIES}}.
 
-    4. SECURITY DEPOSIT. Upon execution of this Agreement, Tenant shall deposit with Landlord the sum of ${formatPrice(propertyData.price || 0)} as security for the faithful performance by Tenant of the terms hereof.
+7. RULES. Tenant agrees to abide by the following rules: {{RULES}}.
 
-    5. UTILITIES. Tenant is responsible for the payment of all utilities and services for the Property.
+8. SIGNATURES. By signing below, the parties agree to the terms and conditions of this Lease Agreement.
 
-    6. AMENITIES. The following amenities are included: ${(propertyData.amenities || []).join(', ')}.
+Landlord: _________________________
+Date: _________________________
 
-    7. RULES. Tenant agrees to abide by the following rules: ${rules.join(', ')}.
-
-    8. SIGNATURES. By signing below, the parties agree to the terms and conditions of this Lease Agreement.
-
-    Landlord: _________________________
-    Date: _________________________
-
-    Tenant: _________________________
-    Date: _________________________
-  `;
+Tenant: _________________________
+Date: _________________________`;
 }
 
 // 5MB limit
@@ -262,6 +250,16 @@ export default function AddPropertyPage() {
             form.setValue('currency', currency);
         }
     }, [selectedCountry, form]);
+
+    const generateLeaseTemplate = () => {
+        const propertyData = form.getValues();
+        const leaseText = generateLeaseTextForTemplate(propertyData);
+        form.setValue('leaseTemplate', leaseText);
+        toast({
+            title: "Legal Blueprint Re-initialized",
+            description: "The lease protocol has been reset to dynamic defaults.",
+        });
+    };
 
     const nextStep = async () => {
         const fields = steps[currentStep - 1].fields;
@@ -924,10 +922,10 @@ export default function AddPropertyPage() {
                                     </div>
                                 </form>
                             </Form>
+                        </Card>
                     </div>
-                </Card>
+                </div>
             </div>
         </div>
-        </div >
     );
 }
