@@ -38,7 +38,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { amenities as allAmenities } from '@/types';
 import { cn, formatPrice } from '@/utils';
-import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon, Sparkles, Building, Loader2, Ruler, AlertCircle } from 'lucide-react';
 import type { Property, UserProfile } from '@/types';
 import { format, addYears } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -138,51 +138,57 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const steps = [
-    { id: 1, name: 'Basic Information', fields: ['title', 'type'] },
-    { id: 2, name: 'Location & Price', fields: ['address', 'country', 'city', 'state', 'zip', 'school', 'price', 'currency'] },
-    { id: 3, name: 'Property Details', fields: ['bedrooms', 'bathrooms', 'area'] },
-    { id: 4, name: 'Amenities & Rules', fields: ['amenities', 'rules'] },
-    { id: 5, name: 'Lease Template', fields: ['leaseTemplate'] },
-    { id: 6, name: 'Upload Photos', fields: ['kitchenImage', 'livingRoomImage', 'bathroomImage', 'bedroomImage', 'otherImage'] },
-    { id: 7, name: 'Description', fields: ['description'] },
-    { id: 8, name: 'Review' }
+    { id: 1, name: 'Basic Info', fields: ['title', 'type'] },
+    { id: 2, name: 'Location & Finance', fields: ['address', 'country', 'city', 'state', 'zip', 'school', 'price', 'currency'] },
+    { id: 3, name: 'Specifications', fields: ['bedrooms', 'bathrooms', 'area'] },
+    { id: 4, name: 'Amenities', fields: ['amenities', 'rules'] },
+    { id: 5, name: 'Legal Blueprint', fields: ['leaseTemplate'] },
+    { id: 6, name: 'Visual Assets', fields: ['kitchenImage', 'livingRoomImage', 'bathroomImage', 'bedroomImage', 'otherImage'] },
+    { id: 7, name: 'Narrative', fields: ['description'] },
+    { id: 8, name: 'Validation' }
 ];
 
 const FileUpload = ({ field, label, description, icon: Icon }: { field: any, label: string, description: string, icon: any }) => (
     <FormItem className="h-full">
-        <FormLabel className="flex items-center gap-2 text-base">
-            <Icon className="h-4 w-4" />
-            {label}
+        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic flex items-center gap-2">
+            <Icon className="h-3 w-3" /> {label}
         </FormLabel>
-        {/* <FormDescription>{description}</FormDescription> */}
         <FormControl>
-            <div className="mt-2 flex flex-col justify-center rounded-lg border border-dashed border-input px-6 py-10 hover:bg-accent/50 transition-colors h-48">
-                <div className="text-center">
+            <div className="mt-4 flex flex-col justify-center rounded-[2rem] border-2 border-dashed border-muted/20 px-6 py-10 hover:bg-primary/5 hover:border-primary/20 transition-all duration-500 group h-56 relative overflow-hidden">
+                <div className="text-center relative z-10">
                     {field.value?.[0] ? (
-                        <div className="flex flex-col items-center gap-2">
-                            <FileImage className="mx-auto h-12 w-12 text-green-500" />
-                            <p className="text-sm font-medium text-green-600 truncate max-w-[200px]">{field.value[0].name}</p>
-                            <Button type="button" variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); field.onChange(null); }} className="text-destructive h-auto p-0 hover:bg-transparent">Remove</Button>
+                        <div className="flex flex-col items-center gap-4 animate-in zoom-in-95 duration-500">
+                            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                                <FileImage className="h-8 w-8" />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-primary truncate max-w-[200px]">{field.value[0].name}</p>
+                                <Button type="button" variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); field.onChange(null); }} className="text-destructive font-black text-[10px] uppercase tracking-widest h-auto p-0 hover:bg-transparent">Purge Asset</Button>
+                            </div>
                         </div>
                     ) : (
-                        <>
-                            <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                            <div className="mt-4 text-sm text-muted-foreground">
+                        <div className="space-y-4">
+                            <div className="h-16 w-16 rounded-2xl bg-muted/5 flex items-center justify-center mx-auto group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-500">
+                                <UploadCloud className="h-8 w-8" />
+                            </div>
+                            <div className="space-y-1">
                                 <label
                                     htmlFor={field.name}
-                                    className="relative cursor-pointer rounded-md font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:text-primary/80"
+                                    className="relative cursor-pointer rounded-md font-black text-[10px] uppercase tracking-widest text-foreground hover:text-primary transition-colors"
                                 >
-                                    <span>Upload {label}</span>
+                                    <span>Integrate {label}</span>
                                     <input id={field.name} name={field.name} type="file" className="sr-only"
                                         accept="image/png, image/jpeg, image/webp"
                                         onChange={(e) => field.onChange(e.target.files)}
                                     />
                                 </label>
+                                <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">MAX 5MB • PNG/JPG/WEBP</p>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-2">PNG, JPG up to 5MB</p>
-                        </>
+                        </div>
                     )}
                 </div>
+                {/* Micro-animation background flash */}
+                <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-1000" />
             </div>
         </FormControl>
         <FormMessage />
@@ -201,7 +207,6 @@ export default function AddPropertyPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
-    // Fetch user profile for pre-filling location
     const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
     const [hasPrefilled, setHasPrefilled] = useState(false);
@@ -228,10 +233,8 @@ export default function AddPropertyPage() {
         },
     });
 
-    // Auto-fill location from profile
     useEffect(() => {
         if (userProfile && !hasPrefilled) {
-            // Only autofill if the fields are empty to avoid overwriting user input if they navigated back
             const currentValues = form.getValues();
             if (!currentValues.country && !currentValues.city && !currentValues.state) {
                 form.reset({
@@ -241,19 +244,17 @@ export default function AddPropertyPage() {
                     city: userProfile.city || '',
                 });
 
-                // If the profile has these values, set the prefilled flag
                 if (userProfile.country) {
                     setHasPrefilled(true);
                     toast({
-                        title: "Location Prefilled",
-                        description: "We've used your profile location as a starting point.",
+                        title: "Intelligence Cached",
+                        description: "Your profile coordinates have been synchronized.",
                     });
                 }
             }
         }
     }, [userProfile, hasPrefilled, form, toast]);
 
-    // Auto-suggest currency based on country
     const selectedCountry = form.watch('country');
     useEffect(() => {
         if (selectedCountry) {
@@ -262,11 +263,8 @@ export default function AddPropertyPage() {
         }
     }, [selectedCountry, form]);
 
-
     const nextStep = async () => {
         const fields = steps[currentStep - 1].fields;
-
-        // When moving to the lease step, generate the template text
         if (currentStep === 4) {
             const propertyData = form.getValues();
             const leaseText = generateLeaseTextForTemplate(propertyData);
@@ -296,8 +294,6 @@ export default function AddPropertyPage() {
         setIsGeneratingDescription(true);
         try {
             const formData = form.getValues();
-
-            // Create a description based on the property details
             const response = await fetch('/api/generate-description', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -315,23 +311,21 @@ export default function AddPropertyPage() {
                 }),
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to generate description');
-            }
+            if (!response.ok) throw new Error('Failed to generate description');
 
             const { description } = await response.json();
             form.setValue('description', description);
 
             toast({
-                title: "Description Generated!",
-                description: "AI has created a description for your property. Feel free to edit it.",
+                title: "Linguistic Logic Generated",
+                description: "AI has synthesized a professional descriptor for your asset.",
             });
         } catch (error) {
             console.error('Error generating description:', error);
             toast({
                 variant: "destructive",
-                title: "Generation Failed",
-                description: "Could not generate description. Please write one manually.",
+                title: "Generation Failure",
+                description: "Manual input required for description protocol.",
             });
         } finally {
             setIsGeneratingDescription(false);
@@ -339,37 +333,21 @@ export default function AddPropertyPage() {
     };
 
     async function uploadImage(file: File, path: string): Promise<string> {
-        try {
-            const storage = getStorage(firebaseApp);
-            const storageRef = ref(storage, path);
-            const snapshot = await uploadBytes(storageRef, file);
-            return await getDownloadURL(snapshot.ref);
-        } catch (error) {
-            console.error(`Upload failed for path: ${path}`, error);
-            throw error;
-        }
+        const storage = getStorage(firebaseApp);
+        const storageRef = ref(storage, path);
+        const snapshot = await uploadBytes(storageRef, file);
+        return await getDownloadURL(snapshot.ref);
     }
 
     async function onSubmit(values: FormValues) {
-        if (!user) {
-            toast({
-                variant: "destructive",
-                title: "Authentication Error",
-                description: "You must be logged in to create a property.",
-            });
-            return;
-        }
-
+        if (!user) return;
         setIsSubmitting(true);
-        console.log("Submitting form...", values);
 
         try {
             const uploadedImageUrls: string[] = [];
             const timestamp = Date.now();
-            // Store images under properties/{landlordId}/{timestamp}/...
             const basePath = `properties/${user.uid}/${timestamp}`;
 
-            // Helper to upload if exists
             const uploadField = async (fileList: any, name: string) => {
                 if (fileList && fileList.length > 0) {
                     try {
@@ -377,27 +355,15 @@ export default function AddPropertyPage() {
                         uploadedImageUrls.push(url);
                     } catch (e) {
                         console.error(`Failed to upload ${name}`, e);
-                        toast({
-                            variant: "destructive",
-                            title: "Upload Warning",
-                            description: `Failed to upload ${name} image. Please try editing the property later to add it.`,
-                        });
-                        // We continue even if one image fails, but we warn the user.
                     }
                 }
             };
 
-            // Execute uploads sequentially to avoid flooding connection (or could use Promise.all for speed)
             await uploadField(values.kitchenImage, 'kitchen');
             await uploadField(values.livingRoomImage, 'livingRoom');
             await uploadField(values.bathroomImage, 'bathroom');
             await uploadField(values.bedroomImage, 'bedroom');
             await uploadField(values.otherImage, 'other');
-
-            // Fallback if no images uploaded at all
-            // if (uploadedImageUrls.length === 0) {
-            //     uploadedImageUrls.push("https://images.unsplash.com/photo-1515263487990-61b07816b324?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
-            // }
 
             const newPropertyData: Omit<Property, 'id'> = {
                 title: values.title,
@@ -421,26 +387,22 @@ export default function AddPropertyPage() {
                 amenities: values.amenities,
                 images: uploadedImageUrls,
                 landlordId: user.uid,
-                status: 'available' as 'available' | 'occupied',
+                status: 'available',
                 rules: values.rules ? values.rules.split(',').map(r => r.trim()).filter(Boolean) : [],
                 leaseTemplate: values.leaseTemplate,
             };
 
             const docRef = await addDoc(collection(firestore, 'properties'), newPropertyData);
-            // Now update the document with its own ID - this is good practice
             await updateDoc(docRef, { id: docRef.id });
 
-            toast({
-                title: "Property Listed!",
-                description: `${values.title} is now available for rent.`,
-            });
+            toast({ title: "Asset Deployed", description: "Your property has been integrated into the marketplace." });
             router.push('/landlord/properties');
         } catch (e: any) {
             console.error("Error adding document: ", e);
             toast({
                 variant: "destructive",
-                title: "Error",
-                description: e.message || "Could not list property. Please try again.",
+                title: "System Error",
+                description: "Asset deployment protocol interrupted.",
             });
         } finally {
             setIsSubmitting(false);
@@ -448,585 +410,524 @@ export default function AddPropertyPage() {
     }
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="font-headline text-3xl font-bold">Add New Property</CardTitle>
-                <CardDescription>Follow the steps to list your property.</CardDescription>
-            </CardHeader>
-            <CardContent>
+        <div className="space-y-12 pb-32 animate-in fade-in duration-1000">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b-4 border-foreground/5">
                 <div className="space-y-4">
-                    <Progress value={(currentStep / totalSteps) * 100} className="mb-8" />
-                    <h3 className="font-headline text-xl font-semibold">{steps[currentStep - 1].name}</h3>
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-white shadow-lg border-2 border-primary/10">
+                            <Building className="h-5 w-5 text-primary" />
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">ASSET DEPLOYMENT</p>
+                    </div>
+                    <h1 className="font-headline text-5xl md:text-6xl font-black tracking-tight text-foreground uppercase">
+                        INITIATE <span className="text-primary italic">HOLDING</span>
+                    </h1>
+                    <p className="text-lg text-muted-foreground font-medium italic font-serif">
+                        &quot;Configuring the structural and financial parameters of your new property asset.&quot;
+                    </p>
                 </div>
+                <div className="flex gap-4">
+                    <div className="bg-primary/5 px-8 py-4 rounded-[2rem] border-2 border-primary/10">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1 italic">Protocol Progress</p>
+                        <p className="text-3xl font-black text-primary">{Math.round((currentStep / totalSteps) * 100)}%</p>
+                    </div>
+                </div>
+            </div>
 
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-8">
+            <div className="relative">
+                <div className="absolute -top-20 -right-20 w-96 h-96 bg-primary/5 blur-3xl rounded-full -z-10" />
+                <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-blue-500/5 blur-3xl rounded-full -z-10" />
 
-                        <div className={cn(currentStep === 1 ? "block" : "hidden")}>
-                            <FormField
-                                control={form.control}
-                                name="title"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Property Title</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g., Modern Downtown Loft" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+                    <div className="lg:col-span-1 space-y-4">
+                        {steps.map((step) => (
+                            <div
+                                key={step.id}
+                                className={cn(
+                                    "flex items-center gap-4 p-5 rounded-2xl transition-all duration-300 border-2",
+                                    currentStep === step.id
+                                        ? "bg-foreground text-white border-foreground shadow-xl scale-105"
+                                        : currentStep > step.id
+                                            ? "bg-white text-foreground border-foreground/5 opacity-60"
+                                            : "bg-white/50 text-muted-foreground border-transparent opacity-40"
                                 )}
-                            />
-                            <Separator className="my-8" />
-                            <FormField
-                                control={form.control}
-                                name="type"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Property Type</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select a property type" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="Apartment">Apartment</SelectItem>
-                                                <SelectItem value="House">House</SelectItem>
-                                                <SelectItem value="Studio">Studio</SelectItem>
-                                                <SelectItem value="Loft">Loft</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
+                            >
+                                <div className={cn(
+                                    "h-8 w-8 rounded-lg flex items-center justify-center font-black text-xs",
+                                    currentStep === step.id ? "bg-primary text-white" : "bg-muted/20"
+                                )}>
+                                    {step.id}
+                                </div>
+                                <p className="text-[10px] font-black uppercase tracking-widest">{step.name}</p>
+                            </div>
+                        ))}
+                    </div>
 
-                        <div className={cn(currentStep === 2 ? "block" : "hidden")}>
-                            <FormField
-                                control={form.control}
-                                name="address"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Street Address</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="123 University Ave" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <Separator className="my-8" />
-                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                                <FormField
-                                    control={form.control}
-                                    name="country"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Country</FormLabel>
-                                            <FormControl>
-                                                <Combobox
-                                                    options={countries.map((c) => ({ label: c.name, value: c.name }))}
-                                                    value={field.value}
-                                                    onChange={(value) => {
-                                                        field.onChange(value);
-                                                        form.setValue('state', ''); // Reset state when country changes
-                                                        form.setValue('school', ''); // Reset school when country changes
-                                                    }}
-                                                    placeholder="Select country"
+                    <div className="lg:col-span-3">
+                        <Card className="rounded-[3.5rem] border-2 border-foreground/5 bg-white shadow-3xl overflow-hidden p-8 md:p-12">
+                            <Form {...form}>
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
+                                    {currentStep === 1 && (
+                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <div className="space-y-8">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="title"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Asset Title</FormLabel>
+                                                            <FormControl>
+                                                                <Input placeholder="e.g., THE LUXE DOWNTOWN PENTHOUSE" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xl font-black uppercase tracking-tight" />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
                                                 />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="state"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>State/Province</FormLabel>
-                                            <FormControl>
-                                                <Combobox
-                                                    options={
-                                                        countries.find((c) => c.name === form.watch('country'))?.states.map((s) => ({
-                                                            label: s.name,
-                                                            value: s.name,
-                                                        })) || []
-                                                    }
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                    placeholder="Select state"
-                                                    disabled={!form.watch('country')}
-                                                    emptyText={!form.watch('country') ? "Select a country first" : "No states found"}
+                                                <FormField
+                                                    control={form.control}
+                                                    name="type"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Structural Category</FormLabel>
+                                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                                <FormControl>
+                                                                    <SelectTrigger className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus:ring-0 text-xs font-black uppercase tracking-widest">
+                                                                        <SelectValue placeholder="Select type" />
+                                                                    </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent className="rounded-2xl border-2 font-black text-[10px] uppercase">
+                                                                    <SelectItem value="Apartment">Apartment</SelectItem>
+                                                                    <SelectItem value="House">House</SelectItem>
+                                                                    <SelectItem value="Studio">Studio</SelectItem>
+                                                                    <SelectItem value="Loft">Loft</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
                                                 />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                <FormField
-                                    control={form.control}
-                                    name="city"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>City</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="San Francisco" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="zip"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>ZIP / Postal Code</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="94105" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-
-                            <FormField
-                                control={form.control}
-                                name="school"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Near School / University (Optional)</FormLabel>
-                                        <FormControl>
-                                            <SchoolCombobox
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                placeholder="Select or add a school..."
-                                                disabled={!form.watch('country')}
-                                            />
-                                        </FormControl>
-                                        <FormDescription>
-                                            This allows students to find your property by searching for their school.
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <Separator className="my-8" />
-                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                                <FormField
-                                    control={form.control}
-                                    name="price"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Price (per month)</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" placeholder="1200" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="currency"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Currency</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select currency" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="USD">USD ($)</SelectItem>
-                                                    <SelectItem value="GBP">GBP (£)</SelectItem>
-                                                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                                                    <SelectItem value="NGN">NGN (₦)</SelectItem>
-                                                    <SelectItem value="GHS">GHS (GH₵)</SelectItem>
-                                                    <SelectItem value="KES">KES (KSh)</SelectItem>
-                                                    <SelectItem value="ZAR">ZAR (R)</SelectItem>
-                                                    <SelectItem value="INR">INR (₹)</SelectItem>
-                                                    <SelectItem value="CAD">CAD (C$)</SelectItem>
-                                                    <SelectItem value="AUD">AUD (A$)</SelectItem>
-                                                    <SelectItem value="JPY">JPY (¥)</SelectItem>
-                                                    <SelectItem value="CNY">CNY (¥)</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                        </div>
-
-                        <div className={cn(currentStep === 3 ? "block" : "hidden")}>
-                            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-                                <FormField
-                                    control={form.control}
-                                    name="bedrooms"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Bedrooms</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" placeholder="2" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="bathrooms"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Bathrooms</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" placeholder="1" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="area"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Area (sqft)</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" placeholder="1000" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                        </div>
-
-                        <div className={cn(currentStep === 4 ? "block" : "hidden")}>
-                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                                <FormField
-                                    control={form.control}
-                                    name="amenities"
-                                    render={() => (
-                                        <FormItem>
-                                            <div className="mb-4">
-                                                <FormLabel className="text-base">Amenities</FormLabel>
-                                                <FormDescription>
-                                                    Select the amenities available at your property.
-                                                </FormDescription>
                                             </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                {allAmenities.map((item) => (
+                                        </div>
+                                    )}
+
+                                    {currentStep === 2 && (
+                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="address"
+                                                    render={({ field }) => (
+                                                        <FormItem className="md:col-span-2">
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Geographic Coordinates (Address)</FormLabel>
+                                                            <FormControl>
+                                                                <Input placeholder="123 PRESTIGE BOULEVARD" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="country"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Sovereign State</FormLabel>
+                                                            <FormControl>
+                                                                <Combobox
+                                                                    options={countries.map((c) => ({ label: c.name, value: c.name }))}
+                                                                    value={field.value}
+                                                                    onChange={(value) => {
+                                                                        field.onChange(value);
+                                                                        form.setValue('state', ''); // Reset state when country changes
+                                                                        form.setValue('school', ''); // Reset school when country changes
+                                                                    }}
+                                                                    placeholder="Select Country"
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="state"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Administrative Region</FormLabel>
+                                                            <FormControl>
+                                                                <Combobox
+                                                                    options={
+                                                                        countries.find((c) => c.name === form.watch('country'))?.states.map((s) => ({
+                                                                            label: s.name,
+                                                                            value: s.name,
+                                                                        })) || []
+                                                                    }
+                                                                    value={field.value}
+                                                                    onChange={field.onChange}
+                                                                    placeholder="Select State"
+                                                                    disabled={!form.watch('country')}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="city"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Urban Sector</FormLabel>
+                                                            <FormControl>
+                                                                <Input placeholder="CITY NAME" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="zip"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Postal Identification</FormLabel>
+                                                            <FormControl>
+                                                                <Input placeholder="ZIP CODE" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                            <Separator className="bg-muted/10" />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="price"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Economic Yield (Price)</FormLabel>
+                                                            <FormControl>
+                                                                <Input type="number" placeholder="0.00" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-2xl font-black text-primary" />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="currency"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Monetary Protocol</FormLabel>
+                                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                                <FormControl>
+                                                                    <SelectTrigger className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus:ring-0 text-xs font-black uppercase tracking-widest">
+                                                                        <SelectValue placeholder="CURRENCY" />
+                                                                    </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent className="rounded-2xl border-2 font-black text-[10px] uppercase">
+                                                                    <SelectItem value="USD">USD ($)</SelectItem>
+                                                                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                                                                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                                                                    <SelectItem value="NGN">NGN (₦)</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {currentStep === 3 && (
+                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="bedrooms"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Sleeping Quarters</FormLabel>
+                                                            <FormControl>
+                                                                <Input type="number" placeholder="0" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="bathrooms"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Sanitary Suites</FormLabel>
+                                                            <FormControl>
+                                                                <Input type="number" placeholder="0" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="area"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Spatial Dimension (sqft)</FormLabel>
+                                                            <FormControl>
+                                                                <Input type="number" placeholder="0" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {currentStep === 4 && (
+                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {[
+                                                    { id: 'wifi', label: 'Global Connectivity (WiFi)', icon: Wifi },
+                                                    { id: 'parking', label: 'Logistic Bay (Parking)', icon: Car },
+                                                    { id: 'kitchen', label: 'Culinary Laboratory (Kitchen)', icon: Utensils },
+                                                    { id: 'ac', label: 'Atmospheric Control (AC)', icon: AirVent },
+                                                    { id: 'gym', label: 'Kinetic Studio (Gym)', icon: Dumbbell },
+                                                    { id: 'pool', label: 'Hydro-Enclosure (Pool)', icon: Waves },
+                                                ].map((amenity) => (
                                                     <FormField
-                                                        key={item}
+                                                        key={amenity.id}
                                                         control={form.control}
-                                                        name="amenities"
-                                                        render={({ field }) => {
-                                                            return (
-                                                                <FormItem
-                                                                    key={item}
-                                                                    className="flex flex-row items-start space-x-3 space-y-0"
-                                                                >
-                                                                    <FormControl>
-                                                                        <Checkbox
-                                                                            checked={field.value?.includes(item)}
-                                                                            onCheckedChange={(checked) => {
-                                                                                return checked
-                                                                                    ? field.onChange([...(field.value || []), item])
-                                                                                    : field.onChange(
-                                                                                        field.value?.filter(
-                                                                                            (value) => value !== item
-                                                                                        )
-                                                                                    )
-                                                                            }}
-                                                                        />
-                                                                    </FormControl>
-                                                                    <FormLabel className="font-normal">
-                                                                        {item}
-                                                                    </FormLabel>
-                                                                </FormItem>
-                                                            )
-                                                        }}
+                                                        name={amenity.id as any}
+                                                        render={({ field }) => (
+                                                            <FormItem className="flex flex-row items-center space-x-4 space-y-0 p-6 rounded-[2rem] border-2 border-transparent bg-muted/10 overflow-hidden transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-xl">
+                                                                <div className="p-3 rounded-xl bg-white shadow-sm">
+                                                                    <amenity.icon className="h-5 w-5 text-primary" />
+                                                                </div>
+                                                                <div className="flex-1 space-y-1">
+                                                                    <FormLabel className="text-[10px] font-black uppercase tracking-[0.2em]">{amenity.label}</FormLabel>
+                                                                </div>
+                                                                <FormControl>
+                                                                    <Checkbox
+                                                                        checked={field.value}
+                                                                        onCheckedChange={field.onChange}
+                                                                        className="h-6 w-6 rounded-lg border-2"
+                                                                    />
+                                                                </FormControl>
+                                                            </FormItem>
+                                                        )}
                                                     />
                                                 ))}
                                             </div>
-                                            <FormMessage />
-                                        </FormItem>
+                                            <Separator className="bg-muted/10" />
+                                            <FormField
+                                                control={form.control}
+                                                name="rules"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Conduct Protocol (Rules)</FormLabel>
+                                                        <FormControl>
+                                                            <Textarea placeholder="e.g., No smoking, Quiet hours after 10 PM" {...field} className="min-h-[150px] rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest p-6" />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
                                     )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="rules"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <div className="mb-4">
-                                                <FormLabel className="text-base">House Rules</FormLabel>
-                                                <FormDescription>
-                                                    List your property rules, separated by commas.
-                                                </FormDescription>
+
+                                    {currentStep === 5 && (
+                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <div className="space-y-8">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="description"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Property Narrative (Description)</FormLabel>
+                                                            <FormControl>
+                                                                <Textarea placeholder="Describe the essence of your property..." {...field} className="min-h-[150px] rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest p-6 leading-relaxed" />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <Separator className="bg-muted/10" />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="leaseTemplate"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <div className="flex items-center justify-between mb-4">
+                                                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Monetary & Legal Framework (Lease Template)</FormLabel>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={generateLeaseTemplate}
+                                                                    className="rounded-full text-[10px] font-black uppercase tracking-widest"
+                                                                >
+                                                                    Refresh Protocol
+                                                                </Button>
+                                                            </div>
+                                                            <FormControl>
+                                                                <Textarea {...field} rows={15} className="rounded-3xl bg-muted/5 border-2 border-dashed border-primary/20 focus-visible:border-primary focus-visible:bg-white text-[11px] font-mono leading-relaxed p-8 transition-all duration-500" />
+                                                            </FormControl>
+                                                            <FormDescription className="text-[10px] font-medium italic mt-4 opacity-60">
+                                                                * This protocol will be cached as the immutable foundation for all future tenancy agreements.
+                                                            </FormDescription>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
                                             </div>
-                                            <FormControl>
-                                                <Textarea placeholder="e.g., No smoking, Quiet hours after 10 PM" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
+                                        </div>
                                     )}
-                                />
-                            </div>
-                        </div>
 
-                        <div className={cn(currentStep === 5 ? "block space-y-8" : "hidden")}>
-                            <FormField
-                                control={form.control}
-                                name="leaseTemplate"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Lease Document Template</FormLabel>
-                                        <FormDescription>
-                                            This is a standard lease template. Review and edit the text as needed. This document will be used to generate lease agreements for this property. Once you proceed, this text will be locked for any future leases for this property.
-                                        </FormDescription>
-                                        <FormControl>
-                                            <Textarea {...field} rows={20} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        {/* Step 6: Upload Photos */}
-                        <div className={cn(currentStep === 6 ? "block" : "hidden")}>
-                            <div className="mb-6">
-                                <h3 className="font-headline text-lg font-semibold">Upload Property Photos</h3>
-                                <p className="text-sm text-muted-foreground">Add photos to your listing. Specific photos help tenants make decisions faster.</p>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                <FormField
-                                    control={form.control}
-                                    name="kitchenImage"
-                                    render={({ field }) => (
-                                        <FileUpload
-                                            field={field}
-                                            label="Kitchen"
-                                            description="Shows appliances, counter space, and layout."
-                                            icon={Utensils}
-                                        />
+                                    {currentStep === 6 && (
+                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="kitchenImage"
+                                                    render={({ field }) => (
+                                                        <FileUpload
+                                                            field={field}
+                                                            label="CULINARY ZONE"
+                                                            description="Capture the aesthetic and utility of the kitchen space."
+                                                            icon={Utensils}
+                                                        />
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="livingRoomImage"
+                                                    render={({ field }) => (
+                                                        <FileUpload
+                                                            field={field}
+                                                            label="SOCIAL ATRIUM"
+                                                            description="Highlight the volume and light of the living area."
+                                                            icon={Layout}
+                                                        />
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="bedroomImage"
+                                                    render={({ field }) => (
+                                                        <FileUpload
+                                                            field={field}
+                                                            label="PRIVATE QUARTERS"
+                                                            description="Focus on comfort, storage, and restful ambiance."
+                                                            icon={Layout}
+                                                        />
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="bathroomImage"
+                                                    render={({ field }) => (
+                                                        <FileUpload
+                                                            field={field}
+                                                            label="SANITARY SUITE"
+                                                            description="Detail the premium finishes and cleanliness."
+                                                            icon={Layout}
+                                                        />
+                                                    )}
+                                                />
+                                            </div>
+                                        </div>
                                     )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="livingRoomImage"
-                                    render={({ field }) => (
-                                        <FileUpload
-                                            field={field}
-                                            label="Living Room"
-                                            description="Main common area lighting and space."
-                                            icon={Sofa}
-                                        />
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="bathroomImage"
-                                    render={({ field }) => (
-                                        <FileUpload
-                                            field={field}
-                                            label="Bathroom"
-                                            description="Sink, toilet, and shower/tub condition."
-                                            icon={Bath}
-                                        />
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="bedroomImage"
-                                    render={({ field }) => (
-                                        <FileUpload
-                                            field={field}
-                                            label="Bedroom"
-                                            description="Space for bed, closet size, and windows."
-                                            icon={BedDouble}
-                                        />
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="otherImage"
-                                    render={({ field }) => (
-                                        <FileUpload
-                                            field={field}
-                                            label="Exterior / Other"
-                                            description="Building front, backyard, or amenities."
-                                            icon={ImageIcon}
-                                        />
-                                    )}
-                                />
-                            </div>
-                        </div>
 
+                                    {currentStep === 7 && (
+                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <div className="p-10 rounded-[2.5rem] bg-black text-white shadow-2xl space-y-10 border border-white/10 relative overflow-hidden">
+                                                <div className="absolute top-0 right-0 p-8 opacity-10">
+                                                    <Sparkles className="h-32 w-32" />
+                                                </div>
+                                                <div className="relative space-y-6">
+                                                    <h3 className="text-4xl font-black uppercase tracking-tighter leading-none italic">Asset Certification Review</h3>
+                                                    <p className="text-white/60 text-xs font-black uppercase tracking-[0.2em]">Finalize deployment configurations</p>
+                                                </div>
 
-                        {/* Step 7: Description */}
-                        <div className={cn(currentStep === 7 ? "block" : "hidden")}>
-                            <div className="mb-6">
-                                <h3 className="font-headline text-lg font-semibold">Property Description</h3>
-                                <p className="text-sm text-muted-foreground">Add a compelling description to attract tenants. Use the auto-generate feature to create one based on your property details.</p>
-                            </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative">
+                                                    <div className="space-y-8">
+                                                        <div>
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 italic">Strategic Title</p>
+                                                            <p className="text-2xl font-black uppercase tracking-tight">{form.getValues('title')}</p>
+                                                            <p className="text-white/60 text-xs mt-2 font-medium">{form.getValues('address')}, {form.getValues('city')}</p>
+                                                        </div>
+                                                        <Separator className="bg-white/10" />
+                                                        <div className="grid grid-cols-2 gap-6">
+                                                            <div>
+                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Economic Yield</p>
+                                                                <p className="text-xl font-black">{form.getValues('currency')} {form.getValues('price')}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Structure Type</p>
+                                                                <p className="text-xl font-black uppercase tracking-tight">{form.getValues('type')}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-8 p-8 rounded-3xl bg-white/5 border border-white/10">
+                                                        <div className="grid grid-cols-2 gap-8">
+                                                            <div>
+                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 italic">Living Quarters</p>
+                                                                <p className="text-2xl font-black">{form.getValues('bedrooms')} BED</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 italic">Sanitary Suites</p>
+                                                                <p className="text-2xl font-black">{form.getValues('bathrooms')} BATH</p>
+                                                            </div>
+                                                        </div>
+                                                        <Separator className="bg-white/10" />
+                                                        <div>
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 italic">Spatial Volume</p>
+                                                            <p className="text-3xl font-black">{form.getValues('area')} SQFT</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
-                            <FormField
-                                control={form.control}
-                                name="description"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <div className="flex items-center justify-between">
-                                            <FormLabel>Description</FormLabel>
+                                    <div className="flex items-center justify-between pt-12 mt-12 border-t-2 border-muted/10">
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            onClick={prevStep}
+                                            disabled={currentStep === 1 || isSubmitting}
+                                            className="h-16 px-10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-muted/20"
+                                        >
+                                            Previous Phase
+                                        </Button>
+                                        {currentStep < steps.length ? (
                                             <Button
                                                 type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={generateDescription}
-                                                disabled={isGeneratingDescription || !form.watch('title')}
-                                                className="gap-2"
+                                                onClick={nextStep}
+                                                className="h-16 px-12 rounded-2xl bg-black text-white hover:bg-black/90 transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 text-[10px] font-black uppercase tracking-[0.2em] group"
                                             >
-                                                <Sparkles className="h-4 w-4" />
-                                                {isGeneratingDescription ? 'Generating...' : 'Auto-Generate'}
+                                                Next Phase <ArrowRight className="ml-3 h-4 w-4 transition-transform group-hover:translate-x-1" />
                                             </Button>
-                                        </div>
-                                        <FormControl>
-                                            <Textarea
-                                                placeholder="Describe your property in detail..."
-                                                {...field}
-                                                rows={8}
-                                            />
-                                        </FormControl>
-                                        <FormDescription>
-                                            Click "Auto-Generate" to create a description based on all your property details, or write your own.
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-
-                        {/* Step 8: Review */}
-                        <div className={cn(currentStep === 8 ? "block" : "hidden")}>
-                            <h3 className="font-headline text-xl font-semibold">Review Your Listing</h3>
-                            <p className="text-muted-foreground">Please review all the information below before submitting.</p>
-                            <div className="mt-6 space-y-6 rounded-lg border bg-secondary/50 p-6">
-                                {/* Basic Info & Location */}
-                                <div className="space-y-2">
-                                    <h4 className="font-semibold">{form.getValues('title')}</h4>
-                                    <p className="text-muted-foreground">{form.getValues('address')}, {form.getValues('city')}, {form.getValues('state')} {form.getValues('zip')}</p>
-                                    <p className="text-muted-foreground">{form.getValues('country')}</p>
-                                </div>
-                                <Separator />
-                                {/* Description */}
-                                <p className="text-sm">{form.getValues('description')}</p>
-                                <Separator />
-                                {/* Details Grid */}
-                                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                                    <div>
-                                        <p className="text-sm font-medium">Price</p>
-                                        <p className="text-muted-foreground">${form.getValues('price')}/month</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium">Type</p>
-                                        <p className="text-muted-foreground">{form.getValues('type')}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium">Bedrooms</p>
-                                        <p className="text-muted-foreground">{form.getValues('bedrooms')}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium">Bathrooms</p>
-                                        <p className="text-muted-foreground">{form.getValues('bathrooms')}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium">Area</p>
-                                        <p className="text-muted-foreground">{form.getValues('area')} sqft</p>
-                                    </div>
-                                </div>
-                                <Separator />
-                                {/* Amenities & Rules */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <p className="text-sm font-medium mb-2">Amenities</p>
-                                        <p className="text-sm text-muted-foreground">{form.getValues('amenities').join(', ')}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium mb-2">Rules</p>
-                                        <p className="text-sm text-muted-foreground">{form.getValues('rules')}</p>
-                                    </div>
-                                </div>
-                                <Separator />
-                                {/* Images Review */}
-                                <div>
-                                    <p className="text-sm font-medium mb-2">Images to Upload</p>
-                                    <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-                                        {[
-                                            { label: 'Kitchen', file: form.getValues('kitchenImage') },
-                                            { label: 'Living Room', file: form.getValues('livingRoomImage') },
-                                            { label: 'Bathroom', file: form.getValues('bathroomImage') },
-                                            { label: 'Bedroom', file: form.getValues('bedroomImage') },
-                                            { label: 'Other', file: form.getValues('otherImage') }
-                                        ].filter(item => item.file && item.file.length > 0).map((item, i) => (
-                                            <div key={i} className="flex items-center gap-2">
-                                                <FileImage className="h-4 w-4" />
-                                                <span>{item.label}: {item.file[0].name}</span>
-                                            </div>
-                                        ))}
-                                        {![form.getValues('kitchenImage'), form.getValues('livingRoomImage'), form.getValues('bathroomImage')].some(f => f && f.length > 0) && (
-                                            <p>No images selected.</p>
+                                        ) : (
+                                            <Button
+                                                type="submit"
+                                                disabled={isSubmitting}
+                                                className="h-16 px-12 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 text-[10px] font-black uppercase tracking-[0.2em] group"
+                                            >
+                                                {isSubmitting ? 'Deploying...' : 'Deploy Asset'} <Loader2 className={cn("ml-3 h-4 w-4 animate-spin", !isSubmitting && "hidden")} />
+                                            </Button>
                                         )}
                                     </div>
-                                </div>
-                                <Separator />
-                                {/* Lease Template */}
-                                <div>
-                                    <p className="text-sm font-medium mb-2">Lease Template</p>
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                        <FileText className="h-4 w-4" />
-                                        <span>Lease document template has been configured.</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-
-                        <div className="mt-12 flex flex-col sm:flex-row justify-between gap-4">
-                            <Button type="button" variant="outline" onClick={prevStep} className={cn(currentStep === 1 && "invisible", "w-full sm:w-auto")}>
-                                <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                            </Button>
-
-                            {currentStep < totalSteps - 1 ? (
-                                <Button type="button" onClick={nextStep} className="w-full sm:w-auto">
-                                    Next <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
-                            ) : currentStep === totalSteps - 1 ? (
-                                <Button type="button" onClick={nextStep} className="w-full sm:w-auto">
-                                    Review <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
-                            ) : (
-                                <Button type="submit" size="lg" disabled={isSubmitting} className="w-full sm:w-auto">
-                                    {isSubmitting ? 'Creating Property...' : 'Create Property'}
-                                </Button>
-                            )}
-                        </div>
-                    </form>
-                </Form>
-            </CardContent>
-        </Card >
+                                </form>
+                            </Form>
+                    </div>
+                </Card>
+            </div>
+        </div>
+        </div >
     );
 }

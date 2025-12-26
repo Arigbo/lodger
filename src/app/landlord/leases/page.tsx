@@ -21,7 +21,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import type { LeaseAgreement, UserProfile as User, Property } from '@/types';
-import { FileText } from 'lucide-react';
+import { FileText, FileStack, ArrowRight, ChevronRight } from 'lucide-react';
+import { format } from 'date-fns';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { formatPrice } from '@/utils';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
@@ -128,87 +131,108 @@ export default function LandlordLeasesPage() {
   }
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-headline text-2xl sm:text-3xl font-bold">Lease Agreements</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            View all lease agreements for your properties.
+    <div className="max-w-7xl mx-auto space-y-12 pb-32 animate-in fade-in duration-1000">
+      {/* Cinematic Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b-4 border-foreground/5">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-white shadow-lg border-2 border-primary/10">
+              <FileStack className="h-5 w-5 text-primary" />
+            </div>
+            <Badge variant="outline" className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border-2">
+              Management Portal
+            </Badge>
+          </div>
+          <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight text-foreground uppercase">
+            LEGAL ARCHIVES
+          </h1>
+          <p className="text-lg text-muted-foreground font-medium italic font-serif">
+            Maintain your portfolio&apos;s contractual integrity
           </p>
         </div>
+        <div className="bg-primary/5 px-8 py-4 rounded-[2rem] border-2 border-primary/10">
+          <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Total Agreements</p>
+          <p className="text-3xl font-black">{aggregatedLeases.length}</p>
+        </div>
       </div>
-      <Separator className="my-4 sm:my-6" />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Leases</CardTitle>
-          <CardDescription>
-            You have {aggregatedLeases.length} total lease agreements on record.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-2 sm:p-6">
-          {aggregatedLeases.length > 0 ? (
-            <div className="w-full overflow-x-auto">
-              <div className="inline-block min-w-full">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Property</TableHead>
-                      <TableHead className="hidden sm:table-cell text-xs sm:text-sm whitespace-nowrap">Tenant</TableHead>
-                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Start Date</TableHead>
-                      <TableHead className="hidden md:table-cell text-xs sm:text-sm whitespace-nowrap">End Date</TableHead>
-                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
-                      <TableHead className="text-xs sm:text-sm"><span className="sr-only">Actions</span></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {aggregatedLeases.map(({ lease, tenant, property }) => {
-                      return (
-                        <TableRow key={lease.id}>
-                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
-                            <Link href={`/landlord/properties/${property?.id}`} className="font-medium hover:underline line-clamp-2">
-                              {property?.title || 'Unknown Property'}
-                            </Link>
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell text-xs sm:text-sm py-2 sm:py-4">
-                            <Link href={`/landlord/tenants/${tenant?.id}`} className="text-muted-foreground hover:underline line-clamp-1">
-                              {tenant?.name || 'Unknown Tenant'}
-                            </Link>
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(lease.startDate).toLocaleDateString()}</TableCell>
-                          <TableCell className="hidden md:table-cell text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(lease.endDate).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
-                            <Badge variant={getStatusVariant(lease.status)} className="text-xs">
-                              {lease.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
-                            <Button variant="outline" size="xs" className="text-xs h-7 whitespace-nowrap" asChild>
-                              <Link href={`/landlord/leases/${lease.id}`}>
-                                <FileText className="mr-1 h-3 w-3 sm:h-4 sm:w-4" /> View
-                              </Link>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+      {aggregatedLeases.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {aggregatedLeases.map(({ lease, tenant, property }) => (
+            <Card key={lease.id} className="group relative overflow-hidden rounded-[2.5rem] bg-white border-2 border-muted/10 shadow-xl shadow-black/[0.02] hover:shadow-2xl hover:border-primary/20 transition-all p-8 md:p-10 flex flex-col justify-between">
+              {/* Decorative Accent */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-[5rem] -mr-8 -mt-8 transition-all group-hover:scale-110" />
+
+              <div className="relative z-10 space-y-8">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                    <Badge variant={getStatusVariant(lease.status)} className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                      {lease.status}
+                    </Badge>
+                    <h3 className="text-2xl font-black uppercase tracking-tight group-hover:text-primary transition-colors">
+                      {property?.title || 'Unknown Asset'}
+                    </h3>
+                  </div>
+                  <div className="h-14 w-14 rounded-2xl bg-muted/20 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <FileText className="h-7 w-7 opacity-20 group-hover:opacity-100 group-hover:text-primary transition-all" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest italic mb-1">RESIDENT</p>
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6 border-2 border-white shadow-sm">
+                        <AvatarImage src={tenant?.profileImageUrl} />
+                        <AvatarFallback className="text-[8px] font-black">{tenant?.name?.[0]}</AvatarFallback>
+                      </Avatar>
+                      <p className="font-black text-xs truncate max-w-[120px]">{tenant?.name || 'Unknown'}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest italic mb-1">MONTHLY RATE</p>
+                    <p className="font-black text-sm text-primary">{formatPrice(property?.price || 0, property?.currency)}</p>
+                  </div>
+                </div>
+
+                <div className="pt-8 border-t-2 border-dotted border-muted/30 flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-muted-foreground/60">
+                    <div className="flex flex-col">
+                      <p className="text-[9px] font-black uppercase tracking-tighter">EFFECTIVE</p>
+                      <p className="text-xs font-bold text-foreground">{format(new Date(lease.startDate), 'MMM dd, yyyy')}</p>
+                    </div>
+                    <ArrowRight className="h-3 w-3 opacity-20" />
+                    <div className="flex flex-col">
+                      <p className="text-[9px] font-black uppercase tracking-tighter">EXPIRES</p>
+                      <p className="text-xs font-bold text-foreground">{format(new Date(lease.endDate), 'MMM dd, yyyy')}</p>
+                    </div>
+                  </div>
+                  <Link href={`/landlord/leases/${lease.id}`}>
+                    <Button variant="ghost" className="h-12 rounded-xl font-black text-[10px] uppercase tracking-widest gap-2 bg-muted/20 hover:bg-primary hover:text-white transition-all">
+                      Review File <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-32 space-y-8 animate-in zoom-in duration-700">
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full" />
+            <div className="relative h-24 w-24 rounded-[2.5rem] bg-white border-2 border-muted-foreground/10 shadow-2xl flex items-center justify-center">
+              <FileStack className="h-10 w-10 text-muted-foreground opacity-20" />
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
-                <FileText className="h-10 w-10 text-muted-foreground" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">No Lease Agreements</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                When you sign a lease with a tenant, it will appear here.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+          <div className="space-y-2 text-center">
+            <h3 className="text-2xl font-black uppercase tracking-tight">Archives Vacant</h3>
+            <p className="text-muted-foreground font-serif italic max-w-sm mx-auto opacity-60 leading-relaxed">
+              When you formalize agreements with prospective scholars, their contractual records will be archived here.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

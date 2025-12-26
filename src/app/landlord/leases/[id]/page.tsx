@@ -8,7 +8,8 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { format } from "date-fns";
-import { CheckCircle2, FileClock, Hourglass, Check, Signature, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, FileClock, Hourglass, Check, Signature, AlertTriangle, Printer, DollarSign, Building } from 'lucide-react';
+import { cn, formatPrice } from "@/utils";
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc } from 'firebase/firestore';
 import Link from 'next/link';
@@ -149,93 +150,207 @@ export default function ViewLandlordLeasePage() {
     };
 
     return (
-        <div>
-            <div className="flex items-center gap-4">
-                {getStatusIcon(lease.status)}
-                <h1 className="font-headline text-3xl font-bold">Lease Agreement</h1>
+        <div className="max-w-5xl mx-auto space-y-12 pb-32 animate-in fade-in duration-700">
+            <style jsx global>{`
+                @media print {
+                    @page { margin: 2cm; }
+                    body * {
+                        visibility: hidden;
+                    }
+                    #lease-document, #lease-document * {
+                        visibility: visible;
+                    }
+                    #lease-document {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                    }
+                }
+            `}</style>
+
+            {/* Premium Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b-4 border-foreground/5">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className={cn(
+                            "p-2 rounded-xl bg-white shadow-lg border-2",
+                            lease.status === 'active' ? "border-green-500/20" :
+                                lease.status === 'pending' ? "border-primary/20" : "border-muted/20"
+                        )}>
+                            {getStatusIcon(lease.status)}
+                        </div>
+                        <Badge variant={getStatusVariant(lease.status)} className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                            {lease.status}
+                        </Badge>
+                    </div>
+                    <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight text-foreground uppercase">
+                        LEASE AGREEMENT
+                    </h1>
+                    <p className="text-lg text-muted-foreground font-medium italic font-serif">
+                        Digital Contract for <Link href={`/landlord/properties/${property?.id}`} className="text-primary hover:underline italic font-serif">#{property?.title}</Link>
+                    </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                    <Button variant="outline" className="h-14 rounded-2xl px-6 font-black text-xs uppercase tracking-widest gap-2 bg-white hover:bg-muted/50 transition-all border-2" onClick={() => window.print()}>
+                        <Printer className="h-4 w-4" /> PRINT
+                    </Button>
+                </div>
             </div>
-            <p className="text-muted-foreground">
-                Review the details of the lease for <Link href={`/landlord/properties/${property?.id}`} className="font-medium text-primary hover:underline">{property?.title}</Link>.
-            </p>
-            <Separator className="my-4" />
-            <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <CardTitle>{property?.title}</CardTitle>
-                            <CardDescription>{property?.location.address}, {property?.location.city}, {property?.location.state}</CardDescription>
-                        </div>
-                        <Badge variant={getStatusVariant(lease.status)} className="text-base capitalize">{lease.status}</Badge>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                        <div>
-                            <h3 className="font-semibold text-muted-foreground">Landlord</h3>
-                            <p>{landlord?.name}</p>
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-muted-foreground">Tenant</h3>
-                            <p>{tenant?.name}</p>
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-muted-foreground">Term</h3>
-                            <p>{format(new Date(lease.startDate), 'MMM dd, yyyy')} - {format(new Date(lease.endDate), 'MMM dd, yyyy')}</p>
-                        </div>
-                    </div>
-                    <Separator className="my-6" />
-                    <h3 className="font-semibold mb-2">Lease Document</h3>
-                    <ScrollArea className="h-96 rounded-md border bg-secondary/30 p-4">
-                        <div className="prose prose-sm max-w-none whitespace-pre-wrap">{lease.leaseText}</div>
-                    </ScrollArea>
 
-                    {/* Signature Section */}
-                    <div className="mt-6 rounded-lg border p-4">
-                        <h3 className="font-semibold mb-4 text-center">Signatures</h3>
-                        <div className="flex justify-around text-sm">
-                            <div className="flex flex-col items-center gap-2">
-                                <span className="font-semibold">Landlord</span>
-                                {lease.landlordSigned ? (
-                                    <span className="font-serif italic text-green-600 flex items-center gap-1"><Check className="h-4 w-4" /> Digitally Signed</span>
-                                ) : (
-                                    <span className="font-serif italic text-amber-600 flex items-center gap-1"><Hourglass className="h-4 w-4" /> Pending Signature</span>
-                                )}
-                                <span className="text-xs text-muted-foreground">{landlord?.name}</span>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                {/* Main Content: The Document */}
+                <div className="lg:col-span-2 space-y-10">
+                    <div className="relative group">
+                        {/* Decorative Background for "Paper" effect */}
+                        <div className="absolute inset-0 bg-muted/20 -rotate-1 rounded-[3rem] -z-10 transition-transform group-hover:rotate-0" />
+                        <div className="absolute inset-0 bg-primary/5 rotate-1 rounded-[3rem] -z-10 transition-transform group-hover:rotate-0" />
+
+                        <div className="relative bg-white border-2 border-foreground/5 shadow-2xl rounded-[3rem] p-8 md:p-12 min-h-[600px] flex flex-col">
+                            <div className="flex justify-between items-start mb-12">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] italic">DOCUMENT ID</p>
+                                    <p className="font-mono text-xs opacity-60">#{lease.id.toUpperCase()}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] italic">ISSUE DATE</p>
+                                    <p className="font-bold text-sm">{format(new Date(lease.startDate), 'MMMM dd, yyyy')}</p>
+                                </div>
                             </div>
-                            <div className="flex flex-col items-center gap-2">
-                                <span className="font-semibold">Tenant</span>
-                                {lease.tenantSigned ? (
-                                    <span className="font-serif italic text-green-600 flex items-center gap-1"><Check className="h-4 w-4" /> Digitally Signed</span>
-                                ) : (
-                                    <span className="font-serif italic text-amber-600 flex items-center gap-1"><Hourglass className="h-4 w-4" /> Pending Signature</span>
-                                )}
-                                <span className="text-xs text-muted-foreground">{tenant?.name}</span>
+
+                            <Separator className="mb-10 opacity-10" />
+
+                            <h2 className="text-xl font-black uppercase tracking-widest mb-8 text-center decoration-primary/20 underline underline-offset-8 decoration-4">
+                                CONTRACTUAL TERMS & CONDITIONS
+                            </h2>
+
+                            <div id="lease-document" className="prose prose-sm md:prose-base max-w-none whitespace-pre-wrap font-serif leading-relaxed text-foreground/80 flex-grow">
+                                {lease.leaseText}
+                            </div>
+
+                            <Separator className="my-12 opacity-10" />
+
+                            {/* Formal Signature Section */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-auto pt-8 border-t-2 border-dotted border-muted/30">
+                                <div className="space-y-4">
+                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest italic">LANDLORD SIGNATURE</p>
+                                    <div className="h-24 bg-muted/10 rounded-3xl border-2 border-dashed border-muted/30 flex items-center justify-center relative overflow-hidden">
+                                        {lease.landlordSigned ? (
+                                            <div className="text-center animate-in zoom-in duration-500">
+                                                <p className="font-serif italic text-2xl text-primary/80 opacity-60 -rotate-3">{landlord?.name}</p>
+                                                <Badge variant="secondary" className="mt-2 text-[9px] font-black uppercase tracking-tighter bg-green-500/10 text-green-600 border-none">VERIFIED SIGNATURE</Badge>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-1 opacity-20">
+                                                <Hourglass className="h-6 w-6" />
+                                                <p className="text-[8px] font-black uppercase tracking-widest">AWAITING EXECUTION</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p className="text-center text-xs font-bold text-muted-foreground/40">Executed by: {landlord?.name || 'Authorized Representative'}</p>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest italic">TENANT SIGNATURE</p>
+                                    <div className="h-24 bg-muted/10 rounded-3xl border-2 border-dashed border-muted/30 flex items-center justify-center relative overflow-hidden">
+                                        {lease.tenantSigned ? (
+                                            <div className="text-center animate-in zoom-in duration-500">
+                                                <p className="font-serif italic text-2xl text-primary/80 opacity-60 -rotate-3">{tenant?.name}</p>
+                                                <Badge variant="secondary" className="mt-2 text-[9px] font-black uppercase tracking-tighter bg-green-500/10 text-green-600 border-none">VERIFIED SIGNATURE</Badge>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-1 opacity-20">
+                                                <Hourglass className="h-6 w-6" />
+                                                <p className="text-[8px] font-black uppercase tracking-widest">PENDING APPROVAL</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p className="text-center text-xs font-bold text-muted-foreground/40">Executed by: {tenant?.name || 'Prospective Tenant'}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {lease.status === 'pending' && !lease.landlordSigned ? (
-                        <div className="mt-6 flex flex-col items-center gap-4 rounded-lg border border-primary/50 bg-primary/5 p-6">
-                            <h3 className="font-bold">Action Required: Sign Lease</h3>
-                            <p className="text-center text-sm text-muted-foreground">Confirm that the lease terms reflect the latest property updates. By clicking "Sign Lease", you acknowledge the agreement.</p>
-                            <Button onClick={handleSignLease}>
-                                <Signature className="mr-2 h-4 w-4" />
-                                Sign Lease Agreement
-                            </Button>
-                        </div>
-                    ) : lease.status === 'pending' && (
-                        <div className="mt-6 text-center text-sm text-muted-foreground italic rounded-lg border p-4">
-                            This lease has been sent to {tenant?.name} for their signature and is awaiting action.
+                {/* Sidebar: Metadata & Actions */}
+                <div className="space-y-10">
+                    {/* Metadata Card */}
+                    <Card className="rounded-[2.5rem] border-2 border-foreground/5 shadow-xl bg-white overflow-hidden">
+                        <CardHeader className="bg-primary/5 border-b-2 border-primary/10">
+                            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                                <CheckCircle2 className="h-4 w-4" /> CONTRACT METRICS
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-8 space-y-8">
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center group">
+                                    <div>
+                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest italic mb-1">RENTAL ASSET</p>
+                                        <p className="font-black text-sm uppercase group-hover:text-primary transition-colors truncate max-w-[150px]">{property?.title}</p>
+                                    </div>
+                                    <div className="h-10 w-10 rounded-xl bg-muted/20 flex items-center justify-center">
+                                        <Building className="h-5 w-5 opacity-20" />
+                                    </div>
+                                </div>
+                                <div className="flex justify-between items-center group">
+                                    <div>
+                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest italic mb-1">TERM DURATION</p>
+                                        <p className="font-black text-sm uppercase truncate max-w-[150px]">
+                                            {format(new Date(lease.startDate), 'MMM yy')} - {format(new Date(lease.endDate), 'MMM yy')}
+                                        </p>
+                                    </div>
+                                    <div className="h-10 w-10 rounded-xl bg-muted/20 flex items-center justify-center">
+                                        <FileClock className="h-5 w-5 opacity-20" />
+                                    </div>
+                                </div>
+                                <div className="flex justify-between items-center group">
+                                    <div>
+                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest italic mb-1">MONTHLY RATE</p>
+                                        <p className="font-black text-2xl text-primary">{formatPrice(property?.price || 0, property?.currency)}</p>
+                                    </div>
+                                    <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+                                        <DollarSign className="h-5 w-5 text-green-600" />
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Action Card: Sign */}
+                    {lease.status === 'pending' && !lease.landlordSigned && (
+                        <div className="relative group overflow-hidden rounded-[2.5rem] bg-foreground text-white p-8 md:p-10 shadow-2xl space-y-8 animate-in slide-in-from-right duration-700">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[5rem] -mr-8 -mt-8 transition-all group-hover:scale-110" />
+                            <div className="relative z-10 space-y-4 text-center">
+                                <h3 className="text-2xl font-black uppercase tracking-tight">EXECUTE AGREEMENT</h3>
+                                <p className="text-white/60 font-serif italic text-sm leading-relaxed">
+                                    &quot;Your signature confirm that terms reflect the latest property updates.&quot;
+                                </p>
+                                <Button className="w-full h-16 rounded-2xl bg-white text-foreground hover:bg-white/90 font-black text-sm uppercase tracking-widest gap-3 shadow-2xl transition-all hover:scale-105 active:scale-95" onClick={handleSignLease}>
+                                    <Signature className="h-5 w-5" /> SIGN DIGITALLY
+                                </Button>
+                            </div>
                         </div>
                     )}
-                </CardContent>
-            </Card>
-            <div className="mt-4 text-center">
-                <Button variant="outline" asChild>
-                    <Link href="/landlord/leases">
-                        Back to All Leases
+
+                    {lease.status === 'pending' && lease.landlordSigned && (
+                        <div className="relative group overflow-hidden rounded-[2.5rem] bg-blue-600 text-white p-8 md:p-10 shadow-2xl space-y-8 animate-in slide-in-from-right duration-700 text-center">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[5rem] -mr-8 -mt-8 transition-all group-hover:scale-110" />
+                            <div className="relative z-10 space-y-4">
+                                <Hourglass className="h-12 w-12 text-white mx-auto animate-pulse" />
+                                <h3 className="text-xl font-black uppercase tracking-tight">AWAITING TENANT</h3>
+                                <p className="text-white/60 font-serif italic text-sm leading-relaxed">
+                                    &quot;This lease has been sent to {tenant?.name} for their signature.&quot;
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    <Link href="/landlord/leases" className="block text-center">
+                        <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.3em] hover:tracking-[0.4em] transition-all opacity-40 hover:opacity-100 italic">
+                            ← BACK TO ALL LEASES
+                        </Button>
                     </Link>
-                </Button>
+                </div>
             </div>
         </div>
     );

@@ -49,75 +49,98 @@ export default function StudentDashboardPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="font-headline text-3xl font-bold">Student Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {user?.displayName || user?.email}.</p>
+    <div className="space-y-12">
+      {/* Header Section */}
+      <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+        <div className="space-y-1">
+          <h1 className="font-headline text-4xl font-extrabold tracking-tight text-foreground">
+            Hi, {user?.displayName?.split(' ')[0] || 'there'}! 👋
+          </h1>
+          <p className="text-lg font-medium text-muted-foreground/80">
+            Welcome back to your Lodger dashboard.
+          </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/student/properties">Find a Property</Link>
+        <Button size="lg" className="rounded-2xl px-8 font-bold shadow-xl shadow-primary/20 transition-all hover:shadow-primary/40 hover:-translate-y-1 active:translate-y-0" asChild>
+          <Link href="/student/properties">Explore Properties</Link>
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="bg-primary/5 border-primary/10 transition-all hover:bg-primary/10">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-primary/70 font-medium">My Tenancies</CardDescription>
-            <CardTitle className="text-3xl font-bold">{stats.activeRents}</CardTitle>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className="group relative overflow-hidden border-none bg-white p-1 transition-all hover:shadow-2xl hover:shadow-primary/5">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+          <CardHeader className="relative pb-2">
+            <CardDescription className="text-xs font-bold uppercase tracking-widest text-primary/60">Currently Renting</CardDescription>
+            <CardTitle className="text-4xl font-black tracking-tighter text-primary">{stats.activeRents}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">Properties you are currently renting</p>
+          <CardContent className="relative">
+            <p className="text-sm font-medium text-muted-foreground/80">Active tenancies secured</p>
+          </CardContent>
+          {/* Decorative background icon */}
+          <Home className="absolute -bottom-4 -right-4 h-24 w-24 text-primary/5 transition-transform group-hover:scale-110 group-hover:rotate-6" />
+        </Card>
+
+        <Card className="group relative overflow-hidden border-none bg-white p-1 transition-all hover:shadow-2xl hover:shadow-orange-500/5">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+          <CardHeader className="relative pb-2">
+            <CardDescription className="text-xs font-bold uppercase tracking-widest text-orange-600/60">Applications</CardDescription>
+            <CardTitle className="text-4xl font-black tracking-tighter text-orange-600">{stats.pendingApps}</CardTitle>
+          </CardHeader>
+          <CardContent className="relative">
+            <p className="text-sm font-medium text-muted-foreground/80">Pending landlord approval</p>
           </CardContent>
         </Card>
-        <Card className="bg-orange-500/5 border-orange-500/10 transition-all hover:bg-orange-500/10">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-orange-600/70 font-medium">Pending Applications</CardDescription>
-            <CardTitle className="text-3xl font-bold text-orange-600">{stats.pendingApps}</CardTitle>
+
+        <Card className="group relative overflow-hidden border-none bg-white p-1 transition-all hover:shadow-2xl hover:shadow-blue-500/5 hidden lg:block">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+          <CardHeader className="relative pb-2">
+            <CardDescription className="text-xs font-bold uppercase tracking-widest text-blue-600/60">Account Status</CardDescription>
+            <CardTitle className="text-4xl font-black tracking-tighter text-blue-600">Verified</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">Awaiting landlord approval</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-blue-500/5 border-blue-500/10 transition-all hover:bg-blue-500/10 hidden lg:block">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-blue-600/70 font-medium">Verified Status</CardDescription>
-            <CardTitle className="text-3xl font-bold text-blue-600">Active</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">Your student account is verified</p>
+          <CardContent className="relative">
+            <p className="text-sm font-medium text-muted-foreground/80">Priority student access active</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="space-y-4">
-        <h2 className="text-2xl font-headline font-semibold">My Home</h2>
+      {/* Main Content Section */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-headline font-bold tracking-tight">My Active Tenancies</h2>
+          {rentedProperties && rentedProperties.length > 0 && (
+            <Link href="/student/tenancy" className="text-sm font-bold text-primary hover:underline underline-offset-4">
+              View All Details →
+            </Link>
+          )}
+        </div>
 
         {rentedProperties && rentedProperties.length > 0 ? (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             {rentedProperties.map(property => (
-              <PropertyCard key={property.id} property={property} />
+              <div key={property.id} className="group transition-all hover:-translate-y-2">
+                <PropertyCard property={property} />
+              </div>
             ))}
           </div>
         ) : (
-          <Card>
-            <CardHeader className="text-center py-12">
-              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-secondary">
-                <Home className="h-10 w-10 text-muted-foreground" />
+          <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
+            <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-3xl bg-muted/30 transition-transform hover:scale-110 hover:rotate-3">
+                <Home className="h-12 w-12 text-muted-foreground/50" />
               </div>
-              <CardTitle>Not Renting Anything Yet</CardTitle>
-              <CardDescription>Your active tenancies will appear here once approved by the landlord.</CardDescription>
-              <div className="mt-6 flex justify-center">
-                <Button asChild>
-                  <Link href="/student/properties">Start Searching</Link>
-                </Button>
-              </div>
-            </CardHeader>
+              <CardTitle className="text-2xl font-bold tracking-tight">No Active Tenancies</CardTitle>
+              <CardDescription className="mx-auto mt-2 max-w-sm text-base font-medium leading-relaxed">
+                You haven&apos;t secured any rentals yet. Start exploring properties and apply to your favorites!
+              </CardDescription>
+              <Button size="lg" className="mt-8 rounded-2xl px-8 font-bold" asChild>
+                <Link href="/student/properties">Start Searching</Link>
+              </Button>
+            </CardContent>
           </Card>
         )}
       </div>
     </div>
-  )
+  );
 }
 
 

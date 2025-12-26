@@ -695,11 +695,11 @@ export default function PropertyDetailPage() {
                                             <span className="text-sm font-bold text-white">{averageRating.toFixed(1)}</span>
                                         </div>
                                     </div>
-                                    <p className="text-4xl font-bold tracking-tight">
+                                    <p className="text-3xl md:text-4xl font-bold tracking-tight truncate">
                                         {userCurrency && userCurrency !== property.currency
                                             ? formatPrice(convertCurrency(property.price, property.currency, userCurrency), userCurrency)
                                             : formatPrice(property.price, property.currency)}
-                                        <span className="text-lg font-normal text-white/40 ml-1">/mo</span>
+                                        <span className="text-base md:text-lg font-normal text-white/40 ml-1">/mo</span>
                                     </p>
                                 </CardHeader>
                                 <CardContent className="p-8 space-y-6">

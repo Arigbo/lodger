@@ -1,14 +1,7 @@
-
 'use client';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -27,11 +20,10 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { UserProfile as User, Property } from '@/types';
-import { MoreHorizontal, Users, Mail, User as UserIcon } from 'lucide-react';
+import { MoreHorizontal, Users, Mail, User as UserIcon, Building, ShieldCheck, MapPin, ExternalLink, Calendar, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
-import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import Loading from '@/app/loading';
 
@@ -61,8 +53,6 @@ export default function TenantsPage() {
 
     const fetchTenants = async () => {
       setIsLoading(true);
-
-      // 1. Get all properties for the current landlord.
       const propertiesQuery = query(
         collection(firestore, 'properties'),
         where('landlordId', '==', landlord.uid)
@@ -70,7 +60,6 @@ export default function TenantsPage() {
       const propertiesSnapshot = await getDocs(propertiesQuery);
       const landlordProperties: Property[] = propertiesSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as Property));
 
-      // 2. Filter for occupied properties and get unique tenant IDs.
       const occupiedProperties = landlordProperties.filter(p => p.currentTenantId);
       const tenantIds = [...new Set(occupiedProperties.map(p => p.currentTenantId!))];
 
@@ -80,7 +69,6 @@ export default function TenantsPage() {
         return;
       }
 
-      // 3. Fetch user data for all unique tenants.
       const usersMap = new Map<string, User>();
       const userChunks = chunkArray(tenantIds, 30);
       await Promise.all(userChunks.map(async chunk => {
@@ -89,7 +77,6 @@ export default function TenantsPage() {
         usersSnapshot.forEach((doc: any) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
       }));
 
-      // 4. Combine the data.
       const combinedData = occupiedProperties.map(property => {
         const tenant = usersMap.get(property.currentTenantId!);
         if (!tenant) return null;
@@ -101,119 +88,142 @@ export default function TenantsPage() {
     };
 
     fetchTenants();
-
   }, [landlord, firestore]);
-
 
   if (isLoading || isUserLoading) {
     return <Loading />;
   }
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-headline text-2xl sm:text-3xl font-bold">My Tenants</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Manage all tenants currently occupying your properties.
+    <div className="space-y-16 pb-32 animate-in fade-in duration-1000">
+      {/* Cinematic Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b-4 border-foreground/5">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="h-2 w-2 rounded-full bg-primary" />
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">RESIDENT ARCHIVES</p>
+          </div>
+          <h1 className="font-headline text-5xl md:text-6xl font-black tracking-tight text-foreground uppercase">
+            RESIDENT <span className="text-primary italic">PORTFOLIO</span>
+          </h1>
+          <p className="text-lg text-muted-foreground font-medium italic font-serif">
+            &quot;Managing the community of scholars inhabiting your curated spaces.&quot;
           </p>
         </div>
+        <div className="bg-primary/5 px-8 py-4 rounded-[2rem] border-2 border-primary/10">
+          <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1 italic">Active Residents</p>
+          <p className="text-3xl font-black text-primary">{tenantsWithProperties.length}</p>
+        </div>
       </div>
-      <Separator className="my-4 sm:my-6" />
-      <Card>
-        <CardHeader>
-          <CardTitle>Tenant List</CardTitle>
-          <CardDescription>
-            You have {tenantsWithProperties.length} current tenants.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-2 sm:p-6">
-          {tenantsWithProperties.length > 0 ? (
-            <div className="w-full overflow-x-auto">
-              <div className="inline-block min-w-full">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Tenant</TableHead>
-                      <TableHead className="hidden md:table-cell text-xs sm:text-sm whitespace-nowrap">Property</TableHead>
-                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
-                      <TableHead className="hidden lg:table-cell text-xs sm:text-sm whitespace-nowrap">Email</TableHead>
-                      <TableHead className="text-xs sm:text-sm"><span className="sr-only">Actions</span></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {tenantsWithProperties.map(({ tenant, property }) => (
-                      <TableRow key={`${tenant.id}-${property.id}`}>
-                        <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
-                          <Link href={`/landlord/tenants/${tenant.id}`} className="hover:underline">
-                            <div className="flex items-center gap-2 sm:gap-3">
-                              <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
-                                <AvatarImage src={tenant.profileImageUrl} />
-                                <AvatarFallback>
-                                  <UserIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="font-medium line-clamp-1">{tenant.name}</span>
-                            </div>
-                          </Link>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-xs sm:text-sm py-2 sm:py-4">
-                          <Link
-                            href={`/landlord/properties/${property.id}`}
-                            className="hover:underline line-clamp-2"
-                          >
-                            {property.title}
-                          </Link>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
-                          <Badge variant={'secondary'} className="text-xs">{property.status}</Badge>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-xs sm:text-sm py-2 sm:py-4 text-muted-foreground whitespace-nowrap">{tenant.email}</TableCell>
-                        <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                aria-haspopup="true"
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem asChild>
-                                <Link href={`/landlord/tenants/${tenant.id}`}>View Details</Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <Link href={`/landlord/messages?conversationId=${tenant.id}`} className="flex items-center">
-                                  <Mail className="mr-2 h-4 w-4" /> Message Tenant
-                                </Link>
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+
+      {tenantsWithProperties.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          {tenantsWithProperties.map(({ tenant, property }) => (
+            <Card key={`${tenant.id}-${property.id}`} className="group relative overflow-hidden rounded-[3.5rem] bg-white border-2 border-muted/10 shadow-xl hover:shadow-3xl hover:border-primary/20 transition-all duration-500 p-8 md:p-10 flex flex-col justify-between min-h-[400px]">
+              {/* Decorative Background Element */}
+              <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-bl-[6rem] -mr-12 -mt-12 group-hover:scale-110 transition-transform duration-700" />
+
+              <div className="relative z-10 space-y-8">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-6">
+                    <div className="relative">
+                      <Avatar className="h-24 w-24 rounded-[2rem] ring-4 ring-primary/5 ring-offset-4 ring-offset-white shadow-xl">
+                        <AvatarImage src={tenant.profileImageUrl} className="object-cover" />
+                        <AvatarFallback className="bg-muted text-2xl font-black uppercase italic">
+                          {tenant.name?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-2xl bg-white border-2 border-primary/10 flex items-center justify-center shadow-lg">
+                        <ShieldCheck className="h-5 w-5 text-primary" />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-2xl font-black uppercase tracking-tight group-hover:text-primary transition-colors">{tenant.name}</h3>
+                      <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground/60 italic">
+                        <Mail className="h-3 w-3" /> {tenant.email}
+                      </div>
+                    </div>
+                  </div>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-12 w-12 rounded-2xl bg-muted/20 hover:bg-primary hover:text-white transition-all">
+                        <MoreHorizontal className="h-6 w-6" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="rounded-[1.5rem] p-2 border-2 border-foreground/5 shadow-2xl">
+                      <DropdownMenuLabel className="text-[9px] font-black uppercase tracking-widest px-4 py-2 border-b border-muted/30 mb-1">Resident Actions</DropdownMenuLabel>
+                      <DropdownMenuItem asChild className="rounded-xl focus:bg-primary focus:text-white cursor-pointer py-3 px-4 font-black text-[10px] uppercase tracking-widest gap-2">
+                        <Link href={`/landlord/tenants/${tenant.id}`}>
+                          <UserIcon className="h-4 w-4" /> View Full Profile
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className="rounded-xl focus:bg-primary focus:text-white cursor-pointer py-3 px-4 font-black text-[10px] uppercase tracking-widest gap-2">
+                        <Link href={`/landlord/messages?conversationId=${tenant.id}`}>
+                          <Mail className="h-4 w-4" /> Initiate Correspondence
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <Separator className="bg-muted/30" />
+
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Assigned Asset</p>
+                    <Link href={`/landlord/properties/${property.id}`} className="group/property flex flex-col gap-1">
+                      <span className="text-xl font-black uppercase tracking-tight group-hover/property:text-primary transition-colors flex items-center gap-2">
+                        <Building className="h-5 w-5 opacity-40" /> {property.title}
+                      </span>
+                      <span className="text-xs font-bold text-muted-foreground/60 flex items-center gap-1 italic">
+                        <MapPin className="h-3 w-3" /> {property.location.address}, {property.location.city}
+                      </span>
+                    </Link>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Tenancy Status</p>
+                      <Badge variant="outline" className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border-2 border-primary/20 text-primary">
+                        {property.status}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Occupancy Date</p>
+                      <p className="font-black text-sm uppercase tracking-tight">Active Protocol</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
-                <Users className="h-10 w-10 text-muted-foreground" />
+
+              <div className="relative z-10 pt-10 mt-auto">
+                <Link href={`/landlord/tenants/${tenant.id}`}>
+                  <Button className="w-full h-16 rounded-2xl bg-foreground text-white hover:bg-primary transition-all duration-500 font-black text-xs uppercase tracking-[0.2em] gap-3 shadow-xl">
+                    ANALYZE RESIDENCY <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </Link>
               </div>
-              <h3 className="mt-4 text-lg font-semibold">No Tenants Found</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                When a student occupies one of your properties, they will appear here.
-              </p>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-32 space-y-10 animate-in zoom-in duration-700">
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+            <div className="relative h-40 w-40 rounded-[3rem] bg-white border-4 border-muted/10 shadow-3xl flex items-center justify-center overflow-hidden">
+              <Users className="h-16 w-16 text-muted-foreground/20" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+          <div className="space-y-4 text-center">
+            <h3 className="text-3xl font-black uppercase tracking-tight italic">Portfolio Vacant</h3>
+            <p className="text-xl text-muted-foreground font-serif italic max-w-sm mx-auto opacity-60 leading-relaxed">
+              &quot;The resident archives are currently dormant. Occupancy data will manifest as agreements are finalized.&quot;
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

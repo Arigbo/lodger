@@ -11,6 +11,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
+        sans: ['var(--font-outfit)', 'sans-serif'],
+        serif: ['var(--font-playfair)', 'serif'],
         body: ['var(--font-inter)', 'sans-serif'],
         headline: ['var(--font-space-grotesk)', 'sans-serif'],
         code: ['monospace'],

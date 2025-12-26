@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-
+import { Outfit, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/utils";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,22 +7,33 @@ import { HeaderAndFooterProvider } from "@/components/header-and-footer-provider
 import { FirebaseClientProvider } from "@/firebase";
 import { SupportBubble } from "@/components/support-bubble";
 
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit"
+});
 
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  style: ["normal", "italic"]
+});
 
 export const metadata: Metadata = {
   title: {
-    default: "Lodger",
-    template: "%s | Lodger",
+    default: "LODGER | Student Living",
+    template: "%s | LODGER",
   },
-  description: "The easiest way for university students to find and book their next rental property.",
+  description: "Find your perfect student home. LODGER offers a curated collection of residences for the modern scholar.",
+  metadataBase: new URL('https://lodger.app'),
+  keywords: ["student housing", "premium rentals", "university living", "student apartments"],
   openGraph: {
     title: "Lodger - Find Your Perfect Student Home",
     description: "The easiest way for university students to find and book their next rental property.",
-    url: "https://your-domain.com", // TODO: Replace with your actual domain
+    url: "https://lodger.app",
     siteName: "Lodger",
     images: [
       {
-        url: "https://your-domain.com/og-image.png", // TODO: Replace with your actual OG image URL
+        url: "/og-image.png",
         width: 1200,
         height: 630,
       },
@@ -34,26 +45,16 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Lodger - Find Your Perfect Student Home",
     description: "The easiest way for university students to find and book their next rental property.",
-    // TODO: Add your Twitter handle
-    // creator: "@your_handle", 
-    images: ["https://your-domain.com/og-image.png"], // TODO: Replace with your actual OG image URL
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
   },
   icons: {
-    icon: "/favicon.ico", // Ensure you have a favicon.ico in your public folder
+    icon: "/favicon.ico",
   }
 };
-
 
 export default function RootLayout({
   children,
@@ -62,17 +63,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
       <body
         className={cn(
-          "min-h-screen bg-background font-body text-foreground antialiased"
+          "min-h-screen bg-background font-sans text-foreground antialiased",
+          outfit.variable,
+          playfair.variable
         )}
       >
         <FirebaseClientProvider>
@@ -84,5 +79,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-

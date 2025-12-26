@@ -1,23 +1,17 @@
 
 'use client';
-import { useState, useEffect, useMemo, useCallback, useRef, FormEvent } from 'react';
+
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import Link from 'next/link';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { cn } from '@/utils';
 import type { UserProfile as User, Message, Property } from '@/types';
-import { Send, Phone, Video, User as UserIcon, ArrowLeft } from 'lucide-react';
-import format from "date-fns/format";
+import { Send } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, query, where, orderBy, getDocs, doc, addDoc, serverTimestamp, limit, documentId } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limit, documentId } from 'firebase/firestore';
 import Loading from '@/app/loading';
 import { sendNotification } from '@/lib/notifications';
-
+import { ConversationList } from './components/ConversationList';
+import { ChatArea } from './components/ChatArea';
 
 type Conversation = {
     participant: User;
@@ -36,9 +30,7 @@ export default function MessagesPage() {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [selectedParticipant, setSelectedParticipant] = useState<User | null>(null);
     const [isClient, setIsClient] = useState(false);
-    const [newMessage, setNewMessage] = useState('');
     const [isDataLoading, setIsDataLoading] = useState(true);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const selectedConversationId = searchParams.get('conversationId');
     const contactId = searchParams.get('contact');
@@ -58,7 +50,6 @@ export default function MessagesPage() {
         setIsClient(true);
     }, []);
 
-    // This query now correctly aligns with the security rules.
     const allMessagesQuery = useMemoFirebase(() => {
         if (!student) return null;
         return query(
@@ -166,18 +157,12 @@ export default function MessagesPage() {
             });
     }, [allStudentMessages, selectedParticipant]);
 
-    // Auto-scroll to bottom
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, selectedConversationId]);
-
-    const handleSendMessage = (e: FormEvent) => {
-        e.preventDefault();
-        if (!newMessage.trim() || !student || !selectedParticipant || !firestore) return;
+    const handleSendMessage = (text: string) => {
+        if (!text.trim() || !student || !selectedParticipant || !firestore) return;
 
         const messagesRef = collection(firestore, 'messages');
         const messageData = {
-            text: newMessage,
+            text: text,
             senderId: student.uid,
             recipientId: selectedParticipant.id,
             participantIds: [student.uid, selectedParticipant.id].sort(),
@@ -192,7 +177,7 @@ export default function MessagesPage() {
                     type: 'NEW_MESSAGE',
                     firestore: firestore,
                     senderName: student.displayName || 'Student',
-                    customMessage: newMessage,
+                    customMessage: text,
                     link: `/landlord/messages?conversationId=${student.uid}`
                 });
             })
@@ -204,8 +189,6 @@ export default function MessagesPage() {
                 });
                 errorEmitter.emit('permission-error', permissionError);
             });
-
-        setNewMessage('');
     };
 
     if (isUserLoading || isDataLoading) {
@@ -213,158 +196,58 @@ export default function MessagesPage() {
     }
 
     return (
-        <div>
-            <div className="mb-8">
-                <h1 className="font-headline text-3xl font-bold">Messages</h1>
-                <p className="text-muted-foreground">Communicate with your landlords.</p>
-            </div>
-            {/* Use dvh for mobile viewport height to handle address bars correctly */}
-            <Card className="h-[calc(100dvh-12rem)] md:h-[calc(100vh-12rem)] overflow-hidden">
-                <div className="grid h-full grid-cols-1 md:grid-cols-3">
-                    <div className={cn(
-                        "flex flex-col border-r",
-                        "md:flex",
-                        selectedConversationId ? "hidden" : "flex"
-                    )}>
-                        <CardHeader>
-                            <CardTitle>Conversations</CardTitle>
-                        </CardHeader>
-                        <Separator />
-                        <ScrollArea className="flex-1">
-                            <CardContent className="p-0">
-                                {conversations.map(convo => (
-                                    <Link
-                                        key={convo.participant.id}
-                                        href={`${pathname}?conversationId=${convo.participant.id}`}
-                                        className={cn(
-                                            "flex w-full items-center gap-4 p-4 text-left hover:bg-accent",
-                                            selectedParticipant?.id === convo.participant.id && 'bg-secondary'
-                                        )}
-                                        scroll={false}
-                                    >
-                                        <Avatar>
-                                            <AvatarImage
-                                                src={convo.participant.profileImageUrl}
-                                                className="object-cover"
-                                            />
-                                            <AvatarFallback>
-                                                <UserIcon className="h-4 w-4" />
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex-grow overflow-hidden">
-                                            <div className="flex justify-between items-center">
-                                                <p className="font-semibold truncate">{convo.participant.name}</p>
-                                                <p className="text-xs text-muted-foreground whitespace-nowrap">{isClient && convo.lastMessageTimestamp && convo.lastMessageTimestamp.getTime() > 0 ? format(convo.lastMessageTimestamp, "p") : ''}</p>
-                                            </div>
-                                            <div className="flex justify-between items-start">
-                                                <p className="text-sm text-muted-foreground truncate">{convo.lastMessage}</p>
-                                                {convo.unreadCount > 0 && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">{convo.unreadCount}</span>}
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </CardContent>
-                        </ScrollArea>
-                    </div>
-
-                    <div className={cn(
-                        "col-span-2 flex-col h-full overflow-hidden",
-                        selectedConversationId ? "flex" : "hidden",
-                        "md:flex"
-                    )}>
-                        {selectedParticipant && student ? (
-                            <>
-                                <div className="flex items-center justify-between border-b p-4">
-                                    <div className="flex items-center gap-4 group">
-                                        <Button variant="ghost" size="icon" className="md:hidden" asChild>
-                                            <Link href="/student/messages" scroll={false}>
-                                                <ArrowLeft />
-                                            </Link>
-                                        </Button>
-                                        <Avatar>
-                                            <AvatarImage
-                                                src={selectedParticipant.profileImageUrl}
-                                                className="object-cover"
-                                            />
-                                            <AvatarFallback>
-                                                <UserIcon className="h-4 w-4" />
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <p className="font-semibold">{selectedParticipant.name}</p>
-                                            <p className="text-xs text-muted-foreground">Online</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Button variant="ghost" size="icon"><Phone /></Button>
-                                        <Button variant="ghost" size="icon"><Video /></Button>
-                                    </div>
-                                </div>
-                                <ScrollArea className="flex-1 p-6">
-                                    <div className="space-y-6">
-                                        {messages?.map(msg => (
-                                            <div key={msg.id} className={cn("flex flex-col gap-1", msg.senderId === student.uid ? "items-end" : "items-start")}>
-                                                <div className={cn("flex items-end gap-3", msg.senderId === student.uid ? "justify-end" : "justify-start")}>
-                                                    {msg.senderId !== student.uid && (
-                                                        <Avatar className="h-8 w-8">
-                                                            <AvatarImage
-                                                                src={selectedParticipant.profileImageUrl}
-                                                                className="object-cover"
-                                                            />
-                                                            <AvatarFallback>
-                                                                <UserIcon className="h-4 w-4" />
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                    )}
-                                                    <div className={cn("max-w-xs rounded-xl p-3 md:max-w-md", msg.senderId === student.uid ? "bg-primary text-primary-foreground" : "bg-secondary")}>
-                                                        <p className="text-sm">{msg.text}</p>
-                                                    </div>
-                                                    {msg.senderId === student.uid && (
-                                                        <Avatar className="h-8 w-8">
-                                                            <AvatarImage
-                                                                src={studentProfile?.profileImageUrl || student.photoURL || undefined}
-                                                                className="object-cover"
-                                                            />
-                                                            <AvatarFallback>
-                                                                <UserIcon className="h-4 w-4" />
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                    )}
-                                                </div>
-                                                <p className="text-xs text-muted-foreground px-12">
-                                                    {isClient && msg.timestamp ? format(msg.timestamp.toDate(), 'MMM d, yyyy, h:mm a') : '...'}
-                                                </p>
-                                            </div>
-                                        ))}
-                                        <div ref={messagesEndRef} />
-                                    </div>
-                                </ScrollArea>
-                                <div className="border-t p-4">
-                                    <form onSubmit={handleSendMessage} className="relative">
-                                        <Input
-                                            placeholder="Type your message..."
-                                            className="pr-12"
-                                            value={newMessage}
-                                            onChange={(e) => setNewMessage(e.target.value)}
-                                        />
-                                        <Button type="submit" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8">
-                                            <Send />
-                                        </Button>
-                                    </form>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="hidden h-full md:flex flex-col items-center justify-center text-center p-6">
-                                <div className="rounded-full bg-secondary p-4">
-                                    <Send className="h-10 w-10 text-muted-foreground" />
-                                </div>
-                                <h3 className="mt-4 text-lg font-semibold">Select a conversation</h3>
-                                <p className="text-muted-foreground">Choose a landlord from the list to start chatting, or find a property to contact a new landlord.</p>
-                            </div>
-                        )}
-                    </div>
+        <div className="h-[calc(100vh-8rem)] min-h-[600px] flex flex-col space-y-6 animate-in fade-in duration-700">
+            {/* Sleek Page Header */}
+            {!selectedConversationId && (
+                <div className="px-2 space-y-1">
+                    <h1 className="font-headline text-3xl font-black tracking-tight text-foreground uppercase italic px-1">
+                        Inbox<span className="text-primary italic">.</span>
+                    </h1>
+                    <div className="h-1 w-12 bg-primary rounded-full" />
                 </div>
-            </Card>
+            )}
+
+            <div className="flex-1 overflow-hidden bg-white border-2 border-muted/10 rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row relative">
+                <div className={cn(
+                    "w-full md:w-80 lg:w-[400px] border-r border-muted/10",
+                    selectedConversationId ? "hidden md:block" : "block"
+                )}>
+                    <ConversationList
+                        conversations={conversations}
+                        selectedParticipantId={selectedParticipant?.id}
+                    />
+                </div>
+
+                <div className={cn(
+                    "flex-1 flex flex-col bg-white relative",
+                    selectedConversationId ? "flex" : "hidden md:flex"
+                )}>
+                    {selectedParticipant && student ? (
+                        <ChatArea
+                            participant={selectedParticipant}
+                            student={student}
+                            studentProfile={studentProfile || undefined}
+                            messages={messages}
+                            onSendMessage={handleSendMessage}
+                        />
+                    ) : (
+                        <div className="h-full flex flex-col items-center justify-center text-center p-12 space-y-8 animate-in zoom-in duration-700 bg-muted/5">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-150 animate-pulse" />
+                                <div className="relative h-32 w-32 flex items-center justify-center rounded-[3rem] bg-white shadow-2xl border-2 border-muted/5">
+                                    <Send className="h-14 w-14 text-muted-foreground/10 rotate-12" />
+                                </div>
+                            </div>
+                            <div className="space-y-4 max-w-sm mx-auto">
+                                <h3 className="text-3xl font-black italic uppercase tracking-tighter">Open a Dialogue</h3>
+                                <p className="text-lg text-muted-foreground font-serif italic">
+                                    &quot;Select a contact to begin your secured conversation.&quot;
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

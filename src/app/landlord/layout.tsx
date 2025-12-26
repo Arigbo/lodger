@@ -46,58 +46,63 @@ export default function LandlordLayout({
   // If user is verified as a landlord, render the layout
   if (user && userProfile && userProfile.role === 'landlord') {
     return (
-      <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-        {/* Desktop Sidebar */}
-        <div className="hidden border-r bg-muted/40 md:block">
-          <div className="flex h-full max-h-screen flex-col gap-2 sticky top-0">
-            <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-              <span className="font-semibold">Landlord Dashboard</span>
+      <div className="min-h-screen bg-[#fafafa]">
+        {/* Desktop Sidebar (Fixed) */}
+        <aside className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col lg:w-72">
+          <div className="flex min-h-0 flex-1 flex-col border-r border-white/40 bg-white/40 backdrop-blur-xl">
+            <div className="flex h-16 shrink-0 items-center border-b border-white/40 px-6 lg:h-20">
+              <span className="font-headline text-xl font-extrabold tracking-tighter text-primary italic">LODGER</span>
+              <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary tracking-widest uppercase">Landlord</span>
             </div>
-            <div className="flex-1 overflow-y-auto">
-              <nav className="grid items-start px-2 text-sm font-medium lg:px-4 py-4">
+            <div className="flex flex-1 flex-col overflow-y-auto pt-4 custom-scrollbar">
+              <nav className="flex-1 px-4 space-y-1">
                 <LandlordSidebar />
               </nav>
             </div>
           </div>
+        </aside>
+
+        {/* Mobile Sidebar (Sheet) */}
+        <div className="md:hidden">
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetContent side="left" className="w-72 p-0 border-none bg-white/80 backdrop-blur-2xl">
+              <SheetHeader className="p-6 border-b border-white/40">
+                <SheetTitle className="flex items-center gap-2">
+                  <span className="font-headline text-xl font-extrabold tracking-tighter text-primary italic">LODGER</span>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary tracking-widest uppercase">Landlord</span>
+                </SheetTitle>
+              </SheetHeader>
+              <div onClick={() => setMobileMenuOpen(false)} className="py-4">
+                <LandlordSidebar />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
 
         {/* Main Content Area */}
-        <div className="flex flex-col">
-          {/* Mobile Header - Renamed to Mobile Sidebar Trigger Area since Header is global */}
-          <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 md:hidden">
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0 md:hidden"
-                >
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Toggle navigation menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="flex flex-col">
-                <SheetHeader>
-                  <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                </SheetHeader>
-                <nav className="grid gap-2 text-lg font-medium">
-                  <div className="flex h-14 items-center border-b px-4 mb-4">
-                    <span className="font-semibold">Menu</span>
-                  </div>
-                  <div onClick={() => setMobileMenuOpen(false)}>
-                    <LandlordSidebar />
-                  </div>
-                </nav>
-              </SheetContent>
-            </Sheet>
-            <div className="flex-1">
-              {/* Global Header handles title/logo */}
+        <div className="flex flex-col md:pl-64 lg:pl-72">
+          {/* Mobile Navigation Header */}
+          <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-white/40 bg-white/60 px-4 shadow-sm backdrop-blur-xl sm:gap-x-6 sm:px-6 lg:px-8 md:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="-m-2.5 p-2.5 text-muted-foreground hover:text-primary transition-colors"
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              <Menu className="h-6 w-6" />
+              <span className="sr-only">Open sidebar</span>
+            </Button>
+            <div className="flex-1 flex justify-center">
+              <span className="font-headline font-bold text-primary text-lg italic">LODGER</span>
             </div>
           </header>
 
-          {/* Main Content */}
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-            {children}
+          <main className="flex-1 py-6 lg:py-10">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="relative animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+                {children}
+              </div>
+            </div>
           </main>
         </div>
       </div>

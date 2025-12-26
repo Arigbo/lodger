@@ -60,26 +60,36 @@ export default function TenancyDetailPage() {
     } | null>(null);
     const { toast } = useToast();
 
-    const handlePaymentSuccess = async () => {
-        console.log("Payment successful!");
+    const handlePaymentSuccess = async (details: { months: number, method: string, amount: number }) => {
         if (!lease || !property || !user) return;
 
         try {
-            // 1. Activate Lease
-            const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
-            await updateDoc(leaseRef, { status: 'active' });
+            // If it's a Stripe payment, we might want to record it here if the dialog didn't
+            // But based on the current architecture, the dialog handles the record creation for offline.
+            // For Stripe, we'll assume the dialog also handles record creation or we do it here.
+            // Let's ensure consistency.
 
-            // 2. Update Property to Occupied
-            const propertyRef = doc(firestore, 'properties', property.id);
-            await updateDoc(propertyRef, {
-                status: 'occupied',
-                currentTenantId: user.uid,
-                leaseStartDate: new Date().toISOString(),
-            });
+            // Only execute activation logic if the lease is currently pending
+            if (lease.status === 'pending') {
+                // 1. Activate Lease
+                const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
+                await updateDoc(leaseRef, {
+                    status: 'active',
+                    paymentMethod: details.method.toLowerCase(),
+                    paymentConfirmed: details.method === 'Stripe'
+                });
 
-            // 3. Notify Landlord
-            await import('@/lib/notifications').then(({ sendNotification }) => {
-                sendNotification({
+                // 2. Update Property to Occupied
+                const propertyRef = doc(firestore, 'properties', property.id);
+                await updateDoc(propertyRef, {
+                    status: 'occupied',
+                    currentTenantId: user.uid,
+                    leaseStartDate: new Date().toISOString(),
+                });
+
+                // 3. Notify Landlord
+                const { sendNotification } = await import('@/lib/notifications');
+                await sendNotification({
                     toUserId: lease.landlordId,
                     type: 'LEASE_SIGNED',
                     firestore: firestore,
@@ -87,13 +97,31 @@ export default function TenancyDetailPage() {
                     link: `/landlord/leases/${lease.id}`,
                     customMessage: `${user.displayName || 'Tenant'} has signed the lease and paid the first month's rent.`
                 });
-            });
 
-            // Refresh state
-            window.location.reload();
+                toast({
+                    title: "Tenancy Activated",
+                    description: details.method === 'Stripe'
+                        ? "Your lease is now active and your payment has been confirmed."
+                        : "Your lease is being activated. Documentation has been sent to your landlord for verification."
+                });
+            } else {
+                // Regular rent payment for an active lease
+                toast({
+                    title: "Payment Received",
+                    description: `Your payment of ${formatPrice(details.amount, property.currency)} for ${details.months} month(s) has been recorded.`
+                });
+            }
 
+            setIsPaymentDialogOpen(false);
+            // We'll use window.location.reload() for a hard refresh to ensure all Firestore listeners update
+            setTimeout(() => window.location.reload(), 1500);
         } catch (error) {
-            console.error("Error finalizing tenancy:", error);
+            console.error("Error finalizing payment flow:", error);
+            toast({
+                variant: 'destructive',
+                title: "Error",
+                description: "Transaction completed, but failed to update status. Please contact support."
+            });
         }
     };
 
@@ -178,7 +206,7 @@ export default function TenancyDetailPage() {
             rentStatusText = lease?.status === 'pending' ? 'Lease Pending Signature' : 'Lease Inactive';
         }
 
-        const hasPendingPayments = tenantTransactions.some(t => t.status === 'Pending');
+        const hasPendingPayments = tenantTransactions.some(t => t.status === 'Pending' || t.status === 'Pending Verification');
         const showPayButton = isLeaseActive && (isRentDue || hasPendingPayments);
         let paymentAmount = 0;
         if (isRentDue) {
@@ -217,133 +245,163 @@ export default function TenancyDetailPage() {
 
 
     return (
-        <div className="space-y-8">
-            <div>
-                <h1 className="font-headline text-3xl font-bold">My Tenancy</h1>
-                <p className="text-muted-foreground">Manage your current rental agreement and payments for {property.title}.</p>
-            </div>
-            <Separator />
-
-            {lease?.status === 'pending' && !tenancyState?.isLeaseActive && (
-                <Card className="border-green-500/50 bg-green-50 mb-6">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-green-700">
-                            Please Complete Payment
-                        </CardTitle>
-                        <CardDescription>
-                            Your lease is signed! Please pay the first month's rent to finalize your tenancy.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button size="lg" onClick={() => setIsPaymentDialogOpen(true)}>
-                            Pay {formatPrice(property.price, property.currency)} Now
-                        </Button>
-                    </CardContent>
-                </Card>
-            )}
-
-            {lease?.status === 'terminating' && (
-                <Card className="border-destructive/50 bg-destructive/5 mb-6">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-destructive">
-                            <AlertTriangle className="h-5 w-5" /> Tenancy Termination Initiated
-                        </CardTitle>
-                        <CardDescription>
-                            The landlord has requested to end your tenancy. You are entitled to a pro-rated refund.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 rounded-lg bg-background border gap-4">
-                            <div>
-                                <p className="text-sm font-medium text-muted-foreground">Calculated Refund</p>
-                                <p className="text-2xl font-bold text-primary">{formatPrice(lease.calculatedRefund || 0, property.currency)}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-muted-foreground">Grace Period Ends</p>
-                                <p className="text-md font-semibold text-amber-600">
-                                    {lease.terminationGracePeriodEnd ? format(new Date(lease.terminationGracePeriodEnd), 'MMMM do, p') : 'N/A'}
-                                </p>
-                            </div>
+        <div className="space-y-12 animate-in fade-in duration-700">
+            {/* Header Section */}
+            <div className="relative overflow-hidden rounded-[2.5rem] bg-primary/5 p-8 sm:p-12">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-full border-none tracking-widest uppercase text-[10px] shadow-lg shadow-primary/20">
+                                Active Tenancy
+                            </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground italic">
-                            By clicking below, you confirm that you have received the compensation mentioned above or have agreed to alternative terms with the landlord. If no action is taken by the deadline, you will be automatically removed.
+                        <h1 className="font-headline text-4xl sm:text-5xl font-black tracking-tight text-foreground leading-tight">
+                            {property.title}
+                        </h1>
+                        <p className="max-w-xl text-lg font-medium text-muted-foreground/80 leading-relaxed">
+                            {property.location.address}, {property.location.city}
                         </p>
-                        <Button variant="destructive" className="w-full" onClick={handleConfirmCompensation}>
-                            Confirm Compensation Received
+                    </div>
+                    <div className="flex flex-col gap-4">
+                        <Button size="lg" className="rounded-2xl px-10 h-14 font-black text-lg shadow-2xl shadow-primary/20 transition-all hover:shadow-primary/40 hover:-translate-y-1 active:translate-y-0" onClick={() => setIsPaymentDialogOpen(true)}>
+                            Pay Rent
                         </Button>
-                    </CardContent>
-                </Card>
-            )}
-
-            {lease?.status === 'pending' && !lease.tenantSigned && (
-                <Card className="border-amber-500/50 bg-amber-50">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-amber-700">
-                            <AlertTriangle /> Action Required
-                        </CardTitle>
-                        <CardDescription>
-                            Your lease agreement is ready for review. Please sign the lease to activate your tenancy and enable payments.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button asChild>
-                            <Link href={`/student/leases/${lease.id}`}>
-                                <Signature className="mr-2 h-4 w-4" /> Review & Sign Lease
-                            </Link>
+                        <Button variant="outline" className="rounded-2xl h-14 font-bold border-white/20 bg-white/40 backdrop-blur-md hover:bg-white/60 transition-all" onClick={handleMessageLandlord}>
+                            <MessageSquare className="mr-2 h-5 w-5" /> Message Landlord
                         </Button>
-                    </CardContent>
-                </Card>
-            )}
+                    </div>
+                </div>
+            </div>
 
-            <Tabs defaultValue="payments" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="payments">Payments</TabsTrigger>
-                    <TabsTrigger value="lease">Lease Info</TabsTrigger>
-                    <TabsTrigger value="contact">Contact</TabsTrigger>
-                </TabsList>
-                <TabsContent value="payments">
-                    <Card className="mt-2">
-                        <CardHeader>
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <CardTitle>Payment History</CardTitle>
-                                    <CardDescription>Review your past transactions.</CardDescription>
-                                </div>
-                                {tenancyState?.showPayButton && tenancyState.paymentAmount > 0 && (
-                                    <Button onClick={() => setIsPaymentDialogOpen(true)}>Pay Now {formatPrice(tenancyState.paymentAmount, property.currency)}</Button>
-                                )}
+            {/* Critical Action Alerts */}
+            <div className="space-y-6">
+                {lease?.status === 'pending' && !lease.tenantSigned && (
+                    <Card className="overflow-hidden border-none bg-amber-500/10 shadow-xl shadow-amber-500/5 backdrop-blur-md text-amber-900 animate-in slide-in-from-top duration-500">
+                        <CardHeader className="flex flex-row items-center gap-6 p-8">
+                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-xl">
+                                <Signature className="h-8 w-8 text-amber-600" />
+                            </div>
+                            <div className="space-y-2">
+                                <CardTitle className="text-2xl font-black tracking-tight text-amber-900">Lease Signature Required</CardTitle>
+                                <CardDescription className="text-lg font-medium text-amber-700/80 leading-relaxed">
+                                    Your lease agreement for <span className="font-bold">{property.title}</span> is ready. Review and sign to activate your full tenancy.
+                                </CardDescription>
+                                <Button size="lg" className="mt-4 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl font-bold px-8" asChild>
+                                    <Link href={`/student/leases/${lease.id}`}>Review & Sign Now</Link>
+                                </Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-2 sm:p-6">
-                            <div className="overflow-x-auto rounded-md border">
+                    </Card>
+                )}
+
+                {lease?.status === 'terminating' && (
+                    <Card className="overflow-hidden border-none bg-destructive/10 shadow-xl shadow-destructive/5 backdrop-blur-md text-destructive animate-in slide-in-from-top duration-500">
+                        <CardHeader className="flex flex-row items-center gap-6 p-8">
+                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-xl">
+                                <AlertTriangle className="h-8 w-8 text-destructive" />
+                            </div>
+                            <div className="space-y-2 flex-1">
+                                <CardTitle className="text-2xl font-black tracking-tight">Tenancy Ending Soon</CardTitle>
+                                <CardDescription className="text-lg font-medium text-destructive/80 leading-relaxed">
+                                    A termination process has been initiated. You are entitled to a pro-rated refund of <span className="font-bold">{formatPrice(lease.calculatedRefund || 0, property.currency)}</span>.
+                                </CardDescription>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="px-8 pb-8 pt-0">
+                            <Button variant="destructive" size="lg" className="w-full rounded-2xl font-black h-14" onClick={handleConfirmCompensation}>
+                                Confirm Refund Received & Vacate
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+
+            <Tabs defaultValue="payments" className="w-full space-y-10">
+                <TabsList className="flex h-16 w-full max-w-2xl gap-2 rounded-[2rem] bg-muted/30 p-2 backdrop-blur-md mx-auto">
+                    <TabsTrigger value="payments" className="flex-1 rounded-[1.5rem] text-sm font-bold tracking-tight transition-all data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-primary">
+                        Payments & History
+                    </TabsTrigger>
+                    <TabsTrigger value="lease" className="flex-1 rounded-[1.5rem] text-sm font-bold tracking-tight transition-all data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-primary">
+                        Lease Details
+                    </TabsTrigger>
+                    <TabsTrigger value="contact" className="flex-1 rounded-[1.5rem] text-sm font-bold tracking-tight transition-all data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-primary">
+                        Support Contact
+                    </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="payments" className="space-y-10">
+                    {/* Payment Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <Card className="group relative overflow-hidden border-none bg-white p-8 shadow-xl shadow-black/[0.02] transition-all hover:shadow-2xl hover:shadow-primary/5">
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                            <div className="relative space-y-4">
+                                <p className="text-xs font-black uppercase tracking-widest text-primary/60">Next Payment Due</p>
+                                <h3 className={cn(
+                                    "text-3xl font-black tracking-tight",
+                                    tenancyState?.isRentDue && tenancyState.isLeaseActive ? "text-destructive" : "text-primary"
+                                )}>
+                                    {tenancyState?.rentDueDateText || "N/A"}
+                                </h3>
+                                <p className="text-lg font-bold text-muted-foreground/80">{tenancyState?.rentStatusText || "N/A"}</p>
+                            </div>
+                        </Card>
+
+                        <Card className="group relative overflow-hidden border-none bg-white p-8 shadow-xl shadow-black/[0.02] transition-all hover:shadow-2xl hover:shadow-primary/5">
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                            <div className="relative space-y-4">
+                                <p className="text-xs font-black uppercase tracking-widest text-primary/60">Lease Overview</p>
+                                <h3 className="text-3xl font-black tracking-tight text-foreground">
+                                    {tenancyState?.leaseEndDate ? format(tenancyState.leaseEndDate, 'MMMM do, yyyy') : "N/A"}
+                                </h3>
+                                <p className="text-lg font-bold text-muted-foreground/80">Scheduled end of tenancy</p>
+                            </div>
+                        </Card>
+                    </div>
+
+                    <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
+                        <CardHeader className="p-8 pb-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <CardTitle className="text-2xl font-black tracking-tight">Financial History</CardTitle>
+                                    <CardDescription className="text-base font-medium">Detailed log of all your rental payments and deposits.</CardDescription>
+                                </div>
+                                <Button variant="outline" className="rounded-2xl font-bold border-muted/50 hover:bg-muted/10">
+                                    Export PDF Statement
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="overflow-x-auto">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="text-xs sm:text-sm whitespace-nowrap">Date</TableHead>
-                                            <TableHead className="text-xs sm:text-sm whitespace-nowrap">Type</TableHead>
-                                            <TableHead className="text-xs sm:text-sm whitespace-nowrap text-right">Amount</TableHead>
-                                            <TableHead className="text-xs sm:text-sm whitespace-nowrap text-center">Status</TableHead>
+                                        <TableRow className="bg-muted/30 border-none">
+                                            <TableHead className="px-8 font-bold text-foreground">Date</TableHead>
+                                            <TableHead className="font-bold text-foreground">Type</TableHead>
+                                            <TableHead className="text-right font-bold text-foreground">Amount</TableHead>
+                                            <TableHead className="text-center font-bold text-foreground px-8">Status</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {transactions && transactions.length > 0 ? transactions.map(t => (
-                                            <TableRow key={t.id}>
-                                                <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
-                                                <TableCell className="text-xs sm:text-sm py-2 sm:py-4">{t.type}</TableCell>
-                                                <TableCell className="text-xs sm:text-sm py-2 sm:py-4 text-right whitespace-nowrap">{formatPrice(t.amount, t.currency)}</TableCell>
-                                                <TableCell className="text-xs sm:text-sm py-2 sm:py-4 text-center">
-                                                    <Badge variant={
-                                                        t.status === 'Completed' ? 'secondary'
-                                                            : t.status === 'Pending' ? 'default'
-                                                                : 'destructive'
-                                                    } className="text-xs">
+                                        {transactions && transactions.length > 0 ? transactions.map((t, idx) => (
+                                            <TableRow key={t.id} className="border-muted/10 hover:bg-muted/5 transition-colors">
+                                                <TableCell className="px-8 font-bold text-muted-foreground/80">{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
+                                                <TableCell className="font-bold">{t.type}</TableCell>
+                                                <TableCell className="text-right font-black text-foreground">{formatPrice(t.amount, t.currency)}</TableCell>
+                                                <TableCell className="text-center px-8">
+                                                    <Badge className={cn(
+                                                        "rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border-none",
+                                                        t.status === 'Completed' ? "bg-green-500/10 text-green-600"
+                                                            : t.status === 'Pending' ? "bg-amber-500/10 text-amber-600"
+                                                                : "bg-destructive/10 text-destructive"
+                                                    )}>
                                                         {t.status}
                                                     </Badge>
                                                 </TableCell>
                                             </TableRow>
                                         )) : (
                                             <TableRow>
-                                                <TableCell colSpan={4} className="text-center h-16 sm:h-24 text-xs sm:text-sm">No transactions found.</TableCell>
+                                                <TableCell colSpan={4} className="text-center py-20 text-muted-foreground font-medium">No transactions found.</TableCell>
                                             </TableRow>
                                         )}
                                     </TableBody>
@@ -352,108 +410,155 @@ export default function TenancyDetailPage() {
                         </CardContent>
                     </Card>
                 </TabsContent>
-                <TabsContent value="lease">
-                    <Card className="mt-2">
-                        <CardHeader>
-                            <CardTitle>Lease Information</CardTitle>
-                            <CardDescription>Key dates and details about your tenancy.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className={cn("text-xl font-bold", tenancyState?.isRentDue && tenancyState.isLeaseActive ? "text-destructive" : "text-primary")}>
-                                            {tenancyState?.rentDueDateText || "N/A"}
-                                        </CardTitle>
-                                        <CardDescription>{tenancyState?.rentStatusText || "N/A"}</CardDescription>
-                                    </CardHeader>
-                                </Card>
-                                <Card className={cn(tenancyState?.isLeaseExpired ? "border-destructive/50 bg-destructive/5" : "")}>
-                                    <CardHeader>
-                                        <CardTitle className={cn("text-xl font-bold", tenancyState?.isLeaseExpired && "text-destructive")}>
-                                            {tenancyState?.leaseEndDate ? format(tenancyState.leaseEndDate, 'MMMM do, yyyy') : "N/A"}
-                                        </CardTitle>
-                                        <CardDescription>{tenancyState?.isLeaseExpired ? "Lease Expired On" : "Lease End Date"}</CardDescription>
-                                    </CardHeader>
-                                </Card>
-                            </div>
-                            <div className="flex items-center justify-between rounded-lg border p-4">
-                                <div>
-                                    <h4 className="font-semibold">Lease Started</h4>
-                                    <p className="text-sm text-muted-foreground">{tenancyState?.leaseStartDate ? format(tenancyState.leaseStartDate, 'MMMM do, yyyy') : "N/A"}</p>
-                                </div>
 
-                                {lease && (
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                            <Button variant="outline"><FileText className="mr-2 h-4 w-4" /> View Lease Agreement</Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="sm:max-w-2xl w-full h-[100dvh] sm:h-auto overflow-y-auto flex flex-col p-0 sm:p-6 gap-0 sm:gap-4">
-                                            <div className="p-6 sm:p-0">
-                                                <DialogHeader>
-                                                    <DialogTitle>Lease Agreement</DialogTitle>
-                                                    <DialogDescription>
-                                                        This is the lease agreement for {property.title}.
-                                                    </DialogDescription>
-                                                </DialogHeader>
-                                            </div>
-                                            <div className="flex-1 overflow-hidden px-6 sm:px-0 pb-6 sm:pb-0">
-                                                <ScrollArea className="h-full sm:h-[60vh] rounded-md border p-4 bg-muted/50">
-                                                    <div className="prose prose-sm whitespace-pre-wrap max-w-none">{lease.leaseText}</div>
-                                                </ScrollArea>
-                                            </div>
-                                            <div className="p-6 sm:p-0 border-t sm:border-none mt-auto">
-                                                <DialogFooter>
-                                                    <DialogClose asChild>
-                                                        <Button className="w-full sm:w-auto text-lg py-6 sm:py-2">Close</Button>
-                                                    </DialogClose>
-                                                </DialogFooter>
-                                            </div>
-                                        </DialogContent>
-                                    </Dialog>
-                                )}
+                <TabsContent value="lease" className="space-y-10">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        <Card className="lg:col-span-2 overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
+                            <CardHeader className="p-8 border-b border-muted/20 bg-muted/5 relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+                                <div className="relative flex items-center justify-between">
+                                    <div className="space-y-1">
+                                        <CardTitle className="text-2xl font-black tracking-tight">Lease Agreement</CardTitle>
+                                        <CardDescription className="font-medium">Legally binding terms of your tenancy.</CardDescription>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Badge className="bg-green-500/10 text-green-600 border-none font-bold">
+                                            Authenticated
+                                        </Badge>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-0 bg-[#fdfdfd]">
+                                <ScrollArea className="h-[600px] w-full p-8 font-serif leading-relaxed text-lg">
+                                    <div className="prose prose-lg max-w-none prose-slate whitespace-pre-wrap selection:bg-primary/20">
+                                        {lease?.leaseText}
+                                    </div>
+                                </ScrollArea>
+                            </CardContent>
+                            <div className="p-8 border-t border-muted/20 bg-muted/5 flex items-center justify-between">
+                                <p className="text-sm font-medium text-muted-foreground italic">
+                                    Last updated: {(() => {
+                                        const dateValue = lease?.createdAt;
+                                        if (!dateValue) return 'N/A';
+
+                                        const d = (dateValue && typeof dateValue.toDate === 'function')
+                                            ? dateValue.toDate()
+                                            : new Date(dateValue);
+
+                                        return isNaN(d.getTime()) ? 'N/A' : format(d, 'PPP');
+                                    })()}
+                                </p>
+                                <Button variant="outline" className="rounded-2xl font-bold">Download Signed Copy (PDF)</Button>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </Card>
+
+                        <div className="space-y-10">
+                            <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
+                                <CardHeader className="p-8">
+                                    <CardTitle className="text-xl font-bold tracking-tight">Signatories</CardTitle>
+                                </CardHeader>
+                                <CardContent className="px-8 pb-8 space-y-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className={cn("flex h-12 w-12 items-center justify-center rounded-2xl", lease?.tenantSigned ? "bg-green-500/10 text-green-600" : "bg-muted/50 text-muted-foreground")}>
+                                            <Signature className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold">Tenant (You)</p>
+                                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{lease?.tenantSigned ? "Signed & Verified" : "Pending Signature"}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <div className={cn("flex h-12 w-12 items-center justify-center rounded-2xl", lease?.landlordSigned ? "bg-green-500/10 text-green-600" : "bg-muted/50 text-muted-foreground")}>
+                                            <Signature className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold">Landlord</p>
+                                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{lease?.landlordSigned ? "Signed & Verified" : "Pending Signature"}</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="overflow-hidden border-none bg-primary/5 shadow-xl shadow-primary/5">
+                                <CardContent className="p-8 text-center space-y-6">
+                                    <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-3xl bg-white shadow-xl">
+                                        <FileText className="h-8 w-8 text-primary" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h4 className="font-black text-xl tracking-tight">Need a Change?</h4>
+                                        <p className="text-sm font-medium text-muted-foreground/80 font-serif leading-relaxed italic">
+                                            &quot;If you need to discuss lease terms or request an amendment, please contact your landlord directly.&quot;
+                                        </p>
+                                    </div>
+                                    <Button variant="outline" className="w-full h-12 rounded-2xl font-bold border-primary/20 text-primary hover:bg-primary/5 transition-all" onClick={handleMessageLandlord}>
+                                        Message Landlord
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
                 </TabsContent>
+
                 <TabsContent value="contact">
                     {landlord && (
-                        <Card className="mt-2">
-                            <CardHeader>
-                                <CardTitle>Contact Your Landlord</CardTitle>
-                                <CardDescription>Get in touch with {landlord.name} regarding your tenancy.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex flex-col items-center text-center">
-                                <Avatar className="h-24 w-24 mx-auto mb-4">
-                                    <AvatarImage src={landlord.profileImageUrl} />
-                                    <AvatarFallback>
-                                        <UserIcon className="h-12 w-12 text-muted-foreground" />
-                                    </AvatarFallback>
-                                </Avatar>
-                                <p className="font-semibold">{landlord.name}</p>
-                                <p className="text-sm text-muted-foreground">{landlord.email}</p>
-                                <Separator className="my-6" />
-                                <Button onClick={handleMessageLandlord} className="w-full max-w-sm">
-                                    <MessageSquare className="mr-2 h-4 w-4" /> Start Conversation
-                                </Button>
+                        <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02] max-w-4xl mx-auto">
+                            <div className="relative h-48 bg-primary overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-br from-black/40 to-transparent" />
+                                <div className="absolute -bottom-12 left-12">
+                                    <Avatar className="h-32 w-32 border-8 border-white shadow-2xl">
+                                        <AvatarImage src={landlord.profileImageUrl} className="object-cover" />
+                                        <AvatarFallback className="bg-muted">
+                                            <UserIcon className="h-12 w-12 text-muted-foreground" />
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </div>
+                            </div>
+                            <CardContent className="pt-20 px-12 pb-12">
+                                <div className="space-y-8">
+                                    <div className="space-y-2">
+                                        <h2 className="text-4xl font-black tracking-tight">{landlord.name}</h2>
+                                        <div className="text-xl font-medium text-muted-foreground flex items-center gap-2">
+                                            <Badge variant="secondary" className="rounded-full px-4 py-1 font-bold">Property Landlord</Badge>
+                                            Verified Account
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+                                        <div className="space-y-4">
+                                            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Contact Email</p>
+                                            <p className="text-lg font-bold text-foreground">{landlord.email}</p>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Communication Policy</p>
+                                            <p className="text-lg font-bold text-foreground">Standard 24h Response</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-8 border-t border-muted/20">
+                                        <Button size="lg" onClick={handleMessageLandlord} className="w-full sm:w-auto h-16 rounded-2xl px-12 font-black text-xl shadow-2xl shadow-primary/20 transition-all hover:shadow-primary/40 hover:-translate-y-1">
+                                            <MessageSquare className="mr-3 h-6 w-6" /> Send Message
+                                        </Button>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                     )}
                 </TabsContent>
             </Tabs>
 
-            {tenancyState && user && (
+            {tenancyState && user && lease && (
                 <PaymentDialog
                     isOpen={isPaymentDialogOpen}
                     onClose={() => setIsPaymentDialogOpen(false)}
                     onPaymentSuccess={handlePaymentSuccess}
-                    amount={tenancyState.paymentAmount}
+                    amount={tenancyState.paymentAmount || property.price}
                     tenantName={user.displayName || user.email || ''}
                     tenantId={user.uid}
                     landlordId={property.landlordId}
                     propertyId={property.id}
                     currency={property.currency}
                     destinationAccountId={landlord?.stripeAccountId}
+                    metadata={{ type: lease.status === 'pending' ? 'Lease Activation' : 'Rent', leaseId: lease.id }}
                 />
             )}
         </div>

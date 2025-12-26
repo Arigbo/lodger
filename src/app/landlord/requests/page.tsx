@@ -1,14 +1,7 @@
-
 'use client';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import * as React from 'react';
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -20,9 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { UserProfile, Property, RentalApplication, LeaseAgreement } from '@/types/';
-import { Check, X, Bell, User as UserIcon } from 'lucide-react';
+import { Check, X, Bell, User as UserIcon, MessageSquare, Calendar, Building, Wallet, ArrowRight, ShieldCheck, Clock, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
-import React, { useState } from 'react';
 import LeaseGenerationDialog from '@/components/lease-generation-dialog';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, where, getDocs, addDoc, updateDoc, documentId, getDoc } from 'firebase/firestore';
@@ -30,6 +22,7 @@ import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Loading from '@/app/loading';
 import { sendNotification } from '@/lib/notifications';
 import { formatPrice } from '@/utils';
+import { useToast } from '@/hooks/use-toast';
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -47,10 +40,10 @@ function chunkArray<T>(array: T[], size: number): T[][] {
   return chunks;
 }
 
-
 export default function RentalRequestsPage() {
   const { user: landlord, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<AggregatedRequest | null>(null);
   const [aggregatedRequests, setAggregatedRequests] = useState<AggregatedRequest[]>([]);
@@ -130,7 +123,6 @@ export default function RentalRequestsPage() {
 
     fetchRequests();
 
-    // Fetch pending offline payments
     const fetchOfflinePayments = async () => {
       const leasesQuery = query(
         collection(firestore, 'leaseAgreements'),
@@ -194,7 +186,6 @@ export default function RentalRequestsPage() {
     const requestRef = doc(firestore, 'rentalApplications', requestId);
     updateDocumentNonBlocking(requestRef, { status: 'declined' });
 
-    // Notify Tenant
     const request = aggregatedRequests.find(r => r.request.id === requestId);
     if (request && request.request.tenantId) {
       sendNotification({
@@ -211,27 +202,16 @@ export default function RentalRequestsPage() {
         ? { ...ar, request: { ...ar.request, status: 'declined' } }
         : ar
     ));
+    toast({ title: "Inquiry Declined", description: "The applicant has been notified of your decision." });
   };
 
   const handleLeaseSigned = async () => {
     if (selectedRequest && landlord && selectedRequest.property?.leaseTemplate) {
       const { request, property } = selectedRequest;
-
-      // 1. Update rental request status
       const requestRef = doc(firestore, 'rentalApplications', request.id);
       updateDocumentNonBlocking(requestRef, { status: 'approved' });
 
-      // 2. Do NOT update property status yet. Wait for tenant to sign and pay.
-      // const propertyRef = doc(firestore, 'properties', property.id);
-      // const leaseStartDate = new Date().toISOString();
-      // updateDocumentNonBlocking(propertyRef, {
-      //   status: 'occupied',
-      //   currentTenantId: request.tenantId,
-      //   leaseStartDate,
-      // });
       const leaseStartDate = new Date().toISOString();
-
-      // 3. Create a new lease agreement
       const leaseCollectionRef = collection(firestore, 'leaseAgreements');
       const leaseDocRef = await addDoc(leaseCollectionRef, {
         propertyId: property.id,
@@ -242,34 +222,32 @@ export default function RentalRequestsPage() {
         tenantSigned: false,
         startDate: leaseStartDate,
         endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
-        status: 'pending', // Pending tenant signature and payment
+        status: 'pending',
       });
       await updateDoc(leaseDocRef, { id: leaseDocRef.id });
 
-      // Notify Tenant: Request Accepted
       await sendNotification({
         toUserId: request.tenantId,
         type: 'REQUEST_ACCEPTED',
         firestore: firestore,
         propertyName: property.title,
-        link: `/student/leases/${leaseDocRef.id}` // Correct Link to Lease Page
+        link: `/student/leases/${leaseDocRef.id}`
       });
 
-      // Notify Tenant: Lease Generated (Ready to sign)
       await sendNotification({
         toUserId: request.tenantId,
         type: 'LEASE_GENERATED',
         firestore: firestore,
         propertyName: property.title,
-        link: `/student/leases/${leaseDocRef.id}` // Correct Link to Lease Page
+        link: `/student/leases/${leaseDocRef.id}`
       });
 
-      // 4. Update local state
       setAggregatedRequests(prev => prev.map(ar =>
         ar.request.id === request.id
           ? { ...ar, request: { ...ar.request, status: 'approved' } }
           : ar
       ));
+      toast({ title: "Authority Granted", description: "Lease protocol initiated and tenant notified." });
     }
   };
 
@@ -278,14 +256,12 @@ export default function RentalRequestsPage() {
       const leaseRef = doc(firestore, 'leaseAgreements', leaseId);
       const propertyRef = doc(firestore, 'properties', propertyId);
 
-      // Update lease
       await updateDoc(leaseRef, {
         paymentConfirmed: true,
         landlordApprovedOfflinePayment: true,
         status: 'active'
       });
 
-      // Update property
       const leaseDoc = await getDoc(leaseRef);
       const leaseData = leaseDoc.data() as LeaseAgreement;
 
@@ -295,7 +271,6 @@ export default function RentalRequestsPage() {
         leaseStartDate: leaseData.startDate
       });
 
-      // Create transaction record
       const property = pendingOfflinePayments.find(p => p.lease.id === leaseId)?.property;
       await addDoc(collection(firestore, 'transactions'), {
         landlordId: landlord!.uid,
@@ -309,7 +284,6 @@ export default function RentalRequestsPage() {
         status: 'Completed'
       });
 
-      // Notify tenant
       await sendNotification({
         toUserId: tenantId,
         type: 'OFFLINE_PAYMENT_APPROVED',
@@ -318,24 +292,22 @@ export default function RentalRequestsPage() {
         link: `/student/tenancy`
       });
 
-      // Update local state
       setPendingOfflinePayments(prev => prev.filter(p => p.lease.id !== leaseId));
+      toast({ title: "Revenue Confirmed", description: "Offline payment authenticated successfully." });
     } catch (error) {
       console.error('Error approving offline payment:', error);
+      toast({ variant: "destructive", title: "Authentication Error", description: "Failed to confirm offline revenue." });
     }
   };
 
   const handleRejectOfflinePayment = async (leaseId: string, tenantId: string, propertyTitle: string) => {
     try {
       const leaseRef = doc(firestore, 'leaseAgreements', leaseId);
-
-      // Reset payment method so tenant can choose again
       await updateDoc(leaseRef, {
         paymentMethod: null,
         paymentConfirmed: false
       });
 
-      // Notify tenant
       await sendNotification({
         toUserId: tenantId,
         type: 'OFFLINE_PAYMENT_REJECTED',
@@ -344,8 +316,8 @@ export default function RentalRequestsPage() {
         link: `/student/leases/${leaseId}`
       });
 
-      // Update local state
       setPendingOfflinePayments(prev => prev.filter(p => p.lease.id !== leaseId));
+      toast({ title: "Payment Rejected", description: "Tenant redirected to re-choose payment protocol." });
     } catch (error) {
       console.error('Error rejecting offline payment:', error);
     }
@@ -356,182 +328,205 @@ export default function RentalRequestsPage() {
   }
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-headline text-2xl sm:text-3xl font-bold">Rental Requests</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Manage incoming applications from students.
+    <div className="space-y-16 pb-32 animate-in fade-in duration-1000">
+      {/* Cinematic Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b-4 border-foreground/5">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="h-2 w-2 rounded-full bg-primary" />
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">INQUIRY MANAGEMENT</p>
+          </div>
+          <h1 className="font-headline text-5xl md:text-6xl font-black tracking-tight text-foreground uppercase">
+            REQUEST <span className="text-primary italic">CENTER</span>
+          </h1>
+          <p className="text-lg text-muted-foreground font-medium italic font-serif">
+            &quot;Filtering prospective residents and authenticating financial yields.&quot;
           </p>
         </div>
-      </div>
-      <Separator className="my-4 sm:my-6" />
-
-      {aggregatedRequests.length === 0 && !isLoading ? (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
-                <Bell className="h-10 w-10 text-muted-foreground" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">No Rental Requests</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                When students apply to your properties, their requests will appear here.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Requests</CardTitle>
-              <CardDescription>
-                You have {pendingRequests.length} pending requests that require your attention.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="w-full overflow-x-auto">
-                <div className="inline-block min-w-full">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-xs sm:text-sm whitespace-nowrap">Applicant</TableHead>
-                        <TableHead className="hidden md:table-cell text-xs sm:text-sm whitespace-nowrap">Property</TableHead>
-                        <TableHead className="hidden lg:table-cell text-xs sm:text-sm whitespace-nowrap">Message</TableHead>
-                        <TableHead className="text-xs sm:text-sm whitespace-nowrap">Date</TableHead>
-                        <TableHead className="text-xs sm:text-sm whitespace-nowrap text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pendingRequests.length > 0 ? (
-                        pendingRequests.map((aggregatedRequest) => {
-                          const { request, applicant, property } = aggregatedRequest;
-                          if (!applicant || !property) return null;
-                          return (
-                            <TableRow key={request.id}>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
-                                <div className="flex items-center gap-2 sm:gap-3">
-                                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10 ring-2 ring-primary/10">
-                                    <AvatarImage src={applicant?.profileImageUrl} className="object-cover" />
-                                    <AvatarFallback>
-                                      <UserIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <span className="font-medium line-clamp-1">{applicant?.name}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell className="hidden md:table-cell text-xs sm:text-sm py-2 sm:py-4">
-                                <Link href={`/landlord/properties/${property?.id}`} className="hover:underline text-muted-foreground line-clamp-2">
-                                  {property?.title}
-                                </Link>
-                              </TableCell>
-                              <TableCell className="hidden lg:table-cell text-xs sm:text-sm py-2 sm:py-4 max-w-xs">
-                                <span className="text-muted-foreground line-clamp-2">{request.messageToLandlord}</span>
-                              </TableCell>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 text-right">
-                                <div className="flex justify-end gap-1 sm:gap-2">
-                                  <Button size="xs" variant="outline" onClick={() => handleAcceptClick(aggregatedRequest)} className="px-2 h-7"><Check className="h-3 w-3 sm:h-4 sm:w-4" /></Button>
-                                  <Button size="xs" variant="destructive" onClick={() => handleDeclineClick(request.id)} className="px-2 h-7"><X className="h-3 w-3 sm:h-4 sm:w-4" /></Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          )
-                        })
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center h-16 sm:h-24 text-xs sm:text-sm">No pending requests.</TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Offline Payment Approvals */}
+        <div className="flex gap-4">
+          <div className="bg-blue-500/5 px-6 py-4 rounded-[2rem] border-2 border-blue-500/10">
+            <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1 italic">Pending Applications</p>
+            <p className="text-3xl font-black text-blue-600">{pendingRequests.length}</p>
+          </div>
           {pendingOfflinePayments.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Offline Payment Confirmations</CardTitle>
-                <CardDescription>
-                  {pendingOfflinePayments.length} tenant(s) selected offline payment. Confirm receipt to activate their lease.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="w-full overflow-x-auto">
-                  <div className="inline-block min-w-full">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap">Tenant</TableHead>
-                          <TableHead className="hidden md:table-cell text-xs sm:text-sm whitespace-nowrap">Property</TableHead>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap">Amount</TableHead>
-                          <TableHead className="hidden sm:table-cell text-xs sm:text-sm whitespace-nowrap">Date Selected</TableHead>
-                          <TableHead className="text-xs sm:text-sm whitespace-nowrap text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {pendingOfflinePayments.map(({ lease, tenant, property }) => {
-                          if (!tenant || !property) return null;
-                          return (
-                            <TableRow key={lease.id}>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
-                                <div className="flex items-center gap-2 sm:gap-3">
-                                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10 ring-2 ring-primary/10">
-                                    <AvatarImage src={tenant.profileImageUrl} className="object-cover" />
-                                    <AvatarFallback>
-                                      <UserIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <span className="font-medium line-clamp-1">{tenant.name}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell className="hidden md:table-cell text-xs sm:text-sm py-2 sm:py-4">
-                                <Link href={`/landlord/properties/${property.id}`} className="hover:underline text-muted-foreground line-clamp-2">
-                                  {property.title}
-                                </Link>
-                              </TableCell>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 font-semibold whitespace-nowrap">
-                                {formatPrice(lease.offlinePaymentAmount || property.price, property.currency)}
-                                {lease.offlinePaymentMonths && lease.offlinePaymentMonths > 1 && (
-                                  <span className="ml-1 text-xs text-muted-foreground">({lease.offlinePaymentMonths}m)</span>
-                                )}
-                              </TableCell>
-                              <TableCell className="hidden sm:table-cell text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{lease.createdAt ? new Date(lease.createdAt.toDate()).toLocaleDateString() : 'N/A'}</TableCell>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 text-right">
-                                <div className="flex justify-end gap-1 sm:gap-2 flex-col sm:flex-row">
-                                  <Button
-                                    size="xs"
-                                    onClick={() => handleApproveOfflinePayment(lease.id, tenant.id, property.id, property.title)}
-                                    className="text-xs px-2 h-7"
-                                  >
-                                    <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" /> Confirm
-                                  </Button>
-                                  <Button
-                                    size="xs"
-                                    variant="outline"
-                                    onClick={() => handleRejectOfflinePayment(lease.id, tenant.id, property.title)}
-                                    className="text-xs px-2 h-7"
-                                  >
-                                    <X className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" /> Reject
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="bg-orange-500/5 px-6 py-4 rounded-[2rem] border-2 border-orange-500/10 animate-pulse">
+              <p className="text-[10px] font-black uppercase tracking-widest text-orange-600 mb-1 italic">Payment Tasks</p>
+              <p className="text-3xl font-black text-orange-600">{pendingOfflinePayments.length}</p>
+            </div>
           )}
         </div>
+      </div>
+
+      {/* Application Stream */}
+      <div className="space-y-10">
+        <div className="flex items-center gap-4 px-2">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <UserIcon className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-3xl font-black uppercase tracking-tight">Active <span className="text-primary italic">Inquiries</span></h2>
+        </div>
+
+        {pendingRequests.length === 0 ? (
+          <Card className="rounded-[3.5rem] border-2 border-dashed border-foreground/10 bg-muted/5 p-24 text-center space-y-8">
+            <div className="h-32 w-32 rounded-[2.5rem] bg-white shadow-2xl flex items-center justify-center mx-auto relative group overflow-hidden">
+              <Bell className="h-14 w-14 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
+              <div className="absolute inset-0 bg-primary/5 rounded-[2.5rem]" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black uppercase tracking-tight italic">Silent Channels</h3>
+              <p className="text-lg text-muted-foreground font-serif italic max-w-sm mx-auto">
+                &quot;Your communication channels are currently clear. Incoming application data will manifest here.&quot;
+              </p>
+            </div>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-8">
+            {pendingRequests.map((aggregatedRequest) => {
+              const { request, applicant, property } = aggregatedRequest;
+              if (!applicant || !property) return null;
+              return (
+                <Card key={request.id} className="group overflow-hidden rounded-[3rem] border-2 border-foreground/5 bg-white hover:shadow-3xl transition-all duration-500 p-8 md:p-10">
+                  <div className="flex flex-col lg:flex-row gap-10">
+                    {/* Applicant Profile */}
+                    <div className="flex items-center gap-6 lg:w-1/3 border-r-2 border-muted/5 pr-10">
+                      <div className="relative">
+                        <Avatar className="h-24 w-24 rounded-[2rem] ring-4 ring-primary/5 ring-offset-4 ring-offset-white">
+                          <AvatarImage src={applicant?.profileImageUrl} className="object-cover" />
+                          <AvatarFallback className="bg-muted text-2xl font-black uppercase italic">
+                            {applicant?.name?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg">
+                          <ShieldCheck className="h-5 w-5" />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-primary italic">Identity Profile</p>
+                        <h3 className="text-2xl font-black uppercase tracking-tight">{applicant?.name}</h3>
+                        <p className="text-xs font-bold text-muted-foreground/60">{applicant?.email}</p>
+                      </div>
+                    </div>
+
+                    {/* Property Connection */}
+                    <div className="flex-1 space-y-6">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Asset Target</p>
+                          <Link href={`/landlord/properties/${property.id}`} className="group/link flex items-center gap-2 text-xl font-black uppercase tracking-tight hover:text-primary transition-colors">
+                            {property.title} <ExternalLink className="h-4 w-4 opacity-0 group-hover/link:opacity-100 transition-opacity" />
+                          </Link>
+                          <p className="text-xs font-medium text-muted-foreground italic font-serif">
+                            &quot;{request.messageToLandlord || "Standard inquiry protocol initiated without custom parameters."}&quot;
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Submission Date</p>
+                          <p className="text-sm font-black text-foreground">{new Date(request.applicationDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-4 pt-4 border-t-2 border-muted/5">
+                        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/20 text-[10px] font-black uppercase tracking-widest">
+                          <Clock className="h-3 w-3 text-primary" /> Status: {request.status}
+                        </div>
+                        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/20 text-[10px] font-black uppercase tracking-widest">
+                          <Wallet className="h-3 w-3 text-primary" /> Yield: {formatPrice(property.price, property.currency)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Decision Matrix */}
+                    <div className="lg:w-1/4 flex lg:flex-col gap-4 justify-center items-stretch">
+                      <Button
+                        onClick={() => handleAcceptClick(aggregatedRequest)}
+                        className="h-16 rounded-2xl bg-foreground text-white hover:bg-primary transition-all font-black text-xs uppercase tracking-widest gap-3 shadow-xl"
+                      >
+                        <Check className="h-5 w-5" /> GRANT AUTHORITY
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleDeclineClick(request.id)}
+                        className="h-16 rounded-2xl border-2 hover:bg-destructive hover:text-white hover:border-destructive transition-all font-black text-xs uppercase tracking-widest gap-3"
+                      >
+                        <X className="h-5 w-5" /> DECLINE INQUIRY
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Offline Payment Sector */}
+      {pendingOfflinePayments.length > 0 && (
+        <div className="space-y-10">
+          <div className="flex items-center gap-4 px-2">
+            <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
+              <Wallet className="h-5 w-5 text-orange-600" />
+            </div>
+            <h2 className="text-3xl font-black uppercase tracking-tight">Financial <span className="text-orange-600 italic">Confirmations</span></h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {pendingOfflinePayments.map(({ lease, tenant, property }) => {
+              if (!tenant || !property) return null;
+              return (
+                <Card key={lease.id} className="group relative overflow-hidden rounded-[3rem] border-2 border-orange-500/10 bg-white hover:shadow-2xl transition-all duration-500 p-8">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 rounded-bl-[4rem] -mr-6 -mt-6" />
+
+                  <div className="space-y-8 relative z-10">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-16 w-16 rounded-2xl ring-2 ring-orange-500/10">
+                        <AvatarImage src={tenant.profileImageUrl} className="object-cover" />
+                        <AvatarFallback className="bg-muted text-xl font-black uppercase italic">
+                          {tenant.name?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h4 className="text-xl font-black uppercase tracking-tight">{tenant.name}</h4>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">RESIDENT IDENTIFIED</p>
+                      </div>
+                    </div>
+
+                    <div className="p-6 rounded-2xl bg-orange-500/5 border-2 border-orange-500/5 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-orange-600/60 italic">OFFLINE REVENUE</p>
+                        <p className="text-2xl font-black text-orange-600">{formatPrice(lease.offlinePaymentAmount || property.price, property.currency)}</p>
+                      </div>
+                      <div className="flex justify-between items-center pt-4 border-t border-orange-500/10">
+                        <p className="text-xs font-bold text-muted-foreground/60 italic">TENANCY TERM</p>
+                        <p className="text-xs font-black uppercase">{lease.offlinePaymentMonths || 1} Month(s) Pre-Paid</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 text-center italic">Verify physical receipt of funds before proceeding</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Button
+                          onClick={() => handleApproveOfflinePayment(lease.id, tenant.id, property.id, property.title)}
+                          className="h-14 rounded-xl bg-orange-600 text-white hover:bg-orange-700 transition-all font-black text-[10px] uppercase tracking-widest gap-2 shadow-lg"
+                        >
+                          <Check className="h-4 w-4" /> AUTHENTICATE
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleRejectOfflinePayment(lease.id, tenant.id, property.title)}
+                          className="h-14 rounded-xl border-2 border-orange-500/20 hover:bg-orange-50 text-orange-600 transition-all font-black text-[10px] uppercase tracking-widest gap-2"
+                        >
+                          <X className="h-4 w-4" /> REJECT
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
       )}
+
       {selectedRequest && landlordProfile && selectedRequest.property?.leaseTemplate && (
         <LeaseGenerationDialog
           isOpen={dialogOpen}

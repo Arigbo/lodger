@@ -21,11 +21,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import type { RentalApplication, UserProfile as User, Property } from '@/types';
-import { BellRing, Search } from 'lucide-react';
+import { BellRing, Search, X, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import Loading from '@/app/loading';
+import { cn } from '@/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -196,139 +197,115 @@ export default function StudentRequestsPage() {
   }
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-headline text-2xl sm:text-3xl font-bold">My Rental Requests</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Track the status of your applications.
-          </p>
-        </div>
+    <div className="space-y-10 animate-in fade-in duration-700">
+      <div className="space-y-2">
+        <h1 className="font-headline text-4xl font-black tracking-tight text-foreground underline decoration-primary/20 underline-offset-8 uppercase">
+          Rental Requests
+        </h1>
+        <p className="text-lg text-muted-foreground font-medium italic font-serif">
+          &quot;Track your active rental applications and inquiries.&quot;
+        </p>
       </div>
-      <Separator className="my-4 sm:my-6" />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Application History</CardTitle>
-          <CardDescription>
-            You have sent {aggregatedRequests.length} rental requests.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-2 sm:p-6">
-          {aggregatedRequests.length > 0 ? (
-            <div className="w-full overflow-x-auto">
-              <div className="inline-block min-w-full">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Property</TableHead>
-                      <TableHead className="hidden sm:table-cell text-xs sm:text-sm whitespace-nowrap">Landlord</TableHead>
-                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Date Sent</TableHead>
-                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
-                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {aggregatedRequests.map(({ request, landlord, property }) => {
-                      return (
-                        <TableRow key={request.id}>
-                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
-                            <Link href={`/student/properties/${property?.id}`} className="font-medium hover:underline line-clamp-2">
-                              {property?.title || 'Unknown Property'}
-                            </Link>
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell text-xs sm:text-sm py-2 sm:py-4">
-                            <span className="text-muted-foreground">{landlord?.name || 'Unknown Landlord'}</span>
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(request.applicationDate).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
-                            <Badge variant={getStatusVariant(request.status)} className="capitalize text-xs">
-                              {request.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2">
-                              {request.status === 'approved' && (
-                                <Button variant="secondary" size="xs" className="text-xs w-full sm:w-auto" asChild>
-                                  <Link href="/student/leases">
-                                    View Leases
-                                  </Link>
-                                </Button>
-                              )}
-                              {request.status === 'pending' && (
-                                <div className="flex flex-col sm:flex-row gap-1 w-full sm:w-auto">
-                                  <Button
-                                    variant="outline"
-                                    size="xs"
-                                    className="text-xs"
-                                    onClick={() => {
-                                      setRequestToEdit(request);
-                                      setEditMessage(request.messageToLandlord || '');
-                                    }}
-                                  >
-                                    Edit
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="xs"
-                                    className="text-xs"
-                                    onClick={() => setRequestToDelete(request.id)}
-                                  >
-                                    Delete
-                                  </Button>
-                                </div>
-                              )}
-                              {/* Allow deletion even if declined/approved to clear list? User said "delete their request" */}
-                              {request.status !== 'pending' && request.status !== 'approved' && (
-                                <Button
-                                  variant="ghost"
-                                  size="xs"
-                                  className="text-destructive hover:text-destructive text-xs"
-                                  onClick={() => setRequestToDelete(request.id)}
-                                >
-                                  Remove
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+      {aggregatedRequests.length > 0 ? (
+        <Card className="overflow-hidden border-2 border-foreground/5 bg-white shadow-xl rounded-[2.5rem]">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30 border-none">
+                <TableHead className="px-8 font-bold text-foreground">Property</TableHead>
+                <TableHead className="font-bold text-foreground">Landlord</TableHead>
+                <TableHead className="font-bold text-foreground">Date Applied</TableHead>
+                <TableHead className="font-bold text-foreground">Status</TableHead>
+                <TableHead className="text-right px-8 font-bold text-foreground">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {aggregatedRequests.map(({ request, landlord, property }) => (
+                <TableRow key={request.id} className="border-muted/10 hover:bg-muted/5 transition-colors">
+                  <TableCell className="px-8 font-bold">
+                    <Link href={`/student/properties/${property?.id}`} className="hover:text-primary transition-colors">
+                      {property?.title || 'Unknown Property'}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="font-medium">{landlord?.name || 'N/A'}</TableCell>
+                  <TableCell className="font-medium text-muted-foreground">
+                    {new Date(request.applicationDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={cn(
+                      "rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border-none",
+                      request.status === 'approved' ? "bg-green-500/10 text-green-600" :
+                        request.status === 'declined' ? "bg-red-500/10 text-red-600" :
+                          "bg-primary/10 text-primary"
+                    )}>
+                      {request.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right px-8 space-x-2">
+                    {request.status === 'approved' && (
+                      <Button size="sm" className="rounded-xl font-bold" asChild>
+                        <Link href="/student/leases">View Lease</Link>
+                      </Button>
+                    )}
+                    {request.status === 'pending' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl font-bold"
+                        onClick={() => {
+                          setRequestToEdit(request);
+                          setEditMessage(request.messageToLandlord || '');
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-xl font-bold text-red-500 hover:bg-red-50"
+                      onClick={() => setRequestToDelete(request.id)}
+                    >
+                      {request.status === 'pending' ? 'Withdraw' : 'Clear'}
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      ) : (
+        <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
+          <CardContent className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="relative mb-8">
+              <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150" />
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-[2rem] bg-muted/30">
+                <Search className="h-10 w-10 text-primary opacity-20" />
               </div>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
-                <BellRing className="h-10 w-10 text-muted-foreground" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">No Requests Sent</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                When you apply for a property, your requests will appear here.
-              </p>
-              <Button asChild className="mt-4">
-                <Link href="/student/properties">
-                  <Search className="mr-2 h-4 w-4" /> Find a Property
-                </Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            <h2 className="text-2xl font-black tracking-tight">No Active Requests</h2>
+            <p className="mx-auto mt-2 max-w-sm text-muted-foreground font-medium">
+              You haven&apos;t submitted any rental applications yet.
+            </p>
+            <Button className="mt-8 rounded-2xl px-8 font-bold" asChild>
+              <Link href="/student/properties">Explore Properties</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <AlertDialog open={!!requestToDelete} onOpenChange={(open) => !open && setRequestToDelete(null)}>
-        <AlertDialogContent className="w-[95vw] sm:max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Request?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to cancel this rental application? This action cannot be undone.
+        <AlertDialogContent className="w-[95vw] sm:max-w-md rounded-[2.5rem] border-none shadow-3xl p-10">
+          <AlertDialogHeader className="space-y-4">
+            <AlertDialogTitle className="text-3xl font-black">Archive Inquiry?</AlertDialogTitle>
+            <AlertDialogDescription className="text-lg font-medium text-muted-foreground italic font-serif">
+              Are you sure you want to withdraw this application? This protocol cannot be reversed.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep Request</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteRequest} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Cancel Request
+          <AlertDialogFooter className="gap-4 mt-8">
+            <AlertDialogCancel className="h-14 rounded-2xl border-2 font-black text-xs uppercase tracking-widest">RETAIN</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteRequest} className="h-14 rounded-2xl bg-red-500 text-white hover:bg-red-600 font-black text-xs uppercase tracking-widest shadow-xl shadow-red-500/20">
+              WITHDRAW INQUIRY
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -336,30 +313,28 @@ export default function StudentRequestsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={!!requestToEdit} onOpenChange={(open) => !open && setRequestToEdit(null)}>
-        <DialogContent className="sm:max-w-md w-[95vw] border-2 shadow-lg">
-          <DialogHeader>
-            <DialogTitle>Edit Application</DialogTitle>
-            <DialogDescription>
-              Update your message to the landlord.
+        <DialogContent className="sm:max-w-md w-[95vw] rounded-[2.5rem] border-none shadow-3xl p-10">
+          <DialogHeader className="space-y-4">
+            <DialogTitle className="text-3xl font-black">Refine Inquiry</DialogTitle>
+            <DialogDescription className="text-lg font-medium text-muted-foreground italic font-serif">
+              Update your personal narrative for this application.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <label className="text-sm font-medium mb-2 block">Message</label>
+          <div className="py-8 space-y-3">
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 ml-1">PROFILE NARRATIVE</label>
             <Textarea
               value={editMessage}
               onChange={(e) => setEditMessage(e.target.value)}
               placeholder="Introduced yourself and explain why you're a good fit..."
-              rows={4}
+              className="min-h-[200px] rounded-[2rem] border-2 bg-muted/5 focus:bg-white transition-all p-6 text-lg font-medium leading-relaxed font-serif italic"
             />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRequestToEdit(null)}>Cancel</Button>
-            <Button onClick={handleUpdateRequest}>Save Changes</Button>
+          <DialogFooter className="gap-4">
+            <Button variant="ghost" className="h-14 rounded-2xl font-black text-xs uppercase tracking-widest underline underline-offset-8 decoration-primary/20 hover:decoration-primary" onClick={() => setRequestToEdit(null)}>DISCARD</Button>
+            <Button onClick={handleUpdateRequest} className="h-14 rounded-2xl px-10 font-black text-xs uppercase tracking-widest shadow-2xl shadow-primary/20">SAVE REFINEMENTS</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div >
   );
 }
-
-

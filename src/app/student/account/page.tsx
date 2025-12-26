@@ -213,99 +213,67 @@ export default function AccountPage() {
     }
 
     return (
-        <div>
-            <div className="mb-8">
-                <h1 className="font-headline text-3xl font-bold">Account Settings</h1>
-                <p className="text-muted-foreground">Manage your profile, password, and notification settings.</p>
+        <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-700">
+            {/* Header Section */}
+            <div className="relative overflow-hidden rounded-[3rem] bg-muted/30 p-10 md:p-14 border-2 border-white/40 shadow-xl shadow-black/[0.02]">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
+                <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
+                    <div className="relative group">
+                        <Avatar className="h-32 w-32 md:h-40 md:w-40 border-8 border-white shadow-2xl transition-transform duration-500 group-hover:scale-105">
+                            <AvatarImage src={previewImage || userProfile.profileImageUrl} className="object-cover" />
+                            <AvatarFallback className="bg-muted text-4xl">
+                                <UserIcon className="h-16 w-16 text-muted-foreground/40" />
+                            </AvatarFallback>
+                        </Avatar>
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                            className="absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white shadow-xl hover:scale-110 active:scale-95 transition-all"
+                        >
+                            <Upload className="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    <div className="space-y-4 text-center md:text-left">
+                        <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight text-foreground">
+                            Account <span className="text-primary italic">Settings</span>
+                        </h1>
+                        <p className="max-w-md text-lg font-medium text-muted-foreground/80 leading-relaxed font-serif italic">
+                            &quot;Personalize your profile and manage your preferences for a tailored Lodger experience.&quot;
+                        </p>
+                    </div>
+                </div>
             </div>
-            <Tabs defaultValue="profile" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 max-w-md">
-                    <TabsTrigger value="profile">Profile</TabsTrigger>
-                    <TabsTrigger value="settings">Settings</TabsTrigger>
+
+            <Tabs defaultValue="profile" className="w-full space-y-10">
+                <TabsList className="h-16 w-full max-w-md grid grid-cols-2 p-1 bg-muted/30 rounded-3xl border-2 border-white/40 shadow-inner">
+                    <TabsTrigger value="profile" className="rounded-[1.25rem] font-black text-sm uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-lg transition-all">
+                        Profile
+                    </TabsTrigger>
+                    <TabsTrigger value="settings" className="rounded-[1.25rem] font-black text-sm uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-lg transition-all">
+                        Security
+                    </TabsTrigger>
                 </TabsList>
-                <TabsContent value="profile">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Your Profile</CardTitle>
-                            <CardDescription>This information helps landlords get to know you.</CardDescription>
+
+                <TabsContent value="profile" className="space-y-10 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <Card className="border-none bg-white shadow-xl shadow-black/[0.02] rounded-[2.5rem] overflow-hidden">
+                        <CardHeader className="p-10 border-b border-muted/20">
+                            <CardTitle className="text-2xl font-black">Personal Information</CardTitle>
+                            <CardDescription className="text-lg font-medium text-muted-foreground/60">Landlords use this to identify and verify you.</CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-10">
                             <Form {...profileForm}>
-                                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-                                        <Avatar className="h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0">
-                                            <AvatarImage src={previewImage || userProfile.profileImageUrl} />
-                                            <AvatarFallback>
-                                                <UserIcon className="h-10 w-10 text-muted-foreground" />
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="grid gap-2 w-full">
-                                            <p className="text-sm text-muted-foreground">Update your profile picture.</p>
-                                            <div className="flex items-center gap-2">
-                                                <Button type="button" variant="outline" disabled={isUploading} onClick={() => fileInputRef.current?.click()}>
-                                                    <Upload className="mr-2 h-4 w-4" />
-                                                    {isUploading ? 'Uploading...' : 'Upload Image'}
-                                                </Button>
-                                                {(previewImage || userProfile.profileImageUrl) && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                        onClick={async () => {
-                                                            if (!confirm("Are you sure you want to remove your profile picture?")) return;
-                                                            try {
-                                                                if (userDocRef) {
-                                                                    await setDoc(userDocRef, { profileImageUrl: null }, { merge: true });
-                                                                    setPreviewImage(null);
-                                                                    toast({ title: "Image Removed", description: "Profile picture deleted." });
-                                                                }
-                                                            } catch (error) {
-                                                                console.error("Error removing image:", error);
-                                                                toast({ variant: "destructive", title: "Error", description: "Failed to remove image." });
-                                                            }
-                                                        }}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                                <input
-                                                    ref={fileInputRef}
-                                                    type="file"
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                    onChange={handleImageUpload}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <Separator />
-
-                                    <FormField
-                                        control={profileForm.control}
-                                        name="name"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Full Name</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Your name" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-10">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                                         <FormField
                                             control={profileForm.control}
-                                            name="email"
+                                            name="name"
                                             render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Email Address</FormLabel>
+                                                <FormItem className="space-y-3">
+                                                    <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Full Name</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="your@email.com" {...field} disabled />
+                                                        <Input placeholder="Enter your full name" className="h-14 rounded-2xl border-2 bg-muted/10 focus:bg-white focus:ring-4 focus:ring-primary/10 font-bold" {...field} />
                                                     </FormControl>
-                                                    <FormDescription>Used for login and notifications.</FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -314,20 +282,49 @@ export default function AccountPage() {
                                             control={profileForm.control}
                                             name="phone"
                                             render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Phone Number</FormLabel>
+                                                <FormItem className="space-y-3">
+                                                    <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Phone Number</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="(123) 456-7890" {...field} />
+                                                        <Input placeholder="(555) 000-0000" className="h-14 rounded-2xl border-2 bg-muted/10 focus:bg-white focus:ring-4 focus:ring-primary/10 font-bold" {...field} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
+                                        <FormField
+                                            control={profileForm.control}
+                                            name="email"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-3">
+                                                    <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Email Address</FormLabel>
+                                                    <FormControl>
+                                                        <Input className="h-14 rounded-2xl border-2 bg-muted/10 opacity-60 font-bold" {...field} disabled />
+                                                    </FormControl>
+                                                    <FormDescription className="italic font-serif text-muted-foreground/60">Verified primary contact</FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField control={profileForm.control} name="school" render={({ field }) => (
+                                            <FormItem className="space-y-3">
+                                                <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Institution</FormLabel>
+                                                <FormControl>
+                                                    <SchoolCombobox
+                                                        value={field.value}
+                                                        onChange={field.onChange}
+                                                        placeholder="Select your university"
+                                                        emptyText="Searching institutions..."
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
                                     </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
                                         <FormField control={profileForm.control} name="country" render={({ field }) => (
-                                            <FormItem className="flex flex-col">
-                                                <FormLabel>Country</FormLabel>
+                                            <FormItem className="flex flex-col space-y-3">
+                                                <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Country</FormLabel>
                                                 <Combobox
                                                     options={countries.map(c => ({ label: c.name, value: c.name }))}
                                                     value={field.value}
@@ -345,8 +342,8 @@ export default function AccountPage() {
                                             </FormItem>
                                         )} />
                                         <FormField control={profileForm.control} name="state" render={({ field }) => (
-                                            <FormItem className="flex flex-col">
-                                                <FormLabel>State</FormLabel>
+                                            <FormItem className="flex flex-col space-y-3">
+                                                <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">State/Province</FormLabel>
                                                 <Combobox
                                                     options={countries.find(c => c.name === profileForm.watch('country'))?.states.map(s => ({ label: s.name, value: s.name })) || []}
                                                     value={field.value}
@@ -357,163 +354,182 @@ export default function AccountPage() {
                                                 <FormMessage />
                                             </FormItem>
                                         )} />
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <FormField control={profileForm.control} name="currency" render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Preferred Currency</FormLabel>
+                                            <FormItem className="space-y-3">
+                                                <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Currency Preference</FormLabel>
                                                 <Select onValueChange={field.onChange} value={field.value || 'USD'}>
                                                     <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select currency" />
+                                                        <SelectTrigger className="h-14 rounded-2xl border-2 bg-muted/10 font-bold">
+                                                            <SelectValue placeholder="USD" />
                                                         </SelectTrigger>
                                                     </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="USD">USD - US Dollar</SelectItem>
-                                                        <SelectItem value="NGN">NGN - Nigerian Naira</SelectItem>
-                                                        <SelectItem value="GHS">GHS - Ghanaian Cedi</SelectItem>
-                                                        <SelectItem value="KES">KES - Kenyan Shilling</SelectItem>
-                                                        <SelectItem value="GBP">GBP - British Pound</SelectItem>
-                                                        <SelectItem value="EUR">EUR - Euro</SelectItem>
+                                                    <SelectContent className="rounded-2xl border-none shadow-3xl p-2">
+                                                        <SelectItem value="USD" className="rounded-xl py-3 font-bold">USD - US Dollar</SelectItem>
+                                                        <SelectItem value="NGN" className="rounded-xl py-3 font-bold">NGN - Nigerian Naira</SelectItem>
+                                                        <SelectItem value="GHS" className="rounded-xl py-3 font-bold">GHS - Ghanaian Cedi</SelectItem>
+                                                        <SelectItem value="KES" className="rounded-xl py-3 font-bold">KES - Kenyan Shilling</SelectItem>
+                                                        <SelectItem value="GBP" className="rounded-xl py-3 font-bold">GBP - British Pound</SelectItem>
+                                                        <SelectItem value="EUR" className="rounded-xl py-3 font-bold">EUR - Euro</SelectItem>
                                                     </SelectContent>
                                                 </Select>
-                                                <FormDescription>Used for price display across the site.</FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )} />
-                                        <FormField control={profileForm.control} name="school" render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>School</FormLabel>
-                                                <FormControl>
-                                                    <SchoolCombobox
-                                                        value={field.value}
-                                                        onChange={field.onChange}
-                                                        placeholder="Select School"
-                                                        emptyText="No school found."
-                                                    />
-                                                </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )} />
                                     </div>
 
-                                    <Button type="submit">Update Profile</Button>
+                                    <div className="pt-8 border-t border-muted/10">
+                                        <Button type="submit" size="lg" className="h-16 px-12 rounded-[1.25rem] font-black text-lg shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 transition-all">
+                                            Save Changes
+                                        </Button>
+                                    </div>
                                 </form>
                             </Form>
                         </CardContent>
                     </Card>
                 </TabsContent>
-                <TabsContent value="settings">
-                    <div className="space-y-8">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Change Password</CardTitle>
-                                <CardDescription>For security, please choose a strong password.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Form {...passwordForm}>
-                                    <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-6">
-                                        <FormField
-                                            control={passwordForm.control}
-                                            name="currentPassword"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Current Password</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="password" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={passwordForm.control}
-                                            name="newPassword"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>New Password</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="password" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={passwordForm.control}
-                                            name="confirmPassword"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Confirm New Password</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="password" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <Button type="submit">Change Password</Button>
-                                    </form>
-                                </Form>
-                            </CardContent>
-                        </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Notification Settings</CardTitle>
-                                <CardDescription>Manage how you receive notifications.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="flex items-center justify-between rounded-lg border p-4">
-                                    <div className="space-y-0.5">
-                                        <label htmlFor="rental-requests-switch" className="text-base font-medium">Rental Status Updates</label>
-                                        <p className="text-sm text-muted-foreground">
-                                            Receive an email when a landlord accepts or declines your request.
+                <TabsContent value="settings" className="space-y-10 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        <div className="lg:col-span-2 space-y-10">
+                            <Card className="border-none bg-white shadow-xl shadow-black/[0.02] rounded-[2.5rem]">
+                                <CardHeader className="p-10">
+                                    <CardTitle className="text-2xl font-black">Security</CardTitle>
+                                    <CardDescription className="text-lg font-medium text-muted-foreground/60">Manage your password and authentication.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-10 pt-0">
+                                    <Form {...passwordForm}>
+                                        <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-8">
+                                            <FormField
+                                                control={passwordForm.control}
+                                                name="currentPassword"
+                                                render={({ field }) => (
+                                                    <FormItem className="space-y-3">
+                                                        <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Current Password</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="password" placeholder="••••••••" className="h-14 rounded-2xl border-2 bg-muted/10 font-bold" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <FormField
+                                                    control={passwordForm.control}
+                                                    name="newPassword"
+                                                    render={({ field }) => (
+                                                        <FormItem className="space-y-3">
+                                                            <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">New Password</FormLabel>
+                                                            <FormControl>
+                                                                <Input type="password" placeholder="••••••••" className="h-14 rounded-2xl border-2 bg-muted/10 font-bold" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={passwordForm.control}
+                                                    name="confirmPassword"
+                                                    render={({ field }) => (
+                                                        <FormItem className="space-y-3">
+                                                            <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Confirm New Password</FormLabel>
+                                                            <FormControl>
+                                                                <Input type="password" placeholder="••••••••" className="h-14 rounded-2xl border-2 bg-muted/10 font-bold" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                            <Button type="submit" className="h-14 rounded-2xl px-10 font-bold border-2">
+                                                Update Security
+                                            </Button>
+                                        </form>
+                                    </Form>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-none bg-white shadow-xl shadow-black/[0.02] rounded-[2.5rem]">
+                                <CardHeader className="p-10">
+                                    <CardTitle className="text-2xl font-black">Preferences</CardTitle>
+                                    <CardDescription className="text-lg font-medium text-muted-foreground/60">Control your digital footprint and notifications.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-10 pt-0 space-y-6">
+                                    <div className="flex items-center justify-between p-6 rounded-[1.5rem] bg-muted/10 border-2">
+                                        <div className="space-y-1">
+                                            <h4 className="font-black text-lg">Activity Notifications</h4>
+                                            <p className="text-sm font-medium text-muted-foreground/60 italic font-serif">Stay informed about request status and messages.</p>
+                                        </div>
+                                        <Switch defaultChecked className="data-[state=checked]:bg-primary" />
+                                    </div>
+                                    <div className="flex items-center justify-between p-6 rounded-[1.5rem] bg-muted/10 border-2">
+                                        <div className="space-y-1">
+                                            <h4 className="font-black text-lg">Marketing & Updates</h4>
+                                            <p className="text-sm font-medium text-muted-foreground/60 italic font-serif">Receive news about new features and regions.</p>
+                                        </div>
+                                        <Switch className="data-[state=checked]:bg-primary" />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <div className="space-y-10">
+                            <Card className="border-2 border-primary/20 bg-primary/5 rounded-[2.5rem] overflow-hidden">
+                                <CardContent className="p-10 text-center space-y-6">
+                                    <div className="h-16 w-16 mx-auto bg-white rounded-3xl shadow-xl flex items-center justify-center">
+                                        <UserIcon className="h-8 w-8 text-primary" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h4 className="font-black text-xl">Privacy Control</h4>
+                                        <p className="text-sm font-medium text-muted-foreground/80 leading-relaxed font-serif italic">
+                                            &quot;Your data is encrypted and secure. Review our privacy policy to learn how we protect your journey.&quot;
                                         </p>
                                     </div>
-                                    <Switch id="rental-requests-switch" defaultChecked />
-                                </div>
-                                <div className="flex items-center justify-between rounded-lg border p-4">
-                                    <div className="space-y-0.5">
-                                        <label htmlFor="new-messages-switch" className="text-base font-medium">New Messages</label>
-                                        <p className="text-sm text-muted-foreground">
-                                            Get notified when a landlord sends you a message.
-                                        </p>
-                                    </div>
-                                    <Switch id="new-messages-switch" defaultChecked />
-                                </div>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
 
-                        <Card className="border-destructive">
-                            <CardHeader>
-                                <CardTitle className="text-destructive">Delete Account</CardTitle>
-                                <CardDescription>Permanently delete your account and all associated data. This action cannot be undone.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive">Delete My Account</Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete your
-                                                account and remove your data from our servers.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction className="bg-destructive hover:bg-destructive/90">Continue</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </CardContent>
-                        </Card>
+                            <Card className="border-2 border-destructive/20 bg-destructive/5 rounded-[2.5rem] overflow-hidden">
+                                <CardHeader className="p-10 pb-4">
+                                    <CardTitle className="text-destructive font-black">Danger Zone</CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-10 pt-0 space-y-6">
+                                    <p className="text-sm font-medium text-muted-foreground/80 leading-relaxed italic">
+                                        Once you delete your account, there is no going back. Please be certain.
+                                    </p>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" className="w-full h-14 rounded-2xl font-bold shadow-lg shadow-destructive/10">
+                                                Terminate Account
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent className="rounded-[2.5rem] p-10 border-none shadow-3xl">
+                                            <AlertDialogHeader className="space-y-4">
+                                                <AlertDialogTitle className="text-3xl font-black">Hold on!</AlertDialogTitle>
+                                                <AlertDialogDescription className="text-lg font-medium leading-relaxed font-serif italic">
+                                                    Are you absolutely sure you want to leave us? This will permanently delete your
+                                                    profile, booking history, and all account data.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter className="pt-8 gap-4">
+                                                <AlertDialogCancel className="h-14 rounded-2xl font-bold border-2">I changed my mind</AlertDialogCancel>
+                                                <AlertDialogAction className="h-14 rounded-2xl font-bold bg-destructive hover:bg-destructive/90 text-white">Yes, terminate account</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
                 </TabsContent>
             </Tabs>
+
+            {/* Hidden file input */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+            />
         </div>
     );
 }
