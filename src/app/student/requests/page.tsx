@@ -202,77 +202,79 @@ export default function StudentRequestsPage() {
         <h1 className="font-headline text-4xl font-black tracking-tight text-foreground underline decoration-primary/20 underline-offset-8 uppercase">
           Rental Requests
         </h1>
-        <p className="text-lg text-muted-foreground font-medium italic font-serif">
+        <p className="text-lg text-muted-foreground font-medium">
           &quot;Track your active rental applications and inquiries.&quot;
         </p>
       </div>
 
       {aggregatedRequests.length > 0 ? (
         <Card className="overflow-hidden border-2 border-foreground/5 bg-white shadow-xl rounded-[2.5rem]">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/30 border-none">
-                <TableHead className="px-8 font-bold text-foreground">Property</TableHead>
-                <TableHead className="font-bold text-foreground">Landlord</TableHead>
-                <TableHead className="font-bold text-foreground">Date Applied</TableHead>
-                <TableHead className="font-bold text-foreground">Status</TableHead>
-                <TableHead className="text-right px-8 font-bold text-foreground">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {aggregatedRequests.map(({ request, landlord, property }) => (
-                <TableRow key={request.id} className="border-muted/10 hover:bg-muted/5 transition-colors">
-                  <TableCell className="px-8 font-bold">
-                    <Link href={`/student/properties/${property?.id}`} className="hover:text-primary transition-colors">
-                      {property?.title || 'Unknown Property'}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="font-medium">{landlord?.name || 'N/A'}</TableCell>
-                  <TableCell className="font-medium text-muted-foreground">
-                    {new Date(request.applicationDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={cn(
-                      "rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border-none",
-                      request.status === 'approved' ? "bg-green-500/10 text-green-600" :
-                        request.status === 'declined' ? "bg-red-500/10 text-red-600" :
-                          "bg-primary/10 text-primary"
-                    )}>
-                      {request.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right px-8 space-x-2">
-                    {request.status === 'approved' && (
-                      <Button size="sm" className="rounded-xl font-bold" asChild>
-                        <Link href="/student/leases">View Lease</Link>
-                      </Button>
-                    )}
-                    {request.status === 'pending' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="rounded-xl font-bold"
-                        onClick={() => {
-                          setRequestToEdit(request);
-                          setEditMessage(request.messageToLandlord || '');
-                        }}
-                      >
-                        Edit
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="rounded-xl font-bold text-red-500 hover:bg-red-50"
-                      onClick={() => setRequestToDelete(request.id)}
-                    >
-                      {request.status === 'pending' ? 'Withdraw' : 'Clear'}
-                    </Button>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30 border-none">
+                  <TableHead className="px-8 font-bold text-foreground">Property</TableHead>
+                  <TableHead className="font-bold text-foreground">Landlord</TableHead>
+                  <TableHead className="font-bold text-foreground">Date Applied</TableHead>
+                  <TableHead className="font-bold text-foreground">Status</TableHead>
+                  <TableHead className="text-right px-8 font-bold text-foreground">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {aggregatedRequests.map(({ request, landlord, property }) => (
+                  <TableRow key={request.id} className="border-muted/10 hover:bg-muted/5 transition-colors text-[10px] sm:text-xs md:text-sm">
+                    <TableCell className="px-8 font-bold">
+                      <Link href={`/student/properties/${property?.id}`} className="hover:text-primary transition-colors whitespace-nowrap">
+                        {property?.title || 'Unknown Property'}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="font-medium whitespace-nowrap">{landlord?.name || 'N/A'}</TableCell>
+                    <TableCell className="font-medium text-muted-foreground whitespace-nowrap">
+                      {new Date(request.applicationDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={cn(
+                        "rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border-none",
+                        request.status === 'approved' ? "bg-green-500/10 text-green-600" :
+                          request.status === 'declined' ? "bg-red-500/10 text-red-600" :
+                            "bg-primary/10 text-primary"
+                      )}>
+                        {request.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right px-8 space-x-2 whitespace-nowrap">
+                      {request.status === 'approved' && (
+                        <Button size="sm" className="rounded-xl font-bold" asChild>
+                          <Link href="/student/leases">View Lease</Link>
+                        </Button>
+                      )}
+                      {request.status === 'pending' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl font-bold"
+                          onClick={() => {
+                            setRequestToEdit(request);
+                            setEditMessage(request.messageToLandlord || '');
+                          }}
+                        >
+                          Edit
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-xl font-bold text-red-500 hover:bg-red-50"
+                        onClick={() => setRequestToDelete(request.id)}
+                      >
+                        {request.status === 'pending' ? 'Withdraw' : 'Clear'}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </Card>
       ) : (
         <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
@@ -298,14 +300,14 @@ export default function StudentRequestsPage() {
         <AlertDialogContent className="w-[95vw] sm:max-w-md rounded-[2.5rem] border-none shadow-3xl p-10">
           <AlertDialogHeader className="space-y-4">
             <AlertDialogTitle className="text-3xl font-black">Archive Inquiry?</AlertDialogTitle>
-            <AlertDialogDescription className="text-lg font-medium text-muted-foreground italic font-serif">
-              Are you sure you want to withdraw this application? This protocol cannot be reversed.
+            <AlertDialogDescription className="text-lg font-medium text-muted-foreground">
+              Are you sure you want to withdraw this application? This action cannot be reversed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-4 mt-8">
             <AlertDialogCancel className="h-14 rounded-2xl border-2 font-black text-xs uppercase tracking-widest">RETAIN</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteRequest} className="h-14 rounded-2xl bg-red-500 text-white hover:bg-red-600 font-black text-xs uppercase tracking-widest shadow-xl shadow-red-500/20">
-              WITHDRAW INQUIRY
+              WITHDRAW APPLICATION
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -315,26 +317,26 @@ export default function StudentRequestsPage() {
       <Dialog open={!!requestToEdit} onOpenChange={(open) => !open && setRequestToEdit(null)}>
         <DialogContent className="sm:max-w-md w-[95vw] rounded-[2.5rem] border-none shadow-3xl p-10">
           <DialogHeader className="space-y-4">
-            <DialogTitle className="text-3xl font-black">Refine Inquiry</DialogTitle>
-            <DialogDescription className="text-lg font-medium text-muted-foreground italic font-serif">
-              Update your personal narrative for this application.
+            <DialogTitle className="text-3xl font-black">Edit Application</DialogTitle>
+            <DialogDescription className="text-lg font-medium text-muted-foreground">
+              Update your message to the landlord.
             </DialogDescription>
           </DialogHeader>
           <div className="py-8 space-y-3">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 ml-1">PROFILE NARRATIVE</label>
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 ml-1">MESSAGE</label>
             <Textarea
               value={editMessage}
               onChange={(e) => setEditMessage(e.target.value)}
-              placeholder="Introduced yourself and explain why you're a good fit..."
-              className="min-h-[200px] rounded-[2rem] border-2 bg-muted/5 focus:bg-white transition-all p-6 text-lg font-medium leading-relaxed font-serif italic"
+              placeholder="Introduce yourself and explain why you're a good fit..."
+              className="min-h-[200px] rounded-[2rem] border-2 bg-muted/5 focus:bg-white transition-all p-6 text-lg font-medium leading-relaxed"
             />
           </div>
           <DialogFooter className="gap-4">
-            <Button variant="ghost" className="h-14 rounded-2xl font-black text-xs uppercase tracking-widest underline underline-offset-8 decoration-primary/20 hover:decoration-primary" onClick={() => setRequestToEdit(null)}>DISCARD</Button>
-            <Button onClick={handleUpdateRequest} className="h-14 rounded-2xl px-10 font-black text-xs uppercase tracking-widest shadow-2xl shadow-primary/20">SAVE REFINEMENTS</Button>
+            <Button variant="ghost" className="h-14 rounded-2xl font-black text-xs uppercase tracking-widest" onClick={() => setRequestToEdit(null)}>CANCEL</Button>
+            <Button onClick={handleUpdateRequest} className="h-14 rounded-2xl px-10 font-black text-xs uppercase tracking-widest shadow-2xl shadow-primary/20">SAVE CHANGES</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div >
+    </div>
   );
 }

@@ -40,7 +40,7 @@ import { amenities as allAmenities } from '@/types';
 import { cn, formatPrice } from '@/utils';
 import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon, Sparkles, Building, Loader2, Ruler, AlertCircle } from 'lucide-react';
 import type { Property, UserProfile } from '@/types';
-import { format, addYears } from 'date-fns';
+import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { useRouter } from 'next/navigation';
 import { useFirestore, useUser, useFirebaseApp, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
@@ -126,19 +126,15 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const steps = [
-    { id: 1, name: 'Basic Info', fields: ['title', 'type'] },
-    { id: 2, name: 'Location & Finance', fields: ['address', 'country', 'city', 'state', 'zip', 'school', 'price', 'currency'] },
-    { id: 3, name: 'Specifications', fields: ['bedrooms', 'bathrooms', 'area'] },
-    { id: 4, name: 'Amenities', fields: ['amenities', 'rules'] },
-    { id: 5, name: 'Legal Blueprint', fields: ['leaseTemplate'] },
-    { id: 6, name: 'Visual Assets', fields: ['kitchenImage', 'livingRoomImage', 'bathroomImage', 'bedroomImage', 'otherImage'] },
-    { id: 7, name: 'Narrative', fields: ['description'] },
-    { id: 8, name: 'Validation' }
+    { id: 1, name: 'Basic Info & Price', fields: ['title', 'type', 'price', 'currency'] },
+    { id: 2, name: 'Location & Details', fields: ['address', 'country', 'city', 'state', 'zip', 'school', 'bedrooms', 'bathrooms', 'area'] },
+    { id: 3, name: 'Features & Amenities', fields: ['amenities', 'rules', 'description'] },
+    { id: 4, name: 'Images & Lease', fields: ['leaseTemplate', 'kitchenImage', 'livingRoomImage', 'bathroomImage', 'bedroomImage', 'otherImage'] }
 ];
 
 const FileUpload = ({ field, label, description, icon: Icon }: { field: any, label: string, description: string, icon: any }) => (
     <FormItem className="h-full">
-        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic flex items-center gap-2">
+        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
             <Icon className="h-3 w-3" /> {label}
         </FormLabel>
         <FormControl>
@@ -151,7 +147,7 @@ const FileUpload = ({ field, label, description, icon: Icon }: { field: any, lab
                             </div>
                             <div className="space-y-1">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-primary truncate max-w-[200px]">{field.value[0].name}</p>
-                                <Button type="button" variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); field.onChange(null); }} className="text-destructive font-black text-[10px] uppercase tracking-widest h-auto p-0 hover:bg-transparent">Purge Asset</Button>
+                                <Button type="button" variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); field.onChange(null); }} className="text-destructive font-black text-[10px] uppercase tracking-widest h-auto p-0 hover:bg-transparent">Remove Image</Button>
                             </div>
                         </div>
                     ) : (
@@ -164,7 +160,7 @@ const FileUpload = ({ field, label, description, icon: Icon }: { field: any, lab
                                     htmlFor={field.name}
                                     className="relative cursor-pointer rounded-md font-black text-[10px] uppercase tracking-widest text-foreground hover:text-primary transition-colors"
                                 >
-                                    <span>Integrate {label}</span>
+                                    <span>Add {label}</span>
                                     <input id={field.name} name={field.name} type="file" className="sr-only"
                                         accept="image/png, image/jpeg, image/webp"
                                         onChange={(e) => field.onChange(e.target.files)}
@@ -235,8 +231,8 @@ export default function AddPropertyPage() {
                 if (userProfile.country) {
                     setHasPrefilled(true);
                     toast({
-                        title: "Intelligence Cached",
-                        description: "Your profile coordinates have been synchronized.",
+                        title: "Location Updated",
+                        description: "Your location settings have been updated.",
                     });
                 }
             }
@@ -256,8 +252,8 @@ export default function AddPropertyPage() {
         const leaseText = generateLeaseTextForTemplate(propertyData);
         form.setValue('leaseTemplate', leaseText);
         toast({
-            title: "Legal Blueprint Re-initialized",
-            description: "The lease protocol has been reset to dynamic defaults.",
+            title: "Lease Template Updated",
+            description: "The lease template has been reset to defaults.",
         });
     };
 
@@ -315,15 +311,15 @@ export default function AddPropertyPage() {
             form.setValue('description', description);
 
             toast({
-                title: "Linguistic Logic Generated",
-                description: "AI has synthesized a professional descriptor for your asset.",
+                title: "Description Created",
+                description: "AI has generated a description for your property.",
             });
         } catch (error) {
             console.error('Error generating description:', error);
             toast({
                 variant: "destructive",
                 title: "Generation Failure",
-                description: "Manual input required for description protocol.",
+                description: "Manual input required for description.",
             });
         } finally {
             setIsGeneratingDescription(false);
@@ -393,14 +389,14 @@ export default function AddPropertyPage() {
             const docRef = await addDoc(collection(firestore, 'properties'), newPropertyData);
             await updateDoc(docRef, { id: docRef.id });
 
-            toast({ title: "Asset Deployed", description: "Your property has been integrated into the marketplace." });
+            toast({ title: "Property Added", description: "Your property is now listed in the marketplace." });
             router.push('/landlord/properties');
         } catch (e: any) {
             console.error("Error adding document: ", e);
             toast({
                 variant: "destructive",
                 title: "System Error",
-                description: "Asset deployment protocol interrupted.",
+                description: "Property submission failed. Please try again.",
             });
         } finally {
             setIsSubmitting(false);
@@ -415,19 +411,18 @@ export default function AddPropertyPage() {
                         <div className="p-2 rounded-xl bg-white shadow-lg border-2 border-primary/10">
                             <Building className="h-5 w-5 text-primary" />
                         </div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">ASSET DEPLOYMENT</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">ADD PROPERTY</p>
                     </div>
-                    <h1 className="font-headline text-5xl md:text-6xl font-black tracking-tight text-foreground uppercase">
-                        INITIATE <span className="text-primary italic">HOLDING</span>
+                    <h1 className="font-headline text-5xl md:text-7xl font-black tracking-tighter text-foreground uppercase leading-[0.9]">
+                        CREATE <br /> <span className="text-primary">PROPERTY</span>
                     </h1>
-                    <p className="text-lg text-muted-foreground font-medium italic font-serif">
-                        &quot;Configuring the structural and financial parameters of your new property asset.&quot;
+                    <p className="text-lg text-muted-foreground font-medium mt-4">
+                        Define your property details and rental terms.
                     </p>
                 </div>
                 <div className="flex gap-4">
                     <div className="bg-primary/5 px-8 py-4 rounded-[2rem] border-2 border-primary/10">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1 italic">Protocol Progress</p>
-                        <p className="text-3xl font-black text-primary">{Math.round((currentStep / totalSteps) * 100)}%</p>
+                        <p className="text-3xl font-black text-primary">{Math.round((currentStep / steps.length) * 100)}%</p>
                     </div>
                 </div>
             </div>
@@ -473,7 +468,7 @@ export default function AddPropertyPage() {
                                                     name="title"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Asset Title</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Title</FormLabel>
                                                             <FormControl>
                                                                 <Input placeholder="e.g., THE LUXE DOWNTOWN PENTHOUSE" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xl font-black uppercase tracking-tight" />
                                                             </FormControl>
@@ -486,7 +481,7 @@ export default function AddPropertyPage() {
                                                     name="type"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Structural Category</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Type</FormLabel>
                                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                                 <FormControl>
                                                                     <SelectTrigger className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus:ring-0 text-xs font-black uppercase tracking-widest">
@@ -516,7 +511,7 @@ export default function AddPropertyPage() {
                                                     name="address"
                                                     render={({ field }) => (
                                                         <FormItem className="md:col-span-2">
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Geographic Coordinates (Address)</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Address</FormLabel>
                                                             <FormControl>
                                                                 <Input placeholder="123 PRESTIGE BOULEVARD" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
                                                             </FormControl>
@@ -529,7 +524,7 @@ export default function AddPropertyPage() {
                                                     name="country"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Sovereign State</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Country</FormLabel>
                                                             <FormControl>
                                                                 <Combobox
                                                                     options={countries.map((c) => ({ label: c.name, value: c.name }))}
@@ -551,7 +546,7 @@ export default function AddPropertyPage() {
                                                     name="state"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Administrative Region</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">State</FormLabel>
                                                             <FormControl>
                                                                 <Combobox
                                                                     options={
@@ -575,7 +570,7 @@ export default function AddPropertyPage() {
                                                     name="city"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Urban Sector</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">City</FormLabel>
                                                             <FormControl>
                                                                 <Input placeholder="CITY NAME" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
                                                             </FormControl>
@@ -588,7 +583,7 @@ export default function AddPropertyPage() {
                                                     name="zip"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Postal Identification</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Zip Code</FormLabel>
                                                             <FormControl>
                                                                 <Input placeholder="ZIP CODE" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
                                                             </FormControl>
@@ -604,7 +599,7 @@ export default function AddPropertyPage() {
                                                     name="price"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Economic Yield (Price)</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Monthly Rent</FormLabel>
                                                             <FormControl>
                                                                 <Input type="number" placeholder="0.00" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-2xl font-black text-primary" />
                                                             </FormControl>
@@ -617,7 +612,7 @@ export default function AddPropertyPage() {
                                                     name="currency"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Monetary Protocol</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Currency</FormLabel>
                                                             <Select onValueChange={field.onChange} value={field.value}>
                                                                 <FormControl>
                                                                     <SelectTrigger className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus:ring-0 text-xs font-black uppercase tracking-widest">
@@ -647,7 +642,7 @@ export default function AddPropertyPage() {
                                                     name="bedrooms"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Sleeping Quarters</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Bedrooms</FormLabel>
                                                             <FormControl>
                                                                 <Input type="number" placeholder="0" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
                                                             </FormControl>
@@ -660,7 +655,7 @@ export default function AddPropertyPage() {
                                                     name="bathrooms"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Sanitary Suites</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Bathrooms</FormLabel>
                                                             <FormControl>
                                                                 <Input type="number" placeholder="0" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
                                                             </FormControl>
@@ -673,7 +668,7 @@ export default function AddPropertyPage() {
                                                     name="area"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Spatial Dimension (sqft)</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Area (sqft)</FormLabel>
                                                             <FormControl>
                                                                 <Input type="number" placeholder="0" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
                                                             </FormControl>
@@ -726,7 +721,7 @@ export default function AddPropertyPage() {
                                                 name="rules"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Conduct Protocol (Rules)</FormLabel>
+                                                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Rules</FormLabel>
                                                         <FormControl>
                                                             <Textarea placeholder="e.g., No smoking, Quiet hours after 10 PM" {...field} className="min-h-[150px] rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest p-6" />
                                                         </FormControl>
@@ -745,7 +740,7 @@ export default function AddPropertyPage() {
                                                     name="description"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Property Narrative (Description)</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Description</FormLabel>
                                                             <FormControl>
                                                                 <Textarea placeholder="Describe the essence of your property..." {...field} className="min-h-[150px] rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest p-6 leading-relaxed" />
                                                             </FormControl>
@@ -760,7 +755,7 @@ export default function AddPropertyPage() {
                                                     render={({ field }) => (
                                                         <FormItem>
                                                             <div className="flex items-center justify-between mb-4">
-                                                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 italic">Monetary & Legal Framework (Lease Template)</FormLabel>
+                                                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Lease Template</FormLabel>
                                                                 <Button
                                                                     type="button"
                                                                     variant="outline"
@@ -768,14 +763,14 @@ export default function AddPropertyPage() {
                                                                     onClick={generateLeaseTemplate}
                                                                     className="rounded-full text-[10px] font-black uppercase tracking-widest"
                                                                 >
-                                                                    Refresh Protocol
+                                                                    Reset Template
                                                                 </Button>
                                                             </div>
                                                             <FormControl>
                                                                 <Textarea {...field} rows={15} className="rounded-3xl bg-muted/5 border-2 border-dashed border-primary/20 focus-visible:border-primary focus-visible:bg-white text-[11px] font-mono leading-relaxed p-8 transition-all duration-500" />
                                                             </FormControl>
-                                                            <FormDescription className="text-[10px] font-medium italic mt-4 opacity-60">
-                                                                * This protocol will be cached as the immutable foundation for all future tenancy agreements.
+                                                            <FormDescription className="text-[10px] font-medium mt-4 opacity-60">
+                                                                * This template will be used for all future lease agreements.
                                                             </FormDescription>
                                                             <FormMessage />
                                                         </FormItem>
@@ -847,21 +842,21 @@ export default function AddPropertyPage() {
                                                     <Sparkles className="h-32 w-32" />
                                                 </div>
                                                 <div className="relative space-y-6">
-                                                    <h3 className="text-4xl font-black uppercase tracking-tighter leading-none italic">Asset Certification Review</h3>
+                                                    <h3 className="text-4xl font-black uppercase tracking-tighter leading-none">Asset Certification Review</h3>
                                                     <p className="text-white/60 text-xs font-black uppercase tracking-[0.2em]">Finalize deployment configurations</p>
                                                 </div>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative">
                                                     <div className="space-y-8">
                                                         <div>
-                                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 italic">Strategic Title</p>
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Strategic Title</p>
                                                             <p className="text-2xl font-black uppercase tracking-tight">{form.getValues('title')}</p>
                                                             <p className="text-white/60 text-xs mt-2 font-medium">{form.getValues('address')}, {form.getValues('city')}</p>
                                                         </div>
                                                         <Separator className="bg-white/10" />
                                                         <div className="grid grid-cols-2 gap-6">
                                                             <div>
-                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Economic Yield</p>
+                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Monthly Rent</p>
                                                                 <p className="text-xl font-black">{form.getValues('currency')} {form.getValues('price')}</p>
                                                             </div>
                                                             <div>
@@ -873,17 +868,17 @@ export default function AddPropertyPage() {
                                                     <div className="space-y-8 p-8 rounded-3xl bg-white/5 border border-white/10">
                                                         <div className="grid grid-cols-2 gap-8">
                                                             <div>
-                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 italic">Living Quarters</p>
+                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Living Quarters</p>
                                                                 <p className="text-2xl font-black">{form.getValues('bedrooms')} BED</p>
                                                             </div>
                                                             <div>
-                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 italic">Sanitary Suites</p>
+                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Sanitary Suites</p>
                                                                 <p className="text-2xl font-black">{form.getValues('bathrooms')} BATH</p>
                                                             </div>
                                                         </div>
                                                         <Separator className="bg-white/10" />
                                                         <div>
-                                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 italic">Spatial Volume</p>
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Spatial Volume</p>
                                                             <p className="text-3xl font-black">{form.getValues('area')} SQFT</p>
                                                         </div>
                                                     </div>

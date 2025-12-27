@@ -436,7 +436,7 @@ export default function TenancyDetailPage() {
                                 </ScrollArea>
                             </CardContent>
                             <div className="p-8 border-t border-muted/20 bg-muted/5 flex items-center justify-between">
-                                <p className="text-sm font-medium text-muted-foreground italic">
+                                <p className="text-sm font-medium text-muted-foreground">
                                     Last updated: {(() => {
                                         const dateValue = lease?.createdAt;
                                         if (!dateValue) return 'N/A';
@@ -486,7 +486,7 @@ export default function TenancyDetailPage() {
                                     </div>
                                     <div className="space-y-2">
                                         <h4 className="font-black text-xl tracking-tight">Need a Change?</h4>
-                                        <p className="text-sm font-medium text-muted-foreground/80 font-serif leading-relaxed italic">
+                                        <p className="text-sm font-medium text-muted-foreground/80 leading-relaxed">
                                             &quot;If you need to discuss lease terms or request an amendment, please contact your landlord directly.&quot;
                                         </p>
                                     </div>

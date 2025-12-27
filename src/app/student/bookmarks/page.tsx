@@ -50,8 +50,8 @@ export default function BookmarksPage() {
         <div className="space-y-8 animate-in fade-in duration-1000">
             {/* Simple Header */}
             <div className="flex flex-col gap-2">
-                <h1 className="font-headline text-3xl md:text-4xl font-black tracking-tight text-foreground uppercase italic px-1">
-                    Bookmarked <span className="text-primary italic">Places.</span>
+                <h1 className="font-headline text-3xl md:text-4xl font-black tracking-tight text-foreground uppercase px-1">
+                    Bookmarked <span className="text-primary">Places.</span>
                 </h1>
                 <div className="h-1 w-12 bg-primary rounded-full ml-1" />
             </div>
@@ -95,15 +95,15 @@ export default function BookmarksPage() {
                             </div>
                         </div>
                         <div className="space-y-4">
-                            <h2 className="text-3xl font-black uppercase tracking-tight">Curate Your <span className="text-primary italic">Future</span></h2>
-                            <p className="text-lg text-muted-foreground font-serif italic leading-relaxed">
+                            <h2 className="text-3xl font-black uppercase tracking-tight">Curate Your <span className="text-primary">Future</span></h2>
+                            <p className="text-lg text-muted-foreground leading-relaxed">
                                 {bookmarkedProperties.length === 0
                                     ? "Your personal gallery of premium dwellings is currently blank. Explore our collection and begin your curation."
-                                    : "Our archives don't match your current search criteria. Perhaps a different inquiry?"}
+                                    : "Our collection doesn't match your current search criteria. Perhaps a different search?"}
                             </p>
                         </div>
                         <Button size="lg" className="h-16 rounded-2xl px-12 font-black text-xs uppercase tracking-widest shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all" asChild>
-                            <Link href="/student/properties">{bookmarkedProperties.length === 0 ? "START CURATION" : "CLEAR ARCHIVES"}</Link>
+                            <Link href="/student/properties">{bookmarkedProperties.length === 0 ? "START CURATION" : "CLEAR SEARCH"}</Link>
                         </Button>
                     </div>
                 </div>

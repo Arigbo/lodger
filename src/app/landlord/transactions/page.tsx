@@ -37,7 +37,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import type { Transaction, UserProfile as User, Property } from '@/types';
 import { formatPrice, cn } from '@/utils';
-import { DollarSign, ExternalLink, MoreHorizontal, Download, Calendar as CalendarIcon, X as ClearIcon, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { DollarSign, ExternalLink, MoreHorizontal, Download, Calendar as CalendarIcon, X as ClearIcon, TrendingUp, TrendingDown, Wallet, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { DateRange } from 'react-day-picker';
 import { addDays, format } from "date-fns";
@@ -237,10 +237,13 @@ Total: ${formatPrice(transaction.transaction.amount, transaction.transaction.cur
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-headline text-2xl sm:text-3xl font-bold">Transactions</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            View, filter, and export your payment history.
-          </p>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">Revenue Tracking</span>
+          </div>
+          <h1 className="font-headline text-5xl md:text-6xl font-black tracking-tighter text-foreground uppercase leading-tight">
+            YOUR <br /> <span className="text-primary">FINANCES</span>
+          </h1>
         </div>
         <Button onClick={handleDownloadReport} className="w-full sm:w-auto">
           <Download className="mr-2 h-4 w-4" />
@@ -365,84 +368,73 @@ Total: ${formatPrice(transaction.transaction.amount, transaction.transaction.cur
         </CardHeader>
         <CardContent>
           {filteredTransactions.length > 0 ? (
-            <div className="w-full overflow-x-auto">
-              <div className="inline-block min-w-full">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Tenant</TableHead>
-                      <TableHead className="hidden md:table-cell text-xs sm:text-sm whitespace-nowrap">Property</TableHead>
-                      <TableHead className="text-xs sm:text-sm whitespace-nowrap">Date</TableHead>
-                      <TableHead className="hidden sm:table-cell text-xs sm:text-sm whitespace-nowrap">Type</TableHead>
-                      <TableHead className="text-xs sm:text-sm whitespace-nowrap text-right">Amount</TableHead>
-                      <TableHead className="text-xs sm:text-sm whitespace-nowrap text-center">Status</TableHead>
-                      <TableHead className="text-xs sm:text-sm"><span className="sr-only">Actions</span></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTransactions.map(({ transaction, tenant, property }) => {
-                      return (
-                        <TableRow key={transaction.id}>
-                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4">
-                            <Link href={`/landlord/tenants/${tenant?.id}`} className="font-medium hover:underline flex items-center gap-1 sm:gap-2 line-clamp-1">
-                              {tenant?.name} <ExternalLink className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
-                            </Link>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell text-xs sm:text-sm py-2 sm:py-4">
-                            <Link href={`/landlord/properties/${property?.id}`} className="text-muted-foreground hover:underline line-clamp-2">
-                              {property?.title}
-                            </Link>
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                          <TableCell className="hidden sm:table-cell text-xs sm:text-sm py-2 sm:py-4 text-muted-foreground whitespace-nowrap">{transaction.type}</TableCell>
-                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4 text-right font-medium whitespace-nowrap">{formatPrice(transaction.amount, transaction.currency)}</TableCell>
-                          <TableCell className="text-xs sm:text-sm py-2 sm:py-4 text-center">
-                            <Badge variant={
-                              transaction.status === 'Completed' ? 'secondary'
-                                : transaction.status === 'Pending' ? 'default'
-                                  : 'destructive'
-                            }>
-                              {transaction.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button aria-haspopup="true" size="icon" variant="ghost">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Toggle menu</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleDownloadReceipt(transaction.id)}>
-                                  <Download className="mr-2 h-4 w-4" />
-                                  Download Receipt
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+            <div className="overflow-x-auto -mx-6 px-6">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30 border-none">
+                    <TableHead className="px-6 font-bold text-foreground">Tenant</TableHead>
+                    <TableHead className="hidden md:table-cell font-bold text-foreground">Property</TableHead>
+                    <TableHead className="font-bold text-foreground">Date</TableHead>
+                    <TableHead className="hidden sm:table-cell font-bold text-foreground">Type</TableHead>
+                    <TableHead className="text-right font-bold text-foreground">Amount</TableHead>
+                    <TableHead className="text-center font-bold text-foreground">Status</TableHead>
+                    <TableHead className="text-right px-6 font-bold text-foreground">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
             </div>
+                      </TableCell>
+        <TableCell className="hidden md:table-cell text-sm font-medium text-muted-foreground">{t.property?.title || 'Deleted Property'}</TableCell>
+        <TableCell className="text-sm font-medium">
+          {t.transaction.date ? format(new Date(t.transaction.date), 'MMM dd, yyyy') : 'N/A'}
+        </TableCell>
+        <TableCell className="hidden sm:table-cell">
+          <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[10px] font-black uppercase tracking-widest border-muted/20">
+            {t.transaction.type}
+          </Badge>
+        </TableCell>
+        <TableCell className="text-right font-black text-sm">
+          {formatPrice(t.transaction.amount, t.transaction.currency)}
+        </TableCell>
+        <TableCell className="text-center">
+          <Badge className={cn(
+            "rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border-none",
+            t.transaction.status === 'Completed' ? "bg-green-500/10 text-green-600" :
+              t.transaction.status === 'Pending' ? "bg-amber-500/10 text-amber-600" :
+                "bg-destructive/10 text-destructive"
+          )}>
+            {t.transaction.status}
+          </Badge>
+        </TableCell>
+        <TableCell className="text-right px-6">
+          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/5 group" asChild>
+            <Link href={`/landlord/transactions/${t.transaction.id}`}>
+              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            </Link>
+          </Button>
+        </TableCell>
+      </TableRow>
+                  ))}
+    </TableBody>
+              </Table >
+            </div >
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-background">
-                <DollarSign className="h-10 w-10 text-muted-foreground" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">No Transactions Found</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Your transactions will appear here. Try adjusting your filters.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <div className="flex flex-col items-center justify-center py-24 text-center">
+      <div className="relative mb-8">
+        <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150" />
+        <div className="relative flex h-24 w-24 items-center justify-center rounded-[2rem] bg-muted/30">
+          <DollarSign className="h-10 w-10 text-primary opacity-20" />
+        </div>
+      </div>
+      <h3 className="text-2xl font-black tracking-tight">No Transactions Found</h3>
+      <p className="mx-auto mt-2 max-w-sm text-muted-foreground font-medium">
+        Try adjusting your filters or check back later for new activity.
+      </p>
     </div>
+  )
+}
+        </CardContent >
+      </Card >
+    </div >
   );
 }
 

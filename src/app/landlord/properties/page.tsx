@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { MoreHorizontal, PlusCircle, Building, Search, Filter, ArrowUpDown, Trash2, Edit3, Eye, User as UserIcon, MapPin, DollarSign, ArrowRight } from 'lucide-react';
+import { MoreHorizontal, Plus, PlusCircle, Building, Search, Filter, ArrowUpDown, Trash2, Edit3, Eye, User as UserIcon, MapPin, DollarSign, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc, getDoc, getDocs, deleteDoc } from 'firebase/firestore';
@@ -154,26 +154,24 @@ export default function LandlordPropertiesPage() {
   return (
     <div className="space-y-12 pb-32 animate-in fade-in duration-1000">
       {/* Elegant Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b-4 border-foreground/5">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <div className="h-2 w-2 rounded-full bg-primary" />
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">ASSET DIRECTORY</p>
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">Inventory Management</span>
           </div>
-          <h1 className="font-headline text-5xl md:text-6xl font-black tracking-tight text-foreground uppercase">
-            VIRTUAL <span className="text-primary italic">HOLDINGS</span>
+          <h1 className="font-headline text-5xl md:text-7xl font-black tracking-tighter text-foreground uppercase leading-[0.9]">
+            YOUR <br /> <span className="text-primary">PROPERTIES</span>
           </h1>
-          <p className="text-lg text-muted-foreground font-medium italic font-serif">
-            &quot;Managing {enhancedProperties.length} high-yield properties in your current portfolio.&quot;
-          </p>
         </div>
-        <Button asChild className="h-16 rounded-3xl px-10 bg-foreground text-white hover:bg-primary shadow-2xl transition-all hover:scale-105 active:scale-95 font-black text-xs uppercase tracking-widest gap-4">
-          <Link href="/landlord/properties/new">
-            <PlusCircle className="h-5 w-5" /> EXPAND PORTFOLIO
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-4">
+          <Button asChild size="lg" className="h-16 rounded-2xl px-12 font-black text-xs uppercase tracking-widest shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all bg-primary">
+            <Link href="/landlord/properties/new">
+              <Plus className="mr-2 h-5 w-5" /> CREATE PROPERTY
+            </Link>
+          </Button>
+        </div>
       </div>
-
       {/* Premium Filter Architecture */}
       <div className="flex flex-col md:flex-row gap-6 bg-white/50 backdrop-blur-xl p-8 rounded-[2.5rem] border-2 border-foreground/5 shadow-2xl sticky top-4 z-40">
         <div className="relative flex-1 group">
@@ -269,11 +267,11 @@ export default function LandlordPropertiesPage() {
                   <CardContent className="p-8 space-y-8 flex-grow">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-4 rounded-2xl bg-muted/20 border-2 border-transparent hover:border-primary/10 transition-colors">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 italic mb-1">YIELD RATE</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">MONTHLY RENT</p>
                         <p className="text-lg font-black text-primary">{formatPrice(property.price, property.currency)}/mo</p>
                       </div>
                       <div className="p-4 rounded-2xl bg-muted/20 border-2 border-transparent hover:border-primary/10 transition-colors">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 italic mb-1">RESIDENT</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">TENANT</p>
                         <p className="text-sm font-black truncate">{property.tenantName || 'VACANT'}</p>
                       </div>
                     </div>
@@ -284,7 +282,7 @@ export default function LandlordPropertiesPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[8px] font-black uppercase tracking-widest text-white/40">TENANT STATUS</p>
-                        <p className="text-xs font-bold truncate">{property.tenantName ? `Active Lease: ${property.tenantName}` : 'Awaiting New Resident'}</p>
+                        <p className="text-xs font-bold truncate">{property.tenantName ? `Active Lease: ${property.tenantName}` : 'Awaiting New Tenant'}</p>
                       </div>
                       <Link href={`/landlord/properties/${property.id}`}>
                         <Button size="icon" variant="ghost" className="rounded-xl hover:bg-white/10 text-white">
@@ -307,8 +305,8 @@ export default function LandlordPropertiesPage() {
             </div>
           </div>
           <div className="space-y-4 max-w-sm mx-auto">
-            <h3 className="text-4xl font-black italic uppercase tracking-tighter">NO ASSETS FOUND</h3>
-            <p className="text-xl text-muted-foreground font-serif italic leading-relaxed">
+            <h3 className="text-4xl font-black uppercase tracking-tighter">NO ASSETS FOUND</h3>
+            <p className="text-xl text-muted-foreground font-medium leading-relaxed">
               &quot;Your digital property portfolio is currently empty. Initiate your first asset protocol to begin.&quot;
             </p>
           </div>
@@ -325,7 +323,7 @@ export default function LandlordPropertiesPage() {
               <Trash2 className="h-8 w-8" />
             </div>
             <AlertDialogTitle className="text-3xl font-black uppercase tracking-tight text-center">DECOMMISSION ASSET?</AlertDialogTitle>
-            <AlertDialogDescription className="text-lg text-center font-serif italic">
+            <AlertDialogDescription className="text-lg text-center font-medium">
               This action is permanent and will remove all telemetry data associated with this holding. All pending applicants will be notified of the withdrawal.
             </AlertDialogDescription>
           </AlertDialogHeader>

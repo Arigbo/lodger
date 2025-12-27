@@ -45,32 +45,19 @@ export default function AboutPage() {
     return (
         <div className="flex flex-col min-h-screen bg-background">
             {/* Premium Hero Section */}
-            <section className="relative pt-16 sm:pt-24 md:pt-32 pb-24 sm:pb-32 md:pb-48 overflow-hidden">
+            <section className="relative pt-8 sm:pt-12 md:pt-16 pb-12 sm:pb-16 md:pb-20 overflow-hidden">
                 <div className="absolute inset-0 z-0">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-secondary/20" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10" />
                     <div className="hidden sm:block absolute top-0 right-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-primary/10 rounded-full blur-[120px] -mr-40 sm:-mr-48 -mt-40 sm:-mt-48 animate-pulse" />
                     <div className="hidden sm:block absolute bottom-0 left-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-blue-500/10 rounded-full blur-[120px] -ml-40 sm:-ml-48 -mb-40 sm:-mb-48 animate-pulse" />
                 </div>
 
-                <div className="container relative z-10 mx-auto px-4 text-center">
-                    <h1 className="font-headline text-3xl sm:text-5xl md:text-8xl font-extrabold tracking-tight text-foreground leading-[1.1] mb-6 sm:mb-8 animate-in fade-in slide-in-from-top-12 duration-1000 fill-mode-both">
-                        The New Standard of <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-600 to-primary bg-[length:200%_auto] animate-gradient-x">Student Living</span>
-                    </h1>
-
-                    <p className="mt-4 sm:mt-6 mx-auto max-w-2xl text-base sm:text-xl md:text-2xl text-muted-foreground leading-relaxed animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-300 fill-mode-both">
-                        Lodger was born from a vision to redefine the student housing experience. We are building the bridge between ambition and the perfect living space.
-                    </p>
-
-                    <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-6 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-500 fill-mode-both">
-                        <Button asChild size="lg" className="h-14 sm:h-16 px-6 sm:px-10 text-base sm:text-xl rounded-xl sm:rounded-2xl shadow-2xl shadow-primary/20 hover:shadow-primary/40 transition-all hover:-translate-y-1 w-full sm:w-auto">
-                            <Link href="/student/properties">Find Your Home</Link>
-                        </Button>
-                        <Button asChild size="lg" variant="outline" className="h-14 sm:h-16 px-6 sm:px-10 text-base sm:text-xl rounded-xl sm:rounded-2xl bg-background/50 backdrop-blur-sm border-2 hover:bg-background/80 transition-all hover:-translate-y-1 w-full sm:w-auto">
-                            <Link href="/landlord">List for Free</Link>
-                        </Button>
-                    </div>
-                </div>
+        <div className="container relative z-10 mx-auto px-4">
+            <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight mb-4">About Lodger</h1>
+            <p className="text-lg text-muted-foreground max-w-3xl">
+                The new standard of student living. Lodger is a technology-driven platform connecting students with verified landlords.
+            </p>
+        </div>
             </section>
 
             {/* Mission Section */}

@@ -247,8 +247,8 @@ export default function PropertiesPage() {
             {/* Simple Search & Filter Section */}
             <div className="space-y-6">
                 <div className="flex flex-col gap-2">
-                    <h1 className="font-headline text-3xl md:text-4xl font-black tracking-tight text-foreground uppercase italic px-1">
-                        Find <span className="text-primary italic">Property.</span>
+                    <h1 className="font-headline text-3xl md:text-4xl font-black tracking-tight text-foreground uppercase px-1">
+                        Find <span className="text-primary">Property.</span>
                     </h1>
                     <div className="h-1 w-12 bg-primary rounded-full ml-1" />
                 </div>
@@ -348,7 +348,7 @@ export default function PropertiesPage() {
                                 </div>
                             </div>
                             <h3 className="text-4xl font-black tracking-tight">No properties found</h3>
-                            <p className="mx-auto mt-6 max-w-sm text-xl font-medium text-muted-foreground/80 leading-relaxed font-serif italic">
+                            <p className="mx-auto mt-6 max-w-sm text-xl font-medium text-muted-foreground/80 leading-relaxed">
                                 &quot;Adjust your search or broad filters to find more premium accommodations in your area.&quot;
                             </p>
                             <Button size="lg" variant="outline" className="mt-12 rounded-2xl px-12 h-14 font-black text-lg border-primary/20 hover:bg-primary/5" onClick={resetFilters}>

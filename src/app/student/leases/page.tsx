@@ -136,8 +136,8 @@ export default function StudentLeasesPage() {
           <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight text-foreground underline decoration-primary/20 underline-offset-8">
             LEASES
           </h1>
-          <p className="text-lg text-muted-foreground font-medium italic font-serif">
-            &quot;Your legal archives and active agreements.&quot;
+          <p className="text-lg text-muted-foreground font-medium">
+            View and manage your lease agreements.
           </p>
         </div>
         <div className="px-6 py-3 bg-primary/5 rounded-2xl border-2 border-primary/10 flex items-center gap-3">
@@ -159,7 +159,7 @@ export default function StudentLeasesPage() {
                       {lease.status}
                     </Badge>
                     <h3 className="text-2xl font-black tracking-tight group-hover:text-primary transition-colors">
-                      {property?.title || 'Unknown Asset'}
+                      {property?.title || 'Unknown Property'}
                     </h3>
                     <p className="text-muted-foreground font-medium text-sm flex items-center gap-2">
                       <FileText className="h-4 w-4 opacity-40" />
@@ -167,18 +167,18 @@ export default function StudentLeasesPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em] mb-1 italic">LANDLORD</p>
+                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em] mb-1">LANDLORD</p>
                     <p className="font-bold text-lg">{landlord?.name || 'Anonymous'}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6 p-6 rounded-3xl bg-muted/20 border-2 border-white">
                   <div>
-                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1 italic">TERM START</p>
+                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">TERM START</p>
                     <p className="font-black text-lg">{new Date(lease.startDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1 italic">TERM END</p>
+                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">TERM END</p>
                     <p className="font-black text-lg">{new Date(lease.endDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                   </div>
                 </div>
@@ -186,8 +186,8 @@ export default function StudentLeasesPage() {
                 <div className="flex flex-wrap items-center justify-between gap-6 pt-4">
                   <div className="flex items-center gap-4">
                     <div className={cn("h-3 w-3 rounded-full animate-pulse", lease.status === 'active' ? "bg-green-500" : "bg-muted/40")} />
-                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground/60 italic">
-                      {lease.status === 'active' ? 'PROTECTED TERMS' : 'ARCHIVED TERMS'}
+                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground/60">
+                      {lease.status === 'active' ? 'ACTIVE LEASE' : 'EXPIRED LEASE'}
                     </span>
                   </div>
 
@@ -218,9 +218,9 @@ export default function StudentLeasesPage() {
             </div>
           </div>
           <div className="space-y-3">
-            <h3 className="text-3xl font-black italic">No Legal Records</h3>
-            <p className="text-lg text-muted-foreground font-serif italic max-w-md mx-auto">
-              &quot;Your digital lease vault is currently awaiting its first legal instrument.&quot;
+            <h3 className="text-3xl font-black">No Leases Found</h3>
+            <p className="text-lg text-muted-foreground max-w-md mx-auto">
+              You don&apos;t have any lease agreements yet.
             </p>
           </div>
           <Link href="/student/properties">

@@ -321,7 +321,7 @@ export default function PaymentDialog({
                     </div>
 
                     <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                      <p className="text-xs font-bold text-amber-700 leading-relaxed text-center italic">
+                      <p className="text-xs font-bold text-amber-700 leading-relaxed text-center">
                         Note: Your receipt will be verified within 24 hours. Please contact your landlord directly to confirm the transfer.
                       </p>
                     </div>

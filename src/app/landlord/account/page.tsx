@@ -339,385 +339,356 @@ export default function AccountPage() {
     }
 
     return (
-        <div>
-            <div className="mb-8">
-                <h1 className="font-headline text-3xl font-bold">Account Settings</h1>
-                <p className="text-muted-foreground">Manage your profile, password, and notification settings.</p>
+        <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-700">
+            {/* Header Section */}
+            <div className="relative overflow-hidden rounded-[3rem] bg-muted/30 p-10 md:p-14 border-2 border-white/40 shadow-xl shadow-black/[0.02]">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
+                <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
+                    <div className="relative group">
+                        <Avatar className="h-32 w-32 md:h-40 md:w-40 border-8 border-white shadow-2xl transition-transform duration-500 group-hover:scale-105">
+                            <AvatarImage src={previewImage || userProfile?.profileImageUrl} className="object-cover" />
+                            <AvatarFallback className="bg-muted text-4xl">
+                                <User className="h-16 w-16 text-muted-foreground/40" />
+                            </AvatarFallback>
+                        </Avatar>
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                            className="absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white shadow-xl hover:scale-110 active:scale-95 transition-all"
+                        >
+                            <Pencil className="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    <div className="space-y-4 text-center md:text-left">
+                        <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight text-foreground uppercase">
+                            Account <span className="text-primary">Settings.</span>
+                        </h1>
+                        <p className="max-w-md text-lg font-medium text-muted-foreground/80 leading-relaxed font-sans">
+                            Manage your landlord profile, payment configurations, and security preferences.
+                        </p>
+                    </div>
+                </div>
             </div>
-            <Tabs defaultValue="profile" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 max-w-md">
-                    <TabsTrigger value="profile">Profile</TabsTrigger>
-                    <TabsTrigger value="settings">Settings</TabsTrigger>
+
+            <Tabs defaultValue="profile" className="w-full space-y-10">
+                <TabsList className="h-16 w-full max-w-md grid grid-cols-2 p-1 bg-muted/30 rounded-3xl border-2 border-white/40 shadow-inner">
+                    <TabsTrigger value="profile" className="rounded-[1.25rem] font-black text-sm uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-lg transition-all">
+                        Profile
+                    </TabsTrigger>
+                    <TabsTrigger value="settings" className="rounded-[1.25rem] font-black text-sm uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-lg transition-all">
+                        Operations
+                    </TabsTrigger>
                 </TabsList>
-                <TabsContent value="profile">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Public Profile</CardTitle>
-                            <CardDescription>This is how other users will see you on the site. Complete your profile to attract more tenants.</CardDescription>
+
+                <TabsContent value="profile" className="space-y-10 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <Card className="border-none bg-white shadow-xl shadow-black/[0.02] rounded-[2.5rem] overflow-hidden">
+                        <CardHeader className="p-10 border-b border-muted/20">
+                            <CardTitle className="text-2xl font-black uppercase">Professional Identity</CardTitle>
+                            <CardDescription className="text-lg font-medium text-muted-foreground/60">This information is visible to tenants during the application process.</CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-10">
                             <Form {...profileForm}>
-                                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-                                        <Avatar className="h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 mx-auto sm:mx-0">
-                                            <AvatarImage src={previewImage || userProfile.profileImageUrl} />
-                                            <AvatarFallback>
-                                                <User className="h-10 w-10 text-muted-foreground" />
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="grid gap-2 w-full">
-                                            <div className="flex items-center gap-2">
-                                                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                                                    {isUploading ? 'Uploading...' : <><Pencil className="mr-2 h-4 w-4" /> Edit DP</>}
-                                                </Button>
-                                                {(previewImage || userProfile.profileImageUrl) && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                        onClick={async () => {
-                                                            if (!confirm("Are you sure you want to remove your profile picture?")) return;
-                                                            try {
-                                                                if (userDocRef) {
-                                                                    await setDoc(userDocRef, { profileImageUrl: null }, { merge: true });
-                                                                    setPreviewImage(null);
-                                                                    toast({ title: "Image Removed", description: "Profile picture deleted." });
-                                                                }
-                                                            } catch (error) {
-                                                                console.error("Error removing image:", error);
-                                                                toast({ variant: "destructive", title: "Error", description: "Failed to remove image." });
-                                                            }
-                                                        }}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                            <p className="text-xs text-muted-foreground">Upload a real photo to build trust.</p>
-                                            <input
-                                                type="file"
-                                                ref={fileInputRef}
-                                                onChange={handleImageUpload}
-                                                className="hidden"
-                                                accept="image/png, image/jpeg"
-                                            />
-                                        </div>
-                                    </div>
-                                    <FormField
-                                        control={profileForm.control}
-                                        name="name"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Full Name</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Your name" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={profileForm.control}
-                                        name="email"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Email Address</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="your@email.com" {...field} disabled />
-                                                </FormControl>
-                                                <FormDescription>Your email address is not displayed publicly.</FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={profileForm.control}
-                                        name="phone"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Phone Number</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="(123) 456-7890" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-10">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                                         <FormField
                                             control={profileForm.control}
-                                            name="country"
+                                            name="name"
                                             render={({ field }) => (
-                                                <FormItem className="flex flex-col">
-                                                    <FormLabel>Country</FormLabel>
-                                                    <Combobox
-                                                        options={countries.map(c => ({ label: c.name, value: c.name }))}
-                                                        value={field.value}
-                                                        onChange={(val) => {
-                                                            field.onChange(val);
-                                                            // Auto-suggest currency
-                                                            const suggestedCurrency = getCurrencyByCountry(val);
-                                                            if (suggestedCurrency) {
-                                                                profileForm.setValue('currency', suggestedCurrency);
-                                                            }
-                                                            profileForm.setValue('state', ''); // Reset state on country change
-                                                        }}
-                                                        placeholder="Select country"
-                                                    />
+                                                <FormItem className="space-y-3">
+                                                    <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Full Name</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Enter your business name or full name" className="h-14 rounded-2xl border-2 bg-muted/10 focus:bg-white focus:ring-4 focus:ring-primary/10 font-bold" {...field} />
+                                                    </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
                                         <FormField
                                             control={profileForm.control}
-                                            name="state"
+                                            name="phone"
                                             render={({ field }) => (
-                                                <FormItem className="flex flex-col">
-                                                    <FormLabel>State/Province</FormLabel>
-                                                    <Combobox
-                                                        options={countries.find(c => c.name === profileForm.watch('country'))?.states.map(s => ({ label: s.name, value: s.name })) || []}
-                                                        value={field.value}
-                                                        onChange={field.onChange}
-                                                        placeholder="Select state"
-                                                        disabled={!profileForm.watch('country')}
-                                                    />
+                                                <FormItem className="space-y-3">
+                                                    <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Contact Number</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="(555) 000-0000" className="h-14 rounded-2xl border-2 bg-muted/10 focus:bg-white focus:ring-4 focus:ring-primary/10 font-bold" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={profileForm.control}
+                                            name="email"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-3 md:col-span-2">
+                                                    <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Primary Email</FormLabel>
+                                                    <FormControl>
+                                                        <Input className="h-14 rounded-2xl border-2 bg-muted/10 opacity-60 font-bold" {...field} disabled />
+                                                    </FormControl>
+                                                    <FormDescription className="text-muted-foreground/60 font-medium">Verified architectural contact for legal notifications.</FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={profileForm.control}
+                                            name="bio"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-3 md:col-span-2">
+                                                    <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Portfolio Description</FormLabel>
+                                                    <FormControl>
+                                                        <Textarea
+                                                            placeholder="Describe your management style or property portfolio..."
+                                                            className="min-h-[120px] rounded-2xl border-2 bg-muted/10 focus:bg-white focus:ring-4 focus:ring-primary/10 font-bold resize-none"
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
                                     </div>
-                                    <FormField
-                                        control={profileForm.control}
-                                        name="currency"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Preferred Currency</FormLabel>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+                                        <FormField control={profileForm.control} name="country" render={({ field }) => (
+                                            <FormItem className="flex flex-col space-y-3">
+                                                <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Country</FormLabel>
+                                                <Combobox
+                                                    options={countries.map(c => ({ label: c.name, value: c.name }))}
+                                                    value={field.value}
+                                                    onChange={(val) => {
+                                                        field.onChange(val);
+                                                        const suggestedCurrency = getCurrencyByCountry(val);
+                                                        if (suggestedCurrency) {
+                                                            profileForm.setValue('currency', suggestedCurrency);
+                                                        }
+                                                        profileForm.setValue('state', '');
+                                                    }}
+                                                    placeholder="Select country"
+                                                />
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
+                                        <FormField control={profileForm.control} name="state" render={({ field }) => (
+                                            <FormItem className="flex flex-col space-y-3">
+                                                <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Region</FormLabel>
+                                                <Combobox
+                                                    options={countries.find(c => c.name === profileForm.watch('country'))?.states.map(s => ({ label: s.name, value: s.name })) || []}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Select state"
+                                                    disabled={!profileForm.watch('country')}
+                                                />
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
+                                        <FormField control={profileForm.control} name="currency" render={({ field }) => (
+                                            <FormItem className="space-y-3">
+                                                <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Primary Currency</FormLabel>
                                                 <Select onValueChange={field.onChange} value={field.value || 'USD'}>
                                                     <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select currency" />
+                                                        <SelectTrigger className="h-14 rounded-2xl border-2 bg-muted/10 font-bold">
+                                                            <SelectValue placeholder="USD" />
                                                         </SelectTrigger>
                                                     </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="USD">USD - US Dollar</SelectItem>
-                                                        <SelectItem value="NGN">NGN - Nigerian Naira</SelectItem>
-                                                        <SelectItem value="GHS">GHS - Ghanaian Cedi</SelectItem>
-                                                        <SelectItem value="KES">KES - Kenyan Shilling</SelectItem>
-                                                        <SelectItem value="GBP">GBP - British Pound</SelectItem>
-                                                        <SelectItem value="EUR">EUR - Euro</SelectItem>
+                                                    <SelectContent className="rounded-2xl border-none shadow-3xl p-2">
+                                                        <SelectItem value="USD" className="rounded-xl py-3 font-bold">USD - US Dollar</SelectItem>
+                                                        <SelectItem value="NGN" className="rounded-xl py-3 font-bold">NGN - Nigerian Naira</SelectItem>
+                                                        <SelectItem value="GHS" className="rounded-xl py-3 font-bold">GHS - Ghanaian Cedi</SelectItem>
+                                                        <SelectItem value="KES" className="rounded-xl py-3 font-bold">KES - Kenyan Shilling</SelectItem>
+                                                        <SelectItem value="GBP" className="rounded-xl py-3 font-bold">GBP - British Pound</SelectItem>
+                                                        <SelectItem value="EUR" className="rounded-xl py-3 font-bold">EUR - Euro</SelectItem>
                                                     </SelectContent>
                                                 </Select>
-                                                <FormDescription>Your preferred currency for receiving payments and viewing dashboards.</FormDescription>
                                                 <FormMessage />
                                             </FormItem>
-                                        )}
-                                    />
-                                    <Button type="submit">Update Profile</Button>
+                                        )} />
+                                    </div>
+
+                                    <div className="pt-8 border-t border-muted/10">
+                                        <Button type="submit" size="lg" className="h-16 px-12 rounded-[1.25rem] font-black text-lg shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 transition-all">
+                                            UPDATE PROFILE
+                                        </Button>
+                                    </div>
                                 </form>
                             </Form>
                         </CardContent>
                     </Card>
                 </TabsContent>
-                <TabsContent value="settings">
-                    <div className="space-y-8">
-                        {/* Payout Settings Card */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Payout Settings</CardTitle>
-                                <CardDescription>Connect your bank account to receive rent payments directly.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {userProfile?.stripeAccountId ? (
-                                    <>
-                                        {stripeAccountStatus.status === 'checking' && (
-                                            <div className="flex items-center gap-3 p-4 border rounded-lg">
-                                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
-                                                <p className="text-sm text-muted-foreground">{stripeAccountStatus.message}</p>
-                                            </div>
-                                        )}
-                                        {stripeAccountStatus.status === 'active' && (
-                                            <div className="flex items-center justify-between p-4 border rounded-lg bg-green-50 border-green-200">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-green-100 rounded-full">
-                                                        <Wallet className="h-5 w-5 text-green-700" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-medium text-green-900">Stripe Connected</p>
-                                                        <p className="text-sm text-green-700">{stripeAccountStatus.message}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {stripeAccountStatus.status === 'incomplete' && (
-                                            <div className="flex flex-col gap-4 p-4 border rounded-lg bg-yellow-50 border-yellow-200">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-yellow-100 rounded-full">
-                                                        <Wallet className="h-5 w-5 text-yellow-700" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-medium text-yellow-900">Onboarding Incomplete</p>
-                                                        <p className="text-sm text-yellow-700">{stripeAccountStatus.message}</p>
-                                                    </div>
-                                                </div>
-                                                <Button onClick={handleConnectStripe} variant="outline" className="w-fit">
-                                                    Complete Stripe Setup
-                                                </Button>
-                                            </div>
-                                        )}
-                                        {stripeAccountStatus.status === 'pending' && (
-                                            <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50 border-blue-200">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-blue-100 rounded-full">
-                                                        <Wallet className="h-5 w-5 text-blue-700" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-medium text-blue-900">Account Pending</p>
-                                                        <p className="text-sm text-blue-700">{stripeAccountStatus.message}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {stripeAccountStatus.status === 'error' && (
-                                            <div className="flex flex-col gap-4 p-4 border rounded-lg bg-red-50 border-red-200">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-red-100 rounded-full">
-                                                        <Wallet className="h-5 w-5 text-red-700" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-medium text-red-900">Status Check Failed</p>
-                                                        <p className="text-sm text-red-700">{stripeAccountStatus.message}</p>
-                                                    </div>
-                                                </div>
-                                                <Button onClick={handleConnectStripe} variant="outline" className="w-fit">
-                                                    Retry Setup
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    <div className="flex flex-col gap-4">
-                                        <p className="text-sm text-muted-foreground">
-                                            To receive payments from tenants, you must connect a Stripe account.
-                                            This allows funds to be transferred directly to your bank.
-                                        </p>
-                                        <Button onClick={handleConnectStripe} className="w-fit">
-                                            Connect with Stripe
-                                        </Button>
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Change Password</CardTitle>
-                                <CardDescription>For security, please choose a strong password.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Form {...passwordForm}>
-                                    <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-6">
-                                        <FormField
-                                            control={passwordForm.control}
-                                            name="currentPassword"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Current Password</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="password" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
+                <TabsContent value="settings" className="space-y-10 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        <div className="md:col-span-2 space-y-10">
+                            {/* Stripe Card */}
+                            <Card className="border-none bg-white shadow-xl shadow-black/[0.02] rounded-[2.5rem] overflow-hidden">
+                                <CardHeader className="p-10 border-b border-muted/20">
+                                    <CardTitle className="text-2xl font-black uppercase">Revenue Protocols</CardTitle>
+                                    <CardDescription className="text-lg font-medium text-muted-foreground/60">Verify your financial identity to enable automated rent collection.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-10 space-y-6">
+                                    {userProfile?.stripeAccountId ? (
+                                        <div className="space-y-4">
+                                            {stripeAccountStatus.status === 'active' ? (
+                                                <div className="flex items-center justify-between p-8 rounded-[2rem] bg-green-500/5 border-2 border-green-500/10">
+                                                    <div className="flex items-center gap-6">
+                                                        <div className="h-14 w-14 rounded-2xl bg-green-500/10 flex items-center justify-center">
+                                                            <Wallet className="h-7 w-7 text-green-600" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-black uppercase tracking-tight text-green-900">STRIPE ACTIVE</p>
+                                                            <p className="text-sm font-medium text-green-700/80">{stripeAccountStatus.message}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col gap-6 p-8 rounded-[2rem] bg-orange-500/5 border-2 border-orange-500/10">
+                                                    <div className="flex items-center gap-6">
+                                                        <div className="h-14 w-14 rounded-2xl bg-orange-500/10 flex items-center justify-center">
+                                                            <Clock className="h-7 w-7 text-orange-600" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-black uppercase tracking-tight text-orange-900">PENDING VERIFICATION</p>
+                                                            <p className="text-sm font-medium text-orange-700/80">{stripeAccountStatus.message}</p>
+                                                        </div>
+                                                    </div>
+                                                    <Button onClick={handleConnectStripe} className="h-14 rounded-xl bg-orange-600 text-white font-black text-xs uppercase tracking-widest">
+                                                        COMPLETE STRIPE SETUP
+                                                    </Button>
+                                                </div>
                                             )}
-                                        />
-                                        <FormField
-                                            control={passwordForm.control}
-                                            name="newPassword"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>New Password</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="password" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={passwordForm.control}
-                                            name="confirmPassword"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Confirm New Password</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="password" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <Button type="submit">Change Password</Button>
-                                    </form>
-                                </Form>
-                            </CardContent>
-                        </Card>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-6">
+                                            <p className="text-lg font-medium text-muted-foreground leading-relaxed">
+                                                To receive payments from tenants, you must synchronize a Stripe account.
+                                                This allows secure, direct transfers to your verified bank.
+                                            </p>
+                                            <Button onClick={handleConnectStripe} size="lg" className="h-16 px-10 rounded-2xl bg-[#635BFF] hover:bg-[#635BFF]/90 text-white font-black transition-all shadow-xl shadow-[#635BFF]/20">
+                                                CONNECT WITH STRIPE
+                                            </Button>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Notification Settings</CardTitle>
-                                <CardDescription>Manage how you receive notifications.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="flex items-center justify-between rounded-lg border p-4">
-                                    <div className="space-y-0.5">
-                                        <label htmlFor="rental-requests-switch" className="text-base font-medium">New Rental Requests</label>
-                                        <p className="text-sm text-muted-foreground">
-                                            Receive an email when a student applies to one of your properties.
-                                        </p>
-                                    </div>
-                                    <Switch id="rental-requests-switch" defaultChecked />
-                                </div>
-                                <div className="flex items-center justify-between rounded-lg border p-4">
-                                    <div className="space-y-0.5">
-                                        <label htmlFor="new-messages-switch" className="text-base font-medium">New Messages</label>
-                                        <p className="text-sm text-muted-foreground">
-                                            Get notified when a student or tenant sends you a message.
-                                        </p>
-                                    </div>
-                                    <Switch id="new-messages-switch" defaultChecked />
-                                </div>
-                            </CardContent>
-                        </Card>
+                            <Card className="border-none bg-white shadow-xl shadow-black/[0.02] rounded-[2.5rem]">
+                                <CardHeader className="p-10">
+                                    <CardTitle className="text-2xl font-black uppercase">Security Matrix</CardTitle>
+                                    <CardDescription className="text-lg font-medium text-muted-foreground/60">Update your architectural access credentials.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-10 pt-0">
+                                    <Form {...passwordForm}>
+                                        <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-8">
+                                            <FormField
+                                                control={passwordForm.control}
+                                                name="currentPassword"
+                                                render={({ field }) => (
+                                                    <FormItem className="space-y-3">
+                                                        <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Existing Password</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="password" placeholder="••••••••" className="h-14 rounded-2xl border-2 bg-muted/10 font-bold" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <FormField
+                                                    control={passwordForm.control}
+                                                    name="newPassword"
+                                                    render={({ field }) => (
+                                                        <FormItem className="space-y-3">
+                                                            <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">New Cipher</FormLabel>
+                                                            <FormControl>
+                                                                <Input type="password" placeholder="••••••••" className="h-14 rounded-2xl border-2 bg-muted/10 font-bold" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={passwordForm.control}
+                                                    name="confirmPassword"
+                                                    render={({ field }) => (
+                                                        <FormItem className="space-y-3">
+                                                            <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">Verify Cipher</FormLabel>
+                                                            <FormControl>
+                                                                <Input type="password" placeholder="••••••••" className="h-14 rounded-2xl border-2 bg-muted/10 font-bold" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                            <Button type="submit" className="h-14 rounded-2xl px-10 font-black uppercase text-xs tracking-widest border-2">
+                                                UPDATE SECURITY
+                                            </Button>
+                                        </form>
+                                    </Form>
+                                </CardContent>
+                            </Card>
+                        </div>
 
-                        <Card className="border-destructive">
-                            <CardHeader>
-                                <CardTitle className="text-destructive">Delete Account</CardTitle>
-                                <CardDescription>Permanently delete your account and all associated data. This action cannot be undone.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive">Delete My Account</Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete your
-                                                account and remove your data from our servers.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction className="bg-destructive hover:bg-destructive/90">Continue</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </CardContent>
-                        </Card>
+                        <div className="space-y-10">
+                            <Card className="border-none bg-white shadow-xl shadow-black/[0.02] rounded-[2.5rem]">
+                                <CardHeader className="p-10">
+                                    <CardTitle className="text-xl font-black uppercase">Alert Logic</CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-10 pt-0 space-y-6">
+                                    <div className="flex items-center justify-between p-6 rounded-[1.5rem] bg-muted/10 border-2">
+                                        <label className="font-black text-sm uppercase">Rental Requests</label>
+                                        <Switch defaultChecked className="data-[state=checked]:bg-primary" />
+                                    </div>
+                                    <div className="flex items-center justify-between p-6 rounded-[1.5rem] bg-muted/10 border-2">
+                                        <label className="font-black text-sm uppercase">System Coms</label>
+                                        <Switch defaultChecked className="data-[state=checked]:bg-primary" />
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-2 border-destructive/20 bg-destructive/5 rounded-[2.5rem] overflow-hidden">
+                                <CardHeader className="p-10 pb-4">
+                                    <CardTitle className="text-destructive font-black uppercase">Danger Zone</CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-10 pt-0 space-y-6">
+                                    <p className="text-sm font-medium text-muted-foreground/80 leading-relaxed">
+                                        Account termination is absolute. Once executed, all property nodes and transactional history will be purged.
+                                    </p>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" className="w-full h-14 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-destructive/10">
+                                                TERMINATE ACCOUNT
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent className="rounded-[2.5rem] p-10 border-none shadow-3xl">
+                                            <AlertDialogHeader className="space-y-4">
+                                                <AlertDialogTitle className="text-3xl font-black uppercase tracking-tight">CONFIRM TERMINATION</AlertDialogTitle>
+                                                <AlertDialogDescription className="text-lg font-medium leading-relaxed font-sans">
+                                                    Are you absolutely certain? This will permanently delete your profile, hosted assets, and all operational data.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter className="pt-8 gap-4">
+                                                <AlertDialogCancel className="h-14 rounded-2xl font-bold border-2">CANCEL</AlertDialogCancel>
+                                                <AlertDialogAction className="h-14 rounded-2xl font-bold bg-destructive hover:bg-destructive/90 text-white">PROCEED WITH DELETION</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
                 </TabsContent>
             </Tabs>
+
+            {/* Hidden file input */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+            />
         </div>
     );
 }

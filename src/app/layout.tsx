@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     default: "LODGER | Student Living",
     template: "%s | LODGER",
   },
-  description: "Find your perfect student home. LODGER offers a curated collection of residences for the modern scholar.",
+  description: "Find your perfect student home. LODGER offers a curated collection of residences for the modern student.",
   metadataBase: new URL('https://lodger.app'),
   keywords: ["student housing", "premium rentals", "university living", "student apartments"],
   openGraph: {

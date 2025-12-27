@@ -59,7 +59,7 @@ export function MessageItem({ message, isMine, showDate, senderProfile }: Messag
                     isMine ? "items-end" : "items-start"
                 )}>
                     {!isMine && (
-                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 px-1 italic">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 px-1">
                             {senderProfile?.name}
                         </span>
                     )}
@@ -80,7 +80,7 @@ export function MessageItem({ message, isMine, showDate, senderProfile }: Messag
                         )}>
                             <span>{format(timestamp, 'h:mm a')}</span>
                             <div className="h-1 w-1 rounded-full bg-muted/20" />
-                            <span className="opacity-0 group-hover:opacity-100 transition-opacity uppercase italic">Delivered</span>
+                            <span className="opacity-0 group-hover:opacity-100 transition-opacity uppercase">Delivered</span>
                         </div>
                     )}
                 </div>

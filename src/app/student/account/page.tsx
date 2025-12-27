@@ -236,9 +236,9 @@ export default function AccountPage() {
 
                     <div className="space-y-4 text-center md:text-left">
                         <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight text-foreground">
-                            Account <span className="text-primary italic">Settings</span>
+                            Account <span className="text-primary">Settings</span>
                         </h1>
-                        <p className="max-w-md text-lg font-medium text-muted-foreground/80 leading-relaxed font-serif italic">
+                        <p className="max-w-md text-lg font-medium text-muted-foreground/80 leading-relaxed">
                             &quot;Personalize your profile and manage your preferences for a tailored Lodger experience.&quot;
                         </p>
                     </div>
@@ -300,7 +300,7 @@ export default function AccountPage() {
                                                     <FormControl>
                                                         <Input className="h-14 rounded-2xl border-2 bg-muted/10 opacity-60 font-bold" {...field} disabled />
                                                     </FormControl>
-                                                    <FormDescription className="italic font-serif text-muted-foreground/60">Verified primary contact</FormDescription>
+                                                    <FormDescription className="text-muted-foreground/60">Verified primary contact</FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -457,14 +457,14 @@ export default function AccountPage() {
                                     <div className="flex items-center justify-between p-6 rounded-[1.5rem] bg-muted/10 border-2">
                                         <div className="space-y-1">
                                             <h4 className="font-black text-lg">Activity Notifications</h4>
-                                            <p className="text-sm font-medium text-muted-foreground/60 italic font-serif">Stay informed about request status and messages.</p>
+                                            <p className="text-sm font-medium text-muted-foreground/60">Stay informed about request status and messages.</p>
                                         </div>
                                         <Switch defaultChecked className="data-[state=checked]:bg-primary" />
                                     </div>
                                     <div className="flex items-center justify-between p-6 rounded-[1.5rem] bg-muted/10 border-2">
                                         <div className="space-y-1">
                                             <h4 className="font-black text-lg">Marketing & Updates</h4>
-                                            <p className="text-sm font-medium text-muted-foreground/60 italic font-serif">Receive news about new features and regions.</p>
+                                            <p className="text-sm font-medium text-muted-foreground/60">Receive news about new features and regions.</p>
                                         </div>
                                         <Switch className="data-[state=checked]:bg-primary" />
                                     </div>
@@ -480,7 +480,7 @@ export default function AccountPage() {
                                     </div>
                                     <div className="space-y-2">
                                         <h4 className="font-black text-xl">Privacy Control</h4>
-                                        <p className="text-sm font-medium text-muted-foreground/80 leading-relaxed font-serif italic">
+                                        <p className="text-sm font-medium text-muted-foreground/80 leading-relaxed">
                                             &quot;Your data is encrypted and secure. Review our privacy policy to learn how we protect your journey.&quot;
                                         </p>
                                     </div>
@@ -492,7 +492,7 @@ export default function AccountPage() {
                                     <CardTitle className="text-destructive font-black">Danger Zone</CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-10 pt-0 space-y-6">
-                                    <p className="text-sm font-medium text-muted-foreground/80 leading-relaxed italic">
+                                    <p className="text-sm font-medium text-muted-foreground/80 leading-relaxed">
                                         Once you delete your account, there is no going back. Please be certain.
                                     </p>
                                     <AlertDialog>
@@ -504,7 +504,7 @@ export default function AccountPage() {
                                         <AlertDialogContent className="rounded-[2.5rem] p-10 border-none shadow-3xl">
                                             <AlertDialogHeader className="space-y-4">
                                                 <AlertDialogTitle className="text-3xl font-black">Hold on!</AlertDialogTitle>
-                                                <AlertDialogDescription className="text-lg font-medium leading-relaxed font-serif italic">
+                                                <AlertDialogDescription className="text-lg font-medium leading-relaxed">
                                                     Are you absolutely sure you want to leave us? This will permanently delete your
                                                     profile, booking history, and all account data.
                                                 </AlertDialogDescription>

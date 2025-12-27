@@ -539,9 +539,9 @@ export default function PropertyDetailPage() {
                     <div className="lg:col-span-2 space-y-10">
                         <div className="space-y-6">
                             <div className="flex items-center gap-3">
-                                <Badge variant="secondary" className="bg-primary/10 text-primary border-none px-4 py-1 text-xs font-bold uppercase tracking-widest italic">{property.type}</Badge>
+                                <Badge variant="secondary" className="bg-primary/10 text-primary border-none px-4 py-1 text-xs font-bold uppercase tracking-widest">{property.type}</Badge>
                                 {property.status === 'occupied' && (
-                                    <Badge variant="destructive" className="px-4 py-1 text-xs font-bold uppercase tracking-widest italic">Occupied</Badge>
+                                    <Badge variant="destructive" className="px-4 py-1 text-xs font-bold uppercase tracking-widest">Occupied</Badge>
                                 )}
                             </div>
 
@@ -675,7 +675,7 @@ export default function PropertyDetailPage() {
                                 ) : (
                                     <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed flex flex-col items-center gap-3">
                                         <Star className="h-8 w-8 text-muted/30" />
-                                        <p className="text-muted-foreground font-bold italic">No reviews yet for this property.</p>
+                                        <p className="text-muted-foreground font-bold">No reviews yet for this property.</p>
                                     </div>
                                 )}
                             </TabsContent>
@@ -711,7 +711,7 @@ export default function PropertyDetailPage() {
                                             </DialogTrigger>
                                             <DialogContent className="sm:max-w-lg rounded-3xl">
                                                 <DialogHeader>
-                                                    <DialogTitle className="text-2xl font-bold">Inquiry for {property.title}</DialogTitle>
+                                                    <DialogTitle className="text-2xl font-bold">Application for {property.title}</DialogTitle>
                                                     <DialogDescription className="text-base font-medium">
                                                         Start a conversation with {landlord?.name}. Your request will include a text message.
                                                     </DialogDescription>
@@ -769,7 +769,7 @@ export default function PropertyDetailPage() {
                                             <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">{landlord.name[0]}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-1 italic">Meet Your Host</p>
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-1">Meet Your Host</p>
                                             <h4 className="text-xl font-headline font-bold">{landlord.name}</h4>
                                             <div className="flex items-center gap-3 mt-2">
                                                 <Dialog>
@@ -811,7 +811,7 @@ export default function PropertyDetailPage() {
                                         </div>
                                     </div>
                                     {landlord.bio && (
-                                        <p className="mt-4 text-sm text-muted-foreground line-clamp-3 font-medium leading-relaxed italic">
+                                        <p className="mt-4 text-sm text-muted-foreground line-clamp-3 font-medium leading-relaxed">
                                             "{landlord.bio}"
                                         </p>
                                     )}

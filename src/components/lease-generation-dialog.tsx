@@ -56,11 +56,11 @@ export default function LeaseGenerationDialog({
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">LEGAL PROTOCOL</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">LEASE PROTOCOL</p>
             </div>
-            <DialogTitle className="text-3xl font-black uppercase tracking-tight">Review & Sign <span className="text-primary italic">Agreement</span></DialogTitle>
-            <DialogDescription className="font-serif italic text-base">
-              "Authenticated digital signature required to finalize the tenancy transition."
+            <DialogTitle className="text-3xl font-black uppercase tracking-tight">Review & Sign <span className="text-primary">Agreement</span></DialogTitle>
+            <DialogDescription className="text-base">
+              Digital signature required to finalize the lease.
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -71,7 +71,7 @@ export default function LeaseGenerationDialog({
               <div className="flex justify-between items-start border-b-2 border-muted pb-8 mb-8">
                 <FileText className="h-12 w-12 text-primary/20" />
                 <div className="text-right space-y-1">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Document ID</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">LEASE ID</p>
                   <p className="text-xs font-mono font-bold">LGR-PROT-{property.id.slice(0, 8).toUpperCase()}</p>
                 </div>
               </div>
@@ -82,12 +82,12 @@ export default function LeaseGenerationDialog({
 
               <div className="pt-12 mt-12 border-t-2 border-muted grid grid-cols-2 gap-12">
                 <div className="space-y-4">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Landlord Certification</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Landlord Signature</p>
                   <div className="h-20 border-b-2 border-dashed border-muted flex items-end pb-2 relative">
                     {isSigned && (
                       <div className="absolute inset-0 flex items-center justify-center animate-in zoom-in-95 duration-500">
-                        <p className="font-serif italic text-2xl text-primary font-bold opacity-80 select-none">
-                          {landlord.legalName || landlord.name}
+                        <p className="text-2xl text-primary font-bold opacity-80 select-none">
+                          {landlord.name}
                         </p>
                       </div>
                     )}
@@ -95,7 +95,7 @@ export default function LeaseGenerationDialog({
                   <p className="text-[10px] font-bold text-muted-foreground uppercase">{landlord.name}</p>
                 </div>
                 <div className="space-y-4">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Tenant Designation</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Tenant Signature</p>
                   <div className="h-20 border-b-2 border-dashed border-muted" />
                   <p className="text-[10px] font-bold text-muted-foreground uppercase">{tenant.name}</p>
                 </div>
@@ -115,7 +115,7 @@ export default function LeaseGenerationDialog({
                 {isSigned ? (
                   <p className="text-[10px] font-bold text-green-600 flex items-center gap-2">✓ CRYPTOGRAPHICALLY SIGNED BY LANDLORD</p>
                 ) : (
-                  <p className="text-[10px] font-bold text-muted-foreground italic font-serif">Awaiting landlord authentication sequence...</p>
+                  <p className="text-[10px] font-bold text-muted-foreground">Awaiting landlord signature...</p>
                 )}
               </div>
             </div>
@@ -140,7 +140,7 @@ export default function LeaseGenerationDialog({
           </div>
 
           <div className="text-center">
-            <button onClick={onClose} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">Abort Protocol</button>
+            <button onClick={onClose} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
           </div>
         </div>
       </DialogContent>

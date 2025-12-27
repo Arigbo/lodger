@@ -20,9 +20,6 @@ export default function LogoLoader() {
                     }}
                     className="relative"
                 >
-                    {/* Pulsing Glow Effect */}
-                    <div className="absolute inset-0 -z-10 bg-primary/20 blur-3xl rounded-full scale-150 animate-pulse" />
-
                     <svg
                         width="80"
                         height="80"
@@ -60,7 +57,7 @@ export default function LogoLoader() {
                     transition={{ delay: 0.5 }}
                     className="mt-6 flex flex-col items-center"
                 >
-                    <h2 className="text-xl font-bold tracking-tighter text-foreground italic">LODGER</h2>
+                    <h2 className="text-xl font-bold tracking-tighter text-foreground uppercase">LODGER</h2>
                     <div className="mt-2 flex gap-1">
                         <motion.div
                             animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}

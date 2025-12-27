@@ -163,7 +163,7 @@ export default function PropertyCard({ property, as = 'link', className }: Prope
           <h3 className="font-headline text-2xl font-bold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary">
             {property.title}
           </h3>
-          <p className="mt-2 text-sm text-muted-foreground line-clamp-1 font-medium italic">
+          <p className="mt-2 text-sm text-muted-foreground line-clamp-1 font-medium">
             {property.location.address}
           </p>
         </div>

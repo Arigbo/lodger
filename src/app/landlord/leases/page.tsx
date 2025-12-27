@@ -146,7 +146,7 @@ export default function LandlordLeasesPage() {
           <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight text-foreground uppercase">
             LEGAL ARCHIVES
           </h1>
-          <p className="text-lg text-muted-foreground font-medium italic font-serif">
+          <p className="text-lg text-muted-foreground font-medium">
             Maintain your portfolio&apos;s contractual integrity
           </p>
         </div>
@@ -180,7 +180,7 @@ export default function LandlordLeasesPage() {
 
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest italic mb-1">RESIDENT</p>
+                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">TENANT</p>
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6 border-2 border-white shadow-sm">
                         <AvatarImage src={tenant?.profileImageUrl} />
@@ -190,7 +190,7 @@ export default function LandlordLeasesPage() {
                     </div>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest italic mb-1">MONTHLY RATE</p>
+                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">MONTHLY RATE</p>
                     <p className="font-black text-sm text-primary">{formatPrice(property?.price || 0, property?.currency)}</p>
                   </div>
                 </div>
@@ -227,8 +227,8 @@ export default function LandlordLeasesPage() {
           </div>
           <div className="space-y-2 text-center">
             <h3 className="text-2xl font-black uppercase tracking-tight">Archives Vacant</h3>
-            <p className="text-muted-foreground font-serif italic max-w-sm mx-auto opacity-60 leading-relaxed">
-              When you formalize agreements with prospective scholars, their contractual records will be archived here.
+            <p className="text-muted-foreground max-w-sm mx-auto opacity-60 leading-relaxed">
+              When you formalize agreements with prospective tenants, their contractual records will be archived here.
             </p>
           </div>
         </div>

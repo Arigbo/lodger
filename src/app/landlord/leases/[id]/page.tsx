@@ -187,8 +187,8 @@ export default function ViewLandlordLeasePage() {
                     <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight text-foreground uppercase">
                         LEASE AGREEMENT
                     </h1>
-                    <p className="text-lg text-muted-foreground font-medium italic font-serif">
-                        Digital Contract for <Link href={`/landlord/properties/${property?.id}`} className="text-primary hover:underline italic font-serif">#{property?.title}</Link>
+                    <p className="text-lg text-muted-foreground font-medium">
+                        Digital Contract for <Link href={`/landlord/properties/${property?.id}`} className="text-primary hover:underline">#{property?.title}</Link>
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-3">
@@ -209,11 +209,11 @@ export default function ViewLandlordLeasePage() {
                         <div className="relative bg-white border-2 border-foreground/5 shadow-2xl rounded-[3rem] p-8 md:p-12 min-h-[600px] flex flex-col">
                             <div className="flex justify-between items-start mb-12">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] italic">DOCUMENT ID</p>
-                                    <p className="font-mono text-xs opacity-60">#{lease.id.toUpperCase()}</p>
+                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] sr-only text-transparent">DOCUMENT ID</p>
+                                    <p className="font-mono text-xs opacity-60 sr-only text-transparent">#{lease.id.toUpperCase()}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] italic">ISSUE DATE</p>
+                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">ISSUE DATE</p>
                                     <p className="font-bold text-sm">{format(new Date(lease.startDate), 'MMMM dd, yyyy')}</p>
                                 </div>
                             </div>
@@ -224,7 +224,7 @@ export default function ViewLandlordLeasePage() {
                                 CONTRACTUAL TERMS & CONDITIONS
                             </h2>
 
-                            <div id="lease-document" className="prose prose-sm md:prose-base max-w-none whitespace-pre-wrap font-serif leading-relaxed text-foreground/80 flex-grow">
+                            <div id="lease-document" className="prose prose-sm md:prose-base max-w-none whitespace-pre-wrap leading-relaxed text-foreground/80 flex-grow">
                                 {lease.leaseText}
                             </div>
 
@@ -233,11 +233,11 @@ export default function ViewLandlordLeasePage() {
                             {/* Formal Signature Section */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-auto pt-8 border-t-2 border-dotted border-muted/30">
                                 <div className="space-y-4">
-                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest italic">LANDLORD SIGNATURE</p>
+                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest">LANDLORD SIGNATURE</p>
                                     <div className="h-24 bg-muted/10 rounded-3xl border-2 border-dashed border-muted/30 flex items-center justify-center relative overflow-hidden">
                                         {lease.landlordSigned ? (
                                             <div className="text-center animate-in zoom-in duration-500">
-                                                <p className="font-serif italic text-2xl text-primary/80 opacity-60 -rotate-3">{landlord?.name}</p>
+                                                <p className="text-2xl text-primary font-bold opacity-80 -rotate-3">{landlord?.name}</p>
                                                 <Badge variant="secondary" className="mt-2 text-[9px] font-black uppercase tracking-tighter bg-green-500/10 text-green-600 border-none">VERIFIED SIGNATURE</Badge>
                                             </div>
                                         ) : (
@@ -251,11 +251,11 @@ export default function ViewLandlordLeasePage() {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest italic">TENANT SIGNATURE</p>
+                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest">TENANT SIGNATURE</p>
                                     <div className="h-24 bg-muted/10 rounded-3xl border-2 border-dashed border-muted/30 flex items-center justify-center relative overflow-hidden">
                                         {lease.tenantSigned ? (
                                             <div className="text-center animate-in zoom-in duration-500">
-                                                <p className="font-serif italic text-2xl text-primary/80 opacity-60 -rotate-3">{tenant?.name}</p>
+                                                <p className="text-2xl text-primary font-bold opacity-80 -rotate-3">{tenant?.name}</p>
                                                 <Badge variant="secondary" className="mt-2 text-[9px] font-black uppercase tracking-tighter bg-green-500/10 text-green-600 border-none">VERIFIED SIGNATURE</Badge>
                                             </div>
                                         ) : (
@@ -285,7 +285,7 @@ export default function ViewLandlordLeasePage() {
                             <div className="space-y-6">
                                 <div className="flex justify-between items-center group">
                                     <div>
-                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest italic mb-1">RENTAL ASSET</p>
+                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">RENTAL ASSET</p>
                                         <p className="font-black text-sm uppercase group-hover:text-primary transition-colors truncate max-w-[150px]">{property?.title}</p>
                                     </div>
                                     <div className="h-10 w-10 rounded-xl bg-muted/20 flex items-center justify-center">
@@ -294,7 +294,7 @@ export default function ViewLandlordLeasePage() {
                                 </div>
                                 <div className="flex justify-between items-center group">
                                     <div>
-                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest italic mb-1">TERM DURATION</p>
+                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">TERM DURATION</p>
                                         <p className="font-black text-sm uppercase truncate max-w-[150px]">
                                             {format(new Date(lease.startDate), 'MMM yy')} - {format(new Date(lease.endDate), 'MMM yy')}
                                         </p>
@@ -305,7 +305,7 @@ export default function ViewLandlordLeasePage() {
                                 </div>
                                 <div className="flex justify-between items-center group">
                                     <div>
-                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest italic mb-1">MONTHLY RATE</p>
+                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">MONTHLY RATE</p>
                                         <p className="font-black text-2xl text-primary">{formatPrice(property?.price || 0, property?.currency)}</p>
                                     </div>
                                     <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center">
@@ -322,7 +322,7 @@ export default function ViewLandlordLeasePage() {
                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[5rem] -mr-8 -mt-8 transition-all group-hover:scale-110" />
                             <div className="relative z-10 space-y-4 text-center">
                                 <h3 className="text-2xl font-black uppercase tracking-tight">EXECUTE AGREEMENT</h3>
-                                <p className="text-white/60 font-serif italic text-sm leading-relaxed">
+                                <p className="text-white/60 font-serif text-sm leading-relaxed">
                                     &quot;Your signature confirm that terms reflect the latest property updates.&quot;
                                 </p>
                                 <Button className="w-full h-16 rounded-2xl bg-white text-foreground hover:bg-white/90 font-black text-sm uppercase tracking-widest gap-3 shadow-2xl transition-all hover:scale-105 active:scale-95" onClick={handleSignLease}>
@@ -336,17 +336,16 @@ export default function ViewLandlordLeasePage() {
                         <div className="relative group overflow-hidden rounded-[2.5rem] bg-blue-600 text-white p-8 md:p-10 shadow-2xl space-y-8 animate-in slide-in-from-right duration-700 text-center">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[5rem] -mr-8 -mt-8 transition-all group-hover:scale-110" />
                             <div className="relative z-10 space-y-4">
-                                <Hourglass className="h-12 w-12 text-white mx-auto animate-pulse" />
                                 <h3 className="text-xl font-black uppercase tracking-tight">AWAITING TENANT</h3>
-                                <p className="text-white/60 font-serif italic text-sm leading-relaxed">
-                                    &quot;This lease has been sent to {tenant?.name} for their signature.&quot;
+                                <p className="text-white/60 font-serif text-sm leading-relaxed">
+                                    This lease has been sent to {tenant?.name} for their signature.
                                 </p>
                             </div>
                         </div>
                     )}
 
                     <Link href="/landlord/leases" className="block text-center">
-                        <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.3em] hover:tracking-[0.4em] transition-all opacity-40 hover:opacity-100 italic">
+                        <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.3em] hover:tracking-[0.4em] transition-all opacity-40 hover:opacity-100">
                             ← BACK TO ALL LEASES
                         </Button>
                     </Link>

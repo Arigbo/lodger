@@ -85,22 +85,22 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Desktop Navigation */}
-        {isLanding ? (
-          <div className="flex items-center gap-8">
-            <nav className="hidden md:flex items-center gap-8">
-              {landingLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-sm font-semibold text-muted-foreground/80 transition-all hover:text-primary hover:tracking-wide relative group"
-                >
-                  {link.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
-                </Link>
-              ))}
-            </nav>
-            <div className="flex items-center gap-3">
+        {/* Desktop Navigation / App Controls */}
+        <div className="flex items-center gap-3">
+          {isLanding ? (
+            <>
+              <nav className="hidden md:flex items-center gap-8">
+                {landingLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="text-sm font-semibold text-muted-foreground/80 transition-all hover:text-primary hover:tracking-wide relative group"
+                  >
+                    {link.label}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
+                  </Link>
+                ))}
+              </nav>
               {!user ? (
                 <div className="hidden md:flex items-center gap-4">
                   <Button variant="ghost" size="sm" className="font-bold hover:bg-primary/10 hover:text-primary transition-colors" asChild>
@@ -111,7 +111,7 @@ export default function Header() {
                   </Button>
                 </div>
               ) : (
-                <Button size="sm" variant="outline" className="rounded-full border-primary/20 hover:border-primary/50 font-bold px-6 transition-all" asChild>
+                <Button size="sm" variant="outline" className="rounded-full border-primary/20 hover:border-primary/50 font-bold px-6 transition-all hidden md:flex" asChild>
                   <Link href={role === "student" ? "/student" : "/landlord"}>Dashboard</Link>
                 </Button>
               )}
@@ -121,115 +121,126 @@ export default function Header() {
               >
                 {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
-            </div>
-          </div>
-        ) : (
-          /* APP PAGES HEADER CONTENT */
-          <div className="flex items-center gap-4">
-            {isMounted && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative group p-2 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all active:scale-95">
-                    <Bell className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
-                    {unreadCount > 0 && (
-                      <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-primary border-2 border-white ring-4 ring-primary/10 animate-pulse" />
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-80 p-2 mt-4 bg-white/80 backdrop-blur-2xl border-white/40 rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300" align="end">
-                  <DropdownMenuLabel className="px-4 py-3">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-bold tracking-tight">Notifications</p>
-                      <p className="text-xs font-medium text-muted-foreground">
-                        {unreadCount > 0 ? `You have ${unreadCount} new alerts` : 'No new activity'}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-white/10 mx-2" />
-                  <div className="max-h-[350px] overflow-y-auto custom-scrollbar p-1">
-                    {notifications.length === 0 ? (
-                      <div className="p-8 text-center flex flex-col items-center gap-2">
-                        <div className="p-3 rounded-2xl bg-muted/30">
-                          <Bell className="h-6 w-6 text-muted-foreground/50" />
-                        </div>
-                        <p className="text-sm font-medium text-muted-foreground">All caught up!</p>
+            </>
+          ) : (
+            /* APP PAGES HEADER CONTENT */
+            <div className="flex items-center gap-3">
+              {/* Mobile Menu Trigger for App Pages (Sidebar Toggle) */}
+              <button
+                className="md:hidden p-2 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all active:scale-95 text-muted-foreground hover:text-primary"
+                id="mobile-sidebar-trigger"
+                onClick={() => {
+                  // This will be handled by the layout listening for this ID or via a custom event
+                  window.dispatchEvent(new CustomEvent('toggle-sidebar'));
+                }}
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              {isMounted && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative group p-2 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all active:scale-95">
+                      <Bell className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
+                      {unreadCount > 0 && (
+                        <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-primary border-2 border-white ring-4 ring-primary/10 animate-pulse" />
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-80 p-2 mt-4 bg-white/80 backdrop-blur-2xl border-white/40 rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300" align="end">
+                    <DropdownMenuLabel className="px-4 py-3">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-bold tracking-tight">Notifications</p>
+                        <p className="text-xs font-medium text-muted-foreground">
+                          {unreadCount > 0 ? `You have ${unreadCount} new alerts` : 'No new activity'}
+                        </p>
                       </div>
-                    ) : (
-                      notifications.slice(0, 5).map((notif) => (
-                        <DropdownMenuItem key={notif.id} asChild>
-                          <Link
-                            href={notif.link || '#'}
-                            className={cn(
-                              "flex flex-col items-start p-3 m-1 rounded-2xl cursor-pointer transition-all hover:bg-primary/5 group border border-transparent",
-                              !notif.read && "bg-primary/[0.03] border-primary/10 shadow-sm"
-                            )}
-                            onClick={() => markAsRead(notif.id)}
-                          >
-                            <div className="flex w-full justify-between gap-2 mb-1">
-                              <span className="font-bold text-xs text-primary/80 group-hover:text-primary transition-colors">{notif.title}</span>
-                              <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">
-                                {notif.createdAt ? new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
-                              </span>
-                            </div>
-                            <p className="text-xs line-clamp-2 text-muted-foreground/90 font-medium leading-relaxed">
-                              {notif.message}
-                            </p>
-                          </Link>
-                        </DropdownMenuItem>
-                      ))
-                    )}
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
-            {user && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 p-0 rounded-full border-2 border-transparent hover:border-primary/20 transition-all p-[2px] active:scale-95 overflow-hidden">
-                    <Avatar className="h-full w-full border border-background">
-                      <AvatarImage
-                        src={userProfile?.profileImageUrl || user.photoURL || ""}
-                        alt={userProfile?.name || user.displayName || "User"}
-                        className="object-cover"
-                      />
-                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                        {user.displayName?.charAt(0) || user.email?.charAt(0) || <User className="h-4 w-4" />}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-64 p-2 mt-4 bg-white/80 backdrop-blur-2xl border-white/40 rounded-[2rem] shadow-2xl animate-in fade-in zoom-in-95 duration-300" align="end">
-                  <DropdownMenuLabel className="p-4">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-bold tracking-tight">{userProfile?.name || user.displayName}</p>
-                      <p className="text-[10px] font-medium text-muted-foreground truncate opacity-70">
-                        {user.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-white/10 mx-2" />
-                  <div className="p-1">
-                    <DropdownMenuItem asChild className="rounded-xl m-1 px-3 py-2 cursor-pointer transition-all hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary">
-                      <Link href={role === "student" ? "/student/account" : "/landlord/account"} className="flex items-center w-full">
-                        <User className="mr-2 h-4 w-4" />
-                        <span className="font-semibold text-sm">My Account</span>
-                      </Link>
-                    </DropdownMenuItem>
+                    </DropdownMenuLabel>
                     <DropdownMenuSeparator className="bg-white/10 mx-2" />
-                    <DropdownMenuItem
-                      onClick={() => setShowLogoutModal(true)}
-                      className="rounded-xl m-1 px-3 py-2 cursor-pointer transition-all hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive"
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      <span className="font-semibold text-sm">Sign Out</span>
-                    </DropdownMenuItem>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        )}
+                    <div className="max-h-[350px] overflow-y-auto custom-scrollbar p-1">
+                      {notifications.length === 0 ? (
+                        <div className="p-8 text-center flex flex-col items-center gap-2">
+                          <div className="p-3 rounded-2xl bg-muted/30">
+                            <Bell className="h-6 w-6 text-muted-foreground/50" />
+                          </div>
+                          <p className="text-sm font-medium text-muted-foreground">All caught up!</p>
+                        </div>
+                      ) : (
+                        notifications.slice(0, 5).map((notif) => (
+                          <DropdownMenuItem key={notif.id} asChild>
+                            <Link
+                              href={notif.link || '#'}
+                              className={cn(
+                                "flex flex-col items-start p-3 m-1 rounded-2xl cursor-pointer transition-all hover:bg-primary/5 group border border-transparent",
+                                !notif.read && "bg-primary/[0.03] border-primary/10 shadow-sm"
+                              )}
+                              onClick={() => markAsRead(notif.id)}
+                            >
+                              <div className="flex w-full justify-between gap-2 mb-1">
+                                <span className="font-bold text-xs text-primary/80 group-hover:text-primary transition-colors">{notif.title}</span>
+                                <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">
+                                  {notif.createdAt ? new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                                </span>
+                              </div>
+                              <p className="text-xs line-clamp-2 text-muted-foreground/90 font-medium leading-relaxed">
+                                {notif.message}
+                              </p>
+                            </Link>
+                          </DropdownMenuItem>
+                        ))
+                      )}
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              {user && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 p-0 rounded-full border-2 border-transparent hover:border-primary/20 transition-all p-[2px] active:scale-95 overflow-hidden">
+                      <Avatar className="h-full w-full border border-background">
+                        <AvatarImage
+                          src={userProfile?.profileImageUrl || user.photoURL || ""}
+                          alt={userProfile?.name || user.displayName || "User"}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                          {user.displayName?.charAt(0) || user.email?.charAt(0) || <User className="h-4 w-4" />}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64 p-2 mt-4 bg-white/80 backdrop-blur-2xl border-white/40 rounded-[2rem] shadow-2xl animate-in fade-in zoom-in-95 duration-300" align="end">
+                    <DropdownMenuLabel className="p-4">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-bold tracking-tight">{userProfile?.name || user.displayName}</p>
+                        <p className="text-[10px] font-medium text-muted-foreground truncate opacity-70">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-white/10 mx-2" />
+                    <div className="p-1">
+                      <DropdownMenuItem asChild className="rounded-xl m-1 px-3 py-2 cursor-pointer transition-all hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary">
+                        <Link href={role === "student" ? "/student/account" : "/landlord/account"} className="flex items-center w-full">
+                          <User className="mr-2 h-4 w-4" />
+                          <span className="font-semibold text-sm">My Account</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="bg-white/10 mx-2" />
+                      <DropdownMenuItem
+                        onClick={() => setShowLogoutModal(true)}
+                        className="rounded-xl m-1 px-3 py-2 cursor-pointer transition-all hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive"
+                      >
+                        <X className="mr-2 h-4 w-4" />
+                        <span className="font-semibold text-sm">Sign Out</span>
+                      </DropdownMenuItem>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Mobile Menu (Landing Page Only) */}

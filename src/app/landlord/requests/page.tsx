@@ -331,29 +331,24 @@ export default function RentalRequestsPage() {
 
   return (
     <div className="space-y-16 pb-32 animate-in fade-in duration-1000">
-      {/* Cinematic Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b-4 border-foreground/5">
+      {/* Page Header & Stats Section */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 px-2">
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="h-2 w-2 rounded-full bg-primary" />
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">INQUIRY MANAGEMENT</p>
-          </div>
-          <h1 className="font-headline text-5xl md:text-6xl font-black tracking-tight text-foreground uppercase">
-            REQUEST <span className="text-primary italic">CENTER</span>
-          </h1>
-          <p className="text-lg text-muted-foreground font-medium italic font-serif">
-            &quot;Filtering prospective residents and authenticating financial yields.&quot;
+          <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight uppercase">Requests<span className="text-primary text-xl ml-1">.</span></h1>
+          <p className="text-lg text-muted-foreground font-medium max-w-2xl leading-relaxed">
+            Manage your incoming applications and verify offline payment transactions in a centralized workflow.
           </p>
         </div>
-        <div className="flex gap-4">
-          <div className="bg-blue-500/5 px-6 py-4 rounded-[2rem] border-2 border-blue-500/10">
-            <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1 italic">Pending Applications</p>
-            <p className="text-3xl font-black text-blue-600">{pendingRequests.length}</p>
+
+        <div className="flex flex-wrap gap-4">
+          <div className="bg-white px-8 py-5 rounded-[2rem] border-2 border-muted/10 shadow-sm flex flex-col justify-center min-w-[160px]">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">Active Requests</p>
+            <p className="text-3xl font-black tracking-tighter">{pendingRequests.length}</p>
           </div>
           {pendingOfflinePayments.length > 0 && (
-            <div className="bg-orange-500/5 px-6 py-4 rounded-[2rem] border-2 border-orange-500/10 animate-pulse">
-              <p className="text-[10px] font-black uppercase tracking-widest text-orange-600 mb-1 italic">Payment Tasks</p>
-              <p className="text-3xl font-black text-orange-600">{pendingOfflinePayments.length}</p>
+            <div className="bg-orange-600 text-white px-8 py-5 rounded-[2rem] shadow-xl shadow-orange-600/20 flex flex-col justify-center min-w-[160px] animate-in zoom-in duration-500">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-1">Payment Tasks</p>
+              <p className="text-3xl font-black tracking-tighter">{pendingOfflinePayments.length}</p>
             </div>
           )}
         </div>
@@ -365,7 +360,7 @@ export default function RentalRequestsPage() {
           <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <UserIcon className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-3xl font-black uppercase tracking-tight">Active <span className="text-primary italic">Inquiries</span></h2>
+          <h2 className="text-3xl font-black uppercase tracking-tight">Active Applications</h2>
         </div>
 
         {pendingRequests.length === 0 ? (
@@ -375,9 +370,9 @@ export default function RentalRequestsPage() {
               <div className="absolute inset-0 bg-primary/5 rounded-[2.5rem]" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-2xl font-black uppercase tracking-tight italic">Silent Channels</h3>
-              <p className="text-lg text-muted-foreground font-serif italic max-w-sm mx-auto">
-                &quot;Your communication channels are currently clear. Incoming application data will manifest here.&quot;
+              <h3 className="text-2xl font-black uppercase tracking-tight">No Requests</h3>
+              <p className="text-lg text-muted-foreground max-w-sm mx-auto">
+                No incoming applications at the moment.
               </p>
             </div>
           </Card>
@@ -394,7 +389,7 @@ export default function RentalRequestsPage() {
                       <div className="relative">
                         <Avatar className="h-24 w-24 rounded-[2rem] ring-4 ring-primary/5 ring-offset-4 ring-offset-white">
                           <AvatarImage src={applicant?.profileImageUrl} className="object-cover" />
-                          <AvatarFallback className="bg-muted text-2xl font-black uppercase italic">
+                          <AvatarFallback className="bg-muted text-2xl font-black uppercase">
                             {applicant?.name?.[0]}
                           </AvatarFallback>
                         </Avatar>
@@ -403,7 +398,7 @@ export default function RentalRequestsPage() {
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-primary italic">Identity Profile</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-primary">APPLICANT PROFILE</p>
                         <h3 className="text-2xl font-black uppercase tracking-tight">{applicant?.name}</h3>
                         <p className="text-xs font-bold text-muted-foreground/60">{applicant?.email}</p>
                       </div>
@@ -413,16 +408,16 @@ export default function RentalRequestsPage() {
                     <div className="flex-1 space-y-6">
                       <div className="flex justify-between items-start">
                         <div className="space-y-2">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Asset Target</p>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">PROPERTY</p>
                           <Link href={`/landlord/properties/${property.id}`} className="group/link flex items-center gap-2 text-xl font-black uppercase tracking-tight hover:text-primary transition-colors">
                             {property.title} <ExternalLink className="h-4 w-4 opacity-0 group-hover/link:opacity-100 transition-opacity" />
                           </Link>
-                          <p className="text-xs font-medium text-muted-foreground italic font-serif">
-                            &quot;{request.messageToLandlord || "Standard inquiry protocol initiated without custom parameters."}&quot;
+                          <p className="text-xs font-medium text-muted-foreground leading-relaxed">
+                            &quot;{request.messageToLandlord || "Application submitted without a message."}&quot;
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Submission Date</p>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">SUBMITTED ON</p>
                           <p className="text-sm font-black text-foreground">{new Date(request.applicationDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                         </div>
                       </div>
@@ -432,7 +427,7 @@ export default function RentalRequestsPage() {
                           <Clock className="h-3 w-3 text-primary" /> Status: {request.status}
                         </div>
                         <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/20 text-[10px] font-black uppercase tracking-widest">
-                          <Wallet className="h-3 w-3 text-primary" /> Yield: {formatPrice(property.price, property.currency)}
+                          <Wallet className="h-3 w-3 text-primary" /> Monthly Rent: {formatPrice(property.price, property.currency)}
                         </div>
                       </div>
                     </div>
@@ -443,14 +438,14 @@ export default function RentalRequestsPage() {
                         onClick={() => handleAcceptClick(aggregatedRequest)}
                         className="h-16 rounded-2xl bg-foreground text-white hover:bg-primary transition-all font-black text-xs uppercase tracking-widest gap-3 shadow-xl"
                       >
-                        <Check className="h-5 w-5" /> GRANT AUTHORITY
+                        <Check className="h-5 w-5" /> ACCEPT APPLICATION
                       </Button>
                       <Button
                         variant="outline"
                         onClick={() => handleDeclineClick(request.id)}
                         className="h-16 rounded-2xl border-2 hover:bg-destructive hover:text-white hover:border-destructive transition-all font-black text-xs uppercase tracking-widest gap-3"
                       >
-                        <X className="h-5 w-5" /> DECLINE INQUIRY
+                        <X className="h-5 w-5" /> DECLINE APPLICATION
                       </Button>
                     </div>
                   </div>
@@ -468,7 +463,7 @@ export default function RentalRequestsPage() {
             <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
               <Wallet className="h-5 w-5 text-orange-600" />
             </div>
-            <h2 className="text-3xl font-black uppercase tracking-tight">Financial <span className="text-orange-600 italic">Confirmations</span></h2>
+            <h2 className="text-3xl font-black uppercase tracking-tight">Offline Payment <span className="text-orange-600">Verification</span></h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -482,35 +477,35 @@ export default function RentalRequestsPage() {
                     <div className="flex items-center gap-4">
                       <Avatar className="h-16 w-16 rounded-2xl ring-2 ring-orange-500/10">
                         <AvatarImage src={tenant.profileImageUrl} className="object-cover" />
-                        <AvatarFallback className="bg-muted text-xl font-black uppercase italic">
+                        <AvatarFallback className="bg-muted text-xl font-black uppercase">
                           {tenant.name?.[0]}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <h4 className="text-xl font-black uppercase tracking-tight">{tenant.name}</h4>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">RESIDENT IDENTIFIED</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">TENANT</p>
                       </div>
                     </div>
 
                     <div className="p-6 rounded-2xl bg-orange-500/5 border-2 border-orange-500/5 space-y-4">
                       <div className="flex justify-between items-center">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-orange-600/60 italic">OFFLINE REVENUE</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-orange-600/60">OFFLINE PAYMENT</p>
                         <p className="text-2xl font-black text-orange-600">{formatPrice(lease.offlinePaymentAmount || property.price, property.currency)}</p>
                       </div>
                       <div className="flex justify-between items-center pt-4 border-t border-orange-500/10">
-                        <p className="text-xs font-bold text-muted-foreground/60 italic">TENANCY TERM</p>
+                        <p className="text-xs font-bold text-muted-foreground/60">LEASE TERM</p>
                         <p className="text-xs font-black uppercase">{lease.offlinePaymentMonths || 1} Month(s) Pre-Paid</p>
                       </div>
                     </div>
 
                     <div className="space-y-4">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 text-center italic">Verify physical receipt of funds before proceeding</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 text-center">Verify physical receipt of funds before proceeding</p>
                       <div className="grid grid-cols-2 gap-4">
                         <Button
                           onClick={() => handleApproveOfflinePayment(lease.id, tenant.id, property.id, property.title)}
                           className="h-14 rounded-xl bg-orange-600 text-white hover:bg-orange-700 transition-all font-black text-[10px] uppercase tracking-widest gap-2 shadow-lg"
                         >
-                          <Check className="h-4 w-4" /> AUTHENTICATE
+                          <Check className="h-4 w-4" /> VERIFY PAYMENT
                         </Button>
                         <Button
                           variant="outline"

@@ -272,8 +272,8 @@ export default function ViewStudentLeasePage() {
                     <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight text-foreground uppercase">
                         LEASE AGREEMENT
                     </h1>
-                    <p className="text-lg text-muted-foreground font-medium italic font-serif">
-                        Digital Contract for <Link href={`/student/properties/${property?.id}`} className="text-primary hover:underline italic font-serif">#{property?.title}</Link>
+                    <p className="text-lg text-muted-foreground font-medium">
+                        Lease Agreement for <Link href={`/student/properties/${property?.id}`} className="text-primary hover:underline">#{property?.title}</Link>
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-3">
@@ -297,11 +297,11 @@ export default function ViewStudentLeasePage() {
                         <div className="relative bg-white border-2 border-foreground/5 shadow-2xl rounded-[3rem] p-8 md:p-12 min-h-[600px] flex flex-col">
                             <div className="flex justify-between items-start mb-12">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] italic">DOCUMENT ID</p>
+                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">LEASE ID</p>
                                     <p className="font-mono text-xs opacity-60">#{lease.id.toUpperCase()}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] italic">ISSUE DATE</p>
+                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">DATE</p>
                                     <p className="font-bold text-sm">{format(new Date(lease.startDate), 'MMMM dd, yyyy')}</p>
                                 </div>
                             </div>
@@ -309,10 +309,10 @@ export default function ViewStudentLeasePage() {
                             <Separator className="mb-10 opacity-10" />
 
                             <h2 className="text-xl font-black uppercase tracking-widest mb-8 text-center decoration-primary/20 underline underline-offset-8 decoration-4">
-                                CONTRACTUAL TERMS & CONDITIONS
+                                LEASE TERMS & CONDITIONS
                             </h2>
 
-                            <div id="lease-document" className="prose prose-sm md:prose-base max-w-none whitespace-pre-wrap font-serif leading-relaxed text-foreground/80 flex-grow">
+                            <div id="lease-document" className="prose prose-sm md:prose-base max-w-none whitespace-pre-wrap leading-relaxed text-foreground/80 flex-grow">
                                 {lease.leaseText}
                             </div>
 
@@ -321,11 +321,11 @@ export default function ViewStudentLeasePage() {
                             {/* Formal Signature Section */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-auto pt-8 border-t-2 border-dotted border-muted/30">
                                 <div className="space-y-4">
-                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest italic">LANDLORD SIGNATURE</p>
+                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest">LANDLORD SIGNATURE</p>
                                     <div className="h-24 bg-muted/10 rounded-3xl border-2 border-dashed border-muted/30 flex items-center justify-center relative overflow-hidden">
                                         {lease.landlordSigned ? (
                                             <div className="text-center animate-in zoom-in duration-500">
-                                                <p className="font-serif italic text-2xl text-primary/80 opacity-60 -rotate-3">{landlord?.name}</p>
+                                                <p className="text-2xl text-primary font-bold opacity-80 -rotate-3">{landlord?.name}</p>
                                                 <Badge variant="secondary" className="mt-2 text-[9px] font-black uppercase tracking-tighter bg-green-500/10 text-green-600 border-none">VERIFIED SIGNATURE</Badge>
                                             </div>
                                         ) : (
@@ -339,11 +339,11 @@ export default function ViewStudentLeasePage() {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest italic">TENANT SIGNATURE</p>
+                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest">TENANT SIGNATURE</p>
                                     <div className="h-24 bg-muted/10 rounded-3xl border-2 border-dashed border-muted/30 flex items-center justify-center relative overflow-hidden">
                                         {lease.tenantSigned ? (
                                             <div className="text-center animate-in zoom-in duration-500">
-                                                <p className="font-serif italic text-2xl text-primary/80 opacity-60 -rotate-3">{tenant?.name}</p>
+                                                <p className="text-2xl text-primary font-bold opacity-80 -rotate-3">{tenant?.name}</p>
                                                 <Badge variant="secondary" className="mt-2 text-[9px] font-black uppercase tracking-tighter bg-green-500/10 text-green-600 border-none">VERIFIED SIGNATURE</Badge>
                                             </div>
                                         ) : (
@@ -366,14 +366,14 @@ export default function ViewStudentLeasePage() {
                     <Card className="rounded-[2.5rem] border-2 border-foreground/5 shadow-xl bg-white overflow-hidden">
                         <CardHeader className="bg-primary/5 border-b-2 border-primary/10">
                             <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                                <FileText className="h-4 w-4" /> CONTRACT METRICS
+                                <FileText className="h-4 w-4" /> LEASE DETAILS
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-8 space-y-8">
                             <div className="space-y-6">
                                 <div className="flex justify-between items-center group">
                                     <div>
-                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest italic mb-1">RENTAL ASSET</p>
+                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">PROPERTY</p>
                                         <p className="font-black text-sm uppercase group-hover:text-primary transition-colors truncate max-w-[150px]">{property?.title}</p>
                                     </div>
                                     <div className="h-10 w-10 rounded-xl bg-muted/20 flex items-center justify-center">
@@ -382,7 +382,7 @@ export default function ViewStudentLeasePage() {
                                 </div>
                                 <div className="flex justify-between items-center group">
                                     <div>
-                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest italic mb-1">TERM DURATION</p>
+                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">LEASE TERM</p>
                                         <p className="font-black text-sm uppercase truncate max-w-[150px]">
                                             {format(new Date(lease.startDate), 'MMM yy')} - {format(new Date(lease.endDate), 'MMM yy')}
                                         </p>
@@ -393,7 +393,7 @@ export default function ViewStudentLeasePage() {
                                 </div>
                                 <div className="flex justify-between items-center group">
                                     <div>
-                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest italic mb-1">MONTHLY RATE</p>
+                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">MONTHLY RATE</p>
                                         <p className="font-black text-2xl text-primary">{formatPrice(property?.price || 0, property?.currency)}</p>
                                     </div>
                                     <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center">
@@ -410,9 +410,9 @@ export default function ViewStudentLeasePage() {
                             <div className="relative group overflow-hidden rounded-[2.5rem] bg-foreground text-white p-8 md:p-10 shadow-2xl space-y-8 animate-in slide-in-from-right duration-700">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[5rem] -mr-8 -mt-8 transition-all group-hover:scale-110" />
                                 <div className="relative z-10 space-y-4">
-                                    <h3 className="text-2xl font-black uppercase tracking-tight">EXECUTE AGREEMENT</h3>
-                                    <p className="text-white/60 font-serif italic text-sm leading-relaxed">
-                                        &quot;Your signature acknowledges full acceptance of the terms outlined in this legal instrument.&quot;
+                                    <h3 className="text-2xl font-black uppercase tracking-tight">SIGN AGREEMENT</h3>
+                                    <p className="text-white/60 text-sm leading-relaxed">
+                                        &quot;Your signature acknowledges full acceptance of the terms outlined in this agreement.&quot;
                                     </p>
                                     <Button className="w-full h-16 rounded-2xl bg-white text-foreground hover:bg-white/90 font-black text-sm uppercase tracking-widest gap-3 shadow-2xl transition-all hover:scale-105 active:scale-95" onClick={handleSignLease}>
                                         <Signature className="h-5 w-5" /> SIGN DIGITALLY
@@ -427,15 +427,15 @@ export default function ViewStudentLeasePage() {
                                 <div className="relative z-10 space-y-6">
                                     <div className="space-y-2">
                                         <h3 className="text-2xl font-black uppercase tracking-tight">INITIAL PAYMENT</h3>
-                                        <p className="text-white/60 font-serif italic text-sm leading-relaxed">
-                                            &quot;Finalize your status by securing the rental asset through an initial payment.&quot;
+                                        <p className="text-white/60 text-sm leading-relaxed">
+                                            &quot;Finalize your status by securing the property through an initial payment.&quot;
                                         </p>
                                     </div>
 
                                     <div className="space-y-6">
                                         <div className="space-y-2">
                                             <h3 className="text-xl font-black uppercase tracking-tight">Activate Tenancy</h3>
-                                            <p className="text-white/60 font-serif italic text-sm leading-relaxed">
+                                            <p className="text-white/60 text-sm leading-relaxed">
                                                 &quot;Complete your payment to activate the lease agreement and receive your move-in instructions.&quot;
                                             </p>
                                         </div>
@@ -458,8 +458,8 @@ export default function ViewStudentLeasePage() {
                                     </div>
                                     <div className="space-y-2">
                                         <h3 className="text-xl font-black uppercase tracking-tight">MANUAL VERIFICATION</h3>
-                                        <p className="text-white/60 font-serif italic text-sm leading-relaxed">
-                                            &quot;Our curator is manually validating your transaction. Access will be granted shortly.&quot;
+                                        <p className="text-white/60 text-sm leading-relaxed">
+                                            &quot;We are verifying your payment. Your lease will be activated shortly.&quot;
                                         </p>
                                     </div>
                                 </div>
@@ -468,8 +468,8 @@ export default function ViewStudentLeasePage() {
                     </div>
 
                     <Link href="/student/leases" className="block text-center">
-                        <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.3em] hover:tracking-[0.4em] transition-all opacity-40 hover:opacity-100 italic">
-                            ← BACK TO LEGAL ARCHIVE
+                        <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.3em] hover:tracking-[0.4em] transition-all opacity-40 hover:opacity-100">
+                            ← BACK TO LEASES
                         </Button>
                     </Link>
                 </div>

@@ -101,17 +101,17 @@ export default function TenantsPage() {
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="h-2 w-2 rounded-full bg-primary" />
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">RESIDENT ARCHIVES</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">TENANT ARCHIVES</p>
           </div>
           <h1 className="font-headline text-5xl md:text-6xl font-black tracking-tight text-foreground uppercase">
-            RESIDENT <span className="text-primary italic">PORTFOLIO</span>
+            TENANT <span className="text-primary">PORTFOLIO</span>
           </h1>
-          <p className="text-lg text-muted-foreground font-medium italic font-serif">
-            &quot;Managing the community of scholars inhabiting your curated spaces.&quot;
+          <p className="text-lg text-muted-foreground font-medium">
+            &quot;Managing the community of tenants inhabiting your curated spaces.&quot;
           </p>
         </div>
         <div className="bg-primary/5 px-8 py-4 rounded-[2rem] border-2 border-primary/10">
-          <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1 italic">Active Residents</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Active Tenants</p>
           <p className="text-3xl font-black text-primary">{tenantsWithProperties.length}</p>
         </div>
       </div>
@@ -129,7 +129,7 @@ export default function TenantsPage() {
                     <div className="relative">
                       <Avatar className="h-24 w-24 rounded-[2rem] ring-4 ring-primary/5 ring-offset-4 ring-offset-white shadow-xl">
                         <AvatarImage src={tenant.profileImageUrl} className="object-cover" />
-                        <AvatarFallback className="bg-muted text-2xl font-black uppercase italic">
+                        <AvatarFallback className="bg-muted text-2xl font-black uppercase">
                           {tenant.name?.[0]}
                         </AvatarFallback>
                       </Avatar>
@@ -139,7 +139,7 @@ export default function TenantsPage() {
                     </div>
                     <div className="space-y-1">
                       <h3 className="text-2xl font-black uppercase tracking-tight group-hover:text-primary transition-colors">{tenant.name}</h3>
-                      <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground/60 italic">
+                      <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground/60">
                         <Mail className="h-3 w-3" /> {tenant.email}
                       </div>
                     </div>
@@ -152,7 +152,7 @@ export default function TenantsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="rounded-[1.5rem] p-2 border-2 border-foreground/5 shadow-2xl">
-                      <DropdownMenuLabel className="text-[9px] font-black uppercase tracking-widest px-4 py-2 border-b border-muted/30 mb-1">Resident Actions</DropdownMenuLabel>
+                      <DropdownMenuLabel className="text-[9px] font-black uppercase tracking-widest px-4 py-2 border-b border-muted/30 mb-1">Tenant Actions</DropdownMenuLabel>
                       <DropdownMenuItem asChild className="rounded-xl focus:bg-primary focus:text-white cursor-pointer py-3 px-4 font-black text-[10px] uppercase tracking-widest gap-2">
                         <Link href={`/landlord/tenants/${tenant.id}`}>
                           <UserIcon className="h-4 w-4" /> View Full Profile
@@ -171,12 +171,12 @@ export default function TenantsPage() {
 
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Assigned Asset</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Assigned Asset</p>
                     <Link href={`/landlord/properties/${property.id}`} className="group/property flex flex-col gap-1">
                       <span className="text-xl font-black uppercase tracking-tight group-hover/property:text-primary transition-colors flex items-center gap-2">
                         <Building className="h-5 w-5 opacity-40" /> {property.title}
                       </span>
-                      <span className="text-xs font-bold text-muted-foreground/60 flex items-center gap-1 italic">
+                      <span className="text-xs font-bold text-muted-foreground/60 flex items-center gap-1">
                         <MapPin className="h-3 w-3" /> {property.location.address}, {property.location.city}
                       </span>
                     </Link>
@@ -184,13 +184,13 @@ export default function TenantsPage() {
 
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-1">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Tenancy Status</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Tenancy Status</p>
                       <Badge variant="outline" className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border-2 border-primary/20 text-primary">
                         {property.status}
                       </Badge>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">Occupancy Date</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Occupancy Date</p>
                       <p className="font-black text-sm uppercase tracking-tight">Active Protocol</p>
                     </div>
                   </div>
@@ -200,7 +200,7 @@ export default function TenantsPage() {
               <div className="relative z-10 pt-10 mt-auto">
                 <Link href={`/landlord/tenants/${tenant.id}`}>
                   <Button className="w-full h-16 rounded-2xl bg-foreground text-white hover:bg-primary transition-all duration-500 font-black text-xs uppercase tracking-[0.2em] gap-3 shadow-xl">
-                    ANALYZE RESIDENCY <ArrowRight className="h-5 w-5" />
+                    ANALYZE TENANCY <ArrowRight className="h-5 w-5" />
                   </Button>
                 </Link>
               </div>
@@ -217,9 +217,9 @@ export default function TenantsPage() {
             </div>
           </div>
           <div className="space-y-4 text-center">
-            <h3 className="text-3xl font-black uppercase tracking-tight italic">Portfolio Vacant</h3>
-            <p className="text-xl text-muted-foreground font-serif italic max-w-sm mx-auto opacity-60 leading-relaxed">
-              &quot;The resident archives are currently dormant. Occupancy data will manifest as agreements are finalized.&quot;
+            <h3 className="text-3xl font-black uppercase tracking-tight">Portfolio Vacant</h3>
+            <p className="text-xl text-muted-foreground font-medium max-w-sm mx-auto opacity-60 leading-relaxed">
+              &quot;The tenant archives are currently dormant. Occupancy data will manifest as agreements are finalized.&quot;
             </p>
           </div>
         </div>
