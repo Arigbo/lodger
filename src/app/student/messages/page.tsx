@@ -14,8 +14,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
+import { format, formatDistanceToNow } from 'date-fns';
 
 type Conversation = {
     id: string;
@@ -41,7 +40,8 @@ export default function MessagesPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [newMessage, setNewMessage] = useState('');
     const [localSelectedConversationId, setLocalSelectedConversationId] = useState<string | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null); // Changed to useRef for proper ref usage
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -49,6 +49,13 @@ export default function MessagesPage() {
 
     const selectedConversationId = searchParams.get('conversationId');
     const contactId = searchParams.get('contact');
+
+    // Handle initial state and mobile view switching
+    useEffect(() => {
+        if (selectedConversationId || contactId) {
+            setIsSidebarOpen(false);
+        }
+    }, [selectedConversationId, contactId]);
 
     const { data: newContact } = useDoc<User>(
         useMemoFirebase(() => (contactId ? doc(firestore, 'users', contactId) : null), [contactId, firestore])
@@ -209,15 +216,18 @@ export default function MessagesPage() {
     }
 
     return (
-        <div className="flex h-[calc(100vh-8rem)] gap-8 animate-in fade-in duration-700">
+        <div className="flex h-[calc(100dvh-7rem)] md:h-[calc(100vh-8rem)] gap-0 md:gap-8 animate-in fade-in duration-700 overflow-hidden -mt-4 md:mt-0">
             {/* Conversation List */}
-            <div className="w-80 md:w-96 flex-shrink-0 flex flex-col gap-6">
+            <div className={cn(
+                "w-full md:w-80 lg:w-96 flex-shrink-0 flex flex-col gap-4 md:gap-6 transition-all duration-300",
+                !isSidebarOpen && "hidden md:flex"
+            )}>
                 <div className="px-2">
-                    <h1 className="text-3xl font-black uppercase tracking-tight">Messages<span className="text-primary">.</span></h1>
-                    <p className="text-sm font-medium text-muted-foreground mt-1 text-left">Your direct connection to landlords.</p>
+                    <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight">Messages<span className="text-primary">.</span></h1>
+                    <p className="text-[10px] md:text-sm font-medium text-muted-foreground mt-1 text-left">Your direct connection to landlords.</p>
                 </div>
 
-                <Card className="flex-1 flex flex-col rounded-[2.5rem] border-2 border-white/40 shadow-xl shadow-black/[0.02] overflow-hidden bg-white/60 backdrop-blur-xl">
+                <Card className="flex-1 flex flex-col rounded-[2rem] md:rounded-[2.5rem] border-2 border-white/40 shadow-xl shadow-black/[0.02] overflow-hidden bg-white/60 backdrop-blur-xl">
                     <div className="p-6 border-b border-muted/20">
                         <div className="relative group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
@@ -255,10 +265,11 @@ export default function MessagesPage() {
                                     key={conv.id}
                                     onClick={() => {
                                         setLocalSelectedConversationId(conv.id);
+                                        setIsSidebarOpen(false);
                                         router.replace(`${pathname}?conversationId=${conv.id}`, { scroll: false });
                                     }}
                                     className={cn(
-                                        "w-full flex gap-4 items-center p-4 rounded-3xl transition-all duration-300 border-2 border-transparent",
+                                        "w-full flex gap-4 items-center p-3 md:p-4 rounded-2xl md:rounded-3xl transition-all duration-300 border-2 border-transparent",
                                         localSelectedConversationId === conv.id
                                             ? "bg-white border-primary/10 shadow-lg scale-[1.02]"
                                             : "hover:bg-white/40 hover:border-white/60 grayscale-[0.5] hover:grayscale-0"
@@ -289,31 +300,42 @@ export default function MessagesPage() {
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1">
+            <div className={cn(
+                "flex-1 h-full",
+                isSidebarOpen && "hidden md:block"
+            )}>
                 {localSelectedConversationId ? (
-                    <Card className="h-full flex flex-col rounded-[3rem] border-2 border-white/40 shadow-2xl shadow-black/[0.03] bg-white overflow-hidden relative">
-                        <div className="p-6 md:p-8 border-b-2 border-muted/5 flex items-center justify-between bg-white text-left">
-                            <div className="flex items-center gap-6">
-                                <Avatar className="h-16 w-16 rounded-[1.25rem] border-2 border-primary/5 shadow-md">
+                    <Card className="h-full flex flex-col rounded-none md:rounded-[3rem] border-0 md:border-2 border-white/40 shadow-2xl shadow-black/[0.03] bg-white overflow-hidden relative">
+                        <div className="p-4 md:p-8 border-b-2 border-muted/5 flex items-center justify-between bg-white text-left">
+                            <div className="flex items-center gap-3 md:gap-6">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="md:hidden h-10 w-10 rounded-xl"
+                                    onClick={() => setIsSidebarOpen(true)}
+                                >
+                                    <Send className="h-5 w-5 rotate-180" /> {/* Using Send rotated as a back arrow since ArrowLeft isn't imported here, or I can import ArrowLeft */}
+                                </Button>
+                                <Avatar className="h-10 w-10 md:h-16 md:w-16 rounded-xl md:rounded-[1.25rem] border-2 border-primary/5 shadow-md">
                                     <AvatarImage src={selectedConversation?.otherUser?.profileImageUrl} className="object-cover" />
-                                    <AvatarFallback className="bg-muted text-2xl font-black">{selectedConversation?.otherUser?.name?.[0]}</AvatarFallback>
+                                    <AvatarFallback className="bg-muted text-xl md:text-2xl font-black">{selectedConversation?.otherUser?.name?.[0]}</AvatarFallback>
                                 </Avatar>
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-3">
-                                        <h2 className="text-2xl font-black uppercase tracking-tight leading-none">{selectedConversation?.otherUser?.name}</h2>
-                                        <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
+                                <div className="space-y-0.5">
+                                    <div className="flex items-center gap-2 md:gap-3">
+                                        <h2 className="text-lg md:text-2xl font-black uppercase tracking-tight leading-none truncate max-w-[150px] md:max-w-none">{selectedConversation?.otherUser?.name}</h2>
+                                        <div className="h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
                                     </div>
-                                    <p className="text-xs font-bold text-muted-foreground/40 uppercase tracking-[0.1em]">Verified Landlord Connection</p>
+                                    <p className="text-[8px] md:text-xs font-bold text-muted-foreground/40 uppercase tracking-[0.1em]">Verified Landlord Connection</p>
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl hover:bg-muted/30 transition-all text-muted-foreground">
+                                <Button variant="ghost" size="icon" className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl hover:bg-muted/30 transition-all text-muted-foreground">
                                     <MoreVertical className="h-5 w-5" />
                                 </Button>
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed opacity-60">
+                        <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-8 custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed opacity-60">
                             {Object.entries(
                                 messages.reduce((groups, msg) => {
                                     const date = format(new Date(msg.timestamp.toDate()), 'MMMM d, yyyy');
@@ -364,7 +386,7 @@ export default function MessagesPage() {
                             <div ref={messagesEndRef} />
                         </div>
 
-                        <div className="p-8 border-t-2 border-muted/5 bg-white relative">
+                        <div className="p-4 md:p-8 border-t-2 border-muted/5 bg-white relative">
                             <form
                                 onSubmit={(e) => {
                                     e.preventDefault();
@@ -374,29 +396,29 @@ export default function MessagesPage() {
                             >
                                 <Input
                                     placeholder="Draft your message..."
-                                    className="h-20 rounded-[2.5rem] border-2 bg-muted/5 pl-8 pr-28 text-sm font-medium focus:bg-white focus:ring-8 focus:ring-primary/5 transition-all shadow-inner placeholder:text-muted-foreground/40"
+                                    className="h-14 md:h-20 rounded-2xl md:rounded-[2.5rem] border-2 bg-muted/5 pl-6 md:pl-8 pr-20 md:pr-28 text-sm font-medium focus:bg-white focus:ring-8 focus:ring-primary/5 transition-all shadow-inner placeholder:text-muted-foreground/40"
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
                                 />
                                 <Button
                                     type="submit"
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 h-14 px-8 rounded-full bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 md:h-14 px-4 md:px-8 rounded-xl md:rounded-full bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100"
                                     disabled={!newMessage.trim()}
                                 >
-                                    <Send className="h-5 w-5" />
+                                    <Send className="h-4 w-4 md:h-5 md:w-5" />
                                 </Button>
                             </form>
                         </div>
                     </Card>
                 ) : (
-                    <Card className="h-full flex flex-col items-center justify-center rounded-[3rem] border-2 border-dashed border-muted/10 bg-muted/5 p-20 text-center space-y-8 animate-in zoom-in duration-700">
-                        <div className="h-32 w-32 rounded-[2.5rem] bg-white shadow-2xl flex items-center justify-center mx-auto relative group overflow-hidden">
-                            <div className="absolute inset-0 bg-primary/5 rounded-[2.5rem] animate-pulse" />
-                            <MessageSquare className="h-14 w-14 text-muted-foreground/20 group-hover:scale-110 transition-transform duration-500" />
+                    <Card className="h-full flex flex-col items-center justify-center rounded-[2rem] md:rounded-[3rem] border-2 border-dashed border-muted/10 bg-muted/5 p-8 md:p-20 text-center space-y-6 md:space-y-8 animate-in zoom-in duration-700">
+                        <div className="h-20 w-20 md:h-32 md:w-32 rounded-2xl md:rounded-[2.5rem] bg-white shadow-2xl flex items-center justify-center mx-auto relative group overflow-hidden">
+                            <div className="absolute inset-0 bg-primary/5 rounded-2xl md:rounded-[2.5rem] animate-pulse" />
+                            <MessageSquare className="h-8 w-8 md:h-14 md:w-14 text-muted-foreground/20 group-hover:scale-110 transition-transform duration-500" />
                         </div>
-                        <div className="space-y-3">
-                            <h3 className="text-3xl font-black uppercase tracking-tight">Channel <span className="text-primary">Hibernated</span></h3>
-                            <p className="text-lg text-muted-foreground font-medium max-w-sm mx-auto leading-relaxed">
+                        <div className="space-y-2 md:space-y-3">
+                            <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight">Channel <span className="text-primary">Hibernated</span></h3>
+                            <p className="text-sm md:text-lg text-muted-foreground font-medium max-w-sm mx-auto leading-relaxed">
                                 Select a landlord thread to initiate communication.
                             </p>
                         </div>
