@@ -163,7 +163,7 @@ export default function StudentLeasesPage() {
                     </h3>
                     <p className="text-muted-foreground font-medium text-sm flex items-center gap-2">
                       <FileText className="h-4 w-4 opacity-40" />
-                      ID: {lease.id.slice(0, 8).toUpperCase()}...
+                      {property?.type} • {property?.bedrooms} Bed
                     </p>
                   </div>
                   <div className="text-right">

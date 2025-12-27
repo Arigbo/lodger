@@ -381,57 +381,69 @@ Total: ${formatPrice(transaction.transaction.amount, transaction.transaction.cur
                     <TableHead className="text-right px-6 font-bold text-foreground">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
-            </div>
+                <TableBody>
+                  {filteredTransactions.map((t) => (
+                    <TableRow key={t.transaction.id} className="border-muted/10 hover:bg-muted/5 transition-colors h-24">
+                      <TableCell className="px-6">
+                        <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black uppercase text-xs">
+                            {t.tenant?.name?.[0] || 'U'}
+                          </div>
+                          <div>
+                            <p className="font-black text-sm uppercase tracking-tight">{t.tenant?.name || 'Anonymous'}</p>
+                            <p className="text-[10px] font-bold text-muted-foreground/60 tracking-widest lowercase">{t.tenant?.email}</p>
+                          </div>
+                        </div>
                       </TableCell>
-        <TableCell className="hidden md:table-cell text-sm font-medium text-muted-foreground">{t.property?.title || 'Deleted Property'}</TableCell>
-        <TableCell className="text-sm font-medium">
-          {t.transaction.date ? format(new Date(t.transaction.date), 'MMM dd, yyyy') : 'N/A'}
-        </TableCell>
-        <TableCell className="hidden sm:table-cell">
-          <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[10px] font-black uppercase tracking-widest border-muted/20">
-            {t.transaction.type}
-          </Badge>
-        </TableCell>
-        <TableCell className="text-right font-black text-sm">
-          {formatPrice(t.transaction.amount, t.transaction.currency)}
-        </TableCell>
-        <TableCell className="text-center">
-          <Badge className={cn(
-            "rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border-none",
-            t.transaction.status === 'Completed' ? "bg-green-500/10 text-green-600" :
-              t.transaction.status === 'Pending' ? "bg-amber-500/10 text-amber-600" :
-                "bg-destructive/10 text-destructive"
-          )}>
-            {t.transaction.status}
-          </Badge>
-        </TableCell>
-        <TableCell className="text-right px-6">
-          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/5 group" asChild>
-            <Link href={`/landlord/transactions/${t.transaction.id}`}>
-              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </Link>
-          </Button>
-        </TableCell>
-      </TableRow>
+                      <TableCell className="hidden md:table-cell text-sm font-medium text-muted-foreground">{t.property?.title || 'Deleted Property'}</TableCell>
+                      <TableCell className="text-sm font-medium">
+                        {t.transaction.date ? format(new Date(t.transaction.date), 'MMM dd, yyyy') : 'N/A'}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[10px] font-black uppercase tracking-widest border-muted/20">
+                          {t.transaction.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-black text-sm">
+                        {formatPrice(t.transaction.amount, t.transaction.currency)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge className={cn(
+                          "rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border-none",
+                          t.transaction.status === 'Completed' ? "bg-green-500/10 text-green-600" :
+                            t.transaction.status === 'Pending' ? "bg-amber-500/10 text-amber-600" :
+                              "bg-destructive/10 text-destructive"
+                        )}>
+                          {t.transaction.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right px-6">
+                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/5 group" asChild>
+                          <Link href={`/landlord/transactions/${t.transaction.id}`}>
+                            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   ))}
-    </TableBody>
+                </TableBody>
               </Table >
             </div >
           ) : (
-    <div className="flex flex-col items-center justify-center py-24 text-center">
-      <div className="relative mb-8">
-        <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150" />
-        <div className="relative flex h-24 w-24 items-center justify-center rounded-[2rem] bg-muted/30">
-          <DollarSign className="h-10 w-10 text-primary opacity-20" />
-        </div>
-      </div>
-      <h3 className="text-2xl font-black tracking-tight">No Transactions Found</h3>
-      <p className="mx-auto mt-2 max-w-sm text-muted-foreground font-medium">
-        Try adjusting your filters or check back later for new activity.
-      </p>
-    </div>
-  )
-}
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="relative mb-8">
+                <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150" />
+                <div className="relative flex h-24 w-24 items-center justify-center rounded-[2rem] bg-muted/30">
+                  <DollarSign className="h-10 w-10 text-primary opacity-20" />
+                </div>
+              </div>
+              <h3 className="text-2xl font-black tracking-tight">No Transactions Found</h3>
+              <p className="mx-auto mt-2 max-w-sm text-muted-foreground font-medium">
+                Try adjusting your filters or check back later for new activity.
+              </p>
+            </div>
+          )
+          }
         </CardContent >
       </Card >
     </div >

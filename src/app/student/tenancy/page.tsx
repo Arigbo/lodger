@@ -118,7 +118,7 @@ export default function TenancyDashboardPage() {
                             </div>
                             <div className="mt-4 flex items-center justify-between px-2">
                                 <span className="text-sm font-bold text-primary group-hover:underline underline-offset-4 decoration-2">Manage Tenancy →</span>
-                                <span className="text-xs font-bold text-muted-foreground/60">Property ID: {property.id.slice(0, 8)}...</span>
+                                <span className="text-xs font-bold text-muted-foreground/60">{property.type} • {property.bedrooms} Bed</span>
                             </div>
                         </Link>
                     ))}

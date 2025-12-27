@@ -297,8 +297,8 @@ export default function ViewStudentLeasePage() {
                         <div className="relative bg-white border-2 border-foreground/5 shadow-2xl rounded-[3rem] p-8 md:p-12 min-h-[600px] flex flex-col">
                             <div className="flex justify-between items-start mb-12">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">LEASE ID</p>
-                                    <p className="font-mono text-xs opacity-60">#{lease.id.toUpperCase()}</p>
+                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">AGREEMENT TYPE</p>
+                                    <p className="font-mono text-xs opacity-60">Fixed Term Residential Lease</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">DATE</p>
