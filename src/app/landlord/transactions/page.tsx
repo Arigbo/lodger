@@ -12,15 +12,7 @@ import {
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -31,10 +23,9 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import type { Transaction, UserProfile as User, Property } from '@/types';
 import { formatPrice, cn } from '@/utils';
-import { DollarSign, ExternalLink, Download, Calendar as CalendarIcon, X as ClearIcon, TrendingUp, TrendingDown, Wallet, ChevronRight } from 'lucide-react';
+import { DollarSign, Download, Calendar as CalendarIcon, X as ClearIcon, TrendingUp, Wallet, Building, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { DateRange } from 'react-day-picker';
 import { addDays, format } from "date-fns";
@@ -269,71 +260,125 @@ export default function TransactionsPage() {
       <Card className="rounded-[3.5rem] border-2 border-foreground/5 bg-white shadow-3xl overflow-hidden">
         <CardContent className="p-0">
           {filteredTransactions.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30 border-none">
-                    <TableHead className="px-8 font-black text-[10px] uppercase tracking-widest text-foreground h-16">Tenant</TableHead>
-                    <TableHead className="hidden md:table-cell font-black text-[10px] uppercase tracking-widest text-foreground h-16">Property</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest text-foreground h-16 text-center">Date</TableHead>
-                    <TableHead className="hidden sm:table-cell font-black text-[10px] uppercase tracking-widest text-foreground h-16 text-center">Type</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest text-foreground h-16 text-right">Amount</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest text-foreground h-16 text-center">Status</TableHead>
-                    <TableHead className="text-right px-8 font-black text-[10px] uppercase tracking-widest text-foreground h-16">Details</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTransactions.map((t) => (
-                    <TableRow key={t.transaction.id} className="border-muted/10 hover:bg-muted/5 transition-colors h-24">
-                      <TableCell className="px-8">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black uppercase text-xs">
-                            {t.tenant?.name?.[0] || 'U'}
-                          </div>
-                          <div>
-                            <p className="font-black text-sm uppercase tracking-tight">{t.tenant?.name || 'Anonymous'}</p>
-                            <p className="text-[10px] font-bold text-muted-foreground/60 tracking-widest lowercase">{t.tenant?.email}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm font-medium text-muted-foreground">
-                        <Link href={`/landlord/properties/${t.property?.id}`} className="hover:text-primary transition-colors flex items-center gap-2">
-                          {t.property?.title || 'Deleted Property'} <ExternalLink className="h-3 w-3 opacity-30" />
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-[11px] font-black uppercase tracking-widest text-center text-muted-foreground">
-                        {t.transaction.date ? format(new Date(t.transaction.date), 'MMM dd, yyyy') : 'N/A'}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell text-center">
-                        <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[9px] font-black uppercase tracking-widest border-muted/20">
-                          {t.transaction.type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-black text-sm">
-                        {formatPrice(t.transaction.amount, t.transaction.currency)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge className={cn(
-                          "rounded-full px-4 py-1 text-[9px] font-black uppercase tracking-widest border-none",
-                          t.transaction.status === 'Completed' ? "bg-emerald-500/10 text-emerald-600" :
-                            t.transaction.status === 'Pending' ? "bg-amber-500/10 text-amber-600" :
-                              "bg-red-500/10 text-red-600"
-                        )}>
-                          {t.transaction.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right px-8">
-                        <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl hover:bg-primary/5 group" asChild>
-                          <Link href={`/landlord/transactions/${t.transaction.id}`}>
-                            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-all" />
-                          </Link>
-                        </Button>
-                      </TableCell>
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30 border-none">
+                      <TableHead className="px-8 font-black text-[10px] uppercase tracking-widest text-foreground h-16">Tenant</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest text-foreground h-16">Property</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest text-foreground h-16 text-center">Date</TableHead>
+                      <TableHead className="hidden sm:table-cell font-black text-[10px] uppercase tracking-widest text-foreground h-16 text-center">Type</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest text-foreground h-16 text-right">Amount</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest text-foreground h-16 text-center">Status</TableHead>
+                      <TableHead className="text-right px-8 font-black text-[10px] uppercase tracking-widest text-foreground h-16">Details</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredTransactions.map((t) => (
+                      <TableRow key={t.transaction.id} className="border-muted/10 hover:bg-muted/5 transition-colors h-24">
+                        <TableCell className="px-8">
+                          <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black uppercase text-xs">
+                              {t.tenant?.name?.[0] || 'U'}
+                            </div>
+                            <div>
+                              <p className="font-black text-sm uppercase tracking-tight">{t.tenant?.name || 'Anonymous'}</p>
+                              <p className="text-[10px] font-bold text-muted-foreground/60 tracking-widest lowercase">{t.tenant?.email}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm font-medium text-muted-foreground">
+                          <Link href={`/landlord/properties/${t.property?.id}`} className="hover:text-primary transition-colors flex items-center gap-2">
+                            <Building className="h-4 w-4" />
+                            {t.property?.title || 'Unknown Property'}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <p className="text-sm font-bold">{format(new Date(t.transaction.date), 'MMM dd, yyyy')}</p>
+                          <p className="text-[10px] font-medium text-muted-foreground/60">{format(new Date(t.transaction.date), 'HH:mm')}</p>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-center">
+                          <Badge variant="outline" className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest border-muted/20">
+                            {t.transaction.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <p className="text-sm font-black tracking-tight">{formatPrice(t.transaction.amount, t.transaction.currency)}</p>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge className={cn(
+                            "rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-widest border-none",
+                            t.transaction.status === 'Completed' ? "bg-emerald-500 text-white" :
+                              t.transaction.status === 'Pending' ? "bg-amber-500 text-white" :
+                                "bg-red-500 text-white"
+                          )}>
+                            {t.transaction.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right px-8">
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/10 hover:text-primary" asChild>
+                            <Link href={`/landlord/transactions/${t.transaction.id}`}>
+                              <ChevronRight className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden divide-y divide-muted/10">
+                {filteredTransactions.map((t) => (
+                  <Link
+                    key={t.transaction.id}
+                    href={`/landlord/transactions/${t.transaction.id}`}
+                    className="flex flex-col p-6 hover:bg-muted/5 transition-colors space-y-4"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black uppercase text-xs">
+                          {t.tenant?.name?.[0] || 'U'}
+                        </div>
+                        <div>
+                          <p className="font-black text-xs uppercase tracking-tight">{t.tenant?.name || 'Anonymous'}</p>
+                          <p className="text-[10px] font-medium text-muted-foreground/60 truncate max-w-[120px]">{t.tenant?.email}</p>
+                        </div>
+                      </div>
+                      <Badge className={cn(
+                        "rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border-none",
+                        t.transaction.status === 'Completed' ? "bg-emerald-500 text-white" :
+                          t.transaction.status === 'Pending' ? "bg-amber-500 text-white" :
+                            "bg-red-500 text-white"
+                      )}>
+                        {t.transaction.status}
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest">Property</p>
+                        <p className="text-xs font-bold truncate">{t.property?.title || 'Unknown'}</p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest">Amount</p>
+                        <p className="text-sm font-black tracking-tight">{formatPrice(t.transaction.amount, t.transaction.currency)}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-2">
+                      <p className="text-[10px] font-bold text-muted-foreground/60">
+                        {format(new Date(t.transaction.date), 'MMM dd, yyyy • HH:mm')}
+                      </p>
+                      <ChevronRight className="h-4 w-4 text-primary" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center py-32 text-center px-10">
               <div className="relative mb-8">

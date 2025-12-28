@@ -79,7 +79,7 @@ export default function PaymentDialog({
         months,
         date: new Date().toISOString(),
         type: metadata.type || 'Rent',
-        method: 'Offline',
+        paymentMethod: 'Offline',
         status: 'Pending Verification',
       });
 
@@ -129,7 +129,7 @@ export default function PaymentDialog({
     }
   };
 
-  const handleStripeSuccess = async () => {
+  const handleStripeSuccess = async (paymentIntentId: string) => {
     setIsProcessing(true);
     try {
       // Record the completed transaction in Firestore
@@ -144,7 +144,8 @@ export default function PaymentDialog({
         months,
         date: new Date().toISOString(),
         type: metadata.type || 'Rent',
-        method: 'Stripe',
+        paymentMethod: 'Stripe',
+        paymentIntentId,
         status: 'Completed',
       });
 

@@ -15,7 +15,7 @@ import { formatPrice } from "@/utils";
 interface StripeCheckoutFormProps {
     amount: number;
     currency?: string;
-    onSuccess: () => void;
+    onSuccess: (paymentIntentId: string) => void;
 }
 
 export default function StripeCheckoutForm({ amount, currency = 'USD', onSuccess }: StripeCheckoutFormProps) {
@@ -49,7 +49,16 @@ export default function StripeCheckoutForm({ amount, currency = 'USD', onSuccess
             setIsLoading(false);
         } else {
             // Payment successful!
-            onSuccess();
+            // Retrieve payment intent to get the ID if needed, 
+            // but usually we can get it from the elements or stripe object if we confirmed it.
+            // Since we are using redirect: 'if_required', if we reach here, it's successful.
+            const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret as string);
+            if (paymentIntent && paymentIntent.status === 'succeeded') {
+                onSuccess(paymentIntent.id);
+            } else {
+                setErrorMessage("Payment confirmation failed. Please check your card.");
+                setIsLoading(false);
+            }
         }
     };
 

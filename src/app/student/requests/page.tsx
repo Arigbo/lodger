@@ -209,7 +209,7 @@ export default function StudentRequestsPage() {
 
       {aggregatedRequests.length > 0 ? (
         <Card className="overflow-hidden border-2 border-foreground/5 bg-white shadow-xl rounded-[2.5rem]">
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 border-none">
@@ -274,6 +274,67 @@ export default function StudentRequestsPage() {
                 ))}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden divide-y divide-muted/10">
+            {aggregatedRequests.map(({ request, landlord, property }) => (
+              <div key={request.id} className="p-6 space-y-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <Link href={`/student/properties/${property?.id}`} className="font-black text-sm uppercase tracking-tight hover:text-primary transition-colors block mb-1">
+                      {property?.title || 'Unknown Property'}
+                    </Link>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                      Applied: {new Date(request.applicationDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
+                  </div>
+                  <Badge className={cn(
+                    "rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border-none",
+                    request.status === 'approved' ? "bg-green-500/10 text-green-600" :
+                      request.status === 'declined' ? "bg-red-500/10 text-red-600" :
+                        "bg-primary/10 text-primary"
+                  )}>
+                    {request.status}
+                  </Badge>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-muted/20 flex items-center justify-center text-[10px] font-black uppercase">
+                    {landlord?.name?.[0] || 'L'}
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">{landlord?.name || 'Unknown Landlord'}</p>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  {request.status === 'approved' ? (
+                    <Button size="sm" className="flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest h-10" asChild>
+                      <Link href="/student/leases">View Lease</Link>
+                    </Button>
+                  ) : request.status === 'pending' ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest h-10 border-2"
+                      onClick={() => {
+                        setRequestToEdit(request);
+                        setEditMessage(request.messageToLandlord || '');
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-xl font-black text-[9px] uppercase tracking-widest text-red-500 h-10 px-4"
+                    onClick={() => setRequestToDelete(request.id)}
+                  >
+                    {request.status === 'pending' ? 'Withdraw' : 'Clear'}
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         </Card>
       ) : (

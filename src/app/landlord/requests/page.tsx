@@ -279,10 +279,11 @@ export default function RentalRequestsPage() {
         tenantId: tenantId,
         propertyId: propertyId,
         amount: leaseData.offlinePaymentAmount || property?.price || 0,
-        monthsPaid: leaseData.offlinePaymentMonths || 1,
+        months: leaseData.offlinePaymentMonths || 1,
         currency: leaseData.currency || property?.currency || 'USD',
         date: new Date().toISOString(),
         type: 'Rent',
+        paymentMethod: 'Offline',
         status: 'Completed'
       });
 
@@ -341,14 +342,14 @@ export default function RentalRequestsPage() {
         </div>
 
         <div className="flex flex-wrap gap-4">
-          <div className="bg-white px-8 py-5 rounded-[2rem] border-2 border-muted/10 shadow-sm flex flex-col justify-center min-w-[160px]">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">Active Requests</p>
-            <p className="text-3xl font-black tracking-tighter">{pendingRequests.length}</p>
+          <div className="bg-white px-6 md:px-8 py-4 md:py-5 rounded-2xl md:rounded-[2rem] border-2 border-muted/10 shadow-sm flex flex-col justify-center flex-1 md:min-w-[160px]">
+            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">Active Requests</p>
+            <p className="text-2xl md:text-3xl font-black tracking-tighter">{pendingRequests.length}</p>
           </div>
           {pendingOfflinePayments.length > 0 && (
-            <div className="bg-orange-600 text-white px-8 py-5 rounded-[2rem] shadow-xl shadow-orange-600/20 flex flex-col justify-center min-w-[160px] animate-in zoom-in duration-500">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-1">Payment Tasks</p>
-              <p className="text-3xl font-black tracking-tighter">{pendingOfflinePayments.length}</p>
+            <div className="bg-orange-600 text-white px-6 md:px-8 py-4 md:py-5 rounded-2xl md:rounded-[2rem] shadow-xl shadow-orange-600/20 flex flex-col justify-center flex-1 md:min-w-[160px] animate-in zoom-in duration-500">
+              <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-1">Payment Tasks</p>
+              <p className="text-2xl md:text-3xl font-black tracking-tighter">{pendingOfflinePayments.length}</p>
             </div>
           )}
         </div>
@@ -433,19 +434,19 @@ export default function RentalRequestsPage() {
                     </div>
 
                     {/* Decision Matrix */}
-                    <div className="lg:w-1/4 flex lg:flex-col gap-4 justify-center items-stretch">
+                    <div className="lg:w-1/4 flex flex-col sm:flex-row lg:flex-col gap-4 justify-center items-stretch lg:border-l-2 lg:border-muted/5 lg:pl-10">
                       <Button
                         onClick={() => handleAcceptClick(aggregatedRequest)}
-                        className="h-16 rounded-2xl bg-foreground text-white hover:bg-primary transition-all font-black text-xs uppercase tracking-widest gap-3 shadow-xl"
+                        className="h-16 flex-1 rounded-2xl bg-foreground text-white hover:bg-primary transition-all font-black text-[10px] md:text-xs uppercase tracking-widest gap-3 shadow-xl"
                       >
-                        <Check className="h-5 w-5" /> ACCEPT APPLICATION
+                        <Check className="h-5 w-5" /> ACCEPT
                       </Button>
                       <Button
                         variant="outline"
                         onClick={() => handleDeclineClick(request.id)}
-                        className="h-16 rounded-2xl border-2 hover:bg-destructive hover:text-white hover:border-destructive transition-all font-black text-xs uppercase tracking-widest gap-3"
+                        className="h-16 flex-1 rounded-2xl border-2 hover:bg-destructive hover:text-white hover:border-destructive transition-all font-black text-[10px] md:text-xs uppercase tracking-widest gap-3"
                       >
-                        <X className="h-5 w-5" /> DECLINE APPLICATION
+                        <X className="h-5 w-5" /> DECLINE
                       </Button>
                     </div>
                   </div>

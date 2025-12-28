@@ -140,10 +140,13 @@ export default function MessagesPage() {
                 setSelectedParticipant(participant);
                 setLocalSelectedConversationId(selectedConversationId);
             }
-        } else if (conversations.length > 0 && !localSelectedConversationId) {
-            setSelectedParticipant(conversations[0].participant);
-            setLocalSelectedConversationId(conversations[0].id);
-            router.replace(`${pathname}?conversationId=${conversations[0].id}`, { scroll: false });
+        } else if (conversations.length > 0 && !localSelectedConversationId && searchParams.get('conversationId')) {
+            const convoId = searchParams.get('conversationId');
+            const participant = conversations.find(c => c.id === convoId)?.participant;
+            if (participant) {
+                setSelectedParticipant(participant);
+                setLocalSelectedConversationId(convoId);
+            }
         }
     }, [selectedConversationId, conversations, localSelectedConversationId, router, pathname]);
 
@@ -308,7 +311,10 @@ export default function MessagesPage() {
                                     variant="ghost"
                                     size="icon"
                                     className="md:hidden h-10 w-10 rounded-xl"
-                                    onClick={() => setIsSidebarOpen(true)}
+                                    onClick={() => {
+                                        setIsSidebarOpen(true);
+                                        router.replace(pathname, { scroll: false });
+                                    }}
                                 >
                                     <ArrowLeft className="h-5 w-5" />
                                 </Button>
@@ -318,10 +324,10 @@ export default function MessagesPage() {
                                 </Avatar>
                                 <div className="space-y-0.5">
                                     <div className="flex items-center gap-2 md:gap-3">
-                                        <h2 className="text-lg md:text-2xl font-black uppercase tracking-tight leading-none truncate max-w-[150px] md:max-w-none">{selectedConversation?.otherUser?.name}</h2>
-                                        <div className="h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
+                                        <h2 className="text-base md:text-xl font-black uppercase tracking-tight leading-none truncate max-w-[150px] md:max-w-none">{selectedConversation?.otherUser?.name}</h2>
+                                        <div className="h-1 md:h-1.5 w-1 md:w-1.5 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
                                     </div>
-                                    <p className="text-[8px] md:text-xs font-bold text-muted-foreground/40 uppercase tracking-[0.1em]">Verified Tenant Connection</p>
+                                    <p className="text-[7px] md:text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.1em]">Verified Tenant Connection</p>
                                 </div>
                             </div>
                             <div className="flex gap-2">
@@ -331,55 +337,60 @@ export default function MessagesPage() {
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-8 custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed opacity-60">
-                            {Object.entries(
-                                messages.reduce((groups, msg) => {
-                                    const date = format(new Date(msg.timestamp.toDate()), 'MMMM d, yyyy');
-                                    if (!groups[date]) groups[date] = [];
-                                    groups[date].push(msg);
-                                    return groups;
-                                }, {} as Record<string, typeof messages>)
-                            ).map(([date, groupMessages]) => (
-                                <div key={date} className="space-y-8">
-                                    <div className="flex justify-center py-4 relative">
-                                        <div className="absolute inset-x-0 top-1/2 h-px bg-muted/10" />
-                                        <span className="relative z-10 px-6 py-2 rounded-full bg-white border-2 border-muted/5 text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">{date}</span>
-                                    </div>
-                                    {groupMessages.map((msg) => (
-                                        <div
-                                            key={msg.id}
-                                            className={cn(
-                                                "flex gap-4 max-w-[85%] animate-in slide-in-from-bottom-2 duration-500",
-                                                msg.senderId === landlord?.uid ? "ml-auto flex-row-reverse" : "mr-auto"
-                                            )}
-                                        >
-                                            <Avatar className="h-10 w-10 flex-shrink-0 rounded-xl mt-1 shadow-sm border-2 border-white">
-                                                <AvatarImage src={msg.senderId === landlord?.uid ? landlordProfile?.profileImageUrl : selectedConversation?.otherUser?.profileImageUrl} className="object-cover" />
-                                                <AvatarFallback className="text-[10px] font-black">{msg.senderId === landlord?.uid ? 'ME' : 'U'}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="space-y-2">
-                                                <div
-                                                    className={cn(
-                                                        "p-6 rounded-[2rem] text-sm font-medium leading-relaxed shadow-xl transition-all hover:scale-[1.01]",
-                                                        msg.senderId === landlord?.uid
-                                                            ? "bg-foreground text-white rounded-tr-none shadow-black/10"
-                                                            : "bg-white border-2 border-muted/10 text-foreground rounded-tl-none shadow-black/5"
-                                                    )}
-                                                >
-                                                    {msg.text}
-                                                </div>
-                                                <p className={cn(
-                                                    "text-[8px] font-bold text-muted-foreground/30 uppercase tracking-widest",
-                                                    msg.senderId === landlord?.uid ? "text-right" : "text-left"
-                                                )}>
-                                                    {format(new Date(msg.timestamp.toDate()), 'HH:mm')} • {msg.senderId === landlord?.uid ? 'Delivered' : 'Received'}
-                                                </p>
-                                            </div>
+                        <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-8 custom-scrollbar relative">
+                            {/* Texture Overlay */}
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed opacity-[0.02] pointer-events-none" />
+
+                            <div className="relative z-10 space-y-6 md:space-y-8">
+                                {Object.entries(
+                                    messages.reduce((groups, msg) => {
+                                        const date = format(new Date(msg.timestamp.toDate()), 'MMMM d, yyyy');
+                                        if (!groups[date]) groups[date] = [];
+                                        groups[date].push(msg);
+                                        return groups;
+                                    }, {} as Record<string, typeof messages>)
+                                ).map(([date, groupMessages]) => (
+                                    <div key={date} className="space-y-8">
+                                        <div className="flex justify-center py-4 relative">
+                                            <div className="absolute inset-x-0 top-1/2 h-px bg-muted/10" />
+                                            <span className="relative z-10 px-6 py-2 rounded-full bg-white border-2 border-muted/5 text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">{date}</span>
                                         </div>
-                                    ))}
-                                </div>
-                            ))}
-                            <div ref={messagesEndRef} />
+                                        {groupMessages.map((msg) => (
+                                            <div
+                                                key={msg.id}
+                                                className={cn(
+                                                    "flex gap-4 max-w-[85%] animate-in slide-in-from-bottom-2 duration-500",
+                                                    msg.senderId === landlord?.uid ? "ml-auto flex-row-reverse" : "mr-auto"
+                                                )}
+                                            >
+                                                <Avatar className="h-10 w-10 flex-shrink-0 rounded-xl mt-1 shadow-sm border-2 border-white">
+                                                    <AvatarImage src={msg.senderId === landlord?.uid ? landlordProfile?.profileImageUrl : selectedConversation?.otherUser?.profileImageUrl} className="object-cover" />
+                                                    <AvatarFallback className="text-[10px] font-black">{msg.senderId === landlord?.uid ? 'ME' : 'U'}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="space-y-2">
+                                                    <div
+                                                        className={cn(
+                                                            "p-6 rounded-[2rem] text-sm font-medium leading-relaxed shadow-xl transition-all hover:scale-[1.01]",
+                                                            msg.senderId === landlord?.uid
+                                                                ? "bg-foreground text-white rounded-tr-none shadow-black/10"
+                                                                : "bg-white border-2 border-muted/10 text-foreground rounded-tl-none shadow-black/5"
+                                                        )}
+                                                    >
+                                                        {msg.text}
+                                                    </div>
+                                                    <p className={cn(
+                                                        "text-[8px] font-bold text-muted-foreground/30 uppercase tracking-widest",
+                                                        msg.senderId === landlord?.uid ? "text-right" : "text-left"
+                                                    )}>
+                                                        {format(new Date(msg.timestamp.toDate()), 'HH:mm')} • {msg.senderId === landlord?.uid ? 'Delivered' : 'Received'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ))}
+                                <div ref={messagesEndRef} />
+                            </div>
                         </div>
 
                         <div className="p-4 md:p-8 border-t-2 border-muted/5 bg-white relative">

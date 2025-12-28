@@ -38,7 +38,7 @@ import { useToast } from '@/hooks/use-toast';
 import { uploadProfileImage } from '@/firebase/storage';
 import { getStorage } from 'firebase/storage';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Pencil, User, Trash2, Wallet } from 'lucide-react';
+import { Pencil, User, Trash2, Wallet, Clock } from 'lucide-react';
 import Loading from '@/app/loading';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { countries } from '@/types/countries';

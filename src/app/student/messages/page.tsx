@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/utils';
 import type { UserProfile as User, Message, Property } from '@/types';
-import { Send, Search, MessageSquare, MoreVertical } from 'lucide-react';
+import { Send, Search, MessageSquare, MoreVertical, ArrowLeft } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limit, documentId } from 'firebase/firestore';
 import Loading from '@/app/loading';
@@ -165,6 +165,19 @@ export default function MessagesPage() {
     }, [allStudentMessages, selectedParticipant]);
 
     useEffect(() => {
+        if (selectedConversationId) {
+            const participant = conversations.find(c => c.id === selectedConversationId)?.participant;
+            if (participant) {
+                setSelectedParticipant(participant);
+                setLocalSelectedConversationId(selectedConversationId);
+            }
+        } else if (contactId && newContact) {
+            setSelectedParticipant(newContact);
+            setLocalSelectedConversationId(contactId);
+        }
+    }, [selectedConversationId, contactId, conversations, newContact]);
+
+    useEffect(() => {
         if (messagesEndRef.current) {
             scrollToBottom();
         }
@@ -312,9 +325,12 @@ export default function MessagesPage() {
                                     variant="ghost"
                                     size="icon"
                                     className="md:hidden h-10 w-10 rounded-xl"
-                                    onClick={() => setIsSidebarOpen(true)}
+                                    onClick={() => {
+                                        setIsSidebarOpen(true);
+                                        router.replace(pathname, { scroll: false });
+                                    }}
                                 >
-                                    <Send className="h-5 w-5 rotate-180" /> {/* Using Send rotated as a back arrow since ArrowLeft isn't imported here, or I can import ArrowLeft */}
+                                    <ArrowLeft className="h-5 w-5" />
                                 </Button>
                                 <Avatar className="h-10 w-10 md:h-16 md:w-16 rounded-xl md:rounded-[1.25rem] border-2 border-primary/5 shadow-md">
                                     <AvatarImage src={selectedConversation?.otherUser?.profileImageUrl} className="object-cover" />
@@ -322,10 +338,10 @@ export default function MessagesPage() {
                                 </Avatar>
                                 <div className="space-y-0.5">
                                     <div className="flex items-center gap-2 md:gap-3">
-                                        <h2 className="text-lg md:text-2xl font-black uppercase tracking-tight leading-none truncate max-w-[150px] md:max-w-none">{selectedConversation?.otherUser?.name}</h2>
-                                        <div className="h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
+                                        <h2 className="text-base md:text-xl font-black uppercase tracking-tight leading-none truncate max-w-[150px] md:max-w-none">{selectedConversation?.otherUser?.name}</h2>
+                                        <div className="h-1 md:h-1.5 w-1 md:w-1.5 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
                                     </div>
-                                    <p className="text-[8px] md:text-xs font-bold text-muted-foreground/40 uppercase tracking-[0.1em]">Verified Landlord Connection</p>
+                                    <p className="text-[7px] md:text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.1em]">Verified Landlord Connection</p>
                                 </div>
                             </div>
                             <div className="flex gap-2">
@@ -335,55 +351,60 @@ export default function MessagesPage() {
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-8 custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed opacity-60">
-                            {Object.entries(
-                                messages.reduce((groups, msg) => {
-                                    const date = format(new Date(msg.timestamp.toDate()), 'MMMM d, yyyy');
-                                    if (!groups[date]) groups[date] = [];
-                                    groups[date].push(msg);
-                                    return groups;
-                                }, {} as Record<string, typeof messages>)
-                            ).map(([date, groupMessages]) => (
-                                <div key={date} className="space-y-8">
-                                    <div className="flex justify-center py-4 relative">
-                                        <div className="absolute inset-x-0 top-1/2 h-px bg-muted/10" />
-                                        <span className="relative z-10 px-6 py-2 rounded-full bg-white border-2 border-muted/5 text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">{date}</span>
-                                    </div>
-                                    {groupMessages.map((msg) => (
-                                        <div
-                                            key={msg.id}
-                                            className={cn(
-                                                "flex gap-4 max-w-[85%] animate-in slide-in-from-bottom-2 duration-500",
-                                                msg.senderId === user?.uid ? "ml-auto flex-row-reverse" : "mr-auto"
-                                            )}
-                                        >
-                                            <Avatar className="h-10 w-10 flex-shrink-0 rounded-xl mt-1 shadow-sm border-2 border-white">
-                                                <AvatarImage src={msg.senderId === user?.uid ? userProfile?.profileImageUrl : selectedParticipant?.profileImageUrl} className="object-cover" />
-                                                <AvatarFallback className="text-[10px] font-black">{msg.senderId === user?.uid ? 'ME' : 'U'}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="space-y-2">
-                                                <div
-                                                    className={cn(
-                                                        "p-6 rounded-[2rem] text-sm font-medium leading-relaxed shadow-xl transition-all hover:scale-[1.01]",
-                                                        msg.senderId === user?.uid
-                                                            ? "bg-foreground text-white rounded-tr-none shadow-black/10"
-                                                            : "bg-white border-2 border-muted/10 text-foreground rounded-tl-none shadow-black/5"
-                                                    )}
-                                                >
-                                                    {msg.text}
-                                                </div>
-                                                <p className={cn(
-                                                    "text-[8px] font-bold text-muted-foreground/30 uppercase tracking-widest",
-                                                    msg.senderId === user?.uid ? "text-right" : "text-left"
-                                                )}>
-                                                    {format(new Date(msg.timestamp.toDate()), 'HH:mm')} • {msg.senderId === user?.uid ? 'Delivered' : 'Received'}
-                                                </p>
-                                            </div>
+                        <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-8 custom-scrollbar relative">
+                            {/* Texture Overlay */}
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed opacity-[0.03] pointer-events-none" />
+
+                            <div className="relative z-10 space-y-6 md:space-y-8">
+                                {Object.entries(
+                                    messages.reduce((groups, msg) => {
+                                        const date = format(new Date(msg.timestamp.toDate()), 'MMMM d, yyyy');
+                                        if (!groups[date]) groups[date] = [];
+                                        groups[date].push(msg);
+                                        return groups;
+                                    }, {} as Record<string, typeof messages>)
+                                ).map(([date, groupMessages]) => (
+                                    <div key={date} className="space-y-8">
+                                        <div className="flex justify-center py-4 relative">
+                                            <div className="absolute inset-x-0 top-1/2 h-px bg-muted/10" />
+                                            <span className="relative z-10 px-6 py-2 rounded-full bg-white border-2 border-muted/5 text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">{date}</span>
                                         </div>
-                                    ))}
-                                </div>
-                            ))}
-                            <div ref={messagesEndRef} />
+                                        {groupMessages.map((msg) => (
+                                            <div
+                                                key={msg.id}
+                                                className={cn(
+                                                    "flex gap-4 max-w-[85%] animate-in slide-in-from-bottom-2 duration-500",
+                                                    msg.senderId === user?.uid ? "ml-auto flex-row-reverse" : "mr-auto"
+                                                )}
+                                            >
+                                                <Avatar className="h-10 w-10 flex-shrink-0 rounded-xl mt-1 shadow-sm border-2 border-white">
+                                                    <AvatarImage src={msg.senderId === user?.uid ? userProfile?.profileImageUrl : selectedParticipant?.profileImageUrl} className="object-cover" />
+                                                    <AvatarFallback className="text-[10px] font-black">{msg.senderId === user?.uid ? 'ME' : 'U'}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="space-y-2">
+                                                    <div
+                                                        className={cn(
+                                                            "p-6 rounded-[2rem] text-sm font-medium leading-relaxed shadow-xl transition-all hover:scale-[1.01]",
+                                                            msg.senderId === user?.uid
+                                                                ? "bg-foreground text-white rounded-tr-none shadow-black/10"
+                                                                : "bg-white border-2 border-muted/10 text-foreground rounded-tl-none shadow-black/5"
+                                                        )}
+                                                    >
+                                                        {msg.text}
+                                                    </div>
+                                                    <p className={cn(
+                                                        "text-[8px] font-bold text-muted-foreground/30 uppercase tracking-widest",
+                                                        msg.senderId === user?.uid ? "text-right" : "text-left"
+                                                    )}>
+                                                        {format(new Date(msg.timestamp.toDate()), 'HH:mm')} • {msg.senderId === user?.uid ? 'Delivered' : 'Received'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ))}
+                                <div ref={messagesEndRef} />
+                            </div>
                         </div>
 
                         <div className="p-4 md:p-8 border-t-2 border-muted/5 bg-white relative">
