@@ -22,13 +22,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Card, CardContent } from "@/components/ui/card";
 
 
-// Mock coordinates for major state centers to determine location
-const stateCoordinates: { [key: string]: { lat: number; lng: number } } = {
-    'CA': { lat: 36.7783, lng: -119.4179 },
-    'NY': { lat: 40.7128, lng: -74.0060 },
-};
+// Mock coordinates for major state centers removed in favor of dynamic property-based detection
 
 export default function PropertiesPage() {
+
     const { user } = useUser();
     const firestore = useFirestore();
 
@@ -92,11 +89,11 @@ export default function PropertiesPage() {
             });
         } else {
             if (filters.country) {
-                // Mocking country filtering as all properties are in USA
+                properties = properties.filter(p => p.location.country === filters.country);
             }
 
             if (filters.state) {
-                properties = properties.filter(p => p.location.state === filters.state);
+                properties = properties.filter(p => p.location.state.toLowerCase() === filters.state!.toLowerCase());
             }
 
             if (filters.city) {
@@ -104,7 +101,7 @@ export default function PropertiesPage() {
             }
 
             if (filters.school) {
-                properties = properties.filter(p => p.location.school === filters.school);
+                properties = properties.filter(p => p.location.school?.toLowerCase() === filters.school!.toLowerCase());
             }
         }
 
@@ -184,38 +181,54 @@ export default function PropertiesPage() {
     };
 
     const handleLocationSuccess = (coords: { lat: number, lng: number }) => {
-        if (!allProperties) return;
+        if (!allProperties || allProperties.length === 0) return;
         setCurrentLocation(coords);
 
-        let closestState: string | null = null;
+        // Find the closest property to determine the user's current region
+        let closestProperty: Property | null = null;
         let minDistance = Infinity;
 
-        for (const state in stateCoordinates) {
-            const distance = haversineDistance(coords, stateCoordinates[state]);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestState = state;
+        for (const property of allProperties) {
+            if (property.location.lat && property.location.lng) {
+                const distance = haversineDistance(coords, { lat: property.location.lat, lng: property.location.lng });
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestProperty = property;
+                }
             }
         }
 
-        let schools: string[] = [];
-        // Set a threshold for how far away is considered "in the state" (e.g., 500km)
-        if (closestState && minDistance < 500) {
-            schools = [...new Set(allProperties
-                .filter(p => p.location.state === closestState && p.location.school)
+        // If we found a property within a reasonable range (e.g. 50km), we assume the user is in that region
+        // defaulting to the country/state/city of that property.
+        if (closestProperty && minDistance < 50) {
+            const regionState = closestProperty.location.state;
+            const regionCountry = closestProperty.location.country;
+
+            // Find all schools in this state to populate the dropdown
+            const schools = [...new Set(allProperties
+                .filter(p => p.location.state === regionState && p.location.school)
                 .map(p => p.location.school!)
             )];
+
+            setSchoolsInArea(schools);
+
+            setFilters(prev => ({
+                ...prev,
+                useCurrentLocation: true,
+                country: regionCountry,
+                state: regionState,
+                // We don't automatically set city as that might be too specific, but we set the broader region
+                school: undefined
+            }));
+        } else {
+            // If no property is close, we still enable location search (filtering by radius)
+            // but we don't pre-select filters because we can't determine a supported region.
+            setSchoolsInArea([]);
+            setFilters(prev => ({
+                ...prev,
+                useCurrentLocation: true
+            }));
         }
-
-        setSchoolsInArea(schools);
-
-        setFilters(prev => ({
-            ...prev,
-            useCurrentLocation: true,
-            country: schools.length > 0 ? 'USA' : undefined,
-            state: schools.length > 0 ? closestState || undefined : undefined,
-            school: undefined
-        }));
     }
 
     const resetFilters = () => {

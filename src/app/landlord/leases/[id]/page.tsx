@@ -1,14 +1,16 @@
 
 'use client';
 
+import { useState } from 'react';
 import { notFound, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { CheckCircle2, FileClock, Hourglass, Check, Signature, AlertTriangle, Printer, DollarSign, Building } from 'lucide-react';
+import { CheckCircle2, FileClock, Hourglass, Check, Signature, AlertTriangle, Printer, DollarSign, Building, Loader2 } from 'lucide-react';
 import { cn, formatPrice } from "@/utils";
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -37,12 +39,17 @@ export default function ViewLandlordLeasePage() {
     const propertyRef = useMemoFirebase(() => lease ? doc(firestore, 'properties', lease.propertyId) : null, [firestore, lease]);
     const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
 
+    const [isSigning, setIsSigning] = useState(false);
+    const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
     // Unified loading state
     const isLoading = isUserLoading || isLeaseLoading;
     const isSupportingDataLoading = isLandlordLoading || isTenantLoading || isPropertyLoading;
 
     const handleSignLease = async () => {
         if (!leaseRef || !lease) return;
+
+        setIsSigning(true);
         try {
             const signedName = landlord?.legalName || landlord?.name || "Landlord";
             const signatureLine = `\n\nDigitally Signed by Landlord: ${signedName} on ${new Date().toLocaleString()}`;
@@ -53,12 +60,18 @@ export default function ViewLandlordLeasePage() {
                 leaseText: updatedLeaseText
             });
 
+            // Show success logic
+            setIsSigning(false);
+            setShowSuccessDialog(true);
+
+            // Note: We don't rely only on toast anymore as per UX feedback
             toast({
                 title: "Lease Signed Successfully!",
                 description: "Your signature has been recorded."
             });
         } catch (error: unknown) {
             console.error("Error signing lease:", error);
+            setIsSigning(false);
             toast({
                 variant: "destructive",
                 title: "Error",
@@ -325,8 +338,20 @@ export default function ViewLandlordLeasePage() {
                                 <p className="text-white/60 font-serif text-sm leading-relaxed">
                                     &quot;Your signature confirm that terms reflect the latest property updates.&quot;
                                 </p>
-                                <Button className="w-full h-16 rounded-2xl bg-white text-foreground hover:bg-white/90 font-black text-sm uppercase tracking-widest gap-3 shadow-2xl transition-all hover:scale-105 active:scale-95" onClick={handleSignLease}>
-                                    <Signature className="h-5 w-5" /> SIGN DIGITALLY
+                                <Button
+                                    className="w-full h-16 rounded-2xl bg-white text-foreground hover:bg-white/90 font-black text-sm uppercase tracking-widest gap-3 shadow-2xl transition-all hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-70"
+                                    onClick={handleSignLease}
+                                    disabled={isSigning}
+                                >
+                                    {isSigning ? (
+                                        <>
+                                            <Loader2 className="h-5 w-5 animate-spin" /> SIGNING...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Signature className="h-5 w-5" /> SIGN DIGITALLY
+                                        </>
+                                    )}
                                 </Button>
                             </div>
                         </div>
@@ -344,13 +369,42 @@ export default function ViewLandlordLeasePage() {
                         </div>
                     )}
 
-                    <Link href="/landlord/leases" className="block text-center">
-                        <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.3em] hover:tracking-[0.4em] transition-all opacity-40 hover:opacity-100">
-                            ← BACK TO ALL LEASES
-                        </Button>
+                    <Link
+                        href="/landlord/leases"
+                        className={cn(
+                            buttonVariants({ variant: "ghost" }),
+                            "font-black text-[10px] uppercase tracking-[0.3em] hover:tracking-[0.4em] transition-all opacity-40 hover:opacity-100"
+                        )}
+                    >
+                        ← BACK TO ALL LEASES
                     </Link>
                 </div>
             </div>
-        </div>
+
+            <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-green-600">
+                            <CheckCircle2 className="h-6 w-6" />
+                            Lease Signed Successfully
+                        </DialogTitle>
+                        <DialogDescription>
+                            Your digital signature has been recorded. The lease is now pending tenant signature.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-center py-6">
+                        <Signature className="h-16 w-16 text-primary/20" />
+                    </div>
+                    <DialogFooter className="sm:justify-between gap-2">
+                        <Button
+                            className="w-full"
+                            onClick={() => setShowSuccessDialog(false)}
+                        >
+                            Okay, Got it
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div >
     );
 }

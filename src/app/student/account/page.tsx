@@ -175,7 +175,7 @@ export default function AccountPage() {
             country: values.country,
             state: values.state,
             school: values.school,
-            currency: values.currency,
+            currency: values.currency || 'USD',
         };
 
         setDoc(userDocRef, dataToUpdate, { merge: true })
@@ -185,13 +185,27 @@ export default function AccountPage() {
                     description: "Your profile has been successfully updated.",
                 });
             })
-            .catch((serverError: any) => {
-                const permissionError = new FirestorePermissionError({
-                    path: userDocRef.path,
-                    operation: 'update',
-                    requestResourceData: dataToUpdate,
-                });
-                errorEmitter.emit('permission-error', permissionError);
+            .catch((error: any) => {
+                console.error("Profile update error:", error);
+
+                // Check if it's a permission error (usually has a code or specific structure)
+                // For now, we'll emit the permission error for the global handler, 
+                // but also show a toast if it's likely a data/validation error.
+
+                if (error.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError({
+                        path: userDocRef.path,
+                        operation: 'update',
+                        requestResourceData: dataToUpdate,
+                    });
+                    errorEmitter.emit('permission-error', permissionError);
+                } else {
+                    toast({
+                        variant: "destructive",
+                        title: "Update Failed",
+                        description: "Could not update profile. Please try again."
+                    });
+                }
             });
     }
 

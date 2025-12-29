@@ -243,12 +243,14 @@ export default function MessagesPage() {
                 });
             })
             .catch((serverError: any) => {
-                const permissionError = new FirestorePermissionError({
-                    path: messagesRef.path,
-                    operation: 'create',
-                    requestResourceData: messageData,
-                });
-                errorEmitter.emit('permission-error', permissionError);
+                console.error("FAILED_TO_SEND_MESSAGE", serverError);
+                // const permissionError = new FirestorePermissionError({
+                //     path: messagesRef.path,
+                //     operation: 'create',
+                //     requestResourceData: messageData,
+                // });
+                // errorEmitter.emit('permission-error', permissionError);
+                alert(`Failed to send message: ${serverError.message || 'Unknown error'}`);
             });
     };
 
