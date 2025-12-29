@@ -438,7 +438,7 @@ export default function MessagesPage() {
                             <div className="relative z-10 space-y-6 md:space-y-8">
                                 {Object.entries(
                                     messages.reduce((groups, msg) => {
-                                        const date = format(new Date(msg.timestamp.toDate()), 'MMMM d, yyyy');
+                                        const date = format(msg.timestamp ? msg.timestamp.toDate() : new Date(), 'MMMM d, yyyy');
                                         if (!groups[date]) groups[date] = [];
                                         groups[date].push(msg);
                                         return groups;
@@ -476,7 +476,7 @@ export default function MessagesPage() {
                                                         "text-[8px] font-bold text-muted-foreground/30 uppercase tracking-widest",
                                                         msg.senderId === user?.uid ? "text-right" : "text-left"
                                                     )}>
-                                                        {format(new Date(msg.timestamp.toDate()), 'HH:mm')} • {msg.senderId === user?.uid ? 'Delivered' : 'Received'}
+                                                        {format(msg.timestamp ? msg.timestamp.toDate() : new Date(), 'HH:mm')} • {msg.senderId === user?.uid ? 'Delivered' : 'Received'}
                                                     </p>
                                                 </div>
                                             </div>

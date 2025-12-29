@@ -289,16 +289,8 @@ export default function MessagesPage() {
                     </div>
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
                         {isDataLoading ? (
-                            <div className="space-y-4 p-4">
-                                {[1, 2, 3].map((i) => (
-                                    <div key={i} className="flex gap-4 items-center animate-pulse">
-                                        <div className="h-14 w-14 rounded-2xl bg-muted/40" />
-                                        <div className="flex-1 space-y-2">
-                                            <div className="h-4 w-1/2 bg-muted/40 rounded-full" />
-                                            <div className="h-3 w-3/4 bg-muted/40 rounded-full" />
-                                        </div>
-                                    </div>
-                                ))}
+                            <div className="flex items-center justify-center p-8">
+                                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                             </div>
                         ) : filteredConversations.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
@@ -397,7 +389,7 @@ export default function MessagesPage() {
                                         <h2 className="text-base md:text-xl font-black uppercase tracking-tight leading-none truncate max-w-[150px] md:max-w-none">{selectedConversation?.otherUser?.name}</h2>
                                         <div className="h-1 md:h-1.5 w-1 md:w-1.5 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
                                     </div>
-                                    <p className="text-[7px] md:text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.1em]">Verified Tenant Connection</p>
+                                    <p className="text-[7px] md:text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.1em]">Tenant</p>
                                 </div>
                             </div>
                             <div className="flex gap-2">
@@ -427,7 +419,7 @@ export default function MessagesPage() {
                             <div className="relative z-10 space-y-6 md:space-y-8">
                                 {Object.entries(
                                     messages.reduce((groups, msg) => {
-                                        const date = format(new Date(msg.timestamp.toDate()), 'MMMM d, yyyy');
+                                        const date = format(msg.timestamp ? msg.timestamp.toDate() : new Date(), 'MMMM d, yyyy');
                                         if (!groups[date]) groups[date] = [];
                                         groups[date].push(msg);
                                         return groups;
@@ -465,7 +457,7 @@ export default function MessagesPage() {
                                                         "text-[8px] font-bold text-muted-foreground/30 uppercase tracking-widest",
                                                         msg.senderId === landlord?.uid ? "text-right" : "text-left"
                                                     )}>
-                                                        {format(new Date(msg.timestamp.toDate()), 'HH:mm')} • {msg.senderId === landlord?.uid ? 'Delivered' : 'Received'}
+                                                        {format(msg.timestamp ? msg.timestamp.toDate() : new Date(), 'HH:mm')} • {msg.senderId === landlord?.uid ? 'Delivered' : 'Received'}
                                                     </p>
                                                 </div>
                                             </div>
@@ -507,9 +499,9 @@ export default function MessagesPage() {
                             <MessageSquare className="h-8 w-8 md:h-14 md:w-14 text-muted-foreground/20 group-hover:scale-110 transition-transform duration-500" />
                         </div>
                         <div className="space-y-2 md:space-y-3">
-                            <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight">Channel <span className="text-primary">Hibernated</span></h3>
+                            <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight">Select a <span className="text-primary">Conversation</span></h3>
                             <p className="text-sm md:text-lg text-muted-foreground font-medium max-w-sm mx-auto leading-relaxed">
-                                Select a verified tenant thread to initiate formal communication protocols.
+                                Choose a tenant from the list to start chatting.
                             </p>
                         </div>
                     </Card>
