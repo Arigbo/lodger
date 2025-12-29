@@ -179,8 +179,21 @@ export default function ViewStudentLeasePage() {
         try {
             // Inject Tenant Name into Lease
             const signedName = tenant?.legalName || tenant?.name || "Tenant";
-            const signatureLine = `\n\nDigitally Signed by Tenant: ${signedName} on ${new Date().toLocaleString()}`;
-            const updatedLeaseText = lease.leaseText + signatureLine;
+            const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            let updatedLeaseText = lease.leaseText;
+
+            // Replace Tenant: Nill globally (top and bottom)
+            updatedLeaseText = updatedLeaseText.replace(/Tenant:\s*Nill/g, `Tenant: ${signedName}`);
+
+            // Replace Date: Nill specifically following Tenant line
+            updatedLeaseText = updatedLeaseText.replace(/(Tenant:[^\n]*\n\s*Date:\s*)Nill/g, `$1${dateStr}`);
+
+            // Fallback: If no Nill pattern found (e.g. legacy lease), append signature
+            if (!updatedLeaseText.includes(`Tenant: ${signedName}`)) {
+                const signatureLine = `\n\nDigitally Signed by Tenant: ${signedName} on ${new Date().toLocaleString()}`;
+                updatedLeaseText = updatedLeaseText + signatureLine;
+            }
 
             await updateDoc(leaseRef, {
                 tenantSigned: true,

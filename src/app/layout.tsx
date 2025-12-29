@@ -1,26 +1,12 @@
-import type { Metadata } from "next";
-import { Outfit, Playfair_Display } from "next/font/google";
-import "./globals.css";
-import { cn } from "@/utils";
-import { Toaster } from "@/components/ui/toaster";
 import { HeaderAndFooterProvider } from "@/components/header-and-footer-provider";
-import { FirebaseClientProvider } from "@/firebase";
 import { SupportBubble } from "@/components/support-bubble";
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-  display: "swap",
-  fallback: ["system-ui", "arial"]
-});
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-  style: ["normal", "italic"],
-  display: "swap",
-  fallback: ["Georgia", "serif"]
-});
+import { Toaster } from "@/components/ui/toaster";
+import { FirebaseClientProvider } from "@/firebase";
+import { cn } from "@/utils";
+import type { Metadata } from "next";
+// Fonts removed to resolve build errors
+const outfit = { variable: "font-sans" };
+const playfair = { variable: "font-serif" };
 
 export const metadata: Metadata = {
   title: {
@@ -42,7 +28,7 @@ export const metadata: Metadata = {
         height: 630,
       },
     ],
-    locale: "en_US",
+    locale: "en_NG",
     type: "website",
   },
   twitter: {
@@ -75,10 +61,12 @@ export default function RootLayout({
         )}
       >
         <FirebaseClientProvider>
-          <HeaderAndFooterProvider>{children}</HeaderAndFooterProvider>
+          <HeaderAndFooterProvider>
+            {children}
+            <Toaster />
+            <SupportBubble />
+          </HeaderAndFooterProvider>
         </FirebaseClientProvider>
-        <Toaster />
-        <SupportBubble />
       </body>
     </html>
   );

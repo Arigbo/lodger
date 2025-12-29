@@ -23,6 +23,14 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Combobox } from '@/components/ui/combobox';
 import { SchoolCombobox } from '@/components/school-combobox';
 import {
@@ -38,7 +46,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { amenities as allAmenities } from '@/types';
 import { cn, formatPrice } from '@/utils';
-import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon, Sparkles, Building, Loader2, Ruler, AlertCircle, Wifi, Car, AirVent, Dumbbell, Waves, Layout } from 'lucide-react';
+import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon, Sparkles, Building, Loader2, Ruler, AlertCircle, Wifi, Car, AirVent, Dumbbell, Waves, Layout, ShieldCheck } from 'lucide-react';
 import type { Property, UserProfile } from '@/types';
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { useRouter } from 'next/navigation';
@@ -51,35 +59,42 @@ import { getCurrencyByCountry } from '@/utils/currencies';
 
 
 function generateLeaseTextForTemplate(propertyData: Partial<FormValues>): string {
+    const amenitiesList = propertyData.amenities && propertyData.amenities.length > 0
+        ? propertyData.amenities.join(', ')
+        : 'None';
+
+    const rulesList = propertyData.rules || 'None';
+    const rentAmount = propertyData.price ? `${propertyData.currency} ${propertyData.price}` : '{{MONTHLY_RENT}}';
+
     return `LEASE AGREEMENT
 
 This Lease Agreement (the "Agreement") is made and entered into on {{DATE_TODAY}}, by and between:
 
-Landlord: {{LANDLORD_NAME}}
-Tenant: {{TENANT_NAME}}
+Landlord: Nill
+Tenant: Nill
 
 1. PROPERTY. Landlord agrees to lease to Tenant the property located at:
-   {{PROPERTY_ADDRESS}}, {{PROPERTY_CITY}}, {{PROPERTY_STATE}}, {{PROPERTY_COUNTRY}}, {{PROPERTY_ZIP}}
+   ${propertyData.address || '{{PROPERTY_ADDRESS}}'}, ${propertyData.city || '{{PROPERTY_CITY}}'}, ${propertyData.state || '{{PROPERTY_STATE}}'}, ${propertyData.country || '{{PROPERTY_COUNTRY}}'}, ${propertyData.zip || '{{PROPERTY_ZIP}}'}
 
 2. TERM. The lease term will begin on {{LEASE_START_DATE}} and will terminate on {{LEASE_END_DATE}}.
 
-3. RENT. Tenant agrees to pay Landlord the sum of {{MONTHLY_RENT}} per month, due on the 1st day of each month.
+3. RENT. Tenant agrees to pay Landlord the sum of ${rentAmount} per month, due on the 1st day of each month.
 
 4. SECURITY DEPOSIT. Upon execution of this Agreement, Tenant shall deposit with Landlord the sum of {{SECURITY_DEPOSIT}} as security for the faithful performance by Tenant of the terms hereof.
 
 5. UTILITIES. Tenant is responsible for the payment of all utilities and services for the Property.
 
-6. AMENITIES. The following amenities are included: {{AMENITIES}}.
+6. AMENITIES. The following amenities are included: ${amenitiesList}.
 
-7. RULES. Tenant agrees to abide by the following rules: {{RULES}}.
+7. RULES. Tenant agrees to abide by the following rules: ${rulesList}.
 
 8. SIGNATURES. By signing below, the parties agree to the terms and conditions of this Lease Agreement.
 
-Landlord: _________________________
-Date: _________________________
+Landlord: Nill
+Date: Nill
 
-Tenant: _________________________
-Date: _________________________`;
+Tenant: Nill
+Date: Nill`;
 }
 
 // 5MB limit
@@ -96,10 +111,10 @@ const imageSchema = z.any()
 
 const formSchema = z.object({
     title: z.string().min(5, 'Title must be at least 5 characters.'),
-    description: z.string().min(10, 'Description is required.'),
+    description: z.string().min(10, 'Description must be at least 10 characters.').optional().or(z.literal('')),
     price: z.coerce.number().positive('Price must be a positive number.'),
     currency: z.string().min(3, 'Currency is required.'),
-    type: z.enum(['Apartment', 'House', 'Studio', 'Loft']),
+    type: z.enum(['Apartment', 'House', 'Studio', 'Loft', 'Self Contain']),
     address: z.string().min(5, 'Address is required.'),
     country: z.string().min(2, 'Country is required.'),
     city: z.string().min(2, 'City is required.'),
@@ -108,7 +123,7 @@ const formSchema = z.object({
     school: z.string().optional(),
     bedrooms: z.coerce.number().int().min(0, 'Bedrooms must be 0 or more.'),
     bathrooms: z.coerce.number().int().min(1, 'Must have at least 1 bathroom.'),
-    area: z.coerce.number().positive('Area must be a positive number.'),
+
     amenities: z.array(z.string()).refine((value) => value.some((item) => item), {
         message: 'You have to select at least one amenity.',
     }),
@@ -126,10 +141,13 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const steps = [
-    { id: 1, name: 'Basic Info & Price', fields: ['title', 'type', 'price', 'currency'] },
-    { id: 2, name: 'Location & Details', fields: ['address', 'country', 'city', 'state', 'zip', 'school', 'bedrooms', 'bathrooms', 'area'] },
-    { id: 3, name: 'Features & Description', fields: ['amenities', 'rules', 'description'] },
-    { id: 4, name: 'Images & Lease', fields: ['leaseTemplate', 'kitchenImage', 'livingRoomImage', 'bathroomImage', 'bedroomImage', 'otherImage'] }
+    { id: 1, name: 'Basic Info', fields: ['title', 'type', 'price', 'currency', 'bedrooms', 'bathrooms'] },
+    { id: 2, name: 'Location', fields: ['address', 'country', 'city', 'state', 'zip', 'school'] },
+    { id: 3, name: 'Amenities & Rules', fields: ['amenities', 'rules'] },
+    { id: 4, name: 'Lease Template', fields: ['leaseTemplate'] },
+    { id: 5, name: 'Images', fields: ['kitchenImage', 'livingRoomImage', 'bathroomImage', 'bedroomImage', 'otherImage'] },
+    { id: 6, name: 'Description', fields: ['description'] },
+    { id: 7, name: 'Review & Submit', fields: [] }
 ];
 
 const FileUpload = ({ field, label, description, icon: Icon }: { field: any, label: string, description: string, icon: any }) => (
@@ -209,7 +227,6 @@ export default function AddPropertyPage() {
             school: '',
             bedrooms: 1,
             bathrooms: 1,
-            area: 0,
             amenities: [],
             rules: '',
             leaseTemplate: '',
@@ -259,7 +276,9 @@ export default function AddPropertyPage() {
 
     const nextStep = async () => {
         const fields = steps[currentStep - 1].fields;
-        if (currentStep === 4) {
+
+        // Auto-generate lease template on step 4 if empty
+        if (currentStep === 3) {
             const propertyData = form.getValues();
             const leaseText = generateLeaseTextForTemplate(propertyData);
             const currentLease = form.getValues('leaseTemplate');
@@ -268,9 +287,13 @@ export default function AddPropertyPage() {
             }
         }
 
-        if (fields) {
+        // Only validate if there are fields to validate (skip review step)
+        if (fields && fields.length > 0) {
             const output = await form.trigger(fields as (keyof FormValues)[], { shouldFocus: true });
-            if (!output) return;
+            if (!output) {
+                console.log('Validation failed for fields:', fields);
+                return;
+            }
         }
 
         if (currentStep < totalSteps) {
@@ -296,7 +319,6 @@ export default function AddPropertyPage() {
                     type: formData.type,
                     bedrooms: formData.bedrooms,
                     bathrooms: formData.bathrooms,
-                    area: formData.area,
                     amenities: formData.amenities,
                     city: formData.city,
                     state: formData.state,
@@ -333,9 +355,24 @@ export default function AddPropertyPage() {
         return await getDownloadURL(snapshot.ref);
     }
 
-    async function onSubmit(values: FormValues) {
-        if (!user) return;
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [pendingSubmission, setPendingSubmission] = useState<FormValues | null>(null);
+
+    // Initial submit just opens the confirmation dialog
+    function onSubmit(values: FormValues) {
+        setPendingSubmission(values);
+        setIsConfirmOpen(true);
+    }
+
+    const handleReject = () => {
+        router.push('/landlord/properties');
+    };
+
+    // Actual submission to Firestore
+    async function handleFinalSubmit() {
+        if (!user || !pendingSubmission) return;
         setIsSubmitting(true);
+        const values = pendingSubmission;
 
         try {
             const uploadedImageUrls: string[] = [];
@@ -361,7 +398,7 @@ export default function AddPropertyPage() {
 
             const newPropertyData: Omit<Property, 'id'> = {
                 title: values.title,
-                description: values.description,
+                description: values.description || '',
                 price: values.price,
                 type: values.type,
                 location: {
@@ -376,7 +413,7 @@ export default function AddPropertyPage() {
                 },
                 bedrooms: values.bedrooms,
                 bathrooms: values.bathrooms,
-                area: values.area,
+                area: 0, // Area removed from form, defaulting to 0
                 currency: values.currency || 'USD',
                 amenities: values.amenities,
                 images: uploadedImageUrls,
@@ -390,7 +427,7 @@ export default function AddPropertyPage() {
             await updateDoc(docRef, { id: docRef.id });
 
             toast({ title: "Property Added", description: "Your property is now listed in the marketplace." });
-            router.push('/landlord/properties');
+            router.push(`/landlord/properties/${docRef.id}?new=true`);
         } catch (e: any) {
             console.error("Error adding document: ", e);
             toast({
@@ -400,6 +437,7 @@ export default function AddPropertyPage() {
             });
         } finally {
             setIsSubmitting(false);
+            setIsConfirmOpen(false);
         }
     }
 
@@ -493,8 +531,77 @@ export default function AddPropertyPage() {
                                                                     <SelectItem value="House">House</SelectItem>
                                                                     <SelectItem value="Studio">Studio</SelectItem>
                                                                     <SelectItem value="Loft">Loft</SelectItem>
+                                                                    <SelectItem value="Self Contain">Self Contain</SelectItem>
                                                                 </SelectContent>
                                                             </Select>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                            <Separator className="bg-muted/10" />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="price"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Monthly Rent</FormLabel>
+                                                            <FormControl>
+                                                                <Input type="number" placeholder="0.00" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-2xl font-black text-primary" />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="currency"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Currency</FormLabel>
+                                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                                <FormControl>
+                                                                    <SelectTrigger className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus:ring-0 text-xs font-black uppercase tracking-widest">
+                                                                        <SelectValue placeholder="CURRENCY" />
+                                                                    </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent className="rounded-2xl border-2 font-black text-[10px] uppercase">
+                                                                    <SelectItem value="USD">USD ($)</SelectItem>
+                                                                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                                                                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                                                                    <SelectItem value="NGN">NGN (₦)</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                            <Separator className="bg-muted/10" />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="bedrooms"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Bedrooms</FormLabel>
+                                                            <FormControl>
+                                                                <Input type="number" placeholder="0" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="bathrooms"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Bathrooms</FormLabel>
+                                                            <FormControl>
+                                                                <Input type="number" placeholder="0" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                                                            </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
                                                     )}
@@ -592,88 +699,9 @@ export default function AddPropertyPage() {
                                                     )}
                                                 />
                                             </div>
-                                            <Separator className="bg-muted/10" />
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                <FormField
-                                                    control={form.control}
-                                                    name="price"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Monthly Rent</FormLabel>
-                                                            <FormControl>
-                                                                <Input type="number" placeholder="0.00" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-2xl font-black text-primary" />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <FormField
-                                                    control={form.control}
-                                                    name="currency"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Currency</FormLabel>
-                                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                                <FormControl>
-                                                                    <SelectTrigger className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus:ring-0 text-xs font-black uppercase tracking-widest">
-                                                                        <SelectValue placeholder="CURRENCY" />
-                                                                    </SelectTrigger>
-                                                                </FormControl>
-                                                                <SelectContent className="rounded-2xl border-2 font-black text-[10px] uppercase">
-                                                                    <SelectItem value="USD">USD ($)</SelectItem>
-                                                                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                                                                    <SelectItem value="GBP">GBP (£)</SelectItem>
-                                                                    <SelectItem value="NGN">NGN (₦)</SelectItem>
-                                                                </SelectContent>
-                                                            </Select>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                            <Separator className="bg-muted/10" />
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                                <FormField
-                                                    control={form.control}
-                                                    name="bedrooms"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Bedrooms</FormLabel>
-                                                            <FormControl>
-                                                                <Input type="number" placeholder="0" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <FormField
-                                                    control={form.control}
-                                                    name="bathrooms"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Bathrooms</FormLabel>
-                                                            <FormControl>
-                                                                <Input type="number" placeholder="0" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <FormField
-                                                    control={form.control}
-                                                    name="area"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Area (sqft)</FormLabel>
-                                                            <FormControl>
-                                                                <Input type="number" placeholder="0" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
+
                                         </div>
+
                                     )}
 
                                     {currentStep === 3 && (
@@ -745,36 +773,7 @@ export default function AddPropertyPage() {
                                                     </FormItem>
                                                 )}
                                             />
-                                            <Separator className="bg-muted/10" />
-                                            <FormField
-                                                control={form.control}
-                                                name="description"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Description</FormLabel>
-                                                            <Button
-                                                                type="button"
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={generateDescription}
-                                                                disabled={isGeneratingDescription}
-                                                                className="rounded-full text-[10px] font-black uppercase tracking-widest"
-                                                            >
-                                                                {isGeneratingDescription ? (
-                                                                    <><Loader2 className="mr-2 h-3 w-3 animate-spin" /> Generating...</>
-                                                                ) : (
-                                                                    <><Sparkles className="mr-2 h-3 w-3" /> AI Generate</>
-                                                                )}
-                                                            </Button>
-                                                        </div>
-                                                        <FormControl>
-                                                            <Textarea placeholder="Describe the essence of your property..." {...field} className="min-h-[150px] md:min-h-[200px] rounded-2xl md:rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-medium p-4 md:p-6 leading-relaxed" />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+
                                         </div>
                                     )}
 
@@ -785,29 +784,25 @@ export default function AddPropertyPage() {
                                                 name="leaseTemplate"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Lease Template</FormLabel>
-                                                            <Button
-                                                                type="button"
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={generateLeaseTemplate}
-                                                                className="rounded-full text-[10px] font-black uppercase tracking-widest"
-                                                            >
-                                                                Reset Template
-                                                            </Button>
-                                                        </div>
+                                                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-4 block">Lease Template</FormLabel>
                                                         <FormControl>
-                                                            <Textarea {...field} rows={12} className="rounded-2xl md:rounded-3xl bg-muted/5 border-2 border-dashed border-primary/20 focus-visible:border-primary focus-visible:bg-white text-[10px] md:text-[11px] font-mono leading-relaxed p-4 md:p-8 transition-all duration-500" />
+                                                            <Textarea
+                                                                {...field}
+                                                                className="min-h-[60vh] rounded-2xl md:rounded-3xl bg-muted/5 border-2 border-dashed border-primary/20 focus-visible:border-primary focus-visible:bg-white text-xs md:text-sm font-mono leading-relaxed p-6 md:p-10 transition-all duration-500"
+                                                            />
                                                         </FormControl>
                                                         <FormDescription className="text-[10px] font-medium mt-4 opacity-60">
-                                                            * This template will be used for all future lease agreements.
+                                                            * Fields marked as "Nill" and dates will be automatically updated with actual names and dates when the lease is signed by each party.
                                                         </FormDescription>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
                                             />
-                                            <Separator className="bg-muted/10" />
+                                        </div>
+                                    )}
+
+                                    {currentStep === 5 && (
+                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                                                 <FormField
                                                     control={form.control}
@@ -857,6 +852,118 @@ export default function AddPropertyPage() {
                                                         />
                                                     )}
                                                 />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="otherImage"
+                                                    render={({ field }) => (
+                                                        <FileUpload
+                                                            field={field}
+                                                            label="OTHER"
+                                                            description="Any other highlights."
+                                                            icon={ImageIcon}
+                                                        />
+                                                    )}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {currentStep === 6 && (
+                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <div className="p-6 md:p-8 rounded-2xl md:rounded-3xl bg-primary/5 border-2 border-primary/10">
+                                                <h3 className="text-base md:text-lg font-black uppercase tracking-tight mb-4">AI-Powered Description</h3>
+                                                <p className="text-xs md:text-sm text-muted-foreground mb-6">
+                                                    Generate a compelling property description using all the details you've provided. You can edit it after generation.
+                                                </p>
+                                                <Button
+                                                    type="button"
+                                                    onClick={generateDescription}
+                                                    disabled={isGeneratingDescription}
+                                                    className="w-full md:w-auto h-12 md:h-14 px-6 md:px-8 rounded-xl md:rounded-2xl text-xs md:text-sm font-black uppercase tracking-widest"
+                                                >
+                                                    {isGeneratingDescription ? (
+                                                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</>
+                                                    ) : (
+                                                        <><Sparkles className="mr-2 h-4 w-4" /> Generate Description</>
+                                                    )}
+                                                </Button>
+                                            </div>
+                                            <FormField
+                                                control={form.control}
+                                                name="description"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Description</FormLabel>
+                                                        <FormControl>
+                                                            <Textarea
+                                                                placeholder="Describe the essence of your property..."
+                                                                {...field}
+                                                                className="min-h-[200px] md:min-h-[250px] rounded-2xl md:rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs md:text-sm font-medium p-4 md:p-6 leading-relaxed"
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {currentStep === 7 && (
+                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <div className="p-8 md:p-12 rounded-2xl md:rounded-[3rem] bg-gradient-to-br from-primary/10 via-background to-blue-500/10 border-2 border-primary/20 relative overflow-hidden">
+                                                <div className="absolute top-0 right-0 p-8 opacity-10">
+                                                    <Sparkles className="h-24 w-24 md:h-32 md:w-32" />
+                                                </div>
+                                                <div className="relative space-y-8">
+                                                    <div>
+                                                        <h3 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-none mb-2">Review Your Property</h3>
+                                                        <p className="text-xs md:text-sm text-muted-foreground uppercase tracking-widest">Finalize before deployment</p>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
+                                                        <div className="space-y-6">
+                                                            <div>
+                                                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Property Title</p>
+                                                                <p className="text-lg md:text-2xl font-black uppercase tracking-tight">{form.getValues('title')}</p>
+                                                                <p className="text-muted-foreground text-xs md:text-sm mt-2">{form.getValues('address')}, {form.getValues('city')}</p>
+                                                            </div>
+                                                            <Separator className="bg-muted/20" />
+                                                            <div className="grid grid-cols-2 gap-4 md:gap-6">
+                                                                <div>
+                                                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Monthly Rent</p>
+                                                                    <p className="text-base md:text-xl font-black">{form.getValues('currency')} {form.getValues('price')}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Type</p>
+                                                                    <p className="text-base md:text-xl font-black uppercase tracking-tight">{form.getValues('type')}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="space-y-6 p-6 md:p-8 rounded-2xl md:rounded-3xl bg-white/50 border border-muted/20">
+                                                            <div className="grid grid-cols-2 gap-6 md:gap-8">
+                                                                <div>
+                                                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Bedrooms</p>
+                                                                    <p className="text-xl md:text-2xl font-black">{form.getValues('bedrooms')}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Bathrooms</p>
+                                                                    <p className="text-xl md:text-2xl font-black">{form.getValues('bathrooms')}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-3">Selected Amenities</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {form.getValues('amenities')?.map((amenity) => (
+                                                            <span key={amenity} className="px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-primary/10 text-primary text-[10px] md:text-xs font-black uppercase tracking-widest">
+                                                                {amenity}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -895,6 +1002,36 @@ export default function AddPropertyPage() {
                     </div>
                 </div>
             </div>
-        </div>
+
+            <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+                <DialogContent className="rounded-[2rem] border-2 border-foreground/5 p-0 overflow-hidden sm:max-w-md">
+                    <div className="bg-primary/5 p-6 md:p-8 flex flex-col items-center justify-center text-center border-b">
+                        <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 text-primary animate-in zoom-in duration-500">
+                            <ShieldCheck className="h-8 w-8" />
+                        </div>
+                        <DialogTitle className="text-xl md:text-2xl font-black uppercase tracking-tight">Final Verification</DialogTitle>
+                        <DialogDescription className="text-xs md:text-sm font-medium mt-2 max-w-xs mx-auto">
+                            Please confirm that you are the legal owner of this property and all provided details are accurate.
+                        </DialogDescription>
+                    </div>
+                    <DialogFooter className="p-6 md:p-8 flex flex-col sm:flex-row gap-4">
+                        <Button
+                            variant="outline"
+                            onClick={handleReject}
+                            className="w-full h-14 rounded-xl border-2 text-[10px] font-black uppercase tracking-widest hover:bg-destructive/5 hover:border-destructive/20 hover:text-destructive transition-colors"
+                        >
+                            No, Cancel Listing
+                        </Button>
+                        <Button
+                            onClick={handleFinalSubmit}
+                            disabled={isSubmitting}
+                            className="w-full h-14 rounded-xl bg-foreground text-white hover:bg-primary transition-all text-[10px] font-black uppercase tracking-widest"
+                        >
+                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Yes, I Confirm"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div >
     );
 }

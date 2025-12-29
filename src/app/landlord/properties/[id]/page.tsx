@@ -1,6 +1,6 @@
 'use client';
 
-import { notFound, useParams, useRouter } from 'next/navigation';
+import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
 import { formatPrice, cn } from '@/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -53,12 +53,15 @@ import {
   ParkingCircle,
   User,
   Users,
-  GraduationCap
+  GraduationCap,
+  Flag
 } from 'lucide-react';
 import type { Property, UserProfile, RentalApplication, PropertyReview } from '@/types';
 import Link from 'next/link';
 import React, { useState, useEffect, useMemo } from 'react';
 import LeaseGenerationDialog from '@/components/lease-generation-dialog';
+import { SharePropertyModal } from '@/components/share-property-modal';
+import { ReportUserDialog } from '@/components/report-user-dialog';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, where, addDoc, updateDoc, getDocs, documentId } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -98,6 +101,18 @@ export default function LandlordPropertyDetailPage() {
   const [api, setApi] = React.useState<any>();
   const [current, setCurrent] = React.useState(0);
   const [count, setCount] = React.useState(0);
+  const searchParams = useSearchParams();
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      setShowShareModal(true);
+      // Remove query param without reload
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [searchParams]);
 
   const propertyRef = useMemoFirebase(() => id ? doc(firestore, 'properties', id) : null, [firestore, id]);
   const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
@@ -546,6 +561,16 @@ export default function LandlordPropertyDetailPage() {
                     <Button asChild variant="outline" className="w-full h-12 rounded-xl border-2 font-black text-xs uppercase tracking-widest">
                       <Link href={`/landlord/messages?contact=${tenant.id}`}>Message Tenant</Link>
                     </Button>
+                    <div className="flex justify-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground text-[10px] uppercase tracking-widest hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => setReportDialogOpen(true)}
+                      >
+                        <Flag className="mr-2 h-3 w-3" /> Report Tenant
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               ) : (
@@ -573,6 +598,22 @@ export default function LandlordPropertyDetailPage() {
           tenant={selectedRequest.applicant}
           property={property}
           templateText={property.leaseTemplate}
+        />
+      )}
+
+      <SharePropertyModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        propertyId={property.id}
+        propertyTitle={property.title}
+      />
+
+      {tenant && (
+        <ReportUserDialog
+          isOpen={reportDialogOpen}
+          onClose={() => setReportDialogOpen(false)}
+          reportedUserId={tenant.id}
+          reportedUserName={tenant.name}
         />
       )}
     </div>

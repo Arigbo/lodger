@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { doc } from 'firebase/firestore';
 import type { UserProfile } from '@/types';
 import Loading from '@/app/loading';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 
@@ -85,6 +85,10 @@ export default function LandlordLayout({
           <div className="md:hidden">
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetContent side="left" className="w-72 p-0 border-none bg-white/80 backdrop-blur-2xl">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Navigation Menu</SheetTitle>
+                  <SheetDescription>Access landlord dashboard navigation</SheetDescription>
+                </SheetHeader>
                 <SheetHeader className="p-6 border-b border-white/40 text-left">
                   <SheetTitle className="text-lg font-black uppercase tracking-tight">Navigation</SheetTitle>
                 </SheetHeader>

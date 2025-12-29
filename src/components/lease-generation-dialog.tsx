@@ -45,7 +45,14 @@ export default function LeaseGenerationDialog({
   };
 
   const handleSend = () => {
-    onLeaseSigned(finalLeaseText);
+    let textToSend = finalLeaseText;
+    if (isSigned) {
+      // Match "Landlord: Nill" and "Date: Nill" specifically in the signature block or globally
+      textToSend = textToSend
+        .replace(/Landlord:\s*Nill/g, `Landlord: ${landlord.name}`)
+        .replace(/(Landlord:[^\n]*\n\s*Date:\s*)Nill/g, `$1${dateStr}`);
+    }
+    onLeaseSigned(textToSend);
     onClose();
   }
 

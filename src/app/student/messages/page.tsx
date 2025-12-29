@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/utils';
 import type { UserProfile as User, Message, Property } from '@/types';
-import { Send, Search, MessageSquare, MoreVertical, ArrowLeft } from 'lucide-react';
+import { Send, Search, MessageSquare, MoreVertical, ArrowLeft, Flag } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limit, documentId, updateDoc, writeBatch } from 'firebase/firestore';
 import Loading from '@/app/loading';
@@ -15,6 +15,13 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { format, formatDistanceToNow } from 'date-fns';
+import { ReportUserDialog } from '@/components/report-user-dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Conversation = {
     id: string;
@@ -31,6 +38,7 @@ export default function MessagesPage() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [selectedParticipant, setSelectedParticipant] = useState<User | null>(null);
@@ -402,9 +410,22 @@ export default function MessagesPage() {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="ghost" size="icon" className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl hover:bg-muted/30 transition-all text-muted-foreground">
-                                    <MoreVertical className="h-5 w-5" />
-                                </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl hover:bg-muted/30 transition-all text-muted-foreground">
+                                            <MoreVertical className="h-5 w-5" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                                        <DropdownMenuItem
+                                            className="text-destructive focus:text-destructive focus:bg-destructive/10 font-bold cursor-pointer"
+                                            onClick={() => setReportDialogOpen(true)}
+                                        >
+                                            <Flag className="mr-2 h-4 w-4" />
+                                            Report Landlord
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                         </div>
 
@@ -503,6 +524,14 @@ export default function MessagesPage() {
                     </Card>
                 )}
             </div>
+            {selectedConversation && selectedConversation.otherUser && (
+                <ReportUserDialog
+                    isOpen={reportDialogOpen}
+                    onClose={() => setReportDialogOpen(false)}
+                    reportedUserId={selectedConversation.otherUser.id}
+                    reportedUserName={selectedConversation.otherUser.name}
+                />
+            )}
         </div>
     );
 }
