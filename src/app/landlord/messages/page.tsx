@@ -6,7 +6,7 @@ import { cn } from '@/utils';
 import type { UserProfile as User, Message } from '@/types';
 import { Send, Search, MessageSquare, MoreVertical, Phone, Video, User as UserIcon, ArrowLeft } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, documentId } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, documentId, updateDoc, writeBatch } from 'firebase/firestore';
 import Loading from '@/app/loading';
 import { sendNotification } from '@/lib/notifications';
 import { Card } from '@/components/ui/card';
@@ -115,13 +115,20 @@ export default function MessagesPage() {
 
                 const convoData = conversationsMap.get(pId);
 
+                // Calculate unread count: messages where read is false and sender is the other participant
+                const unreadCount = (allLandlordMessages || []).filter(msg =>
+                    msg.participantIds.includes(pId) &&
+                    msg.read === false &&
+                    msg.senderId !== landlord.uid
+                ).length;
+
                 return {
                     id: pId,
                     participant,
                     otherUser: participant,
                     lastMessage: convoData?.lastMessage || null,
                     lastMessageTimestamp: convoData?.lastMessage.timestamp?.toDate() || new Date(0),
-                    unreadCount: 0,
+                    unreadCount,
                 } as Conversation;
             }).filter(Boolean) as Conversation[];
 
@@ -150,6 +157,35 @@ export default function MessagesPage() {
         }
     }, [selectedConversationId, conversations, localSelectedConversationId, router, pathname]);
 
+    // Mark messages as read when conversation is opened
+    useEffect(() => {
+        if (!landlord || !selectedParticipant || !firestore || !allLandlordMessages) return;
+
+        const markAsRead = async () => {
+            const unreadMessages = allLandlordMessages.filter(msg =>
+                msg.participantIds.includes(selectedParticipant.id) &&
+                msg.read === false &&
+                msg.senderId === selectedParticipant.id
+            );
+
+            if (unreadMessages.length === 0) return;
+
+            const batch = writeBatch(firestore);
+            unreadMessages.forEach(msg => {
+                const msgRef = doc(firestore, 'messages', msg.id);
+                batch.update(msgRef, { read: true });
+            });
+
+            try {
+                await batch.commit();
+            } catch (error) {
+                console.error('Error marking messages as read:', error);
+            }
+        };
+
+        markAsRead();
+    }, [selectedParticipant, landlord, firestore, allLandlordMessages]);
+
     useEffect(() => {
         if (messagesEndRef.current) {
             scrollToBottom();
@@ -168,8 +204,11 @@ export default function MessagesPage() {
             });
     }, [allLandlordMessages, selectedParticipant]);
 
-    const handleSendMessage = (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
+    const handleSendMessage = async (e?: React.FormEvent) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         if (!newMessage.trim() || !landlord || !selectedParticipant || !firestore) return;
 
         const messagesRef = collection(firestore, 'messages');
@@ -259,40 +298,61 @@ export default function MessagesPage() {
                                 <p className="text-sm font-black text-muted-foreground uppercase tracking-widest leading-relaxed">No conversations found</p>
                             </div>
                         ) : (
-                            filteredConversations.map((conv) => (
-                                <button
-                                    key={conv.id}
-                                    onClick={() => {
-                                        setLocalSelectedConversationId(conv.id);
-                                        setIsSidebarOpen(false);
-                                        router.replace(`${pathname}?conversationId=${conv.id}`, { scroll: false });
-                                    }}
-                                    className={cn(
-                                        "w-full flex gap-4 items-center p-3 md:p-4 rounded-2xl md:rounded-3xl transition-all duration-300 border-2 border-transparent",
-                                        localSelectedConversationId === conv.id
-                                            ? "bg-white border-primary/10 shadow-lg scale-[1.02]"
-                                            : "hover:bg-white/40 hover:border-white/60 grayscale-[0.5] hover:grayscale-0"
-                                    )}
-                                >
-                                    <Avatar className="h-14 w-14 rounded-2xl border-2 border-background shadow-sm">
-                                        <AvatarImage src={conv.otherUser?.profileImageUrl} className="object-cover" />
-                                        <AvatarFallback className="bg-primary/5 text-primary text-xl font-black">
-                                            {conv.otherUser?.name?.[0] || 'U'}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 text-left min-w-0">
-                                        <div className="flex justify-between items-start mb-0.5">
-                                            <h3 className="font-black text-xs uppercase tracking-tight truncate pr-2">{conv.otherUser?.name || 'Unknown User'}</h3>
-                                            <span className="text-[10px] font-bold text-muted-foreground/40 whitespace-nowrap">
-                                                {conv.lastMessage?.timestamp ? formatDistanceToNow(new Date(conv.lastMessage.timestamp.toDate()), { addSuffix: false }) : ''}
-                                            </span>
+                            filteredConversations.map((conv) => {
+                                const hasUnread = conv.unreadCount > 0;
+                                return (
+                                    <button
+                                        key={conv.id}
+                                        onClick={() => {
+                                            setLocalSelectedConversationId(conv.id);
+                                            setIsSidebarOpen(false);
+                                            router.replace(`${pathname}?conversationId=${conv.id}`, { scroll: false });
+                                        }}
+                                        className={cn(
+                                            "w-full flex gap-4 items-center p-3 md:p-4 rounded-2xl md:rounded-3xl transition-all duration-300 border-2 relative",
+                                            localSelectedConversationId === conv.id
+                                                ? "bg-white border-primary/10 shadow-lg scale-[1.02]"
+                                                : hasUnread
+                                                    ? "bg-primary/5 border-primary/20 hover:bg-primary/10 hover:border-primary/30"
+                                                    : "border-transparent hover:bg-white/40 hover:border-white/60 grayscale-[0.5] hover:grayscale-0"
+                                        )}
+                                    >
+                                        <div className="relative">
+                                            <Avatar className="h-14 w-14 rounded-2xl border-2 border-background shadow-sm">
+                                                <AvatarImage src={conv.otherUser?.profileImageUrl} className="object-cover" />
+                                                <AvatarFallback className={cn(
+                                                    "text-xl font-black",
+                                                    hasUnread ? "bg-primary/10 text-primary" : "bg-primary/5 text-primary"
+                                                )}>
+                                                    {conv.otherUser?.name?.[0] || 'U'}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            {hasUnread && (
+                                                <div className="absolute -top-1 -right-1 h-5 w-5 bg-primary rounded-full border-2 border-white flex items-center justify-center">
+                                                    <span className="text-[10px] font-black text-white">{conv.unreadCount}</span>
+                                                </div>
+                                            )}
                                         </div>
-                                        <p className="text-xs font-medium text-muted-foreground/60 truncate pr-4 leading-tight">
-                                            {conv.lastMessage?.senderId === landlord?.uid ? 'You: ' : ''}{conv.lastMessage?.text || 'No messages yet'}
-                                        </p>
-                                    </div>
-                                </button>
-                            ))
+                                        <div className="flex-1 text-left min-w-0">
+                                            <div className="flex justify-between items-start mb-0.5">
+                                                <h3 className={cn(
+                                                    "font-black text-xs uppercase tracking-tight truncate pr-2",
+                                                    hasUnread && "text-primary"
+                                                )}>{conv.otherUser?.name || 'Unknown User'}</h3>
+                                                <span className="text-[10px] font-bold text-muted-foreground/40 whitespace-nowrap">
+                                                    {conv.lastMessage?.timestamp ? formatDistanceToNow(new Date(conv.lastMessage.timestamp.toDate()), { addSuffix: false }) : ''}
+                                                </span>
+                                            </div>
+                                            <p className={cn(
+                                                "text-xs font-medium truncate pr-4 leading-tight",
+                                                hasUnread ? "text-foreground font-bold" : "text-muted-foreground/60"
+                                            )}>
+                                                {conv.lastMessage?.senderId === landlord?.uid ? 'You: ' : ''}{conv.lastMessage?.text || 'No messages yet'}
+                                            </p>
+                                        </div>
+                                    </button>
+                                );
+                            })
                         )}
                     </div>
                 </Card>

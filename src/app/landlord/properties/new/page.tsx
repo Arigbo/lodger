@@ -38,7 +38,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { amenities as allAmenities } from '@/types';
 import { cn, formatPrice } from '@/utils';
-import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon, Sparkles, Building, Loader2, Ruler, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon, Sparkles, Building, Loader2, Ruler, AlertCircle, Wifi, Car, AirVent, Dumbbell, Waves, Layout } from 'lucide-react';
 import type { Property, UserProfile } from '@/types';
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { useRouter } from 'next/navigation';
@@ -128,7 +128,7 @@ type FormValues = z.infer<typeof formSchema>;
 const steps = [
     { id: 1, name: 'Basic Info & Price', fields: ['title', 'type', 'price', 'currency'] },
     { id: 2, name: 'Location & Details', fields: ['address', 'country', 'city', 'state', 'zip', 'school', 'bedrooms', 'bathrooms', 'area'] },
-    { id: 3, name: 'Features & Amenities', fields: ['amenities', 'rules', 'description'] },
+    { id: 3, name: 'Features & Description', fields: ['amenities', 'rules', 'description'] },
     { id: 4, name: 'Images & Lease', fields: ['leaseTemplate', 'kitchenImage', 'livingRoomImage', 'bathroomImage', 'bedroomImage', 'otherImage'] }
 ];
 
@@ -404,25 +404,25 @@ export default function AddPropertyPage() {
     }
 
     return (
-        <div className="space-y-12 pb-32 animate-in fade-in duration-1000">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b-4 border-foreground/5">
-                <div className="space-y-4">
+        <div className="max-w-full overflow-x-hidden space-y-8 md:space-y-12 px-4 md:px-0 pb-32 animate-in fade-in duration-1000">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-8 pb-6 md:pb-8 border-b-4 border-foreground/5">
+                <div className="space-y-3 md:space-y-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-xl bg-white shadow-lg border-2 border-primary/10">
-                            <Building className="h-5 w-5 text-primary" />
+                            <Building className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                         </div>
                         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">ADD PROPERTY</p>
                     </div>
-                    <h1 className="font-headline text-5xl md:text-7xl font-black tracking-tighter text-foreground uppercase leading-[0.9]">
+                    <h1 className="font-headline text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter text-foreground uppercase leading-[0.9]">
                         CREATE <br /> <span className="text-primary">PROPERTY</span>
                     </h1>
-                    <p className="text-lg text-muted-foreground font-medium mt-4">
+                    <p className="text-sm md:text-base lg:text-lg text-muted-foreground font-medium mt-4">
                         Define your property details and rental terms.
                     </p>
                 </div>
                 <div className="flex gap-4">
-                    <div className="bg-primary/5 px-8 py-4 rounded-[2rem] border-2 border-primary/10">
-                        <p className="text-3xl font-black text-primary">{Math.round((currentStep / steps.length) * 100)}%</p>
+                    <div className="bg-primary/5 px-6 md:px-8 py-3 md:py-4 rounded-2xl md:rounded-[2rem] border-2 border-primary/10">
+                        <p className="text-2xl md:text-3xl font-black text-primary">{Math.round((currentStep / steps.length) * 100)}%</p>
                     </div>
                 </div>
             </div>
@@ -431,8 +431,8 @@ export default function AddPropertyPage() {
                 <div className="absolute -top-20 -right-20 w-96 h-96 bg-primary/5 blur-3xl rounded-full -z-10" />
                 <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-blue-500/5 blur-3xl rounded-full -z-10" />
 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-                    <div className="lg:col-span-1 space-y-4">
+                <div className="grid grid-cols-1 gap-8 md:gap-12 lg:grid-cols-4">
+                    <div className="lg:col-span-1 space-y-3 md:space-y-4">
                         {steps.map((step) => (
                             <div
                                 key={step.id}
@@ -457,7 +457,7 @@ export default function AddPropertyPage() {
                     </div>
 
                     <div className="lg:col-span-3">
-                        <Card className="rounded-[3.5rem] border-2 border-foreground/5 bg-white shadow-3xl overflow-hidden p-8 md:p-12">
+                        <Card className="rounded-2xl md:rounded-[3.5rem] border-2 border-foreground/5 bg-white shadow-3xl overflow-hidden p-4 sm:p-6 md:p-8 lg:p-12">
                             <Form {...form}>
                                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
                                     {currentStep === 1 && (
@@ -631,11 +631,7 @@ export default function AddPropertyPage() {
                                                     )}
                                                 />
                                             </div>
-                                        </div>
-                                    )}
-
-                                    {currentStep === 3 && (
-                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <Separator className="bg-muted/10" />
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                                 <FormField
                                                     control={form.control}
@@ -680,41 +676,61 @@ export default function AddPropertyPage() {
                                         </div>
                                     )}
 
-                                    {currentStep === 4 && (
+                                    {currentStep === 3 && (
                                         <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                {[
-                                                    { id: 'wifi', label: 'Global Connectivity (WiFi)', icon: Wifi },
-                                                    { id: 'parking', label: 'Logistic Bay (Parking)', icon: Car },
-                                                    { id: 'kitchen', label: 'Culinary Laboratory (Kitchen)', icon: Utensils },
-                                                    { id: 'ac', label: 'Atmospheric Control (AC)', icon: AirVent },
-                                                    { id: 'gym', label: 'Kinetic Studio (Gym)', icon: Dumbbell },
-                                                    { id: 'pool', label: 'Hydro-Enclosure (Pool)', icon: Waves },
-                                                ].map((amenity) => (
-                                                    <FormField
-                                                        key={amenity.id}
-                                                        control={form.control}
-                                                        name={amenity.id as any}
-                                                        render={({ field }) => (
-                                                            <FormItem className="flex flex-row items-center space-x-4 space-y-0 p-6 rounded-[2rem] border-2 border-transparent bg-muted/10 overflow-hidden transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-xl">
-                                                                <div className="p-3 rounded-xl bg-white shadow-sm">
-                                                                    <amenity.icon className="h-5 w-5 text-primary" />
-                                                                </div>
-                                                                <div className="flex-1 space-y-1">
-                                                                    <FormLabel className="text-[10px] font-black uppercase tracking-[0.2em]">{amenity.label}</FormLabel>
-                                                                </div>
-                                                                <FormControl>
-                                                                    <Checkbox
-                                                                        checked={field.value}
-                                                                        onCheckedChange={field.onChange}
-                                                                        className="h-6 w-6 rounded-lg border-2"
-                                                                    />
-                                                                </FormControl>
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                ))}
-                                            </div>
+                                            <FormField
+                                                control={form.control}
+                                                name="amenities"
+                                                render={() => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-6 block">Select Amenities</FormLabel>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                            {[
+                                                                { id: 'wifi', label: 'WiFi', icon: Wifi },
+                                                                { id: 'parking', label: 'Parking', icon: Car },
+                                                                { id: 'kitchen', label: 'Kitchen', icon: Utensils },
+                                                                { id: 'ac', label: 'Air Conditioning', icon: AirVent },
+                                                                { id: 'gym', label: 'Gym', icon: Dumbbell },
+                                                                { id: 'pool', label: 'Pool', icon: Waves },
+                                                            ].map((amenity) => (
+                                                                <FormField
+                                                                    key={amenity.id}
+                                                                    control={form.control}
+                                                                    name="amenities"
+                                                                    render={({ field }) => {
+                                                                        return (
+                                                                            <FormItem className="flex flex-row items-center space-x-4 space-y-0 p-4 md:p-6 rounded-2xl md:rounded-[2rem] border-2 border-transparent bg-muted/10 overflow-hidden transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-xl">
+                                                                                <div className="p-2 md:p-3 rounded-xl bg-white shadow-sm">
+                                                                                    <amenity.icon className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                                                                                </div>
+                                                                                <div className="flex-1 space-y-1">
+                                                                                    <FormLabel className="text-[10px] font-black uppercase tracking-[0.2em] cursor-pointer">{amenity.label}</FormLabel>
+                                                                                </div>
+                                                                                <FormControl>
+                                                                                    <Checkbox
+                                                                                        checked={field.value?.includes(amenity.id)}
+                                                                                        onCheckedChange={(checked) => {
+                                                                                            return checked
+                                                                                                ? field.onChange([...field.value, amenity.id])
+                                                                                                : field.onChange(
+                                                                                                    field.value?.filter(
+                                                                                                        (value) => value !== amenity.id
+                                                                                                    )
+                                                                                                )
+                                                                                        }}
+                                                                                        className="h-5 w-5 md:h-6 md:w-6 rounded-lg border-2"
+                                                                                    />
+                                                                                </FormControl>
+                                                                            </FormItem>
+                                                                        )
+                                                                    }}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
                                             <Separator className="bg-muted/10" />
                                             <FormField
                                                 control={form.control}
@@ -723,7 +739,37 @@ export default function AddPropertyPage() {
                                                     <FormItem>
                                                         <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Rules</FormLabel>
                                                         <FormControl>
-                                                            <Textarea placeholder="e.g., No smoking, Quiet hours after 10 PM" {...field} className="min-h-[150px] rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest p-6" />
+                                                            <Textarea placeholder="e.g., No smoking, Quiet hours after 10 PM" {...field} className="min-h-[120px] md:min-h-[150px] rounded-2xl md:rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-medium p-4 md:p-6" />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <Separator className="bg-muted/10" />
+                                            <FormField
+                                                control={form.control}
+                                                name="description"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Description</FormLabel>
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={generateDescription}
+                                                                disabled={isGeneratingDescription}
+                                                                className="rounded-full text-[10px] font-black uppercase tracking-widest"
+                                                            >
+                                                                {isGeneratingDescription ? (
+                                                                    <><Loader2 className="mr-2 h-3 w-3 animate-spin" /> Generating...</>
+                                                                ) : (
+                                                                    <><Sparkles className="mr-2 h-3 w-3" /> AI Generate</>
+                                                                )}
+                                                            </Button>
+                                                        </div>
+                                                        <FormControl>
+                                                            <Textarea placeholder="Describe the essence of your property..." {...field} className="min-h-[150px] md:min-h-[200px] rounded-2xl md:rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-medium p-4 md:p-6 leading-relaxed" />
                                                         </FormControl>
                                                         <FormMessage />
                                                     </FormItem>
@@ -732,65 +778,45 @@ export default function AddPropertyPage() {
                                         </div>
                                     )}
 
-                                    {currentStep === 5 && (
+                                    {currentStep === 4 && (
                                         <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                                            <div className="space-y-8">
-                                                <FormField
-                                                    control={form.control}
-                                                    name="description"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Description</FormLabel>
-                                                            <FormControl>
-                                                                <Textarea placeholder="Describe the essence of your property..." {...field} className="min-h-[150px] rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest p-6 leading-relaxed" />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <Separator className="bg-muted/10" />
-                                                <FormField
-                                                    control={form.control}
-                                                    name="leaseTemplate"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <div className="flex items-center justify-between mb-4">
-                                                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Lease Template</FormLabel>
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={generateLeaseTemplate}
-                                                                    className="rounded-full text-[10px] font-black uppercase tracking-widest"
-                                                                >
-                                                                    Reset Template
-                                                                </Button>
-                                                            </div>
-                                                            <FormControl>
-                                                                <Textarea {...field} rows={15} className="rounded-3xl bg-muted/5 border-2 border-dashed border-primary/20 focus-visible:border-primary focus-visible:bg-white text-[11px] font-mono leading-relaxed p-8 transition-all duration-500" />
-                                                            </FormControl>
-                                                            <FormDescription className="text-[10px] font-medium mt-4 opacity-60">
-                                                                * This template will be used for all future lease agreements.
-                                                            </FormDescription>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {currentStep === 6 && (
-                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <FormField
+                                                control={form.control}
+                                                name="leaseTemplate"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Lease Template</FormLabel>
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={generateLeaseTemplate}
+                                                                className="rounded-full text-[10px] font-black uppercase tracking-widest"
+                                                            >
+                                                                Reset Template
+                                                            </Button>
+                                                        </div>
+                                                        <FormControl>
+                                                            <Textarea {...field} rows={12} className="rounded-2xl md:rounded-3xl bg-muted/5 border-2 border-dashed border-primary/20 focus-visible:border-primary focus-visible:bg-white text-[10px] md:text-[11px] font-mono leading-relaxed p-4 md:p-8 transition-all duration-500" />
+                                                        </FormControl>
+                                                        <FormDescription className="text-[10px] font-medium mt-4 opacity-60">
+                                                            * This template will be used for all future lease agreements.
+                                                        </FormDescription>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <Separator className="bg-muted/10" />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                                                 <FormField
                                                     control={form.control}
                                                     name="kitchenImage"
                                                     render={({ field }) => (
                                                         <FileUpload
                                                             field={field}
-                                                            label="CULINARY ZONE"
-                                                            description="Capture the aesthetic and utility of the kitchen space."
+                                                            label="KITCHEN"
+                                                            description="Capture the kitchen space."
                                                             icon={Utensils}
                                                         />
                                                     )}
@@ -801,9 +827,9 @@ export default function AddPropertyPage() {
                                                     render={({ field }) => (
                                                         <FileUpload
                                                             field={field}
-                                                            label="SOCIAL ATRIUM"
-                                                            description="Highlight the volume and light of the living area."
-                                                            icon={Layout}
+                                                            label="LIVING ROOM"
+                                                            description="Highlight the living area."
+                                                            icon={Sofa}
                                                         />
                                                     )}
                                                 />
@@ -813,9 +839,9 @@ export default function AddPropertyPage() {
                                                     render={({ field }) => (
                                                         <FileUpload
                                                             field={field}
-                                                            label="PRIVATE QUARTERS"
-                                                            description="Focus on comfort, storage, and restful ambiance."
-                                                            icon={Layout}
+                                                            label="BEDROOM"
+                                                            description="Focus on comfort and ambiance."
+                                                            icon={BedDouble}
                                                         />
                                                     )}
                                                 />
@@ -825,9 +851,9 @@ export default function AddPropertyPage() {
                                                     render={({ field }) => (
                                                         <FileUpload
                                                             field={field}
-                                                            label="SANITARY SUITE"
-                                                            description="Detail the premium finishes and cleanliness."
-                                                            icon={Layout}
+                                                            label="BATHROOM"
+                                                            description="Detail the finishes."
+                                                            icon={Bath}
                                                         />
                                                     )}
                                                 />
@@ -835,83 +861,31 @@ export default function AddPropertyPage() {
                                         </div>
                                     )}
 
-                                    {currentStep === 7 && (
-                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                                            <div className="p-10 rounded-[2.5rem] bg-black text-white shadow-2xl space-y-10 border border-white/10 relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 p-8 opacity-10">
-                                                    <Sparkles className="h-32 w-32" />
-                                                </div>
-                                                <div className="relative space-y-6">
-                                                    <h3 className="text-4xl font-black uppercase tracking-tighter leading-none">Asset Certification Review</h3>
-                                                    <p className="text-white/60 text-xs font-black uppercase tracking-[0.2em]">Finalize deployment configurations</p>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative">
-                                                    <div className="space-y-8">
-                                                        <div>
-                                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Strategic Title</p>
-                                                            <p className="text-2xl font-black uppercase tracking-tight">{form.getValues('title')}</p>
-                                                            <p className="text-white/60 text-xs mt-2 font-medium">{form.getValues('address')}, {form.getValues('city')}</p>
-                                                        </div>
-                                                        <Separator className="bg-white/10" />
-                                                        <div className="grid grid-cols-2 gap-6">
-                                                            <div>
-                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Monthly Rent</p>
-                                                                <p className="text-xl font-black">{form.getValues('currency')} {form.getValues('price')}</p>
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Structure Type</p>
-                                                                <p className="text-xl font-black uppercase tracking-tight">{form.getValues('type')}</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="space-y-8 p-8 rounded-3xl bg-white/5 border border-white/10">
-                                                        <div className="grid grid-cols-2 gap-8">
-                                                            <div>
-                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Living Quarters</p>
-                                                                <p className="text-2xl font-black">{form.getValues('bedrooms')} BED</p>
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Sanitary Suites</p>
-                                                                <p className="text-2xl font-black">{form.getValues('bathrooms')} BATH</p>
-                                                            </div>
-                                                        </div>
-                                                        <Separator className="bg-white/10" />
-                                                        <div>
-                                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Spatial Volume</p>
-                                                            <p className="text-3xl font-black">{form.getValues('area')} SQFT</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="flex items-center justify-between pt-12 mt-12 border-t-2 border-muted/10">
+                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 md:pt-12 mt-8 md:mt-12 border-t-2 border-muted/10">
                                         <Button
                                             type="button"
                                             variant="ghost"
                                             onClick={prevStep}
                                             disabled={currentStep === 1 || isSubmitting}
-                                            className="h-16 px-10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-muted/20"
+                                            className="w-full sm:w-auto h-12 md:h-16 px-6 md:px-10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-muted/20"
                                         >
-                                            Previous Phase
+                                            Previous
                                         </Button>
                                         {currentStep < steps.length ? (
                                             <Button
                                                 type="button"
                                                 onClick={nextStep}
-                                                className="h-16 px-12 rounded-2xl bg-black text-white hover:bg-black/90 transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 text-[10px] font-black uppercase tracking-[0.2em] group"
+                                                className="w-full sm:w-auto h-12 md:h-16 px-8 md:px-12 rounded-2xl bg-black text-white hover:bg-black/90 transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 text-[10px] font-black uppercase tracking-[0.2em] group"
                                             >
-                                                Next Phase <ArrowRight className="ml-3 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                                Next <ArrowRight className="ml-2 md:ml-3 h-3 w-3 md:h-4 md:w-4 transition-transform group-hover:translate-x-1" />
                                             </Button>
                                         ) : (
                                             <Button
                                                 type="submit"
                                                 disabled={isSubmitting}
-                                                className="h-16 px-12 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 text-[10px] font-black uppercase tracking-[0.2em] group"
+                                                className="w-full sm:w-auto h-12 md:h-16 px-8 md:px-12 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 text-[10px] font-black uppercase tracking-[0.2em] group"
                                             >
-                                                {isSubmitting ? 'Deploying...' : 'Deploy Asset'} <Loader2 className={cn("ml-3 h-4 w-4 animate-spin", !isSubmitting && "hidden")} />
+                                                {isSubmitting ? 'Deploying...' : 'Deploy Asset'} <Loader2 className={cn("ml-2 md:ml-3 h-3 w-3 md:h-4 md:w-4 animate-spin", !isSubmitting && "hidden")} />
                                             </Button>
                                         )}
                                     </div>

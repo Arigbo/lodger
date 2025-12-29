@@ -7,7 +7,7 @@ import { CheckCircle2, Globe, ShieldCheck, Users } from "lucide-react";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import AboutTeam from '@/components/about-team';
-
+import { LandingHero } from '@/components/landing-hero';
 import { StatCard } from '@/components/stat-card';
 
 const stats = [
@@ -45,20 +45,11 @@ export default function AboutPage() {
     return (
         <div className="flex flex-col min-h-screen bg-background">
             {/* Premium Hero Section */}
-            <section className="relative pt-8 sm:pt-12 md:pt-16 pb-12 sm:pb-16 md:pb-20 overflow-hidden">
-                <div className="absolute inset-0 z-0">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10" />
-                    <div className="hidden sm:block absolute top-0 right-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-primary/10 rounded-full blur-[120px] -mr-40 sm:-mr-48 -mt-40 sm:-mt-48 animate-pulse" />
-                    <div className="hidden sm:block absolute bottom-0 left-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-blue-500/10 rounded-full blur-[120px] -ml-40 sm:-ml-48 -mb-40 sm:-mb-48 animate-pulse" />
-                </div>
-
-        <div className="container relative z-10 mx-auto px-4">
-            <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight mb-4">About Lodger</h1>
-            <p className="text-lg text-muted-foreground max-w-3xl">
-                The new standard of student living. Lodger is a technology-driven platform connecting students with verified landlords.
-            </p>
-        </div>
-            </section>
+            <LandingHero
+                imageUrl="https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2070&auto=format&fit=crop"
+                title="About Lodger"
+                description="The new standard of student living. Lodger is a technology-driven platform connecting students with verified landlords."
+            />
 
             {/* Mission Section */}
             <section className="py-16 sm:py-24 md:py-32 bg-secondary/10 overflow-hidden">
