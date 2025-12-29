@@ -305,7 +305,7 @@ export default function LandlordPropertyDetailPage() {
                 )}
               </div>
               <div className="space-y-4">
-                <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground leading-tight uppercase font-headline">
+                <h1 className="text-3xl md:text-6xl font-black tracking-tight text-foreground leading-tight uppercase font-headline">
                   {property.title}
                 </h1>
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-muted-foreground font-bold">

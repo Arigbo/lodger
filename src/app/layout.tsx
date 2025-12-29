@@ -9,13 +9,17 @@ import { SupportBubble } from "@/components/support-bubble";
 
 const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-outfit"
+  variable: "--font-outfit",
+  display: "swap",
+  fallback: ["system-ui", "arial"]
 });
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
-  style: ["normal", "italic"]
+  style: ["normal", "italic"],
+  display: "swap",
+  fallback: ["Georgia", "serif"]
 });
 
 export const metadata: Metadata = {

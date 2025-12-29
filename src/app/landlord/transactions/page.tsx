@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Transaction, UserProfile as User, Property } from '@/types';
 import { formatPrice, cn } from '@/utils';
-import { DollarSign, Download, Calendar as CalendarIcon, X as ClearIcon, TrendingUp, Wallet, Building, ChevronRight } from 'lucide-react';
+import { DollarSign, Download, Calendar as CalendarIcon, X as ClearIcon, TrendingUp, Wallet, Building, ChevronRight, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { DateRange } from 'react-day-picker';
 import { addDays, format } from "date-fns";
@@ -163,49 +163,49 @@ export default function TransactionsPage() {
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">Financial Intelligence</span>
           </div>
-          <h1 className="font-headline text-5xl md:text-7xl font-black tracking-tighter text-foreground uppercase leading-[0.9]">
-            TRANSACTION <br /> <span className="text-primary">ARCHIVE</span>
+          <h1 className="font-headline text-4xl md:text-6xl font-black tracking-tighter text-foreground uppercase leading-[0.9]">
+            Financial <br /> <span className="text-primary">Ledger</span>
           </h1>
           <p className="text-lg text-muted-foreground font-medium mt-4">
             Comprehensive history of your property revenue and logistics.
           </p>
+          <div className="flex gap-4">
+            <Button variant="outline" className="h-16 px-8 rounded-2xl border-2 font-black text-xs uppercase tracking-widest gap-3 hover:bg-muted transition-all">
+              <Download className="h-4 w-4" /> EXPORT DATA
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-4">
-          <Button variant="outline" className="h-16 px-8 rounded-2xl border-2 font-black text-xs uppercase tracking-widest gap-3 hover:bg-muted transition-all">
-            <Download className="h-4 w-4" /> EXPORT DATA
-          </Button>
-        </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <Card className="rounded-[3rem] border-2 border-foreground/5 bg-white p-10 shadow-xl">
-          <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] mb-4">Settled Funds</p>
-          <div className="flex items-end justify-between">
-            <h3 className="text-4xl font-black tracking-tighter">{formatPrice(totalRevenue)}</h3>
-            <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-              <TrendingUp className="h-6 w-6 text-emerald-600" />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <Card className="rounded-[3rem] border-2 border-foreground/5 bg-white p-10 shadow-xl">
+            <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] mb-4">Settled Funds</p>
+            <div className="flex items-end justify-between">
+              <h3 className="text-4xl font-black tracking-tighter">{formatPrice(totalRevenue)}</h3>
+              <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-emerald-600" />
+              </div>
             </div>
-          </div>
-        </Card>
-        <Card className="rounded-[3rem] border-2 border-foreground/5 bg-white p-10 shadow-xl">
-          <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] mb-4">Pipeline Revenue</p>
-          <div className="flex items-end justify-between">
-            <h3 className="text-4xl font-black tracking-tighter">{formatPrice(pendingAmount)}</h3>
-            <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-              <Wallet className="h-6 w-6 text-amber-600" />
+          </Card>
+          <Card className="rounded-[3rem] border-2 border-foreground/5 bg-white p-10 shadow-xl">
+            <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] mb-4">Pipeline Revenue</p>
+            <div className="flex items-end justify-between">
+              <h3 className="text-4xl font-black tracking-tighter">{formatPrice(pendingAmount)}</h3>
+              <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+                <Wallet className="h-6 w-6 text-amber-600" />
+              </div>
             </div>
-          </div>
-        </Card>
-        <Card className="rounded-[3rem] border-2 border-foreground/5 bg-primary text-white p-10 shadow-xl shadow-primary/20">
-          <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4">Active Tenure</p>
-          <div className="flex items-end justify-between">
-            <h3 className="text-4xl font-black tracking-tighter">{filteredTransactions.length}</h3>
-            <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center">
-              <TrendingUp className="h-6 w-6 text-white" />
+          </Card>
+          <Card className="rounded-[3rem] border-2 border-foreground/5 bg-primary text-white p-10 shadow-xl shadow-primary/20">
+            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4">Active Tenure</p>
+            <div className="flex items-end justify-between">
+              <h3 className="text-4xl font-black tracking-tighter">{filteredTransactions.length}</h3>
+              <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-white" />
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
 
       {/* Filter Bar */}

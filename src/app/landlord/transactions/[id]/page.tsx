@@ -11,7 +11,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import { Transaction, UserProfile as User, Property } from '@/types';
 import { formatPrice, cn } from '@/utils';
 import { format } from 'date-fns';
-import { ArrowLeft, Calendar, DollarSign, User as UserIcon, Building, Download, ExternalLink, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Calendar, DollarSign, User as UserIcon, Building, Download, ExternalLink, ShieldCheck, CheckCircle, Loader2 } from 'lucide-react';
+import { updateDoc } from 'firebase/firestore';
 import Loading from '@/app/loading';
 import Link from 'next/link';
 
@@ -25,6 +26,34 @@ export default function TransactionDetailPage() {
     const [tenant, setTenant] = useState<User | null>(null);
     const [property, setProperty] = useState<Property | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isConfirming, setIsConfirming] = useState(false);
+
+    const handleConfirmPayment = async () => {
+        if (!transactionId || !firestore || !transaction) return;
+        setIsConfirming(true);
+
+        try {
+            const transRef = doc(firestore, 'transactions', transactionId);
+            await updateDoc(transRef, {
+                status: 'Completed',
+                date: transaction.date || new Date().toISOString()
+            });
+
+            setTransaction(prev => prev ? {
+                ...prev,
+                status: 'Completed',
+                date: prev.date || new Date().toISOString()
+            } : null);
+
+            // You might want to add a toast notification here if you have a toast system
+            alert("Payment confirmed successfully!");
+        } catch (error) {
+            console.error("Error confirming payment:", error);
+            alert("Failed to confirm payment. Please try again.");
+        } finally {
+            setIsConfirming(false);
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -74,8 +103,8 @@ export default function TransactionDetailPage() {
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <div>
-                    <h1 className="text-3xl font-black uppercase tracking-tight">Transaction<span className="text-primary"> Details.</span></h1>
-                    <p className="text-sm font-medium text-muted-foreground">Detailed financial record for ID: {transaction.id}</p>
+                    <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight">Transaction<span className="text-primary"> Details.</span></h1>
+                    <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Detailed financial record for ID: {transaction.id}</p>
                 </div>
             </div>
 
@@ -151,7 +180,22 @@ export default function TransactionDetailPage() {
                         </CardContent>
                     </Card>
 
-                    <div className="flex gap-4">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        {(transaction.status === 'Pending' || transaction.status === 'Pending Verification') &&
+                            (transaction.paymentMethod === 'Offline' || (transaction as any).method === 'Offline') && (
+                                <Button
+                                    onClick={handleConfirmPayment}
+                                    disabled={isConfirming}
+                                    className="flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20"
+                                >
+                                    {isConfirming ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <CheckCircle className="h-4 w-4" />
+                                    )}
+                                    Confirm Offline Payment
+                                </Button>
+                            )}
                         <Button className="flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest gap-2">
                             <Download className="h-4 w-4" /> Download Receipt
                         </Button>

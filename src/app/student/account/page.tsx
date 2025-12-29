@@ -235,7 +235,7 @@ export default function AccountPage() {
                     </div>
 
                     <div className="space-y-4 text-center md:text-left">
-                        <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight text-foreground">
+                        <h1 className="font-headline text-2xl md:text-5xl font-black tracking-tight text-foreground uppercase">
                             Account <span className="text-primary">Settings</span>
                         </h1>
                         <p className="max-w-md text-lg font-medium text-muted-foreground/80 leading-relaxed">

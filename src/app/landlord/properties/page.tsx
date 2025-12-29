@@ -160,7 +160,7 @@ export default function LandlordPropertiesPage() {
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">Inventory Management</span>
           </div>
-          <h1 className="font-headline text-5xl md:text-7xl font-black tracking-tighter text-foreground uppercase leading-[0.9]">
+          <h1 className="font-headline text-4xl md:text-6xl font-black tracking-tighter text-foreground uppercase leading-[0.9]">
             YOUR <br /> <span className="text-primary">PROPERTIES</span>
           </h1>
         </div>

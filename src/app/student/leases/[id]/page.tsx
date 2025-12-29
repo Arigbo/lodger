@@ -269,7 +269,7 @@ export default function ViewStudentLeasePage() {
                             {lease.status}
                         </Badge>
                     </div>
-                    <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight text-foreground uppercase">
+                    <h1 className="font-headline text-3xl md:text-5xl font-black tracking-tight text-foreground uppercase">
                         LEASE AGREEMENT
                     </h1>
                     <p className="text-lg text-muted-foreground font-medium">
