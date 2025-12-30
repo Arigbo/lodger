@@ -40,7 +40,7 @@ export function NotificationModal({ open, onOpenChange, notifications, onMarkAsR
                     </div>
                 </DialogHeader>
 
-                <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-6 space-y-4">
+                <div className="max-h-[70vh] overflow-y-auto custom-scrollbar p-6 pb-20 space-y-4">
                     {notifications.length === 0 ? (
                         <div className="py-20 text-center space-y-4">
                             <div className="h-20 w-20 rounded-3xl bg-muted/20 flex items-center justify-center mx-auto">

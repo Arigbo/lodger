@@ -9,9 +9,10 @@ import { Separator } from '@/components/ui/separator';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Transaction, UserProfile as User, Property } from '@/types';
+import { sendNotification } from '@/lib/notifications';
 import { formatPrice, cn } from '@/utils';
 import { format } from 'date-fns';
-import { ArrowLeft, Calendar, DollarSign, User as UserIcon, Building, Download, ExternalLink, ShieldCheck, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Calendar, DollarSign, User as UserIcon, Building, Download, ExternalLink, ShieldCheck, CheckCircle, Loader2, XCircle } from 'lucide-react';
 import { updateDoc } from 'firebase/firestore';
 import Loading from '@/app/loading';
 import Link from 'next/link';
@@ -27,6 +28,7 @@ export default function TransactionDetailPage() {
     const [property, setProperty] = useState<Property | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isConfirming, setIsConfirming] = useState(false);
+    const [isDenying, setIsDenying] = useState(false);
 
     const handleConfirmPayment = async () => {
         if (!transactionId || !firestore || !transaction) return;
@@ -39,19 +41,62 @@ export default function TransactionDetailPage() {
                 date: transaction.date || new Date().toISOString()
             });
 
+            // Send Notification to Student
+            await sendNotification({
+                toUserId: transaction.tenantId,
+                type: 'OFFLINE_PAYMENT_APPROVED',
+                firestore: firestore,
+                propertyTitle: property?.title || 'Property',
+                link: `/student/leases` // Could link to specific lease if ID available
+            });
+
             setTransaction(prev => prev ? {
                 ...prev,
                 status: 'Completed',
                 date: prev.date || new Date().toISOString()
             } : null);
 
-            // You might want to add a toast notification here if you have a toast system
             alert("Payment confirmed successfully!");
         } catch (error) {
             console.error("Error confirming payment:", error);
             alert("Failed to confirm payment. Please try again.");
         } finally {
             setIsConfirming(false);
+        }
+    };
+
+    const handleDenyPayment = async () => {
+        if (!transactionId || !firestore || !transaction) return;
+        if (!confirm("Are you sure you want to deny this payment? This action cannot be undone.")) return;
+
+        setIsDenying(true);
+
+        try {
+            const transRef = doc(firestore, 'transactions', transactionId);
+            await updateDoc(transRef, {
+                status: 'Failed', // Or 'Rejected' depending on your enum
+            });
+
+            // Send Notification to Student
+            await sendNotification({
+                toUserId: transaction.tenantId,
+                type: 'OFFLINE_PAYMENT_REJECTED',
+                firestore: firestore,
+                propertyTitle: property?.title || 'Property',
+                link: `/student/leases`
+            });
+
+            setTransaction(prev => prev ? {
+                ...prev,
+                status: 'Failed'
+            } : null);
+
+            alert("Payment denied.");
+        } catch (error) {
+            console.error("Error denying payment:", error);
+            alert("Failed to deny payment.");
+        } finally {
+            setIsDenying(false);
         }
     };
 
@@ -183,18 +228,29 @@ export default function TransactionDetailPage() {
                     <div className="flex flex-col sm:flex-row gap-4">
                         {(transaction.status === 'Pending' || transaction.status === 'Pending Verification') &&
                             (transaction.paymentMethod === 'Offline' || (transaction as any).method === 'Offline') && (
-                                <Button
-                                    onClick={handleConfirmPayment}
-                                    disabled={isConfirming}
-                                    className="flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20"
-                                >
-                                    {isConfirming ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <CheckCircle className="h-4 w-4" />
-                                    )}
-                                    Confirm Offline Payment
-                                </Button>
+                                <div className="flex gap-4 flex-1">
+                                    <Button
+                                        onClick={handleDenyPayment}
+                                        disabled={isDenying || isConfirming}
+                                        variant="destructive"
+                                        className="h-14 rounded-2xl font-black text-xs uppercase tracking-widest gap-2 bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20 px-8"
+                                    >
+                                        {isDenying ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+                                        Deny
+                                    </Button>
+                                    <Button
+                                        onClick={handleConfirmPayment}
+                                        disabled={isConfirming || isDenying}
+                                        className="flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20"
+                                    >
+                                        {isConfirming ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <CheckCircle className="h-4 w-4" />
+                                        )}
+                                        Confirm Payment
+                                    </Button>
+                                </div>
                             )}
                         <Button className="flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest gap-2">
                             <Download className="h-4 w-4" /> Download Receipt

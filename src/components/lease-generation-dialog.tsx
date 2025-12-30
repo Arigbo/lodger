@@ -48,6 +48,7 @@ export default function LeaseGenerationDialog({
     let textToSend = finalLeaseText;
     if (isSigned) {
       // Match "Landlord: Nill" and "Date: Nill" specifically in the signature block or globally
+      const dateStr = new Date().toLocaleDateString();
       textToSend = textToSend
         .replace(/Landlord:\s*Nill/g, `Landlord: ${landlord.name}`)
         .replace(/(Landlord:[^\n]*\n\s*Date:\s*)Nill/g, `$1${dateStr}`);

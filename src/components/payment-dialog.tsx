@@ -31,7 +31,7 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY 
 interface PaymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onPaymentSuccess: (details: { months: number, method: 'Offline' | 'Stripe', amount: number }) => void;
+  onPaymentSuccess: (details: { months: number, method: 'Offline' | 'Stripe', amount: number, transactionId?: string }) => void;
   amount: number;
   tenantName: string;
   tenantId: string;
@@ -59,6 +59,7 @@ export default function PaymentDialog({
   const [isProcessing, setIsProcessing] = useState(false);
   const [months, setMonths] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState<'Offline' | 'Stripe'>('Offline');
+  const [createdTransactionId, setCreatedTransactionId] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -69,7 +70,7 @@ export default function PaymentDialog({
     setIsProcessing(true);
     try {
       const transactionsRef = collection(firestore, 'transactions');
-      await addDoc(transactionsRef, {
+      const docRef = await addDoc(transactionsRef, {
         ...metadata,
         landlordId,
         tenantId,
@@ -82,6 +83,8 @@ export default function PaymentDialog({
         paymentMethod: 'Offline',
         status: 'Pending Verification',
       });
+
+      setCreatedTransactionId(docRef.id);
 
       setIsProcessing(false);
       setStep(4); // Success step
@@ -160,7 +163,7 @@ export default function PaymentDialog({
   };
 
   const handleFinish = () => {
-    onPaymentSuccess({ months, method: paymentMethod, amount: totalAmount });
+    onPaymentSuccess({ months, method: paymentMethod, amount: totalAmount, transactionId: createdTransactionId || undefined });
     toast({
       title: "Payment Recorded",
       description: `Your payment of ${formatPrice(totalAmount, currency)} has been submitted.`,

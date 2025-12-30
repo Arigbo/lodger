@@ -345,10 +345,7 @@ export default function MessagesPage() {
                                                     {conv.lastMessage?.timestamp ? formatDistanceToNow(new Date(conv.lastMessage.timestamp.toDate()), { addSuffix: false }) : ''}
                                                 </span>
                                             </div>
-                                            <p className={cn(
-                                                "text-xs font-medium truncate pr-4 leading-tight",
-                                                hasUnread ? "text-foreground font-bold" : "text-muted-foreground/60"
-                                            )}>
+                                            <p className="text-xs font-medium truncate pr-4 leading-tight w-full overflow-hidden text-ellipsis whitespace-nowrap">
                                                 {conv.lastMessage?.senderId === landlord?.uid ? 'You: ' : ''}{conv.lastMessage?.text || 'No messages yet'}
                                             </p>
                                         </div>

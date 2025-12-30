@@ -115,7 +115,7 @@ export default function ViewStudentLeasePage() {
         );
     }
 
-    const handlePaymentSuccess = async (details: { months: number, method: string, amount: number }) => {
+    const handlePaymentSuccess = async (details: { months: number, method: string, amount: number, transactionId?: string }) => {
         try {
             if (!leaseRef) return;
 
@@ -136,7 +136,8 @@ export default function ViewStudentLeasePage() {
                     type: 'OFFLINE_PAYMENT_PENDING',
                     firestore: firestore,
                     propertyName: property?.title || 'Property',
-                    link: `/landlord/requests`
+                    transactionId: details.transactionId,
+                    link: `/landlord/requests` // Fallback
                 });
 
                 toast({
@@ -157,6 +158,21 @@ export default function ViewStudentLeasePage() {
                         currentTenantId: currentUser.uid,
                         leaseStartDate: lease.startDate
                     });
+
+                    // Notify other applicants about the property being occupied
+                    try {
+                        await fetch('/api/notify-applicants', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                propertyId: lease.propertyId,
+                                winnerTenantId: currentUser.uid,
+                                propertyTitle: property?.title
+                            })
+                        });
+                    } catch (err) {
+                        console.error("Failed to notify other applicants", err);
+                    }
                 }
 
                 toast({
@@ -475,6 +491,27 @@ export default function ViewStudentLeasePage() {
                                             &quot;We are verifying your payment. Your lease will be activated shortly.&quot;
                                         </p>
                                     </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {lease.status === 'active' && (
+                            <div className="relative group overflow-hidden rounded-[2.5rem] bg-white border-2 border-foreground/5 p-8 md:p-10 shadow-lg space-y-8 animate-in slide-in-from-right duration-700">
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                                            <DollarSign className="h-5 w-5 text-green-600" /> Pay Rent
+                                        </h3>
+                                        <p className="text-muted-foreground text-sm leading-relaxed">
+                                            Manage your monthly rental payments securely.
+                                        </p>
+                                    </div>
+                                    <Button className="w-full h-16 rounded-2xl bg-foreground text-white hover:bg-foreground/90 font-black text-lg gap-3 shadow-xl transition-all hover:scale-[1.02]" onClick={() => setIsPaymentOpen(true)}>
+                                        Make Payment
+                                    </Button>
+                                    <p className="text-[10px] text-center font-bold text-muted-foreground/40 uppercase tracking-widest">
+                                        Next Due Date: {format(new Date(), 'MMM dd, yyyy')}
+                                    </p>
                                 </div>
                             </div>
                         )}

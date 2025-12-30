@@ -6,7 +6,8 @@ import {
     orderBy,
     onSnapshot,
     doc,
-    updateDoc
+    updateDoc,
+    writeBatch
 } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import { Notification } from '@/types/notification';
@@ -58,7 +59,26 @@ export function useNotifications(userId: string | null) {
         }
     };
 
+    const markAllAsRead = async () => {
+        if (!firestore || !userId) return;
+        try {
+            const batch = writeBatch(firestore);
+            const unreadNotifications = notifications.filter(n => !n.read);
+
+            unreadNotifications.forEach(n => {
+                const ref = doc(firestore, 'notifications', n.id);
+                batch.update(ref, { read: true });
+            });
+
+            if (unreadNotifications.length > 0) {
+                await batch.commit();
+            }
+        } catch (error) {
+            console.error("Error marking all as read:", error);
+        }
+    };
+
     const unreadCount = notifications.filter(n => !n.read).length;
 
-    return { notifications, loading, markAsRead, unreadCount };
+    return { notifications, loading, markAsRead, markAllAsRead, unreadCount };
 }
