@@ -18,6 +18,7 @@ export function useNotifications(userId: string | null) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        console.log('[useNotifications] useEffect triggered - userId:', userId, 'firestore:', !!firestore);
         if (!userId || !firestore) {
             setNotifications([]);
             setLoading(false);
@@ -37,10 +38,11 @@ export function useNotifications(userId: string | null) {
                 ...doc.data(),
             })) as Notification[];
 
+            console.log('[useNotifications] Loaded notifications:', newNotifications.length, newNotifications);
             setNotifications(newNotifications);
             setLoading(false);
         }, (error) => {
-            console.error("Error fetching notifications:", error);
+            console.error("[useNotifications] Error fetching notifications:", error);
             setLoading(false);
         });
 
