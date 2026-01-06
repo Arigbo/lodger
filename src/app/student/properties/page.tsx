@@ -223,6 +223,8 @@ export default function PropertiesPage() {
 
         const topRated = [...allProperties].sort((a, b) => (b.amenities?.length || 0) - (a.amenities?.length || 0));
 
+        const recentlyAdded = [...allProperties].sort((a, b) => b.id.localeCompare(a.id));
+
         return [
             { id: 'near-school', title: 'Near Your School', description: `Apartments near ${userProfile?.school || 'University'}`, icon: GraduationCap, properties: nearSchool },
             { id: 'in-city', title: 'In Your City', description: `Best listings in ${userProfile?.city || 'your area'}`, icon: Landmark, properties: inCity },
