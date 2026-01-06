@@ -101,7 +101,7 @@ export default function StudentLayout({
           </div>
 
           {/* Main Content Area */}
-          <div className="flex flex-col flex-1 md:pl-64 lg:pl-72">
+          <div className="flex flex-col flex-1 md:pl-64 lg:pl-72 overflow-x-hidden">
             <main className="flex-1 py-6 lg:py-10">
               <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {!userProfile.phone && (
