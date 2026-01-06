@@ -26,7 +26,8 @@ service cloud.firestore {
           resource.data.landlordId == request.auth.uid || 
           (resource.data.currentTenantId == request.auth.uid && 
            request.resource.data.status == 'available' && 
-           request.resource.data.currentTenantId == null)
+           request.resource.data.currentTenantId == null &&
+           request.resource.data.leaseStartDate == null)
       );
       
       allow delete: if request.auth != null && resource.data.landlordId == request.auth.uid;

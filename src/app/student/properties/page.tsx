@@ -20,6 +20,36 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
+import { GraduationCap, Landmark, Sparkles, TrendingUp, Star } from 'lucide-react';
+
+function PropertySection({ title, description, properties, icon: Icon, delay = 0 }: {
+    title: string,
+    description?: string,
+    properties: Property[],
+    icon: any,
+    delay?: number
+}) {
+    if (properties.length === 0) return null;
+    return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: `${delay}ms` }}>
+            <div className="flex flex-col gap-1 px-1">
+                <div className="flex items-center gap-2 text-primary font-bold uppercase tracking-wider text-xs">
+                    <Icon className="h-4 w-4" />
+                    <span>{title}</span>
+                </div>
+                <div className="flex items-end justify-between">
+                    <h2 className="text-2xl md:text-3xl font-black tracking-tight">{description || `Premium ${title}`}</h2>
+                    <Button variant="ghost" size="sm" className="text-primary font-bold hover:bg-primary/5 rounded-xl">View All</Button>
+                </div>
+            </div>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {properties.slice(0, 3).map((property, idx) => (
+                    <PropertyCard key={property.id} property={property} className="h-full" />
+                ))}
+            </div>
+        </div>
+    );
+}
 
 
 // Mock coordinates for major state centers removed in favor of dynamic property-based detection
@@ -173,6 +203,50 @@ export default function PropertiesPage() {
 
         setFilteredProperties(properties);
     }, [filters, currentLocation, allProperties, searchQuery, sortBy, userCurrency]);
+
+    const sections = useMemo(() => {
+        if (!allProperties || allProperties.length === 0) return [];
+
+        const nearSchool = allProperties.filter(p =>
+            userProfile?.school && p.location.school?.toLowerCase() === userProfile.school.toLowerCase()
+        );
+
+        const inCity = allProperties.filter(p =>
+            userProfile?.city && p.location.city?.toLowerCase() === userProfile.city.toLowerCase()
+        );
+
+        const budgetFriendly = [...allProperties].sort((a, b) => {
+            const priceA = convertCurrency(a.price, a.currency, userCurrency);
+            const priceB = convertCurrency(b.price, b.currency, userCurrency);
+            return priceA - priceB;
+        });
+
+        const topRated = [...allProperties].sort((a, b) => (b.amenities?.length || 0) - (a.amenities?.length || 0));
+
+        return [
+            { id: 'near-school', title: 'Near Your School', description: `Apartments near ${userProfile?.school || 'University'}`, icon: GraduationCap, properties: nearSchool },
+            { id: 'in-city', title: 'In Your City', description: `Best listings in ${userProfile?.city || 'your area'}`, icon: Landmark, properties: inCity },
+            { id: 'top-rated', title: 'Top Rated', description: 'Highly recommended by students', icon: Star, properties: topRated },
+            { id: 'budget', title: 'Budget Friendly', description: 'Premium homes within your reach', icon: TrendingUp, properties: budgetFriendly },
+            { id: 'recent', title: 'Recently Added', description: 'Freshly listed for you', icon: Sparkles, properties: recentlyAdded },
+        ];
+    }, [allProperties, userProfile, userCurrency]);
+
+    const isSearching = useMemo(() => {
+        if (searchQuery.trim().length > 0) return true;
+
+        // Count non-default filters
+        const activeFilterCount = Object.keys(filters).filter(k => {
+            if (k === 'useCurrentLocation') return filters[k];
+            if (filters[k as keyof FilterState] === undefined) return false;
+            if (k === 'amenities') return filters[k] && filters[k]!.length > 0;
+            // Ignore defaults applied from profile
+            if (['country', 'state', 'school'].includes(k) && filters[k as keyof FilterState] === userProfile?.[k as keyof UserProfile]) return false;
+            return true;
+        }).length;
+
+        return activeFilterCount > 0 || sortBy !== 'newest';
+    }, [filters, searchQuery, sortBy, userProfile]);
 
 
     const handleFilterChange = (newFilters: FilterState) => {
@@ -369,49 +443,68 @@ export default function PropertiesPage() {
                 </div>
             </div>
 
-            {/* Results Grid */}
-            <div className="space-y-8">
-                <div className="flex items-center justify-between px-4">
-                    <h2 className="text-2xl font-black tracking-tight">
-                        {filteredProperties.length} Homes Found
-                    </h2>
-                    {searchQuery && (
-                        <p className="text-muted-foreground font-medium">
-                            Showing results for &quot;<span className="text-foreground font-bold">{searchQuery}</span>&quot;
-                        </p>
-                    )}
-                </div>
+            {/* Main Content Area */}
+            <div className="space-y-16">
+                {isSearching ? (
+                    /* Search Results View */
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        <div className="flex items-center justify-between px-4">
+                            <h2 className="text-2xl font-black tracking-tight">
+                                {filteredProperties.length} Homes Found
+                            </h2>
+                            {searchQuery && (
+                                <p className="text-muted-foreground font-medium">
+                                    Showing results for &quot;<span className="text-foreground font-bold">{searchQuery}</span>&quot;
+                                </p>
+                            )}
+                        </div>
 
-                {filteredProperties.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-                        {filteredProperties.map((property, idx) => (
-                            <div
-                                key={property.id}
-                                className="animate-in fade-in slide-in-from-bottom-6 duration-700 hover:-translate-y-2 transition-all"
-                                style={{ animationDelay: `${idx * 100}ms` }}
-                            >
-                                <PropertyCard property={property} />
+                        {filteredProperties.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                                {filteredProperties.map((property, idx) => (
+                                    <div
+                                        key={property.id}
+                                        className="animate-in fade-in slide-in-from-bottom-6 duration-700 hover:-translate-y-2 transition-all"
+                                        style={{ animationDelay: `${idx * 100}ms` }}
+                                    >
+                                        <PropertyCard property={property} />
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                        ) : (
+                            <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
+                                <CardContent className="flex flex-col items-center justify-center py-32 text-center">
+                                    <div className="relative mb-12">
+                                        <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150 animate-pulse" />
+                                        <div className="relative flex h-40 w-40 items-center justify-center rounded-[3rem] bg-muted/30">
+                                            <HomeIcon className="h-20 w-20 text-primary opacity-20" />
+                                        </div>
+                                    </div>
+                                    <h3 className="text-4xl font-black tracking-tight">No properties found</h3>
+                                    <p className="mx-auto mt-6 max-w-sm text-xl font-medium text-muted-foreground/80 leading-relaxed">
+                                        &quot;Adjust your search or broad filters to find more premium accommodations in your area.&quot;
+                                    </p>
+                                    <Button size="lg" variant="outline" className="mt-12 rounded-2xl px-12 h-14 font-black text-lg border-primary/20 hover:bg-primary/5" onClick={resetFilters}>
+                                        Reset All Filters
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        )}
                     </div>
                 ) : (
-                    <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
-                        <CardContent className="flex flex-col items-center justify-center py-32 text-center">
-                            <div className="relative mb-12">
-                                <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150 animate-pulse" />
-                                <div className="relative flex h-40 w-40 items-center justify-center rounded-[3rem] bg-muted/30">
-                                    <HomeIcon className="h-20 w-20 text-primary opacity-20" />
-                                </div>
-                            </div>
-                            <h3 className="text-4xl font-black tracking-tight">No properties found</h3>
-                            <p className="mx-auto mt-6 max-w-sm text-xl font-medium text-muted-foreground/80 leading-relaxed">
-                                &quot;Adjust your search or broad filters to find more premium accommodations in your area.&quot;
-                            </p>
-                            <Button size="lg" variant="outline" className="mt-12 rounded-2xl px-12 h-14 font-black text-lg border-primary/20 hover:bg-primary/5" onClick={resetFilters}>
-                                Reset All Filters
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    /* Curated Sections View */
+                    <div className="space-y-20">
+                        {sections.map((section, idx) => (
+                            <PropertySection
+                                key={section.id}
+                                title={section.title}
+                                description={section.description}
+                                icon={section.icon}
+                                properties={section.properties}
+                                delay={idx * 100}
+                            />
+                        ))}
+                    </div>
                 )}
             </div>
         </div>
