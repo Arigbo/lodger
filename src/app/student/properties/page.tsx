@@ -34,17 +34,17 @@ function PropertySection({ title, description, properties, icon: Icon, delay = 0
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: `${delay}ms` }}>
-            <div className="flex flex-col gap-1 px-1">
-                <div className="flex items-center gap-2 text-primary font-bold uppercase tracking-wider text-xs">
-                    <Icon className="h-4 w-4" />
+            <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-primary font-bold uppercase tracking-wider text-[10px] md:text-xs">
+                    <Icon className="h-3.5 w-3.5 md:h-4 w-4" />
                     <span>{title}</span>
                 </div>
-                <div className="flex items-end justify-between">
-                    <h2 className="text-2xl md:text-3xl font-black tracking-tight">{description || `Premium ${title}`}</h2>
+                <div className="flex items-end justify-between gap-4">
+                    <h2 className="text-xl md:text-3xl font-black tracking-tight leading-tight">{description || `Premium ${title}`}</h2>
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="text-primary font-bold hover:bg-primary/5 rounded-xl"
+                        className="text-primary font-bold hover:bg-primary/5 rounded-xl shrink-0"
                         onClick={onShowSearch}
                     >
                         View All
@@ -53,12 +53,12 @@ function PropertySection({ title, description, properties, icon: Icon, delay = 0
             </div>
 
             {/* Horizontal Scroll Carousel */}
-            <div className="relative group">
-                <div className="flex gap-6 overflow-x-auto pb-8 pt-2 px-1 no-scrollbar scroll-smooth snap-x snap-mandatory">
+            <div className="relative -mx-4 sm:-mx-6 lg:-mx-8">
+                <div className="flex gap-4 md:gap-6 overflow-x-auto pb-8 pt-2 px-4 sm:px-6 lg:px-8 no-scrollbar scroll-smooth snap-x snap-mandatory">
                     {properties.map((property, idx) => (
                         <div
                             key={property.id}
-                            className="min-w-[280px] md:min-w-[380px] lg:min-w-[420px] snap-start"
+                            className="min-w-[85vw] sm:min-w-[380px] lg:min-w-[420px] snap-start"
                         >
                             <PropertyCard property={property} className="h-full shadow-lg shadow-black/[0.03]" />
                         </div>
@@ -388,14 +388,14 @@ export default function PropertiesPage() {
     }
 
     return (
-        <div className="space-y-12 animate-in fade-in duration-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 animate-in fade-in duration-700">
             {/* Simple Search & Filter Section */}
             <div className="space-y-6">
                 <div className="flex flex-col gap-2">
-                    <h1 className="font-headline text-3xl md:text-4xl font-black tracking-tight text-foreground uppercase px-1">
+                    <h1 className="font-headline text-3xl md:text-4xl font-black tracking-tight text-foreground uppercase">
                         Find <span className="text-primary">Property.</span>
                     </h1>
-                    <div className="h-1 w-12 bg-primary rounded-full ml-1" />
+                    <div className="h-1 w-12 bg-primary rounded-full" />
                 </div>
 
                 <div className="flex flex-col lg:flex-row items-center gap-4">
@@ -501,8 +501,8 @@ export default function PropertiesPage() {
                 {isSearching ? (
                     /* Search Results View */
                     <div className="space-y-8 animate-in fade-in duration-500">
-                        <div className="flex items-center justify-between px-4">
-                            <h2 className="text-2xl font-black tracking-tight">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <h2 className="text-xl md:text-2xl font-black tracking-tight">
                                 {filteredProperties.length} Homes Found
                             </h2>
                             {searchQuery && (
