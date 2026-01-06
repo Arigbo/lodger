@@ -39,6 +39,7 @@ export default function TenancyDetailPage() {
     const { data: landlord, isLoading: isLandlordLoading } = useDoc<User>(landlordRef);
 
     const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+    const [isVacateDialogOpen, setIsVacateDialogOpen] = useState(false);
 
     const transactionsQuery = useMemoFirebase(() => (user && id) ? query(collection(firestore, 'transactions'), where('tenantId', '==', user.uid), where('propertyId', '==', id)) : null, [firestore, user, id]);
     const { data: transactions, isLoading: areTransactionsLoading } = useCollection<Transaction>(transactionsQuery);
@@ -129,7 +130,7 @@ export default function TenancyDetailPage() {
     const handleConfirmCompensation = async () => {
         if (!lease || !property || !user) return;
         try {
-            // Update lease to expired
+            // Update lease to expired (Immediate Termination)
             const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
             await updateDoc(leaseRef, {
                 status: 'expired',
@@ -145,9 +146,10 @@ export default function TenancyDetailPage() {
             });
 
             toast({
-                title: "Tenancy Finalized",
-                description: "You have confirmed receipt of compensation. The tenancy is now officially ended.",
+                title: "Tenancy Terminated",
+                description: "You have confirmed receipt of compensation and acknowledged the vacation period. The tenancy is now closed.",
             });
+            setIsVacateDialogOpen(false);
             window.location.reload();
         } catch (error) {
             console.error("Error confirming compensation:", error);
@@ -297,13 +299,42 @@ export default function TenancyDetailPage() {
                                 <CardDescription className="text-lg font-medium text-destructive/80 leading-relaxed">
                                     A termination process has been initiated. You are entitled to a pro-rated refund of <span className="font-bold">{formatPrice(lease.calculatedRefund || 0, property.currency)}</span>.
                                 </CardDescription>
-                                <Button
-                                    size="lg"
-                                    className="mt-4 bg-destructive hover:bg-destructive/90 text-white rounded-2xl font-bold px-8"
-                                    onClick={handleConfirmCompensation}
-                                >
-                                    Confirm Refund Received & Vacate
-                                </Button>
+                                <Dialog open={isVacateDialogOpen} onOpenChange={setIsVacateDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                            size="lg"
+                                            className="mt-4 bg-destructive hover:bg-destructive/90 text-white rounded-2xl font-bold px-8"
+                                        >
+                                            Confirm Refund Received & Vacate
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-md rounded-[2rem] border-none shadow-2xl p-8">
+                                        <DialogHeader className="space-y-4">
+                                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive mx-auto">
+                                                <AlertTriangle className="h-8 w-8" />
+                                            </div>
+                                            <div className="space-y-2 text-center">
+                                                <DialogTitle className="text-2xl font-black tracking-tight uppercase">Confirm Vacation</DialogTitle>
+                                                <DialogDescription className="text-base font-medium text-muted-foreground leading-relaxed">
+                                                    You are confirming that you have received your pro-rated refund.
+                                                    <br /><br />
+                                                    <span className="text-foreground font-bold">Important:</span> You are required to vacate the property within <span className="text-destructive font-bold">48 hours</span> of this confirmation.
+                                                </DialogDescription>
+                                            </div>
+                                        </DialogHeader>
+                                        <DialogFooter className="mt-8 flex-col sm:flex-row gap-3">
+                                            <DialogClose asChild>
+                                                <Button variant="ghost" className="rounded-xl font-bold">Cancel</Button>
+                                            </DialogClose>
+                                            <Button
+                                                className="bg-destructive hover:bg-destructive/90 text-white rounded-xl font-bold px-8"
+                                                onClick={handleConfirmCompensation}
+                                            >
+                                                Acknowledge & Terminate
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
                             </div>
                         </CardHeader>
                     </Card>

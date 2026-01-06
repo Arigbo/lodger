@@ -244,7 +244,7 @@ export default function SearchFilters({
               <div key={amenity} className="flex items-center space-x-2">
                 <Checkbox
                   id={amenity.toLowerCase().replace(/[\s-]/g, '')}
-                  checked={filters.amenities?.includes(amenity)}
+                  checked={Boolean(filters.amenities?.includes(amenity))}
                   onCheckedChange={(checked) => handleAmenityChange(amenity, !!checked)}
                 />
                 <Label htmlFor={amenity.toLowerCase().replace(/[\s-]/g, '')} className="text-sm font-normal">{amenity}</Label>
