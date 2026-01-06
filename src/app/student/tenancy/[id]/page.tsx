@@ -150,7 +150,7 @@ export default function TenancyDetailPage() {
                 description: "You have confirmed receipt of compensation and acknowledged the vacation period. The tenancy is now closed.",
             });
             setIsVacateDialogOpen(false);
-            window.location.reload();
+            router.push('/student/tenancy');
         } catch (error) {
             console.error("Error confirming compensation:", error);
             toast({

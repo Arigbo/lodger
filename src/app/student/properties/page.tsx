@@ -93,7 +93,7 @@ export default function PropertiesPage() {
             }
 
             if (filters.state) {
-                properties = properties.filter(p => p.location.state.toLowerCase() === filters.state!.toLowerCase());
+                properties = properties.filter(p => p.location.state.toLowerCase().includes(filters.state!.toLowerCase()));
             }
 
             if (filters.city) {
@@ -101,7 +101,7 @@ export default function PropertiesPage() {
             }
 
             if (filters.school) {
-                properties = properties.filter(p => p.location.school?.toLowerCase() === filters.school!.toLowerCase());
+                properties = properties.filter(p => p.location.school?.toLowerCase().includes(filters.school!.toLowerCase()));
             }
         }
 
@@ -140,11 +140,14 @@ export default function PropertiesPage() {
         }
 
         if (searchQuery) {
-            const lowerQuery = searchQuery.toLowerCase();
+            const lowerQuery = searchQuery.toLowerCase().trim();
             properties = properties.filter(p =>
                 p.title.toLowerCase().includes(lowerQuery) ||
                 p.location.address.toLowerCase().includes(lowerQuery) ||
-                p.location.city.toLowerCase().includes(lowerQuery)
+                p.location.city.toLowerCase().includes(lowerQuery) ||
+                p.location.state.toLowerCase().includes(lowerQuery) ||
+                p.location.school?.toLowerCase().includes(lowerQuery) ||
+                p.type.toLowerCase().includes(lowerQuery)
             );
         }
 
@@ -164,7 +167,7 @@ export default function PropertiesPage() {
                     return b.area - a.area;
                 case 'newest':
                 default:
-                    return -1;
+                    return b.id.localeCompare(a.id); // Fallback to ID for reverse chronological-ish order
             }
         });
 
@@ -247,6 +250,8 @@ export default function PropertiesPage() {
         });
         setCurrentLocation(null);
         setSchoolsInArea(null);
+        setSearchQuery('');
+        setSortBy('newest');
     }
 
     const isLoading = isProfileLoading || arePropertiesLoading;
