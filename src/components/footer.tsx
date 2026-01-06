@@ -26,7 +26,7 @@ export default function Footer() {
             <h4 className="font-headline text-lg font-semibold">Company</h4>
             <ul className="mt-4 space-y-2">
               <li><Link href="/about" className="text-sm text-muted-foreground hover:text-foreground">About Us</Link></li>
-              <li><Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground">Blog</Link></li>
+              <li><Link href="https://lodger-blog.vercel.app/" className="text-sm text-muted-foreground hover:text-foreground">Blog</Link></li>
             </ul>
           </div>
           <div className="md:col-span-2">

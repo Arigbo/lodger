@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/utils";
 
-const BLOG_API_URL = process.env.NEXT_PUBLIC_BLOG_API_URL || "http://localhost:3001/api/v1/posts";
-const PUBLIC_BLOG_URL = process.env.NEXT_PUBLIC_BLOG_URL || "http://localhost:3001/post";
+const BLOG_API_URL = process.env.NEXT_PUBLIC_BLOG_API_URL || "https://lodger-blog.vercel.app/api/v1/posts";
+const PUBLIC_BLOG_URL = process.env.NEXT_PUBLIC_BLOG_URL || "https://lodger-blog.vercel.app/post";
 
 async function getPosts(page: number, search: string) {
     try {

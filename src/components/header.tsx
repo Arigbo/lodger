@@ -66,7 +66,7 @@ export default function Header() {
 
   const landingLinks = [
     { href: "/student/properties", label: "Properties" },
-    { href: "/blog", label: "Blog" },
+    { href: "https://lodger-blog.vercel.app/", label: "Blog" },
     { href: "/about", label: "About" },
     { href: "/auth/signup?type=landlord", label: "List Home" },
   ];

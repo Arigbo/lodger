@@ -22,13 +22,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Card, CardContent } from "@/components/ui/card";
 import { GraduationCap, Landmark, Sparkles, TrendingUp, Star } from 'lucide-react';
 
-function PropertySection({ title, description, properties, icon: Icon, delay = 0, onShowSearch }: {
+function PropertySection({ title, description, properties, icon: Icon, delay = 0 }: {
     title: string,
     description?: string,
     properties: Property[],
     icon: any,
-    delay?: number,
-    onShowSearch?: () => void
+    delay?: number
 }) {
     if (properties.length === 0) return null;
 
@@ -41,14 +40,6 @@ function PropertySection({ title, description, properties, icon: Icon, delay = 0
                 </div>
                 <div className="flex items-end justify-between gap-4">
                     <h2 className="text-xl md:text-3xl font-black tracking-tight leading-tight">{description || `Premium ${title}`}</h2>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-primary font-bold hover:bg-primary/5 rounded-xl shrink-0"
-                        onClick={onShowSearch}
-                    >
-                        View All
-                    </Button>
                 </div>
             </div>
 
@@ -63,19 +54,8 @@ function PropertySection({ title, description, properties, icon: Icon, delay = 0
                             <PropertyCard property={property} className="h-full shadow-lg shadow-black/[0.03]" />
                         </div>
                     ))}
-                    {/* Final spacer/View All card */}
-                    <div className="min-w-[200px] flex items-center justify-center snap-start pr-4">
-                        <Button
-                            variant="outline"
-                            className="h-full w-full rounded-2xl border-dashed border-2 flex flex-col gap-4 py-20 text-muted-foreground hover:text-primary hover:border-primary transition-all"
-                            onClick={onShowSearch}
-                        >
-                            <div className="h-12 w-12 rounded-full bg-primary/5 flex items-center justify-center">
-                                <Search className="h-6 w-6" />
-                            </div>
-                            <span className="font-bold">View All Listings</span>
-                        </Button>
-                    </div>
+                    {/* Final spacer for edge-to-edge feel */}
+                    <div className="min-w-[20px] sm:min-w-[40px] shrink-0" />
                 </div>
             </div>
         </div>
@@ -555,26 +535,6 @@ export default function PropertiesPage() {
                                 icon={section.icon}
                                 properties={section.properties}
                                 delay={idx * 100}
-                                onShowSearch={() => {
-                                    // If a section "View All" is clicked, we auto-filter by that section's criteria if possible
-                                    // or just switch to searching mode with current filters
-                                    if (section.id === 'near-school' && userProfile?.school) {
-                                        setFilters(f => ({ ...f, school: userProfile.school }));
-                                    } else if (section.id === 'in-city' && userProfile?.city) {
-                                        setFilters(f => ({ ...f, city: userProfile.city }));
-                                    } else if (section.id === 'budget') {
-                                        setSortBy('price-asc');
-                                        setFilters(f => ({ ...f, price: 500000 })); // High ceiling to trigger search
-                                    } else if (section.id === 'recent') {
-                                        setSortBy('newest');
-                                        // Triggering search mode by setting a dummy query if needed, 
-                                        // but usually changing sortBy or active filters is enough.
-                                        setFilters(f => ({ ...f, propertyType: 'any' }));
-                                    } else {
-                                        // Just trigger search mode
-                                        setSearchQuery(' '); // Soft space to trigger search results
-                                    }
-                                }}
                             />
                         ))}
                     </div>
