@@ -71,6 +71,8 @@ export default function SearchFilters({
       newFilters.useCurrentLocation = false;
     }
     setFilters(newFilters);
+    // Auto-apply filters immediately
+    onFilterChange({ ...newFilters, price });
   };
 
   const handleAmenityChange = (amenity: string, checked: boolean) => {
@@ -183,7 +185,11 @@ export default function SearchFilters({
           <Label>Max Price: {formatPrice(price, userCurrency)}</Label>
           <Slider
             value={[price]}
-            onValueChange={(value) => setPrice(value[0])}
+            onValueChange={(value) => {
+              setPrice(value[0]);
+              // Auto-apply price filter
+              onFilterChange({ ...filters, price: value[0] });
+            }}
             max={userCurrency === 'NGN' ? 5000000 : userCurrency === 'GHS' ? 50000 : 10000}
             min={userCurrency === 'NGN' ? 50000 : userCurrency === 'GHS' ? 500 : 100}
             step={userCurrency === 'NGN' ? 10000 : userCurrency === 'GHS' ? 100 : 50}
@@ -248,8 +254,7 @@ export default function SearchFilters({
         </div>
       </CardContent>
       <CardFooter className="flex-col gap-2">
-        <Button className="w-full" onClick={handleApplyFilters}>Apply Filters</Button>
-        <Button variant="ghost" className="w-full" onClick={handleReset}>Reset</Button>
+        <Button variant="ghost" className="w-full" onClick={handleReset}>Reset All Filters</Button>
       </CardFooter>
     </Card>
   );

@@ -278,37 +278,75 @@ export default function PropertiesPage() {
                     </div>
 
                     <div className="flex items-center gap-3 w-full lg:w-auto">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className="h-14 rounded-2xl px-6 gap-3 border-muted/20 bg-white shadow-sm font-bold hover:bg-primary/5 hover:text-primary transition-all">
-                                    <SlidersHorizontal className="h-5 w-5" />
-                                    Filters
-                                    <Badge className="bg-primary/10 text-primary border-none font-black h-5 w-5 p-0 flex items-center justify-center">
-                                        {Object.keys(filters).filter(k => filters[k as keyof FilterState] !== undefined && filters[k as keyof FilterState] !== false).length}
-                                    </Badge>
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[90vw] max-w-[500px] p-0 rounded-3xl overflow-hidden border-none shadow-2xl mt-2" align="end">
-                                <div className="bg-muted/30 p-6 border-b flex items-center justify-between">
-                                    <h3 className="font-bold text-lg text-foreground">Filter Properties</h3>
-                                    <Button variant="ghost" size="sm" onClick={resetFilters} className="text-primary hover:text-primary hover:bg-primary/10 font-bold rounded-xl px-4">
-                                        Reset
+                        {/* Mobile: Sheet */}
+                        <div className="lg:hidden w-full">
+                            <Sheet>
+                                <SheetTrigger asChild>
+                                    <Button variant="outline" className="h-14 w-full rounded-2xl px-6 gap-3 border-muted/20 bg-white shadow-sm font-bold hover:bg-primary/5 hover:text-primary transition-all">
+                                        <SlidersHorizontal className="h-5 w-5" />
+                                        Filters
+                                        <Badge className="bg-primary/10 text-primary border-none font-black h-5 w-5 p-0 flex items-center justify-center">
+                                            {Object.keys(filters).filter(k => filters[k as keyof FilterState] !== undefined && filters[k as keyof FilterState] !== false).length}
+                                        </Badge>
                                     </Button>
-                                </div>
-                                <div className="max-h-[70vh] overflow-y-auto p-6 custom-scrollbar">
-                                    <SearchFilters
-                                        onFilterChange={handleFilterChange}
-                                        onReset={resetFilters}
-                                        initialFilters={filters}
-                                        onLocationSuccess={handleLocationSuccess}
-                                        schoolsInArea={schoolsInArea}
-                                        availableStates={availableStates}
-                                        userCurrency={userCurrency}
-                                        className="border-0 shadow-none p-0"
-                                    />
-                                </div>
-                            </PopoverContent>
-                        </Popover>
+                                </SheetTrigger>
+                                <SheetContent side="bottom" className="h-[90vh] p-0 rounded-t-3xl">
+                                    <div className="bg-muted/30 p-6 border-b flex items-center justify-between">
+                                        <h3 className="font-bold text-lg text-foreground">Filter Properties</h3>
+                                        <Button variant="ghost" size="sm" onClick={resetFilters} className="text-primary hover:text-primary hover:bg-primary/10 font-bold rounded-xl px-4">
+                                            Reset
+                                        </Button>
+                                    </div>
+                                    <div className="h-[calc(90vh-80px)] overflow-y-auto p-6 custom-scrollbar">
+                                        <SearchFilters
+                                            onFilterChange={handleFilterChange}
+                                            onReset={resetFilters}
+                                            initialFilters={filters}
+                                            onLocationSuccess={handleLocationSuccess}
+                                            schoolsInArea={schoolsInArea}
+                                            availableStates={availableStates}
+                                            userCurrency={userCurrency}
+                                            className="border-0 shadow-none p-0"
+                                        />
+                                    </div>
+                                </SheetContent>
+                            </Sheet>
+                        </div>
+
+                        {/* Desktop: Popover */}
+                        <div className="hidden lg:block">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="h-14 rounded-2xl px-6 gap-3 border-muted/20 bg-white shadow-sm font-bold hover:bg-primary/5 hover:text-primary transition-all">
+                                        <SlidersHorizontal className="h-5 w-5" />
+                                        Filters
+                                        <Badge className="bg-primary/10 text-primary border-none font-black h-5 w-5 p-0 flex items-center justify-center">
+                                            {Object.keys(filters).filter(k => filters[k as keyof FilterState] !== undefined && filters[k as keyof FilterState] !== false).length}
+                                        </Badge>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[90vw] max-w-[500px] p-0 rounded-3xl overflow-hidden border-none shadow-2xl mt-2" align="end">
+                                    <div className="bg-muted/30 p-6 border-b flex items-center justify-between">
+                                        <h3 className="font-bold text-lg text-foreground">Filter Properties</h3>
+                                        <Button variant="ghost" size="sm" onClick={resetFilters} className="text-primary hover:text-primary hover:bg-primary/10 font-bold rounded-xl px-4">
+                                            Reset
+                                        </Button>
+                                    </div>
+                                    <div className="max-h-[70vh] overflow-y-auto p-6 custom-scrollbar">
+                                        <SearchFilters
+                                            onFilterChange={handleFilterChange}
+                                            onReset={resetFilters}
+                                            initialFilters={filters}
+                                            onLocationSuccess={handleLocationSuccess}
+                                            schoolsInArea={schoolsInArea}
+                                            availableStates={availableStates}
+                                            userCurrency={userCurrency}
+                                            className="border-0 shadow-none p-0"
+                                        />
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
 
                         <Select value={sortBy} onValueChange={setSortBy}>
                             <SelectTrigger className="h-14 w-full lg:w-[220px] rounded-2xl border-muted/20 bg-white shadow-sm font-bold px-6 focus:ring-2 focus:ring-primary/10">

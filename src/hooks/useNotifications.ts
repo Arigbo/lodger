@@ -27,7 +27,7 @@ export function useNotifications(userId: string | null) {
         const notificationsRef = collection(firestore, 'notifications');
         const q = query(
             notificationsRef,
-            where('userId', '==', userId),
+            where('recipientId', '==', userId),
             orderBy('createdAt', 'desc')
         );
 
