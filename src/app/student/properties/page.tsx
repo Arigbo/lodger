@@ -264,14 +264,14 @@ export default function PropertiesPage() {
                     score += 50;
                 }
 
-                // Freshness (0-20 points based on ID comparison as proxy for time)
-                // Newer IDs are usually "larger" or later in sequence
-                score += (p.id > a.id ? 10 : 0);
-
-                // Status points (Verified etc - if applicable, but we filter available)
                 return score;
             };
-            return getScore(b) - getScore(a);
+
+            const scoreA = getScore(a);
+            const scoreB = getScore(b);
+
+            if (scoreA !== scoreB) return scoreB - scoreA;
+            return b.id.localeCompare(a.id); // Tie-breaker: Newest first
         });
 
         const recentlyAdded = [...allProperties].sort((a, b) => b.id.localeCompare(a.id));
