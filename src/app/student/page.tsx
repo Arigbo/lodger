@@ -117,9 +117,9 @@ export default function StudentDashboardPage() {
         {rentedProperties && rentedProperties.length > 0 ? (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             {rentedProperties.map(property => (
-              <div key={property.id} className="group transition-all hover:-translate-y-2">
-                <PropertyCard property={property} />
-              </div>
+              <Link key={property.id} href={`/student/tenancy/${property.id}`} className="group transition-all hover:-translate-y-2 block">
+                <PropertyCard property={property} as="div" />
+              </Link>
             ))}
           </div>
         ) : (

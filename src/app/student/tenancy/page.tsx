@@ -36,7 +36,7 @@ export default function TenancyDashboardPage() {
         return query(
             collection(firestore, 'leaseAgreements'),
             where('tenantId', '==', user.uid),
-            where('status', 'in', ['active', 'pending'])
+            where('status', 'in', ['active', 'pending', 'terminating'])
         );
     }, [user, firestore]);
 
@@ -67,7 +67,7 @@ export default function TenancyDashboardPage() {
             const propertyChunks = chunkArray(propertyIds, 30);
             const fetchedProperties: Property[] = [];
             for (const chunk of propertyChunks) {
-                const propertiesQuery = query(collection(firestore, 'properties'), where('id', 'in', chunk));
+                const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
                 const propertySnapshots = await getDocs(propertiesQuery);
                 propertySnapshots.forEach((doc: any) => {
                     fetchedProperties.push(doc.data() as Property);
