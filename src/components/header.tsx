@@ -197,120 +197,119 @@ export default function Header() {
                                 variant="ghost"
                                 className="w-full text-xs font-bold uppercase tracking-widest text-primary hover:bg-primary/5"
                                 onClick={() => {
-                                  if (window.innerWidth < 768) {
-                                    router.push('/notifications');
-                                  } else {
-                                    // Ideally we expand here, but for now linking to page is consistent
-                                    // Or we can just set a state to show all. 
-                                    // User asked "desktop extends the notification drop down"
-                                    router.push('/notifications'); // Placeholder for now, or I can add state.
-                                    // Let's add state if I can... actually header is complex. 
-                                    // Let's assume navigating to page is safer for "See All" 
-                                    // BUT user explicitly said "desktop extends".
-                                    // I'll need a local state `viewLimit`.
-                                  }
+                                  const notificationPath = role === 'student' ? '/student/notifications' : '/landlord/notifications';
+                                  router.push(notificationPath);
                                 }}
                               >
-                                See All Activity
+                                View All Notifications
                               </Button>
                             </div>
                           )}
-                        </>
+                                  }
+                                }}
+                              >
+                          See All Activity
+                        </Button>
+                    </div>
+                          )}
+                  </>
                       )}
-                    </div>
+                </div>
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
 
-              {user && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-10 p-0 rounded-full border-2 border-transparent hover:border-primary/20 transition-all p-[2px] active:scale-95 overflow-hidden">
-                      <Avatar className="h-full w-full border border-background">
-                        <AvatarImage
-                          src={userProfile?.profileImageUrl || user.photoURL || ""}
-                          alt={userProfile?.name || user.displayName || "User"}
-                          className="object-cover"
-                        />
-                        <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                          {user.displayName?.charAt(0) || user.email?.charAt(0) || <User className="h-4 w-4" />}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-64 p-2 mt-4 bg-white/80 backdrop-blur-2xl border-white/40 rounded-[2rem] shadow-2xl animate-in fade-in zoom-in-95 duration-300" align="end">
-                    <DropdownMenuLabel className="p-4">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-bold tracking-tight">{userProfile?.name || user.displayName}</p>
-                        <p className="text-[10px] font-medium text-muted-foreground truncate opacity-70">
-                          {user.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-white/10 mx-2" />
-                    <div className="p-1">
-                      <DropdownMenuItem asChild className="rounded-xl m-1 px-3 py-2 cursor-pointer transition-all hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary">
-                        <Link href={role === "student" ? "/student/account" : "/landlord/account"} className="flex items-center w-full">
-                          <User className="mr-2 h-4 w-4" />
-                          <span className="font-semibold text-sm">My Account</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-white/10 mx-2" />
-                      <DropdownMenuItem
-                        onClick={() => setShowLogoutModal(true)}
-                        className="rounded-xl m-1 px-3 py-2 cursor-pointer transition-all hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive"
-                      >
-                        <X className="mr-2 h-4 w-4" />
-                        <span className="font-semibold text-sm">Sign Out</span>
-                      </DropdownMenuItem>
-                    </div>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-          )}
-        </div>
+        {user && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-10 w-10 p-0 rounded-full border-2 border-transparent hover:border-primary/20 transition-all p-[2px] active:scale-95 overflow-hidden">
+                <Avatar className="h-full w-full border border-background">
+                  <AvatarImage
+                    src={userProfile?.profileImageUrl || user.photoURL || ""}
+                    alt={userProfile?.name || user.displayName || "User"}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                    {user.displayName?.charAt(0) || user.email?.charAt(0) || <User className="h-4 w-4" />}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-64 p-2 mt-4 bg-white/80 backdrop-blur-2xl border-white/40 rounded-[2rem] shadow-2xl animate-in fade-in zoom-in-95 duration-300" align="end">
+              <DropdownMenuLabel className="p-4">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-bold tracking-tight">{userProfile?.name || user.displayName}</p>
+                  <p className="text-[10px] font-medium text-muted-foreground truncate opacity-70">
+                    {user.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-white/10 mx-2" />
+              <div className="p-1">
+                <DropdownMenuItem asChild className="rounded-xl m-1 px-3 py-2 cursor-pointer transition-all hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary">
+                  <Link href={role === "student" ? "/student/account" : "/landlord/account"} className="flex items-center w-full">
+                    <User className="mr-2 h-4 w-4" />
+                    <span className="font-semibold text-sm">My Account</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-white/10 mx-2" />
+                <DropdownMenuItem
+                  onClick={() => setShowLogoutModal(true)}
+                  className="rounded-xl m-1 px-3 py-2 cursor-pointer transition-all hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  <span className="font-semibold text-sm">Sign Out</span>
+                </DropdownMenuItem>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
+          )}
+    </div>
+      </div >
 
-      {/* Mobile Menu (Landing Page Only) */}
-      {isLanding && isMenuOpen && (
-        <div className="md:hidden mt-2 p-4 mx-4 mb-4 rounded-3xl bg-background/80 backdrop-blur-2xl border border-white/10 shadow-2xl animate-in slide-in-from-top-4 duration-300">
-          <nav className="flex flex-col space-y-2">
-            {landingLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setIsMenuOpen(false)}
-                className="text-lg font-bold p-4 rounded-2xl hover:bg-primary/10 hover:text-primary transition-all"
-              >
-                {link.label}
-              </Link>
-            ))}
-            <div className="pt-4 mt-2 border-t border-white/10 flex flex-col gap-3">
-              {user ? (
-                <Button className="rounded-2xl p-6 font-bold text-lg" asChild onClick={() => setIsMenuOpen(false)}>
-                  <Link href={role === "student" ? "/student" : "/landlord"}>Open Dashboard</Link>
+    {/* Mobile Menu (Landing Page Only) */ }
+  {
+    isLanding && isMenuOpen && (
+      <div className="md:hidden mt-2 p-4 mx-4 mb-4 rounded-3xl bg-background/80 backdrop-blur-2xl border border-white/10 shadow-2xl animate-in slide-in-from-top-4 duration-300">
+        <nav className="flex flex-col space-y-2">
+          {landingLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setIsMenuOpen(false)}
+              className="text-lg font-bold p-4 rounded-2xl hover:bg-primary/10 hover:text-primary transition-all"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <div className="pt-4 mt-2 border-t border-white/10 flex flex-col gap-3">
+            {user ? (
+              <Button className="rounded-2xl p-6 font-bold text-lg" asChild onClick={() => setIsMenuOpen(false)}>
+                <Link href={role === "student" ? "/student" : "/landlord"}>Open Dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" className="rounded-2xl p-6 font-bold text-lg" asChild onClick={() => setIsMenuOpen(false)}>
+                  <Link href="/auth/login">Login</Link>
                 </Button>
-              ) : (
-                <>
-                  <Button variant="ghost" className="rounded-2xl p-6 font-bold text-lg" asChild onClick={() => setIsMenuOpen(false)}>
-                    <Link href="/auth/login">Login</Link>
-                  </Button>
-                  <Button className="rounded-2xl p-6 font-bold text-lg shadow-xl shadow-primary/20" asChild onClick={() => setIsMenuOpen(false)}>
-                    <Link href="/auth/signup">Get Started</Link>
-                  </Button>
-                </>
-              )}
-            </div>
-          </nav>
-        </div>
-      )}
+                <Button className="rounded-2xl p-6 font-bold text-lg shadow-xl shadow-primary/20" asChild onClick={() => setIsMenuOpen(false)}>
+                  <Link href="/auth/signup">Get Started</Link>
+                </Button>
+              </>
+            )}
+          </div>
+        </nav>
+      </div>
+    )
+  }
 
-      <LogoutModal
-        open={showLogoutModal}
-        onOpenChange={setShowLogoutModal}
-        onConfirm={handleLogout}
-      />
-    </header>
+  <LogoutModal
+    open={showLogoutModal}
+    onOpenChange={setShowLogoutModal}
+    onConfirm={handleLogout}
+  />
+    </header >
   );
 }

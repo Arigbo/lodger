@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/utils";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { useUser } from "@/firebase/provider";
 
 interface NotificationItemProps {
     notification: any;
@@ -9,6 +10,9 @@ interface NotificationItemProps {
 }
 
 export function NotificationItem({ notification, onMarkAsRead, isDropdown = false }: NotificationItemProps) {
+    const { role } = useUser();
+    const notificationPath = role === 'student' ? '/student/notifications' : '/landlord/notifications';
+
     const content = (
         <div className="flex w-full justify-between gap-2 mb-1">
             <span className="font-bold text-xs text-primary/80 group-hover:text-primary transition-colors">{notification.title}</span>
@@ -33,7 +37,7 @@ export function NotificationItem({ notification, onMarkAsRead, isDropdown = fals
         return (
             <DropdownMenuItem asChild>
                 <Link
-                    href={`/notifications/${notification.id}`}
+                    href={`${notificationPath}/${notification.id}`}
                     className={containerClasses}
                     onClick={() => onMarkAsRead(notification.id)}
                 >
@@ -46,7 +50,7 @@ export function NotificationItem({ notification, onMarkAsRead, isDropdown = fals
 
     return (
         <Link
-            href={`/notifications/${notification.id}`}
+            href={`${notificationPath}/${notification.id}`}
             className={containerClasses}
             onClick={() => onMarkAsRead(notification.id)}
         >

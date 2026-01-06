@@ -297,13 +297,15 @@ export default function TenancyDetailPage() {
                                 <CardDescription className="text-lg font-medium text-destructive/80 leading-relaxed">
                                     A termination process has been initiated. You are entitled to a pro-rated refund of <span className="font-bold">{formatPrice(lease.calculatedRefund || 0, property.currency)}</span>.
                                 </CardDescription>
+                                <Button
+                                    size="lg"
+                                    className="mt-4 bg-destructive hover:bg-destructive/90 text-white rounded-2xl font-bold px-8"
+                                    onClick={handleConfirmCompensation}
+                                >
+                                    Confirm Refund Received & Vacate
+                                </Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="px-8 pb-8 pt-0">
-                            <Button variant="destructive" size="lg" className="w-full rounded-2xl font-black h-14" onClick={handleConfirmCompensation}>
-                                Confirm Refund Received & Vacate
-                            </Button>
-                        </CardContent>
                     </Card>
                 )}
             </div>
