@@ -22,14 +22,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Card, CardContent } from "@/components/ui/card";
 import { GraduationCap, Landmark, Sparkles, TrendingUp, Star } from 'lucide-react';
 
-function PropertySection({ title, description, properties, icon: Icon, delay = 0 }: {
+function PropertySection({ title, description, properties, icon: Icon, delay = 0, onShowSearch }: {
     title: string,
     description?: string,
     properties: Property[],
     icon: any,
-    delay?: number
+    delay?: number,
+    onShowSearch?: () => void
 }) {
     if (properties.length === 0) return null;
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: `${delay}ms` }}>
             <div className="flex flex-col gap-1 px-1">
@@ -39,13 +41,42 @@ function PropertySection({ title, description, properties, icon: Icon, delay = 0
                 </div>
                 <div className="flex items-end justify-between">
                     <h2 className="text-2xl md:text-3xl font-black tracking-tight">{description || `Premium ${title}`}</h2>
-                    <Button variant="ghost" size="sm" className="text-primary font-bold hover:bg-primary/5 rounded-xl">View All</Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-primary font-bold hover:bg-primary/5 rounded-xl"
+                        onClick={onShowSearch}
+                    >
+                        View All
+                    </Button>
                 </div>
             </div>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                {properties.slice(0, 3).map((property, idx) => (
-                    <PropertyCard key={property.id} property={property} className="h-full" />
-                ))}
+
+            {/* Horizontal Scroll Carousel */}
+            <div className="relative group">
+                <div className="flex gap-6 overflow-x-auto pb-8 pt-2 px-1 no-scrollbar scroll-smooth snap-x snap-mandatory">
+                    {properties.map((property, idx) => (
+                        <div
+                            key={property.id}
+                            className="min-w-[280px] md:min-w-[380px] lg:min-w-[420px] snap-start"
+                        >
+                            <PropertyCard property={property} className="h-full shadow-lg shadow-black/[0.03]" />
+                        </div>
+                    ))}
+                    {/* Final spacer/View All card */}
+                    <div className="min-w-[200px] flex items-center justify-center snap-start pr-4">
+                        <Button
+                            variant="outline"
+                            className="h-full w-full rounded-2xl border-dashed border-2 flex flex-col gap-4 py-20 text-muted-foreground hover:text-primary hover:border-primary transition-all"
+                            onClick={onShowSearch}
+                        >
+                            <div className="h-12 w-12 rounded-full bg-primary/5 flex items-center justify-center">
+                                <Search className="h-6 w-6" />
+                            </div>
+                            <span className="font-bold">View All Listings</span>
+                        </Button>
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -221,14 +252,34 @@ export default function PropertiesPage() {
             return priceA - priceB;
         });
 
-        const topRated = [...allProperties].sort((a, b) => (b.amenities?.length || 0) - (a.amenities?.length || 0));
+        // Refined "Highly Recommended" Logic (Multi-factor ranking)
+        const highlyRecommended = [...allProperties].sort((a, b) => {
+            const getScore = (p: Property) => {
+                let score = 0;
+                // Amenities count (0-50 points)
+                score += Math.min((p.amenities?.length || 0) * 5, 50);
+
+                // Proximity to student's school (50 points)
+                if (userProfile?.school && p.location.school?.toLowerCase() === userProfile.school.toLowerCase()) {
+                    score += 50;
+                }
+
+                // Freshness (0-20 points based on ID comparison as proxy for time)
+                // Newer IDs are usually "larger" or later in sequence
+                score += (p.id > a.id ? 10 : 0);
+
+                // Status points (Verified etc - if applicable, but we filter available)
+                return score;
+            };
+            return getScore(b) - getScore(a);
+        });
 
         const recentlyAdded = [...allProperties].sort((a, b) => b.id.localeCompare(a.id));
 
         return [
             { id: 'near-school', title: 'Near Your School', description: `Apartments near ${userProfile?.school || 'University'}`, icon: GraduationCap, properties: nearSchool },
+            { id: 'recommended', title: 'Highly Recommended', description: 'Curated premium homes for you', icon: Star, properties: highlyRecommended },
             { id: 'in-city', title: 'In Your City', description: `Best listings in ${userProfile?.city || 'your area'}`, icon: Landmark, properties: inCity },
-            { id: 'top-rated', title: 'Top Rated', description: 'Highly recommended by students', icon: Star, properties: topRated },
             { id: 'budget', title: 'Budget Friendly', description: 'Premium homes within your reach', icon: TrendingUp, properties: budgetFriendly },
             { id: 'recent', title: 'Recently Added', description: 'Freshly listed for you', icon: Sparkles, properties: recentlyAdded },
         ];
@@ -504,6 +555,26 @@ export default function PropertiesPage() {
                                 icon={section.icon}
                                 properties={section.properties}
                                 delay={idx * 100}
+                                onShowSearch={() => {
+                                    // If a section "View All" is clicked, we auto-filter by that section's criteria if possible
+                                    // or just switch to searching mode with current filters
+                                    if (section.id === 'near-school' && userProfile?.school) {
+                                        setFilters(f => ({ ...f, school: userProfile.school }));
+                                    } else if (section.id === 'in-city' && userProfile?.city) {
+                                        setFilters(f => ({ ...f, city: userProfile.city }));
+                                    } else if (section.id === 'budget') {
+                                        setSortBy('price-asc');
+                                        setFilters(f => ({ ...f, price: 500000 })); // High ceiling to trigger search
+                                    } else if (section.id === 'recent') {
+                                        setSortBy('newest');
+                                        // Triggering search mode by setting a dummy query if needed, 
+                                        // but usually changing sortBy or active filters is enough.
+                                        setFilters(f => ({ ...f, propertyType: 'any' }));
+                                    } else {
+                                        // Just trigger search mode
+                                        setSearchQuery(' '); // Soft space to trigger search results
+                                    }
+                                }}
                             />
                         ))}
                     </div>
