@@ -12,7 +12,7 @@ import { useMemo } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BedDouble, Bath, Ruler, MapPin, Building, PlusCircle, Heart } from "lucide-react";
+import { BedDouble, Bath, Ruler, MapPin, Building, PlusCircle, Heart, GraduationCap } from "lucide-react";
 import { usePathname } from "next/navigation";
 import type { UserProfile } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -160,6 +160,12 @@ export default function PropertyCard({ property, as = 'link', className }: Prope
             <MapPin className="h-3 w-3" />
             <span>{property.location.city}</span>
           </div>
+          {property.location.school && (
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-[0.1em] mb-1">
+              <GraduationCap className="h-3 w-3" />
+              <span>Near {property.location.school}</span>
+            </div>
+          )}
           <h3 className="font-headline text-2xl font-bold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary">
             {property.title}
           </h3>

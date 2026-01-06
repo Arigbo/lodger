@@ -41,6 +41,7 @@ import { UploadCloud, X, Loader2, Building, RefreshCw, AlertCircle } from 'lucid
 import Loading from '@/app/loading';
 import Link from 'next/link';
 import { Combobox } from '@/components/ui/combobox';
+import { SchoolCombobox } from '@/components/school-combobox';
 import { countries } from '@/types/countries';
 import {
   Dialog,
@@ -65,6 +66,7 @@ const formSchema = z.object({
   city: z.string().min(2, 'City is required.'),
   state: z.string().min(2, 'State is required.'),
   zip: z.string().min(5, 'ZIP code is required.'),
+  school: z.string().optional(),
   bedrooms: z.coerce.number().int().min(1, 'Must have at least 1 bedroom.'),
   bathrooms: z.coerce.number().int().min(1, 'Must have at least 1 bathroom.'),
   area: z.coerce.number().positive('Area must be a positive number.'),
@@ -111,6 +113,7 @@ export default function EditPropertyPage() {
       city: '',
       state: '',
       zip: '',
+      school: '',
       bedrooms: 1,
       bathrooms: 1,
       area: 0,
@@ -132,6 +135,7 @@ export default function EditPropertyPage() {
         city: property.location?.city || '',
         state: property.location?.state || '',
         zip: property.location?.zip || '',
+        school: property.location?.school || '',
         bedrooms: property.bedrooms || 1,
         bathrooms: property.bathrooms || 1,
         area: property.area || 0,
@@ -279,9 +283,9 @@ export default function EditPropertyPage() {
           city: values.city,
           state: values.state,
           zip: values.zip,
+          school: values.school || null,
           lat: property?.location?.lat ?? null,
           lng: property?.location?.lng ?? null,
-          school: property?.location?.school ?? null,
         },
         bedrooms: values.bedrooms,
         bathrooms: values.bathrooms,
@@ -554,6 +558,22 @@ export default function EditPropertyPage() {
                     <FormLabel>ZIP Code</FormLabel>
                     <FormControl>
                       <Input placeholder="90210" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="school"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Search Nearest School</FormLabel>
+                    <FormControl>
+                      <SchoolCombobox
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

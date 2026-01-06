@@ -698,6 +698,22 @@ export default function AddPropertyPage() {
                                                         </FormItem>
                                                     )}
                                                 />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="school"
+                                                    render={({ field }) => (
+                                                        <FormItem className="md:col-span-2">
+                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Search Nearest School</FormLabel>
+                                                            <FormControl>
+                                                                <SchoolCombobox
+                                                                    value={field.value || ''}
+                                                                    onChange={field.onChange}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
                                             </div>
 
                                         </div>
