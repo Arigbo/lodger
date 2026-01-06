@@ -110,22 +110,29 @@ export default function TenantDetailPage() {
                     description: `The tenant has been notified. A 3-day grace period has started for the refund of ${formatPrice(rentStatus.calculatedRefund, property.currency)}.`,
                 });
             } else {
-                // Rent is due or tenancy inactive, end immediately
+                // Rent is due - still use terminating status, not immediate expiration
+                // Tenant must confirm even if no refund is owed
                 await updateDocumentNonBlocking(leaseRef, {
-                    status: 'expired',
-                    endDate: new Date().toISOString()
+                    status: 'terminating',
+                    terminationGracePeriodEnd: new Date().toISOString(), // No grace period for overdue rent
+                    calculatedRefund: 0
                 });
 
-                const propertyDocRef = doc(firestore, 'properties', property.id);
-                await updateDocumentNonBlocking(propertyDocRef, {
-                    status: 'available',
-                    currentTenantId: null,
-                    leaseStartDate: null
+                // Notify tenant
+                await import('@/lib/notifications').then(({ sendNotification }) => {
+                    sendNotification({
+                        toUserId: tenant.id,
+                        type: 'TENANCY_TERMINATING',
+                        firestore: firestore,
+                        propertyName: property.title,
+                        link: `/student/tenancy/${property.id}`,
+                        customMessage: `Landlord has ended the tenancy due to overdue rent. Please vacate the property.`
+                    });
                 });
 
                 toast({
-                    title: "Tenancy Ended",
-                    description: "The tenancy has been successfully terminated as rent was overdue.",
+                    title: "Termination Initiated",
+                    description: "The tenant has been notified. Tenancy will be finalized once tenant confirms.",
                 });
             }
         } catch (error) {
@@ -176,12 +183,16 @@ export default function TenantDetailPage() {
                 nextRentDueDate = leaseStartDate;
             }
 
+            // If tenant has prepaid rent (nextRentDueDate is in future), lease stays active
+            // This handles the scenario where tenant pays beyond the lease period
             if (isPast(nextRentDueDate)) {
                 status = 'Due';
                 text = `Due on ${format(nextRentDueDate, 'MMM do, yyyy')}`;
             } else {
                 status = 'Paid';
                 text = `Next due on ${format(nextRentDueDate, 'MMM do, yyyy')}`;
+                // Note: Even if official lease end date has passed, if rent is prepaid,
+                // tenant has right to stay until prepaid period ends
             }
         }
 

@@ -219,9 +219,8 @@ export default function TenancyDetailPage() {
     }
 
     // Allow access if:
-    // 1. User is the current tenant (property.currentTenantId)
-    // 2. AND the lease is NOT expired (as per user feedback)
-    const isTenant = user?.uid === property?.currentTenantId && lease?.status !== 'expired';
+    // User is the tenant on this specific lease (regardless of current property status)
+    const isTenant = user?.uid === lease?.tenantId;
 
     if (!property || !isTenant) {
         if (!isLoading) notFound();
