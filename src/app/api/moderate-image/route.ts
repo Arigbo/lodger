@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import sharp from 'sharp';
+
 
 // Initialize Gemini for visual analysis
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENAI_API_KEY || '');
@@ -23,6 +23,9 @@ const CACHE_TTL = 60 * 60 * 1000; // 1 hour
  */
 async function stripMetadata(imageBuffer: Buffer): Promise<Buffer> {
     try {
+        const sharpModule = await import('sharp');
+        const sharp = sharpModule.default || sharpModule;
+
         return await sharp(imageBuffer)
             .rotate() // Auto-rotate based on EXIF orientation
             .withMetadata({
@@ -48,7 +51,7 @@ function getCacheKey(imageData: string): string {
 export async function POST(request: NextRequest) {
     try {
         // Rate limiting
-        const ip = request.ip ?? request.headers.get("x-forwarded-for") ?? "127.0.0.1";
+        const ip = (request as any).ip ?? request.headers.get("x-forwarded-for") ?? "127.0.0.1";
         const { success, limit, reset, remaining } = await ratelimit.limit(ip);
 
         if (!success) {
