@@ -52,13 +52,14 @@ export default function AboutPage() {
             />
 
             {/* Mission Section */}
-            <section className="py-16 sm:py-24 md:py-32 bg-secondary/10 overflow-hidden">
-                <div className="container mx-auto px-4">
-                    <div className="grid gap-8 sm:gap-12 md:gap-20 lg:grid-cols-2 items-center">
+            <section className="py-24 sm:py-32 bg-secondary/10 overflow-hidden relative">
+                <div className="absolute top-0 right-0 p-64 opacity-[0.03] blur-3xl bg-primary rounded-full -mr-64 -mt-64" />
+                <div className="container mx-auto px-4 relative z-10">
+                    <div className="grid gap-12 sm:gap-20 lg:grid-cols-2 items-center">
                         <div className="relative hidden lg:block animate-in fade-in slide-in-from-left-20 duration-1000 fill-mode-both">
                             <div className="absolute -top-6 -left-6 w-16 h-16 sm:w-24 sm:h-24 bg-primary/20 rounded-2xl blur-2xl" />
                             <div className="absolute -bottom-6 -right-6 w-16 h-16 sm:w-24 sm:h-24 bg-blue-500/20 rounded-2xl blur-2xl" />
-                            <div className="relative aspect-[4/3] rounded-2xl sm:rounded-3xl md:rounded-[3rem] overflow-hidden shadow-2xl border-4 sm:border-8 border-background ring-1 ring-border group">
+                            <div className="relative aspect-[4/3] rounded-[3rem] overflow-hidden shadow-2xl border-8 border-background ring-1 ring-border group">
                                 <Image
                                     src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2070&auto=format&fit=crop"
                                     alt="Students studying together"
@@ -69,16 +70,18 @@ export default function AboutPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-20 duration-1000 fill-mode-both">
-                            <div>
-                                <h2 className="font-headline text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-4 sm:mb-6"> Our Mission </h2>
-                                <p className="text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed">
+                        <div className="space-y-8 animate-in fade-in slide-in-from-right-20 duration-1000 fill-mode-both">
+                            <div className="max-w-xl">
+                                <h2 className="font-headline text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-foreground mb-6 leading-[1.1]">
+                                    Our <span className="text-primary italic">Mission</span>
+                                </h2>
+                                <p className="text-xl text-muted-foreground leading-relaxed">
                                     Lodger is more than a booking platform. We are a technology-driven ecosystem built by <span className="text-primary font-bold italic">Ancients</span>, dedicated to simplifying the housing journey and ensuring every student has a safe, verified place to call home.
                                 </p>
                             </div>
 
                             <div className="space-y-6">
-                                <div className="flex gap-6 p-8 rounded-[2rem] bg-background/80 border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group">
+                                <div className="flex gap-6 p-8 rounded-[2.5rem] bg-background border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group">
                                     <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                                         <ShieldCheck className="h-7 w-7" />
                                     </div>
@@ -87,7 +90,7 @@ export default function AboutPage() {
                                         <p className="text-muted-foreground">Every property undergoes a rigorous verification process to ensure transparency and security.</p>
                                     </div>
                                 </div>
-                                <div className="flex gap-6 p-8 rounded-[2rem] bg-background/80 border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group">
+                                <div className="flex gap-6 p-8 rounded-[2.5rem] bg-background border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group">
                                     <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
                                         <Globe className="h-7 w-7" />
                                     </div>
@@ -102,8 +105,91 @@ export default function AboutPage() {
                 </div>
             </section>
 
+            {/* Vision & Values Section */}
+            <section className="py-24 sm:py-32 bg-background relative overflow-hidden">
+                <div className="container mx-auto px-4">
+                    <div className="text-center max-w-4xl mx-auto mb-20 animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both">
+                        <h2 className="font-headline text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-8">
+                            A Vision for the <span className="text-primary italic">Future</span>
+                        </h2>
+                        <p className="text-xl sm:text-2xl text-muted-foreground leading-relaxed">
+                            We envision a world where student housing is accessible, transparent, and built on trust. At our core, we are driven by values that prioritize the student experience and landlord efficiency.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {values.map((value, index) => (
+                            <div
+                                key={index}
+                                className="p-10 rounded-[2.5rem] bg-secondary/5 border border-border/50 hover:bg-background hover:shadow-2xl hover:border-primary/20 transition-all duration-500 group animate-in fade-in slide-in-from-bottom-12 duration-1000 fill-mode-both"
+                                style={{ animationDelay: `${index * 100}ms` }}
+                            >
+                                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-8 group-hover:scale-110 transition-transform">
+                                    <value.icon className="h-8 w-8" />
+                                </div>
+                                <h3 className="text-2xl font-bold mb-4">{value.title}</h3>
+                                <p className="text-muted-foreground leading-relaxed">{value.description}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Culture Section */}
+            <section className="py-24 sm:py-32 bg-foreground text-background overflow-hidden relative">
+                <div className="absolute inset-0 z-0">
+                    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_30%,rgba(59,130,246,0.1),transparent_50% )]" />
+                </div>
+
+                <div className="container mx-auto px-4 relative z-10">
+                    <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+                        <div className="space-y-8 animate-in fade-in slide-in-from-left-20 duration-1000 fill-mode-both">
+                            <div>
+                                <h2 className="font-headline text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-8 leading-[1.1]">
+                                    Driven by <span className="text-primary italic">Ancients</span>
+                                </h2>
+                                <p className="text-xl sm:text-2xl text-muted-foreground/80 leading-relaxed font-medium">
+                                    Our culture is built on the pursuit of excellence and the belief that technology can bridge the gap in trust between students and property owners. We don't just build software; we build solutions.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                                <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                                    <h4 className="text-xl font-bold mb-3 text-primary">Innovation</h4>
+                                    <p className="text-muted-foreground text-sm">Constantly pushing the boundaries of what's possible in real estate tech.</p>
+                                </div>
+                                <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                                    <h4 className="text-xl font-bold mb-3 text-primary">Empathy</h4>
+                                    <p className="text-muted-foreground text-sm">Understanding the stress of relocation and designing for peace of mind.</p>
+                                </div>
+                                <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                                    <h4 className="text-xl font-bold mb-3 text-primary">Excellence</h4>
+                                    <p className="text-muted-foreground text-sm">A commitment to quality in Every line of code and every user interaction.</p>
+                                </div>
+                                <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                                    <h4 className="text-xl font-bold mb-3 text-primary">Legacy</h4>
+                                    <p className="text-muted-foreground text-sm">Building products that stand the test of time and leave a positive impact.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="relative hidden lg:block animate-in fade-in slide-in-from-right-20 duration-1000 fill-mode-both">
+                            <div className="relative aspect-square rounded-[4rem] overflow-hidden border-8 border-white/5 shadow-2xl scale-90">
+                                <Image
+                                    src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop"
+                                    alt="Our team office"
+                                    fill
+                                    className="object-cover opacity-80"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Stats Section */}
-            <section className="py-32 border-y border-border/50 bg-background relative overflow-hidden">
+            <section className="py-24 sm:py-32 border-y border-border/50 bg-background relative overflow-hidden">
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
                         {stats.map((stat, index) => (
@@ -114,7 +200,15 @@ export default function AboutPage() {
             </section>
 
             {/* Team & Testimonials Section */}
-            <section className="py-32">
+            <section className="py-24 sm:py-32">
+                <div className="container mx-auto px-4 mb-20 text-center">
+                    <h2 className="font-headline text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-6">
+                        The People Behind <span className="text-primary italic">Lodger</span>
+                    </h2>
+                    <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                        We're a team of innovators and creators dedicated to transforming the student living experience, one home at a time.
+                    </p>
+                </div>
                 <AboutTeam />
             </section>
 

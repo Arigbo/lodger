@@ -150,52 +150,225 @@ const steps = [
     { id: 7, name: 'Review & Submit', fields: [] }
 ];
 
-const FileUpload = ({ field, label, description, icon: Icon }: { field: any, label: string, description: string, icon: any }) => (
-    <FormItem className="h-full">
-        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
-            <Icon className="h-3 w-3" /> {label}
-        </FormLabel>
-        <FormControl>
-            <div className="mt-4 flex flex-col justify-center rounded-[2rem] border-2 border-dashed border-muted/20 px-6 py-10 hover:bg-primary/5 hover:border-primary/20 transition-all duration-500 group h-56 relative overflow-hidden">
-                <div className="text-center relative z-10">
-                    {field.value?.[0] ? (
-                        <div className="flex flex-col items-center gap-4 animate-in zoom-in-95 duration-500">
-                            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                                <FileImage className="h-8 w-8" />
+interface FileUploadProps {
+    field: any;
+    label: string;
+    description: string;
+    icon: any;
+    onUpload?: (files: FileList) => void;
+    onAnalysisChange?: (analysis: { safety: string, context: string, reason?: string } | null) => void;
+}
+
+const FileUpload = ({ field, label, description, icon: Icon, onUpload, onAnalysisChange }: FileUploadProps) => {
+    const [isScanning, setIsScanning] = useState(false);
+    const [analysis, setAnalysis] = useState<{ safety: string, context: string, reason?: string } | null>(null);
+    const { toast } = useToast();
+
+    const stripMetadata = async (file: File): Promise<Blob> => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0);
+                    canvas.toBlob((blob) => {
+                        resolve(blob || file);
+                    }, 'image/jpeg', 0.95);
+                } else {
+                    resolve(file);
+                }
+            };
+            img.onerror = () => resolve(file);
+            img.src = URL.createObjectURL(file);
+        });
+    };
+
+    const handleFileChange = async (files: FileList | null) => {
+        if (!files || files.length === 0) {
+            field.onChange(null);
+            setAnalysis(null);
+            onAnalysisChange?.(null);
+            return;
+        }
+
+        setIsScanning(true);
+        setAnalysis(null);
+        onAnalysisChange?.(null);
+
+        try {
+            const originalFile = files[0];
+            const cleanBlob = await stripMetadata(originalFile);
+            const cleanFile = new File([cleanBlob], originalFile.name, { type: 'image/jpeg' });
+
+            // Create a fake FileList-like object for the form
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(cleanFile);
+            field.onChange(dataTransfer.files);
+
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const base64 = (reader.result as string).split(',')[1];
+                try {
+                    const response = await fetch('/api/moderate-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            imageBase64: base64,
+                            mimeType: cleanFile.type
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        setAnalysis(data);
+                        onAnalysisChange?.(data);
+
+                        // Show appropriate toast based on analysis
+                        if (data.safety === 'UNSAFE') {
+                            toast({
+                                variant: "destructive",
+                                title: "Image Blocked",
+                                description: data.reason || "This image contains inappropriate content and cannot be uploaded.",
+                            });
+                            // Clear the field for UNSAFE images
+                            field.onChange(null);
+                            setAnalysis(null);
+                            onAnalysisChange?.(null);
+                        } else if (data.context === 'IRRELEVANT') {
+                            toast({
+                                title: "Context Warning",
+                                description: data.reason || "This image may not be relevant to apartment listings.",
+                            });
+                        } else {
+                            toast({
+                                title: "Image Verified",
+                                description: "Image passed safety and context checks.",
+                            });
+                        }
+                    } else if (response.status === 429) {
+                        toast({
+                            variant: "destructive",
+                            title: "Rate Limit Exceeded",
+                            description: "Too many requests. Please wait a moment and try again.",
+                        });
+                        field.onChange(null);
+                    } else {
+                        throw new Error('Moderation check failed');
+                    }
+                } catch (error) {
+                    console.error("Moderation API error:", error);
+                    toast({
+                        variant: "destructive",
+                        title: "Moderation Failed",
+                        description: "Unable to verify image safety. Please try again.",
+                    });
+                    field.onChange(null);
+                }
+                setIsScanning(false);
+            };
+            reader.readAsDataURL(cleanFile);
+        } catch (error) {
+            console.error("Image processing failed", error);
+            toast({
+                variant: "destructive",
+                title: "Upload Error",
+                description: "Failed to process image. Please try a different file.",
+            });
+            setIsScanning(false);
+            field.onChange(null);
+        }
+    };
+
+    return (
+        <FormItem className="h-full">
+            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2"><Icon className="h-3 w-3" /> {label}</span>
+                {analysis && (
+                    <div className={cn(
+                        "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[8px] font-black tracking-tighter uppercase",
+                        analysis.safety === 'SAFE' && analysis.context === 'RELEVANT' ? "bg-green-500/10 text-green-600" : "bg-orange-500/10 text-orange-600"
+                    )}>
+                        {analysis.safety === 'SAFE' && analysis.context === 'RELEVANT' ? (
+                            <><ShieldCheck className="h-2.5 w-2.5" /> Verified</>
+                        ) : (
+                            <><AlertCircle className="h-2.5 w-2.5" /> Issue Detected</>
+                        )}
+                    </div>
+                )}
+            </FormLabel>
+            <FormControl>
+                <div className={cn(
+                    "mt-4 flex flex-col justify-center rounded-[2rem] border-2 border-dashed px-6 py-10 transition-all duration-500 group h-56 relative overflow-hidden",
+                    analysis && analysis.safety === 'UNSAFE' ? "border-destructive/40 bg-destructive/5" :
+                        analysis && analysis.context === 'IRRELEVANT' ? "border-orange-500/40 bg-orange-500/5" :
+                            "border-muted/20 hover:bg-primary/5 hover:border-primary/20"
+                )}>
+                    <div className="text-center relative z-10">
+                        {isScanning ? (
+                            <div className="flex flex-col items-center gap-4 animate-in fade-in duration-500">
+                                <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                                    <Loader2 className="h-8 w-8 animate-spin" />
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-primary animate-pulse">Scanning Content...</p>
+                                    <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">Safety & Context Check</p>
+                                </div>
                             </div>
-                            <div className="space-y-1">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-primary truncate max-w-[200px]">{field.value[0].name}</p>
-                                <Button type="button" variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); field.onChange(null); }} className="text-destructive font-black text-[10px] uppercase tracking-widest h-auto p-0 hover:bg-transparent">Remove Image</Button>
+                        ) : field.value?.[0] ? (
+                            <div className="flex flex-col items-center gap-4 animate-in zoom-in-95 duration-500">
+                                <div className={cn(
+                                    "h-16 w-16 rounded-2xl flex items-center justify-center transition-colors shadow-2xl shadow-black/5",
+                                    analysis && analysis.safety === 'UNSAFE' ? "bg-destructive/20 text-destructive" :
+                                        analysis && analysis.context === 'IRRELEVANT' ? "bg-orange-500/20 text-orange-600" :
+                                            "bg-primary/10 text-primary"
+                                )}>
+                                    {analysis && analysis.safety === 'UNSAFE' ? <AlertCircle className="h-8 w-8" /> : <FileImage className="h-8 w-8" />}
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-foreground truncate max-w-[200px]">{field.value[0].name}</p>
+                                    <div className="flex items-center justify-center gap-3">
+                                        <Button type="button" variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); handleFileChange(null); }} className="text-destructive font-black text-[10px] uppercase tracking-widest h-auto p-0 hover:bg-transparent">Remove</Button>
+                                        <span className="w-1 h-1 bg-muted rounded-full" />
+                                        <label htmlFor={field.name} className="cursor-pointer text-muted-foreground hover:text-primary font-black text-[10px] uppercase tracking-widest transition-colors">Replace</label>
+                                        <input id={field.name} name={field.name} type="file" className="sr-only" accept="image/png, image/jpeg, image/webp" onChange={(e) => handleFileChange(e.target.files)} />
+                                    </div>
+                                    {analysis && (analysis.safety === 'UNSAFE' || analysis.context === 'IRRELEVANT') && (
+                                        <p className="text-[9px] font-bold text-destructive uppercase tracking-tight mt-2 max-w-[180px] mx-auto leading-tight italic">
+                                            {analysis.reason || (analysis.safety === 'UNSAFE' ? "Content flagged for safety" : "Irrelevant to apartment context")}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            <div className="h-16 w-16 rounded-2xl bg-muted/5 flex items-center justify-center mx-auto group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-500">
-                                <UploadCloud className="h-8 w-8" />
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="h-16 w-16 rounded-2xl bg-muted/5 flex items-center justify-center mx-auto group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-500">
+                                    <UploadCloud className="h-8 w-8" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label
+                                        htmlFor={field.name}
+                                        className="relative cursor-pointer rounded-md font-black text-[10px] uppercase tracking-widest text-foreground hover:text-primary transition-colors"
+                                    >
+                                        <span>Add {label}</span>
+                                        <input id={field.name} name={field.name} type="file" className="sr-only"
+                                            accept="image/png, image/jpeg, image/webp"
+                                            onChange={(e) => handleFileChange(e.target.files)}
+                                        />
+                                    </label>
+                                    <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">MAX 5MB • AI SECURED</p>
+                                </div>
                             </div>
-                            <div className="space-y-1">
-                                <label
-                                    htmlFor={field.name}
-                                    className="relative cursor-pointer rounded-md font-black text-[10px] uppercase tracking-widest text-foreground hover:text-primary transition-colors"
-                                >
-                                    <span>Add {label}</span>
-                                    <input id={field.name} name={field.name} type="file" className="sr-only"
-                                        accept="image/png, image/jpeg, image/webp"
-                                        onChange={(e) => field.onChange(e.target.files)}
-                                    />
-                                </label>
-                                <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">MAX 5MB • PNG/JPG/WEBP</p>
-                            </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
-                {/* Micro-animation background flash */}
-                <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-1000" />
-            </div>
-        </FormControl>
-        <FormMessage />
-    </FormItem>
-);
+            </FormControl>
+            <FormMessage />
+        </FormItem>
+    );
+};
 
 
 export default function AddPropertyPage() {
@@ -212,6 +385,21 @@ export default function AddPropertyPage() {
     const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
     const [hasPrefilled, setHasPrefilled] = useState(false);
+
+    // Track image moderation analysis for all images
+    const [imageAnalysis, setImageAnalysis] = useState<{
+        kitchen: { safety: string, context: string, reason?: string } | null;
+        livingRoom: { safety: string, context: string, reason?: string } | null;
+        bedroom: { safety: string, context: string, reason?: string } | null;
+        bathroom: { safety: string, context: string, reason?: string } | null;
+        other: { safety: string, context: string, reason?: string } | null;
+    }>({
+        kitchen: null,
+        livingRoom: null,
+        bedroom: null,
+        bathroom: null,
+        other: null,
+    });
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -607,6 +795,17 @@ export default function AddPropertyPage() {
                                                     )}
                                                 />
                                             </div>
+                                            <div className="p-6 rounded-[2rem] bg-amber-500/5 border-2 border-amber-500/10 flex gap-4 animate-in slide-in-from-bottom duration-700">
+                                                <div className="h-10 w-10 min-w-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+                                                    <ShieldCheck className="h-5 w-5" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Implicit Content Warning</p>
+                                                    <p className="text-[9px] font-medium text-amber-600/60 leading-relaxed uppercase tracking-tight">
+                                                        Photos are monitored for safety and context. Ensure your images show actual property interiors to avoid listing rejection.
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
 
@@ -829,6 +1028,7 @@ export default function AddPropertyPage() {
                                                             label="KITCHEN"
                                                             description="Capture the kitchen space."
                                                             icon={Utensils}
+                                                            onAnalysisChange={(analysis) => setImageAnalysis(prev => ({ ...prev, kitchen: analysis }))}
                                                         />
                                                     )}
                                                 />
@@ -841,6 +1041,7 @@ export default function AddPropertyPage() {
                                                             label="LIVING ROOM"
                                                             description="Highlight the living area."
                                                             icon={Sofa}
+                                                            onAnalysisChange={(analysis) => setImageAnalysis(prev => ({ ...prev, livingRoom: analysis }))}
                                                         />
                                                     )}
                                                 />
@@ -853,6 +1054,7 @@ export default function AddPropertyPage() {
                                                             label="BEDROOM"
                                                             description="Focus on comfort and ambiance."
                                                             icon={BedDouble}
+                                                            onAnalysisChange={(analysis) => setImageAnalysis(prev => ({ ...prev, bedroom: analysis }))}
                                                         />
                                                     )}
                                                 />
@@ -865,6 +1067,7 @@ export default function AddPropertyPage() {
                                                             label="BATHROOM"
                                                             description="Detail the finishes."
                                                             icon={Bath}
+                                                            onAnalysisChange={(analysis) => setImageAnalysis(prev => ({ ...prev, bathroom: analysis }))}
                                                         />
                                                     )}
                                                 />
@@ -877,6 +1080,7 @@ export default function AddPropertyPage() {
                                                             label="OTHER"
                                                             description="Any other highlights."
                                                             icon={ImageIcon}
+                                                            onAnalysisChange={(analysis) => setImageAnalysis(prev => ({ ...prev, other: analysis }))}
                                                         />
                                                     )}
                                                 />

@@ -16,6 +16,8 @@ export type UserProfile = {
     stripeAccountId?: string;
     currency?: string;
     bookmarkedPropertyIds?: string[];
+    avatarType?: 'photo' | 'avatar' | 'character';
+    avatarValue?: string;
 };
 
 export type User = UserProfile;

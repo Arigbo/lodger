@@ -220,24 +220,77 @@ export default function EditPropertyPage() {
 
     const newImageUrls: string[] = [];
     const storage = getStorage(firebaseApp);
+    let blockedCount = 0;
+    let warnedCount = 0;
 
     for (const file of Array.from(files)) {
-      const imageRef = ref(storage, `properties/${property.landlordId}/${Date.now()}_${file.name}`);
       try {
-        const snapshot = await uploadBytes(imageRef, file);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        newImageUrls.push(downloadURL);
+        // Use moderation utility from storage.ts
+        const { moderateAndUpload } = await import('@/firebase/storage');
+
+        const result = await moderateAndUpload(
+          storage,
+          `properties/${property.landlordId}/${Date.now()}_${file.name}`,
+          file,
+          { allowIrrelevant: true } // Allow upload but warn for irrelevant images
+        );
+
+        if (result.success && result.downloadURL) {
+          newImageUrls.push(result.downloadURL);
+
+          // Show warning if image is irrelevant
+          if (result.analysis?.context === 'IRRELEVANT') {
+            warnedCount++;
+          }
+        } else if (result.blocked) {
+          // Image was blocked due to safety concerns
+          blockedCount++;
+          toast({
+            variant: "destructive",
+            title: "Image Blocked",
+            description: `${file.name}: ${result.error || 'Contains inappropriate content'}`,
+          });
+        } else {
+          // Other error
+          toast({
+            variant: "destructive",
+            title: "Upload Failed",
+            description: `${file.name}: ${result.error || 'Unknown error'}`,
+          });
+        }
       } catch (error: any) {
         console.error("Error uploading image:", error);
-        toast({ variant: "destructive", title: "Upload Failed", description: `Could not upload ${file.name}: ${error.message}` });
+        toast({
+          variant: "destructive",
+          title: "Upload Failed",
+          description: `Could not upload ${file.name}: ${error.message}`,
+        });
       }
     }
 
     if (newImageUrls.length > 0) {
       const updatedImages = [...(property?.images || []), ...newImageUrls];
       await updateDoc(propertyRef, { images: updatedImages });
-      toast({ title: "Images Uploaded", description: `${newImageUrls.length} new image(s) have been added.` });
+
+      let description = `${newImageUrls.length} new image(s) have been added.`;
+      if (warnedCount > 0) {
+        description += ` ${warnedCount} image(s) may not be relevant to property listings.`;
+      }
+      if (blockedCount > 0) {
+        description += ` ${blockedCount} image(s) were blocked for safety.`;
+      }
+
+      toast({
+        title: "Images Uploaded",
+        description,
+      });
       refetch();
+    } else if (blockedCount > 0) {
+      toast({
+        variant: "destructive",
+        title: "No Images Uploaded",
+        description: "All images were blocked due to safety concerns.",
+      });
     }
 
     setImageFiles([]);
