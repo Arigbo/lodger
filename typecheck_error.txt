@@ -1,0 +1,7 @@
+﻿
+> lodger@0.1.0 typecheck
+> tsc --noEmit 2\u003e\u00261
+
+error TS6231: Could not resolve the path '2/u003e/u00261' with the extensions: '.ts', '.tsx', '.d.ts', '.cts', '.d.cts', '.mts', '.d.mts'.
+  The file is in the program because:
+    Root file specified for compilation
