@@ -323,29 +323,35 @@ export default function LandlordPropertyDetailPage() {
               ))}
             </div>
 
-            {/* Tabs */}
-            <Tabs defaultValue="gallery" className="w-full">
-              <TabsList className="w-full justify-start bg-transparent border-b rounded-none px-0 h-auto gap-8 mb-8">
-                <TabsTrigger value="gallery" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Gallery</TabsTrigger>
-                <TabsTrigger value="overview" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Overview</TabsTrigger>
-                <TabsTrigger value="amenities" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Amenities</TabsTrigger>
-                <TabsTrigger value="rules" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">House Rules</TabsTrigger>
-                <TabsTrigger value="reviews" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Reviews</TabsTrigger>
-              </TabsList>
-              <TabsContent value="gallery" className="mt-0 space-y-6">
+            {/* Main Content Sections */}
+            <div className="space-y-16">
+              {/* Gallery Section */}
+              <section id="gallery" className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-black tracking-tight uppercase">Property Gallery</h3>
+                </div>
                 <PropertyGallery
                   images={property.images}
                   videos={property.videos}
                   title={property.title}
                 />
-              </TabsContent>
-              <TabsContent value="overview" className="mt-0 space-y-6">
+              </section>
+
+              <Separator className="opacity-50" />
+
+              {/* Overview Section */}
+              <section id="overview" className="space-y-6">
                 <h3 className="text-2xl font-black tracking-tight uppercase">About this property</h3>
                 <p className="text-lg text-muted-foreground font-medium leading-relaxed">
                   {property.description}
                 </p>
-              </TabsContent>
-              <TabsContent value="amenities" className="mt-0">
+              </section>
+
+              <Separator className="opacity-50" />
+
+              {/* Amenities Section */}
+              <section id="amenities" className="space-y-6">
+                <h3 className="text-2xl font-black tracking-tight uppercase">Amenities</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {property.amenities.map(amenity => (
                     <div key={amenity} className="flex items-center gap-3 p-4 rounded-2xl border bg-card/50 backdrop-blur-sm group hover:border-primary/30 transition-all font-bold">
@@ -356,8 +362,13 @@ export default function LandlordPropertyDetailPage() {
                     </div>
                   ))}
                 </div>
-              </TabsContent>
-              <TabsContent value="rules" className="mt-0">
+              </section>
+
+              <Separator className="opacity-50" />
+
+              {/* Rules Section */}
+              <section id="rules" className="space-y-6">
+                <h3 className="text-2xl font-black tracking-tight uppercase">House Rules</h3>
                 <div className="bg-muted/20 p-8 rounded-[2rem] border-2 border-dashed border-border">
                   <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {property.rules.map(rule => (
@@ -368,8 +379,12 @@ export default function LandlordPropertyDetailPage() {
                     ))}
                   </ul>
                 </div>
-              </TabsContent>
-              <TabsContent value="reviews" className="mt-0 space-y-8">
+              </section>
+
+              <Separator className="opacity-50" />
+
+              {/* Reviews Section */}
+              <section id="reviews" className="space-y-8">
                 <h3 className="text-2xl font-black tracking-tight uppercase">Tenant Reviews</h3>
                 {reviews && reviews.length > 0 ? (
                   <div className="space-y-6">
@@ -404,8 +419,8 @@ export default function LandlordPropertyDetailPage() {
                     <p className="text-muted-foreground font-black uppercase tracking-widest text-xs opacity-40">No reviews recorded yet</p>
                   </div>
                 )}
-              </TabsContent>
-            </Tabs>
+              </section>
+            </div>
 
             {/* Rental Inquiries Table */}
             <div className="space-y-6">
