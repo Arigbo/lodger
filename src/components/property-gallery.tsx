@@ -78,11 +78,11 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {filteredMedia.map((media, index) => (
                     <div
                         key={index}
-                        className="group relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-muted/10 border border-white/10 cursor-pointer"
+                        className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted/10 border border-white/10 cursor-pointer"
                         onClick={() => setSelectedMedia(media)}
                     >
                         {media.type === 'image' ? (
@@ -122,7 +122,7 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
             </div>
 
             <Dialog open={!!selectedMedia} onOpenChange={() => setSelectedMedia(null)}>
-                <DialogContent className="max-w-[95vw] md:max-w-7xl border-none bg-black/95 backdrop-blur-2xl p-0 overflow-hidden rounded-[1.5rem] md:rounded-[3rem] h-auto max-h-[90vh]">
+                <DialogContent className="max-w-[95vw] md:max-w-7xl border-none bg-black/95 backdrop-blur-2xl p-0 overflow-hidden rounded-2xl md:rounded-3xl h-auto max-h-[90vh]">
                     <DialogHeader className="sr-only">
                         <DialogTitle>Media Viewer</DialogTitle>
                     </DialogHeader>
