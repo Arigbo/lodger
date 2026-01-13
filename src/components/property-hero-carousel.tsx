@@ -21,7 +21,7 @@ export function PropertyHeroCarousel({ images, title }: PropertyHeroCarouselProp
     if (!images || images.length === 0) return null;
 
     return (
-        <div className="relative group w-full h-[450px] md:h-[650px] lg:h-[750px] overflow-hidden rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] bg-black/5">
+        <div className="relative group w-full h-[400px] md:h-[500px] overflow-hidden rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] bg-black/5">
             <Carousel className="w-full h-full" opts={{ loop: true }}>
                 <CarouselContent className="h-full ml-0">
                     {images.map((image, index) => (

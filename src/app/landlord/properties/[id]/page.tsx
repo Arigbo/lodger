@@ -243,8 +243,21 @@ export default function LandlordPropertyDetailPage() {
 
   return (
     <div className="min-h-screen pb-20 animate-in fade-in duration-700">
+      {/* Back Button */}
+      <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-8">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="gap-2 hover:gap-3 transition-all"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back to Properties
+        </Button>
+      </div>
+
       {/* Hero Section - Image Carousel only */}
-      <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-12">
+      <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-6">
         <PropertyHeroCarousel images={property.images} title={property.title} />
       </div>
 
