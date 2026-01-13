@@ -277,11 +277,11 @@ export default function LandlordPropertyDetailPage() {
                 )}
               </div>
               <div className="space-y-4">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  <h1 className="text-3xl md:text-6xl font-black tracking-tight text-foreground leading-tight uppercase font-headline">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                  <h1 className="text-3xl md:text-6xl font-black tracking-tight text-foreground leading-tight uppercase font-headline flex-1">
                     {property.title}
                   </h1>
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-3 shrink-0 md:mt-2">
                     <Button
                       variant="outline"
                       size="icon"
@@ -323,35 +323,29 @@ export default function LandlordPropertyDetailPage() {
               ))}
             </div>
 
-            {/* Main Content Sections */}
-            <div className="space-y-16">
-              {/* Gallery Section */}
-              <section id="gallery" className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-2xl font-black tracking-tight uppercase">Property Gallery</h3>
-                </div>
+            {/* Tabs Content */}
+            <Tabs defaultValue="gallery" className="w-full">
+              <TabsList className="w-full justify-start bg-transparent border-b rounded-none px-0 h-auto gap-8 mb-8">
+                <TabsTrigger value="gallery" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Gallery</TabsTrigger>
+                <TabsTrigger value="overview" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Overview</TabsTrigger>
+                <TabsTrigger value="amenities" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Amenities</TabsTrigger>
+                <TabsTrigger value="rules" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">House Rules</TabsTrigger>
+                <TabsTrigger value="reviews" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Reviews</TabsTrigger>
+              </TabsList>
+              <TabsContent value="gallery" className="mt-0 space-y-6">
                 <PropertyGallery
                   images={property.images}
                   videos={property.videos}
                   title={property.title}
                 />
-              </section>
-
-              <Separator className="opacity-50" />
-
-              {/* Overview Section */}
-              <section id="overview" className="space-y-6">
+              </TabsContent>
+              <TabsContent value="overview" className="mt-0 space-y-6">
                 <h3 className="text-2xl font-black tracking-tight uppercase">About this property</h3>
                 <p className="text-lg text-muted-foreground font-medium leading-relaxed">
                   {property.description}
                 </p>
-              </section>
-
-              <Separator className="opacity-50" />
-
-              {/* Amenities Section */}
-              <section id="amenities" className="space-y-6">
-                <h3 className="text-2xl font-black tracking-tight uppercase">Amenities</h3>
+              </TabsContent>
+              <TabsContent value="amenities" className="mt-0">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {property.amenities.map(amenity => (
                     <div key={amenity} className="flex items-center gap-3 p-4 rounded-2xl border bg-card/50 backdrop-blur-sm group hover:border-primary/30 transition-all font-bold">
@@ -362,13 +356,8 @@ export default function LandlordPropertyDetailPage() {
                     </div>
                   ))}
                 </div>
-              </section>
-
-              <Separator className="opacity-50" />
-
-              {/* Rules Section */}
-              <section id="rules" className="space-y-6">
-                <h3 className="text-2xl font-black tracking-tight uppercase">House Rules</h3>
+              </TabsContent>
+              <TabsContent value="rules" className="mt-0">
                 <div className="bg-muted/20 p-8 rounded-[2rem] border-2 border-dashed border-border">
                   <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {property.rules.map(rule => (
@@ -379,12 +368,8 @@ export default function LandlordPropertyDetailPage() {
                     ))}
                   </ul>
                 </div>
-              </section>
-
-              <Separator className="opacity-50" />
-
-              {/* Reviews Section */}
-              <section id="reviews" className="space-y-8">
+              </TabsContent>
+              <TabsContent value="reviews" className="mt-0 space-y-8">
                 <h3 className="text-2xl font-black tracking-tight uppercase">Tenant Reviews</h3>
                 {reviews && reviews.length > 0 ? (
                   <div className="space-y-6">
@@ -419,8 +404,8 @@ export default function LandlordPropertyDetailPage() {
                     <p className="text-muted-foreground font-black uppercase tracking-widest text-xs opacity-40">No reviews recorded yet</p>
                   </div>
                 )}
-              </section>
-            </div>
+              </TabsContent>
+            </Tabs>
 
             {/* Rental Inquiries Table */}
             <div className="space-y-6">
@@ -594,12 +579,7 @@ export default function LandlordPropertyDetailPage() {
         />
       )}
 
-      <SharePropertyModal
-        isOpen={showShareModal}
-        onClose={() => setShowShareModal(false)}
-        propertyId={property.id}
-        propertyTitle={property.title}
-      />
+
 
       {tenant && (
         <ReportUserDialog
@@ -612,7 +592,7 @@ export default function LandlordPropertyDetailPage() {
       <SharePropertyModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
-        propertyId={id}
+        propertyId={id as string || ""}
         propertyTitle={property.title}
       />
     </div>

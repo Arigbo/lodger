@@ -433,11 +433,11 @@ export default function PropertyDetailPage() {
                                 )}
                             </div>
 
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight text-foreground leading-[1.1]">
+                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                                <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight text-foreground leading-[1.1] flex-1">
                                     {property.title}
                                 </h1>
-                                <div className="flex items-center gap-3 shrink-0">
+                                <div className="flex items-center gap-3 shrink-0 md:mt-2">
                                     <Button
                                         variant="outline"
                                         size="icon"
@@ -477,311 +477,296 @@ export default function PropertyDetailPage() {
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Specs Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
-                            <BedDouble className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
-                            <p className="text-xl font-bold">{property.bedrooms}</p>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Bedrooms</p>
-                        </div>
-                        <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
-                            <Bath className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
-                            <p className="text-xl font-bold">{property.bathrooms}</p>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Bathrooms</p>
-                        </div>
-                        <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
-                            <Ruler className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
-                            <p className="text-xl font-bold">{property.area}</p>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Square Feet</p>
-                        </div>
-                        <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
-                            <Building className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
-                            <p className="text-xl font-bold whitespace-nowrap">{property.type}</p>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Property Type</p>
-                        </div>
-                    </div>
-
-                    {/* Main Content Sections */}
-                    <div className="space-y-16">
-                        {/* Gallery Section */}
-                        <section id="gallery" className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-2xl font-bold tracking-tight">Property Gallery</h3>
+                        {/* Specs Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
+                                <BedDouble className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
+                                <p className="text-xl font-bold">{property.bedrooms}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Bedrooms</p>
                             </div>
-                            <PropertyGallery
-                                images={property.images}
-                                videos={property.videos}
-                                title={property.title}
-                            />
-                        </section>
-
-                        <Separator className="opacity-50" />
-
-                        {/* Overview Section */}
-                        <section id="overview" className="space-y-6">
-                            <h3 className="text-2xl font-bold tracking-tight">About this property</h3>
-                            <p className="text-lg text-muted-foreground leading-relaxed">
-                                {property.description}
-                            </p>
-                        </section>
-
-                        <Separator className="opacity-50" />
-
-                        {/* Amenities Section */}
-                        <section id="amenities" className="space-y-6">
-                            <h3 className="text-2xl font-bold tracking-tight">Amenities</h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                {property.amenities.map(amenity => (
-                                    <div key={amenity} className="flex items-center gap-3 p-4 rounded-2xl border bg-card/50 backdrop-blur-sm group hover:border-primary/30 transition-all">
-                                        <div className="bg-primary/10 p-2 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-all">
-                                            {amenityIcons[amenity] || <CheckCircle className="h-5 w-5" />}
-                                        </div>
-                                        <span className="font-bold text-sm tracking-tight">{amenity}</span>
-                                    </div>
-                                ))}
+                            <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
+                                <Bath className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
+                                <p className="text-xl font-bold">{property.bathrooms}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Bathrooms</p>
                             </div>
-                        </section>
-
-                        <Separator className="opacity-50" />
-
-                        {/* Rules Section */}
-                        <section id="rules" className="space-y-6">
-                            <h3 className="text-2xl font-bold tracking-tight">House Rules</h3>
-                            <div className="bg-muted/20 p-8 rounded-[2rem] border-2 border-dashed border-border">
-                                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {property.rules.map(rule => (
-                                        <li key={rule} className="flex items-start gap-3 text-muted-foreground font-medium">
-                                            <div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                                            {rule}
-                                        </li>
-                                    ))}
-                                </ul>
+                            <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
+                                <Ruler className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
+                                <p className="text-xl font-bold">{property.area}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Square Feet</p>
                             </div>
-                        </section>
+                            <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
+                                <Building className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
+                                <p className="text-xl font-bold whitespace-nowrap">{property.type}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Property Type</p>
+                            </div>
+                        </div>
 
-                        <Separator className="opacity-50" />
-
-                        {/* Reviews Section */}
-                        <section id="reviews" className="space-y-8">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h3 className="text-2xl font-bold tracking-tight">Student reviews</h3>
-                                    <p className="text-sm text-muted-foreground font-medium">Verified feedback from past tenants</p>
-                                </div>
-                                <ReviewButton
-                                    propertyId={property.id}
-                                    userId={user?.uid}
-                                    firestore={firestore}
-                                    userProfile={userProfile}
+                        {/* Tabs Content */}
+                        <Tabs defaultValue="gallery" className="w-full">
+                            <TabsList className="w-full justify-start bg-transparent border-b rounded-none px-0 h-auto gap-8 mb-8">
+                                <TabsTrigger value="gallery" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Gallery</TabsTrigger>
+                                <TabsTrigger value="overview" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Overview</TabsTrigger>
+                                <TabsTrigger value="amenities" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Amenities</TabsTrigger>
+                                <TabsTrigger value="rules" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">House Rules</TabsTrigger>
+                                <TabsTrigger value="reviews" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Reviews</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="gallery" className="mt-0 space-y-6">
+                                <PropertyGallery
+                                    images={property.images}
+                                    videos={property.videos}
+                                    title={property.title}
                                 />
-                            </div>
+                            </TabsContent>
+                            <TabsContent value="overview" className="mt-0 space-y-6">
+                                <h3 className="text-2xl font-bold tracking-tight">About this property</h3>
+                                <p className="text-lg text-muted-foreground leading-relaxed">
+                                    {property.description}
+                                </p>
+                            </TabsContent>
+                            <TabsContent value="amenities" className="mt-0">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                    {property.amenities.map(amenity => (
+                                        <div key={amenity} className="flex items-center gap-3 p-4 rounded-2xl border bg-card/50 backdrop-blur-sm group hover:border-primary/30 transition-all">
+                                            <div className="bg-primary/10 p-2 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                                                {amenityIcons[amenity] || <CheckCircle className="h-5 w-5" />}
+                                            </div>
+                                            <span className="font-bold text-sm tracking-tight">{amenity}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </TabsContent>
+                            <TabsContent value="rules" className="mt-0">
+                                <div className="bg-muted/20 p-8 rounded-[2rem] border-2 border-dashed border-border">
+                                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {property.rules.map(rule => (
+                                            <li key={rule} className="flex items-start gap-3 text-muted-foreground font-medium">
+                                                <div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+                                                {rule}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </TabsContent>
+                            <TabsContent value="reviews" className="mt-0 space-y-8">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-2xl font-bold tracking-tight">Student reviews</h3>
+                                        <p className="text-sm text-muted-foreground font-medium">Verified feedback from past tenants</p>
+                                    </div>
+                                    <ReviewButton
+                                        propertyId={property.id}
+                                        userId={user?.uid}
+                                        firestore={firestore}
+                                        userProfile={userProfile}
+                                    />
+                                </div>
 
-                            {reviews && reviews.length > 0 ? (
-                                <div className="space-y-6">
-                                    {reviews.map(review => (
-                                        <div key={review.id} className="p-6 rounded-3xl border bg-card/50 backdrop-blur-sm space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-4">
-                                                    <Avatar className="h-12 w-12 border-2 border-background shadow-lg">
-                                                        <AvatarImage src={review.tenantImageUrl} className="object-cover" />
-                                                        <AvatarFallback className="bg-primary/10 text-primary font-bold">{review.tenantName?.[0]}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div>
-                                                        <p className="font-bold text-lg leading-none">{review.tenantName}</p>
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <div className="flex">
-                                                                {[...Array(5)].map((_, i) => (
-                                                                    <Star key={i} className={cn("h-3 w-3", i < review.rating ? "text-yellow-500 fill-current" : "text-muted/30")} />
-                                                                ))}
+                                {reviews && reviews.length > 0 ? (
+                                    <div className="space-y-6">
+                                        {reviews.map(review => (
+                                            <div key={review.id} className="p-6 rounded-3xl border bg-card/50 backdrop-blur-sm space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <Avatar className="h-12 w-12 border-2 border-background shadow-lg">
+                                                            <AvatarImage src={review.tenantImageUrl} className="object-cover" />
+                                                            <AvatarFallback className="bg-primary/10 text-primary font-bold">{review.tenantName?.[0]}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <p className="font-bold text-lg leading-none">{review.tenantName}</p>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <div className="flex">
+                                                                    {[...Array(5)].map((_, i) => (
+                                                                        <Star key={i} className={cn("h-3 w-3", i < review.rating ? "text-yellow-500 fill-current" : "text-muted/30")} />
+                                                                    ))}
+                                                                </div>
+                                                                <span className="text-xs text-muted-foreground font-bold">{new Date(review.reviewDate).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span>
                                                             </div>
-                                                            <span className="text-xs text-muted-foreground font-bold">{new Date(review.reviewDate).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <p className="text-muted-foreground leading-relaxed font-medium">{review.comment}</p>
                                             </div>
-                                            <p className="text-muted-foreground leading-relaxed font-medium">{review.comment}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed flex flex-col items-center gap-3">
-                                    <Star className="h-8 w-8 text-muted/30" />
-                                    <p className="text-muted-foreground font-bold">No reviews yet for this property.</p>
-                                </div>
-                            )}
-                        </section>
-                    </div>
-                </div>
-
-                {/* Right Column: Pricing & Booking */}
-                <div className="space-y-6">
-                    <div className="sticky top-12 space-y-6">
-                        <Card className="border-none bg-background shadow-[0_0_50px_-12px_rgba(0,0,0,0.12)] rounded-[2.5rem] overflow-hidden">
-                            <CardHeader className="bg-[#0A0A0A] text-white p-8">
-                                <div className="flex items-center justify-between mb-2">
-                                    <Badge variant="secondary" className="bg-white/10 text-white border-white/20 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest">Pricing</Badge>
-                                    <div className="flex items-center gap-1 text-white/60">
-                                        <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                                        <span className="text-sm font-bold text-white">{averageRating.toFixed(1)}</span>
+                                        ))}
                                     </div>
-                                </div>
-                                <p className="text-3xl md:text-4xl font-bold tracking-tight truncate">
-                                    {userCurrency && userCurrency !== property.currency
-                                        ? formatPrice(convertCurrency(property.price, property.currency, userCurrency), userCurrency)
-                                        : formatPrice(property.price, property.currency)}
-                                    <span className="text-base md:text-lg font-normal text-white/40 ml-1">/mo</span>
-                                </p>
-                            </CardHeader>
-                            <CardContent className="p-8 space-y-6">
-                                <div className="space-y-4">
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                            <Button className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform" disabled={property.status === 'occupied'}>
-                                                Request to Rent
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="sm:max-w-lg rounded-3xl">
-                                            <DialogHeader>
-                                                <DialogTitle className="text-2xl font-bold">Application for {property.title}</DialogTitle>
-                                                <DialogDescription className="text-base font-medium">
-                                                    Start a conversation with {landlord?.name}. Your request will include a text message.
-                                                </DialogDescription>
-                                            </DialogHeader>
-                                            <div className="py-6 space-y-4">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="message" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Your Message</Label>
-                                                    <Textarea
-                                                        id="message"
-                                                        placeholder="Describe yourself and why you're interested..."
-                                                        className="min-h-[150px] rounded-2xl border-2 focus:ring-primary focus:border-primary text-base p-4"
-                                                        value={requestMessage}
-                                                        onChange={(e) => setRequestMessage(e.target.value)}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <DialogFooter className="gap-3">
-                                                <DialogClose asChild>
-                                                    <Button variant="outline" className="h-12 rounded-xl flex-1 border-2">Cancel</Button>
-                                                </DialogClose>
-                                                <Button onClick={handleSendRequest} className="h-12 rounded-xl flex-1 shadow-lg shadow-primary/20">Send Request</Button>
-                                            </DialogFooter>
-                                        </DialogContent>
-                                    </Dialog>
-
-                                    <Button variant="outline" className="w-full h-14 rounded-2xl text-lg font-bold border-2 hover:bg-muted/50 transition-colors" onClick={handleMessageLandlord}>
-                                        <MessageSquare className="mr-3 h-5 w-5" /> Message Host
-                                    </Button>
-                                </div>
-
-                                <div className="space-y-4 pt-4 border-t border-border/50">
-                                    <div className="flex items-center justify-between text-sm font-bold uppercase tracking-widest text-muted-foreground/60">
-                                        <span>Landlord Stats</span>
+                                ) : (
+                                    <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed flex flex-col items-center gap-3">
+                                        <Star className="h-8 w-8 text-muted/30" />
+                                        <p className="text-muted-foreground font-bold">No reviews yet for this property.</p>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-xs text-muted-foreground font-medium">Response Rate</span>
-                                            <span className="font-bold">100%</span>
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-xs text-muted-foreground font-medium">Response Time</span>
-                                            <span className="font-bold">Under 1hr</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Landlord Profile Mini Card */}
-                        {landlord && (
-                            <Card className="border-none bg-muted/30 rounded-[2rem] p-6 hover:bg-muted/40 transition-colors group">
-                                <div className="flex items-center gap-4">
-                                    <Avatar className="h-16 w-16 shadow-xl border-2 border-background group-hover:scale-105 transition-transform">
-                                        <AvatarImage src={landlord.profileImageUrl} className="object-cover" />
-                                        <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">{landlord.name[0]}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-1">Meet Your Host</p>
-                                        <h4 className="text-xl font-headline font-bold">{landlord.name}</h4>
-                                        <div className="flex items-center gap-3 mt-2">
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <button className="text-muted-foreground hover:text-primary transition-colors">
-                                                        <Phone className="h-4 w-4" />
-                                                    </button>
-                                                </DialogTrigger>
-                                                <DialogContent className="sm:max-w-sm rounded-[2rem]">
-                                                    <DialogHeader>
-                                                        <DialogTitle className="text-2xl font-bold">Contact Details</DialogTitle>
-                                                    </DialogHeader>
-                                                    <div className="space-y-4 py-4">
-                                                        <Button variant="outline" className="w-full h-12 rounded-xl justify-start border-2" asChild>
-                                                            <a href={`mailto:${landlord.email}`}><Mail className="mr-3 h-4 w-4" /> {landlord.email}</a>
-                                                        </Button>
-                                                        {landlord.phone && (
-                                                            <Button variant="outline" className="w-full h-12 rounded-xl justify-start border-2" asChild>
-                                                                <a href={`tel:${landlord.phone}`}><Phone className="mr-3 h-4 w-4" /> {landlord.phone}</a>
-                                                            </Button>
-                                                        )}
-                                                        {landlord.whatsappUrl && (
-                                                            <Button variant="outline" className="w-full h-12 rounded-xl justify-start border-2" asChild>
-                                                                <Link href={landlord.whatsappUrl} target="_blank"><FaWhatsapp className="mr-3 h-5 w-5" /> WhatsApp</Link>
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </DialogContent>
-                                            </Dialog>
-                                            <a href={`mailto:${landlord.email}`} className="text-muted-foreground hover:text-primary transition-colors">
-                                                <Mail className="h-4 w-4" />
-                                            </a>
-                                            {landlord.whatsappUrl && (
-                                                <Link href={landlord.whatsappUrl} target="_blank" className="text-muted-foreground hover:text-primary transition-colors">
-                                                    <FaWhatsapp className="h-4 w-4" />
-                                                </Link>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                                {landlord.bio && (
-                                    <p className="mt-4 text-sm text-muted-foreground line-clamp-3 font-medium leading-relaxed">
-                                        "{landlord.bio}"
-                                    </p>
                                 )}
-                            </Card>
-                        )}
+                            </TabsContent>
+                        </Tabs>
                     </div>
-                </div>
-            </div>
 
-            {/* Similar Properties Section */}
-            {similarProperties.length > 0 && (
-                <div className="mt-20 border-t pt-20">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h2 className="text-3xl font-bold tracking-tight">Similar Properties</h2>
-                            <p className="text-muted-foreground mt-2">Explore other homes you might be interested in.</p>
+                    {/* Right Column: Pricing & Booking */}
+                    <div className="space-y-6">
+                        <div className="sticky top-12 space-y-6">
+                            <Card className="border-none bg-background shadow-[0_0_50px_-12px_rgba(0,0,0,0.12)] rounded-[2.5rem] overflow-hidden">
+                                <CardHeader className="bg-[#0A0A0A] text-white p-8">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <Badge variant="secondary" className="bg-white/10 text-white border-white/20 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest">Pricing</Badge>
+                                        <div className="flex items-center gap-1 text-white/60">
+                                            <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                            <span className="text-sm font-bold text-white">{averageRating.toFixed(1)}</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-3xl md:text-4xl font-bold tracking-tight truncate">
+                                        {userCurrency && userCurrency !== property.currency
+                                            ? formatPrice(convertCurrency(property.price, property.currency, userCurrency), userCurrency)
+                                            : formatPrice(property.price, property.currency)}
+                                        <span className="text-base md:text-lg font-normal text-white/40 ml-1">/mo</span>
+                                    </p>
+                                </CardHeader>
+                                <CardContent className="p-8 space-y-6">
+                                    <div className="space-y-4">
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <Button className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform" disabled={property.status === 'occupied'}>
+                                                    Request to Rent
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="sm:max-w-lg rounded-3xl">
+                                                <DialogHeader>
+                                                    <DialogTitle className="text-2xl font-bold">Application for {property.title}</DialogTitle>
+                                                    <DialogDescription className="text-base font-medium">
+                                                        Start a conversation with {landlord?.name}. Your request will include a text message.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <div className="py-6 space-y-4">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="message" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Your Message</Label>
+                                                        <Textarea
+                                                            id="message"
+                                                            placeholder="Describe yourself and why you're interested..."
+                                                            className="min-h-[150px] rounded-2xl border-2 focus:ring-primary focus:border-primary text-base p-4"
+                                                            value={requestMessage}
+                                                            onChange={(e) => setRequestMessage(e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <DialogFooter className="gap-3">
+                                                    <DialogClose asChild>
+                                                        <Button variant="outline" className="h-12 rounded-xl flex-1 border-2">Cancel</Button>
+                                                    </DialogClose>
+                                                    <Button onClick={handleSendRequest} className="h-12 rounded-xl flex-1 shadow-lg shadow-primary/20">Send Request</Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+
+                                        <Button variant="outline" className="w-full h-14 rounded-2xl text-lg font-bold border-2 hover:bg-muted/50 transition-colors" onClick={handleMessageLandlord}>
+                                            <MessageSquare className="mr-3 h-5 w-5" /> Message Host
+                                        </Button>
+                                    </div>
+
+                                    <div className="space-y-4 pt-4 border-t border-border/50">
+                                        <div className="flex items-center justify-between text-sm font-bold uppercase tracking-widest text-muted-foreground/60">
+                                            <span>Landlord Stats</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-xs text-muted-foreground font-medium">Response Rate</span>
+                                                <span className="font-bold">100%</span>
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-xs text-muted-foreground font-medium">Response Time</span>
+                                                <span className="font-bold">Under 1hr</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Landlord Profile Mini Card */}
+                            {landlord && (
+                                <Card className="border-none bg-muted/30 rounded-[2rem] p-6 hover:bg-muted/40 transition-colors group">
+                                    <div className="flex items-center gap-4">
+                                        <Avatar className="h-16 w-16 shadow-xl border-2 border-background group-hover:scale-105 transition-transform">
+                                            <AvatarImage src={landlord.profileImageUrl} className="object-cover" />
+                                            <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">{landlord.name[0]}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-1">Meet Your Host</p>
+                                            <h4 className="text-xl font-headline font-bold">{landlord.name}</h4>
+                                            <div className="flex items-center gap-3 mt-2">
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <button className="text-muted-foreground hover:text-primary transition-colors">
+                                                            <Phone className="h-4 w-4" />
+                                                        </button>
+                                                    </DialogTrigger>
+                                                    <DialogContent className="sm:max-w-sm rounded-[2rem]">
+                                                        <DialogHeader>
+                                                            <DialogTitle className="text-2xl font-bold">Contact Details</DialogTitle>
+                                                        </DialogHeader>
+                                                        <div className="space-y-4 py-4">
+                                                            <Button variant="outline" className="w-full h-12 rounded-xl justify-start border-2" asChild>
+                                                                <a href={`mailto:${landlord.email}`}><Mail className="mr-3 h-4 w-4" /> {landlord.email}</a>
+                                                            </Button>
+                                                            {landlord.phone && (
+                                                                <Button variant="outline" className="w-full h-12 rounded-xl justify-start border-2" asChild>
+                                                                    <a href={`tel:${landlord.phone}`}><Phone className="mr-3 h-4 w-4" /> {landlord.phone}</a>
+                                                                </Button>
+                                                            )}
+                                                            {landlord.whatsappUrl && (
+                                                                <Button variant="outline" className="w-full h-12 rounded-xl justify-start border-2" asChild>
+                                                                    <Link href={landlord.whatsappUrl} target="_blank"><FaWhatsapp className="mr-3 h-5 w-5" /> WhatsApp</Link>
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </DialogContent>
+                                                </Dialog>
+                                                <a href={`mailto:${landlord.email}`} className="text-muted-foreground hover:text-primary transition-colors">
+                                                    <Mail className="h-4 w-4" />
+                                                </a>
+                                                {landlord.whatsappUrl && (
+                                                    <Link href={landlord.whatsappUrl} target="_blank" className="text-muted-foreground hover:text-primary transition-colors">
+                                                        <FaWhatsapp className="h-4 w-4" />
+                                                    </Link>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {landlord.bio && (
+                                        <p className="mt-4 text-sm text-muted-foreground line-clamp-3 font-medium leading-relaxed">
+                                            "{landlord.bio}"
+                                        </p>
+                                    )}
+                                </Card>
+                            )}
                         </div>
-                        <Button variant="ghost" className="text-primary font-bold gap-2" asChild>
-                            <Link href="/student/properties">
-                                View All Properties
-                                <ChevronLeft className="h-4 w-4 rotate-180" />
-                            </Link>
-                        </Button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {similarProperties.map((similarProperty) => (
-                            <PropertyCard key={similarProperty.id} property={similarProperty} />
-                        ))}
                     </div>
                 </div>
-            )}
-            <SharePropertyModal
-                isOpen={isShareModalOpen}
-                onClose={() => setIsShareModalOpen(false)}
-                propertyId={property.id}
-                propertyTitle={property.title}
-            />
+
+                {/* Similar Properties Section */}
+                {similarProperties.length > 0 && (
+                    <div className="mt-20 border-t pt-20">
+                        <div className="flex items-center justify-between mb-8">
+                            <div>
+                                <h2 className="text-3xl font-bold tracking-tight">Similar Properties</h2>
+                                <p className="text-muted-foreground mt-2">Explore other homes you might be interested in.</p>
+                            </div>
+                            <Button variant="ghost" className="text-primary font-bold gap-2" asChild>
+                                <Link href="/student/properties">
+                                    View All Properties
+                                    <ChevronLeft className="h-4 w-4 rotate-180" />
+                                </Link>
+                            </Button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {similarProperties.map((similarProperty) => (
+                                <PropertyCard key={similarProperty.id} property={similarProperty} />
+                            ))}
+                        </div>
+                    </div>
+                )}
+                <SharePropertyModal
+                    isOpen={isShareModalOpen}
+                    onClose={() => setIsShareModalOpen(false)}
+                    propertyId={property.id}
+                    propertyTitle={property.title}
+                />
+            </div>
         </div>
     );
 }
