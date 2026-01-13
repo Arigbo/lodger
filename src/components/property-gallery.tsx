@@ -43,13 +43,15 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between mb-4">
-                <div className="flex bg-muted/20 p-1.5 rounded-2xl border border-white/10 backdrop-blur-md">
+                <div className="flex bg-muted/30 p-1.5 rounded-2xl border border-white/10 backdrop-blur-xl shadow-2xl">
                     {videos.length > 0 && (
                         <button
                             onClick={() => setActiveTab('all')}
                             className={cn(
-                                "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
-                                activeTab === 'all' ? "bg-primary text-white shadow-lg" : "text-white/60 hover:text-white"
+                                "px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300",
+                                activeTab === 'all'
+                                    ? "bg-primary text-white shadow-lg shadow-primary/25 ring-1 ring-white/20"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                             )}
                         >
                             All ({allMedia.length})
@@ -58,8 +60,10 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
                     <button
                         onClick={() => setActiveTab('photos')}
                         className={cn(
-                            "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
-                            activeTab === 'photos' ? "bg-primary text-white shadow-lg" : "text-white/60 hover:text-white"
+                            "px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300",
+                            activeTab === 'photos'
+                                ? "bg-primary text-white shadow-lg shadow-primary/25 ring-1 ring-white/20"
+                                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                         )}
                     >
                         Photos ({images.length})
@@ -68,8 +72,10 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
                         <button
                             onClick={() => setActiveTab('videos')}
                             className={cn(
-                                "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
-                                activeTab === 'videos' ? "bg-primary text-white shadow-lg" : "text-white/60 hover:text-white"
+                                "px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300",
+                                activeTab === 'videos'
+                                    ? "bg-primary text-white shadow-lg shadow-primary/25 ring-1 ring-white/20"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                             )}
                         >
                             Videos ({videos.length})

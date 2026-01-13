@@ -434,7 +434,7 @@ export default function PropertyDetailPage() {
                             </div>
 
                             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                                <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight text-foreground leading-[1.1] flex-1">
+                                <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight text-foreground leading-[1.1] flex-1 uppercase">
                                     {property.title}
                                 </h1>
                                 <div className="flex items-center gap-3 shrink-0 md:mt-2">
@@ -628,7 +628,7 @@ export default function PropertyDetailPage() {
                                             </DialogTrigger>
                                             <DialogContent className="sm:max-w-lg rounded-3xl">
                                                 <DialogHeader>
-                                                    <DialogTitle className="text-2xl font-bold">Application for {property.title}</DialogTitle>
+                                                    <DialogTitle className="text-2xl font-bold uppercase">Application for {property.title}</DialogTitle>
                                                     <DialogDescription className="text-base font-medium">
                                                         Start a conversation with {landlord?.name}. Your request will include a text message.
                                                     </DialogDescription>

@@ -61,7 +61,7 @@ export function SharePropertyModal({ isOpen, onClose, propertyId, propertyTitle 
                     </div>
                     <DialogTitle className="text-2xl font-black uppercase tracking-tight">Property Deployed!</DialogTitle>
                     <DialogDescription className="text-base font-medium">
-                        "{propertyTitle}" has been successfully published. Share it now to attract tenants.
+                        "<span className="uppercase">{propertyTitle}</span>" has been successfully published. Share it now to attract tenants.
                     </DialogDescription>
                 </div>
 
