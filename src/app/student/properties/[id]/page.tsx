@@ -416,7 +416,7 @@ export default function PropertyDetailPage() {
             </div>
 
             {/* Hero Section - Image Carousel only */}
-            <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-6">
+            <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-4">
                 <PropertyHeroCarousel images={property.images} title={property.title} />
             </div>
 
