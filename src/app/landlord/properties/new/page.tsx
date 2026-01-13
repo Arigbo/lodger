@@ -46,7 +46,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { amenities as allAmenities } from '@/types';
 import { cn, formatPrice } from '@/utils';
-import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileVideo, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon, Sparkles, Building, Loader2, Ruler, AlertCircle, Wifi, Car, AirVent, Dumbbell, Waves, Layout, ShieldCheck, Video } from 'lucide-react';
+import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileVideo, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon, Sparkles, Building, Loader2, Ruler, AlertCircle, Wifi, Car, AirVent, Dumbbell, Waves, Layout, ShieldCheck, Video, Play } from 'lucide-react';
 import type { Property, UserProfile } from '@/types';
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { useRouter } from 'next/navigation';
@@ -1285,6 +1285,39 @@ export default function AddPropertyPage() {
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-6">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Media</p>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+                                                        {/* Images */}
+                                                        {['kitchenImage', 'livingRoomImage', 'bedroomImage', 'bathroomImage', 'otherImage'].map((field) => {
+                                                            const file = (form.getValues() as any)[field]?.[0];
+                                                            if (!file) return null;
+                                                            return (
+                                                                <div key={field} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-foreground/5 shadow-inner group">
+                                                                    <img src={URL.createObjectURL(file)} alt={field} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                                                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-full border border-white/10">
+                                                                        <span className="text-[6px] font-black text-white uppercase tracking-widest">{field.replace('Image', '')}</span>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                        {/* Video */}
+                                                        {form.getValues('propertyVideo')?.[0] && (
+                                                            <div className="relative aspect-square rounded-2xl overflow-hidden border-2 border-primary/20 bg-black group cursor-pointer">
+                                                                <video src={URL.createObjectURL(form.getValues('propertyVideo')![0])} className="w-full h-full object-cover opacity-60 transition-opacity group-hover:opacity-100" />
+                                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                                    <div className="h-8 w-8 rounded-full bg-primary/90 flex items-center justify-center text-white scale-90 group-hover:scale-100 transition-transform">
+                                                                        <Play className="h-4 w-4 ml-0.5 fill-current" />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="absolute top-2 left-2 px-2 py-0.5 bg-primary rounded-full border border-white/10">
+                                                                    <span className="text-[6px] font-black text-white uppercase tracking-widest">Walkthrough</span>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
 

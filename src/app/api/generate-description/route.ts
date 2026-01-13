@@ -20,10 +20,10 @@ export async function POST(request: NextRequest) {
         });
 
         return NextResponse.json({ description });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error generating description:', error);
         return NextResponse.json(
-            { error: 'Failed to generate description' },
+            { error: 'Failed to generate description', details: error.message },
             { status: 500 }
         );
     }

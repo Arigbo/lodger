@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon, Building, Users, GraduationCap, ChevronLeft, Heart } from "lucide-react";
+import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon, Building, Users, GraduationCap, ChevronLeft, Heart, Video } from "lucide-react";
 import PropertyCard from "@/components/property-card";
 import type { Property, UserProfile, PropertyReview, ImagePlaceholder, RentalApplication } from "@/types";
 import React, { useState, useEffect, useMemo } from "react";
@@ -34,6 +34,7 @@ import {
     CarouselPrevious,
 } from "@/components/ui/carousel";
 import { PropertyGallery } from "@/components/property-gallery";
+import { PropertyCarousel } from "@/components/property-carousel";
 // This function is for generating dynamic metadata and is commented out
 // because this is a client component. For SEO on dynamic client-rendered pages,
 // you would typically fetch data in a parent Server Component and pass it down,
@@ -98,6 +99,7 @@ export default function PropertyDetailPage() {
     const router = useRouter();
 
     const [requestMessage, setRequestMessage] = useState("");
+    const [isGalleryOpen, setIsGalleryOpen] = useState(false);
     const [isClient, setIsClient] = useState(false);
 
     const [api, setApi] = React.useState<any>();
@@ -418,19 +420,41 @@ export default function PropertyDetailPage() {
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
 
-            {/* Gallery Section - Full Width on Mobile, Container on Desktop */}
-            <div className="relative w-full bg-[#0A0A0A] overflow-hidden lg:rounded-b-[3rem] shadow-2xl">
-                <div className="absolute inset-0 z-0 opacity-10">
-                    <div className="absolute inset-0 h-full w-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]" />
-                </div>
+            {/* Hero Section with Carousel */}
+            <div className="relative w-full">
+                <PropertyCarousel
+                    images={property.images}
+                    videos={property.videos}
+                    title={property.title}
+                    onViewAll={() => setIsGalleryOpen(true)}
+                />
 
-                <div className="container mx-auto px-0 lg:px-8 py-0 lg:py-8">
-                    <PropertyGallery
-                        images={property.images}
-                        videos={property.videos}
-                        title={property.title}
-                    />
-                </div>
+                {/* Full Gallery Modal */}
+                <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+                    <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 border-none bg-black/95 backdrop-blur-2xl rounded-[3rem] overflow-hidden">
+                        <DialogHeader className="sr-only">
+                            <DialogTitle>Full Property Gallery</DialogTitle>
+                        </DialogHeader>
+                        <div className="w-full h-full overflow-y-auto p-8 lg:p-12">
+                            <div className="flex items-center justify-between mb-8">
+                                <h3 className="text-3xl font-black text-white uppercase tracking-tighter">{property.title} — Gallery</h3>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-12 w-12 rounded-full bg-white/10 text-white hover:bg-white/20 border border-white/10"
+                                    onClick={() => setIsGalleryOpen(false)}
+                                >
+                                    <Maximize2 className="h-6 w-6 rotate-45" />
+                                </Button>
+                            </div>
+                            <PropertyGallery
+                                images={property.images}
+                                videos={property.videos}
+                                title={property.title}
+                            />
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-12">
@@ -506,6 +530,29 @@ export default function PropertyDetailPage() {
                                 <p className="text-lg text-muted-foreground leading-relaxed">
                                     {property.description}
                                 </p>
+
+                                {/* Media Highlights */}
+                                <div className="space-y-6 pt-6 border-t border-border/50">
+                                    <h4 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground/60">Property Highlights</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {property.videos && property.videos.length > 0 && (
+                                            <div className="relative aspect-video rounded-[2rem] overflow-hidden bg-black group border-2 border-primary/20 shadow-2xl">
+                                                <video src={property.videos[0]} className="w-full h-full object-cover" controls />
+                                                <div className="absolute top-6 left-6 flex items-center gap-2 bg-primary px-4 py-2 rounded-full border border-white/10 shadow-xl opacity-90 group-hover:opacity-100 transition-opacity">
+                                                    <Video className="h-4 w-4 text-white" />
+                                                    <span className="text-[10px] font-black text-white uppercase tracking-widest">Video Walkthrough</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {property.images.slice(0, 4).map((img, i) => (
+                                                <div key={i} className="relative aspect-square rounded-3xl overflow-hidden border-2 border-border/10 group shadow-md hover:shadow-xl transition-all">
+                                                    <Image src={img} alt={`${property.title} highlight ${i}`} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
                             </TabsContent>
                             <TabsContent value="amenities" className="mt-0">
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

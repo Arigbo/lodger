@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json(
-            { error: 'Failed to moderate image', details: error.message },
+            { error: 'Failed to moderate image', details: error.message, stack: error.stack },
             { status: 500 }
         );
     }
