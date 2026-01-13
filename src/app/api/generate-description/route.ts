@@ -3,7 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
+        console.log('Generate description request body:', body);
+
         const { title, type, bedrooms, bathrooms, area, amenities, city, state, country, school } = body;
+
+        // Basic validation
+        if (!type || !city) {
+            return NextResponse.json(
+                { error: 'Missing required fields (type, city)' },
+                { status: 400 }
+            );
+        }
 
         // Generate a description based on the property details
         const description = generatePropertyDescription({
@@ -23,7 +33,11 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
         console.error('Error generating description:', error);
         return NextResponse.json(
-            { error: 'Failed to generate description', details: error.message },
+            {
+                error: 'Failed to generate description',
+                message: error.message,
+                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            },
             { status: 500 }
         );
     }

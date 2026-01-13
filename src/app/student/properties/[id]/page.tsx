@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon, Building, Users, GraduationCap, ChevronLeft, Heart, Video } from "lucide-react";
+import { Star, BedDouble, Bath, Ruler, MapPin, CheckCircle, Wifi, ParkingCircle, Dog, Wind, Tv, MessageSquare, Phone, Bookmark, Share2, Mail, Twitter, Link as LinkIcon, Facebook, Linkedin, User as UserIcon, Building, Users, GraduationCap, ChevronLeft, Heart, Video, Maximize2 } from "lucide-react";
 import PropertyCard from "@/components/property-card";
 import type { Property, UserProfile, PropertyReview, ImagePlaceholder, RentalApplication } from "@/types";
 import React, { useState, useEffect, useMemo } from "react";
@@ -34,7 +34,6 @@ import {
     CarouselPrevious,
 } from "@/components/ui/carousel";
 import { PropertyGallery } from "@/components/property-gallery";
-import { PropertyCarousel } from "@/components/property-carousel";
 // This function is for generating dynamic metadata and is commented out
 // because this is a client component. For SEO on dynamic client-rendered pages,
 // you would typically fetch data in a parent Server Component and pass it down,
@@ -420,47 +419,11 @@ export default function PropertyDetailPage() {
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
 
-            {/* Hero Section with Carousel */}
-            <div className="relative w-full">
-                <PropertyCarousel
-                    images={property.images}
-                    videos={property.videos}
-                    title={property.title}
-                    onViewAll={() => setIsGalleryOpen(true)}
-                />
-
-                {/* Full Gallery Modal */}
-                <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
-                    <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 border-none bg-black/95 backdrop-blur-2xl rounded-[3rem] overflow-hidden">
-                        <DialogHeader className="sr-only">
-                            <DialogTitle>Full Property Gallery</DialogTitle>
-                        </DialogHeader>
-                        <div className="w-full h-full overflow-y-auto p-8 lg:p-12">
-                            <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-3xl font-black text-white uppercase tracking-tighter">{property.title} — Gallery</h3>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-12 w-12 rounded-full bg-white/10 text-white hover:bg-white/20 border border-white/10"
-                                    onClick={() => setIsGalleryOpen(false)}
-                                >
-                                    <Maximize2 className="h-6 w-6 rotate-45" />
-                                </Button>
-                            </div>
-                            <PropertyGallery
-                                images={property.images}
-                                videos={property.videos}
-                                title={property.title}
-                            />
-                        </div>
-                    </DialogContent>
-                </Dialog>
-            </div>
-
             <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-12">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                     {/* Left Column: Property Info */}
-                    <div className="lg:col-span-2 space-y-10">
+                    <div className="lg:col-span-2 space-y-12">
+                        {/* Property Title & Basic Info */}
                         <div className="space-y-6">
                             <div className="flex items-center gap-3">
                                 <Badge variant="secondary" className="bg-primary/10 text-primary border-none px-4 py-1 text-xs font-bold uppercase tracking-widest">{property.type}</Badge>
@@ -491,6 +454,67 @@ export default function PropertyDetailPage() {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Media Grid Section */}
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-4 h-[400px] md:h-[600px]">
+                                {/* Main large image/video */}
+                                <div className="md:col-span-2 md:row-span-2 relative rounded-[2.5rem] overflow-hidden border-2 border-border/10 group cursor-pointer shadow-xl h-full" onClick={() => setIsGalleryOpen(true)}>
+                                    {property.videos && property.videos.length > 0 ? (
+                                        <div className="relative w-full h-full">
+                                            <video src={property.videos[0]} className="w-full h-full object-cover" muted autoPlay loop playsInline />
+                                            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
+                                            <div className="absolute top-6 left-6 flex items-center gap-2 bg-primary px-4 py-2 rounded-full border border-white/10 shadow-xl">
+                                                <Video className="h-4 w-4 text-white" />
+                                                <span className="text-[10px] font-black text-white uppercase tracking-widest">Walkthrough</span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <Image src={property.images[0]} alt={property.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                                    )}
+                                </div>
+
+                                {/* Smaller images */}
+                                {property.images.slice(1, 5).map((img, i) => (
+                                    <div key={i} className="relative rounded-3xl overflow-hidden border-2 border-border/10 group cursor-pointer shadow-md h-full" onClick={() => setIsGalleryOpen(true)}>
+                                        <Image src={img} alt={`${property.title} - ${i + 1}`} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all" />
+                                        {i === 3 && property.images.length > 5 && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                                                <span className="text-white text-xl font-bold">+{property.images.length - 5} More</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Full Gallery Modal */}
+                            <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+                                <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 border-none bg-black/95 backdrop-blur-2xl rounded-[3rem] overflow-hidden">
+                                    <DialogHeader className="sr-only">
+                                        <DialogTitle>Full Property Gallery</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="w-full h-full overflow-y-auto p-8 lg:p-12">
+                                        <div className="flex items-center justify-between mb-8">
+                                            <h3 className="text-3xl font-black text-white uppercase tracking-tighter">{property.title} — Gallery</h3>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-12 w-12 rounded-full bg-white/10 text-white hover:bg-white/20 border border-white/10"
+                                                onClick={() => setIsGalleryOpen(false)}
+                                            >
+                                                <Maximize2 className="h-6 w-6 rotate-45" />
+                                            </Button>
+                                        </div>
+                                        <PropertyGallery
+                                            images={property.images}
+                                            videos={property.videos}
+                                            title={property.title}
+                                        />
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
                         </div>
 
                         {/* Specs Grid */}
@@ -531,26 +555,15 @@ export default function PropertyDetailPage() {
                                     {property.description}
                                 </p>
 
-                                {/* Media Highlights */}
+                                {/* Media Highlights (Duplicated from above for Overview tab context, but we keep it focused) */}
                                 <div className="space-y-6 pt-6 border-t border-border/50">
-                                    <h4 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground/60">Property Highlights</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {property.videos && property.videos.length > 0 && (
-                                            <div className="relative aspect-video rounded-[2rem] overflow-hidden bg-black group border-2 border-primary/20 shadow-2xl">
-                                                <video src={property.videos[0]} className="w-full h-full object-cover" controls />
-                                                <div className="absolute top-6 left-6 flex items-center gap-2 bg-primary px-4 py-2 rounded-full border border-white/10 shadow-xl opacity-90 group-hover:opacity-100 transition-opacity">
-                                                    <Video className="h-4 w-4 text-white" />
-                                                    <span className="text-[10px] font-black text-white uppercase tracking-widest">Video Walkthrough</span>
-                                                </div>
+                                    <h4 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground/60">Featured Views</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {property.images.slice(0, 4).map((img, i) => (
+                                            <div key={i} className="relative aspect-square rounded-3xl overflow-hidden border-2 border-border/10 group shadow-md hover:shadow-xl transition-all">
+                                                <Image src={img} alt={`${property.title} highlight ${i}`} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
                                             </div>
-                                        )}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            {property.images.slice(0, 4).map((img, i) => (
-                                                <div key={i} className="relative aspect-square rounded-3xl overflow-hidden border-2 border-border/10 group shadow-md hover:shadow-xl transition-all">
-                                                    <Image src={img} alt={`${property.title} highlight ${i}`} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
-                                                </div>
-                                            ))}
-                                        </div>
+                                        ))}
                                     </div>
                                 </div>
                             </TabsContent>

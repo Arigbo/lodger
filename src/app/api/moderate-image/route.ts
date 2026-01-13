@@ -50,6 +50,14 @@ function getCacheKey(imageData: string): string {
 
 export async function POST(request: NextRequest) {
     try {
+        // Check for API Key
+        if (!process.env.GOOGLE_GENAI_API_KEY) {
+            console.error('GOOGLE_GENAI_API_KEY is missing in environment variables');
+            return NextResponse.json(
+                { error: 'AI features are currently unavailable. Please configure GOOGLE_GENAI_API_KEY.' },
+                { status: 503 }
+            );
+        }
         // Rate limiting
         const ip = (request as any).ip ?? request.headers.get("x-forwarded-for") ?? "127.0.0.1";
         const { success, limit, reset, remaining } = await ratelimit.limit(ip);
