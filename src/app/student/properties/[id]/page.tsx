@@ -493,18 +493,6 @@ export default function PropertyDetailPage() {
                                 <p className="text-lg text-muted-foreground leading-relaxed">
                                     {property.description}
                                 </p>
-
-                                {/* Media Highlights (Duplicated from above for Overview tab context, but we keep it focused) */}
-                                <div className="space-y-6 pt-6 border-t border-border/50">
-                                    <h4 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground/60">Featured Views</h4>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {property.images.slice(0, 4).map((img, i) => (
-                                            <div key={i} className="relative aspect-square rounded-3xl overflow-hidden border-2 border-border/10 group shadow-md hover:shadow-xl transition-all">
-                                                <Image src={img} alt={`${property.title} highlight ${i}`} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
                             </TabsContent>
                             <TabsContent value="amenities" className="mt-0">
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

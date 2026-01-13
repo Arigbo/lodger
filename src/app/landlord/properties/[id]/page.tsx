@@ -69,6 +69,7 @@ import Loading from '@/app/loading';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { PropertyGallery } from '@/components/property-gallery';
+import { PropertyHeroCarousel } from '@/components/property-hero-carousel';
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -242,19 +243,9 @@ export default function LandlordPropertyDetailPage() {
 
   return (
     <div className="min-h-screen pb-20 animate-in fade-in duration-700">
-      {/* Gallery Section */}
-      <div className="relative w-full bg-[#0A0A0A] overflow-hidden lg:rounded-b-[3rem] shadow-2xl">
-        <div className="absolute inset-0 z-0 opacity-10">
-          <div className="absolute inset-0 h-full w-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]" />
-        </div>
-
-        <div className="container mx-auto px-0 lg:px-8 py-0 lg:py-8">
-          <PropertyGallery
-            images={property.images}
-            videos={property.videos}
-            title={property.title}
-          />
-        </div>
+      {/* Hero Section - Image Carousel only */}
+      <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-12">
+        <PropertyHeroCarousel images={property.images} title={property.title} />
       </div>
 
       <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-12">
@@ -286,6 +277,20 @@ export default function LandlordPropertyDetailPage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Dedicated Media Gallery Section */}
+            <div className="space-y-8 pt-8 border-t border-border/50">
+              <div>
+                <h3 className="text-2xl font-black tracking-tight uppercase tracking-tighter">Property Gallery</h3>
+                <p className="text-sm text-muted-foreground font-medium mt-1">Explore all photos and video walkthroughs of this property</p>
+              </div>
+
+              <PropertyGallery
+                images={property.images}
+                videos={property.videos}
+                title={property.title}
+              />
             </div>
 
             {/* Specs Grid */}
