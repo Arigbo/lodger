@@ -481,13 +481,21 @@ export default function PropertyDetailPage() {
                         </div>
 
                         {/* Tabs Content */}
-                        <Tabs defaultValue="overview" className="w-full">
+                        <Tabs defaultValue="gallery" className="w-full">
                             <TabsList className="w-full justify-start bg-transparent border-b rounded-none px-0 h-auto gap-8 mb-8">
+                                <TabsTrigger value="gallery" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Gallery</TabsTrigger>
                                 <TabsTrigger value="overview" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Overview</TabsTrigger>
                                 <TabsTrigger value="amenities" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Amenities</TabsTrigger>
                                 <TabsTrigger value="rules" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">House Rules</TabsTrigger>
                                 <TabsTrigger value="reviews" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Reviews</TabsTrigger>
                             </TabsList>
+                            <TabsContent value="gallery" className="mt-0 space-y-6">
+                                <PropertyGallery
+                                    images={property.images}
+                                    videos={property.videos}
+                                    title={property.title}
+                                />
+                            </TabsContent>
                             <TabsContent value="overview" className="mt-0 space-y-6">
                                 <h3 className="text-2xl font-bold tracking-tight">About this property</h3>
                                 <p className="text-lg text-muted-foreground leading-relaxed">
