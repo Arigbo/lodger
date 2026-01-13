@@ -37,7 +37,7 @@ import type { LeaseAgreement } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import Image from 'next/image';
-import { UploadCloud, X, Loader2, Building, RefreshCw, AlertCircle } from 'lucide-react';
+import { UploadCloud, X, Loader2, Building, RefreshCw, AlertCircle, FileVideo, Video } from 'lucide-react';
 import Loading from '@/app/loading';
 import Link from 'next/link';
 import { Combobox } from '@/components/ui/combobox';
@@ -317,6 +317,55 @@ export default function EditPropertyPage() {
     } catch (error: unknown) {
       console.error("Error deleting image:", error);
       toast({ variant: "destructive", title: "Deletion Failed", description: "Could not remove the image. It may have already been deleted." });
+    }
+  }
+
+  async function handleVideoUpload(files: FileList | null) {
+    if (!files || !property || !propertyRef) return;
+    setIsUploading(true);
+
+    const storage = getStorage(firebaseApp);
+    const file = files[0];
+    const path = `properties/${property.landlordId}/${Date.now()}_${file.name}`;
+
+    try {
+      const storageRef = ref(storage, path);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      const updatedVideos = [...(property?.videos || []), downloadURL];
+      await updateDoc(propertyRef, { videos: updatedVideos });
+
+      toast({ title: "Video Uploaded", description: "Your walkthrough video has been added." });
+      refetch();
+    } catch (error: any) {
+      console.error("Error uploading video:", error);
+      toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload video." });
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  async function handleRemoveVideo(videoUrl: string) {
+    if (!property || !propertyRef) return;
+    if (!property?.videos) return;
+
+    const isConfirmed = window.confirm("Are you sure you want to delete this video?");
+    if (!isConfirmed) return;
+
+    try {
+      const storage = getStorage(firebaseApp);
+      const videoRef = ref(storage, videoUrl);
+      await deleteObject(videoRef);
+
+      const updatedVideos = property.videos.filter(url => url !== videoUrl);
+      await updateDoc(propertyRef, { videos: updatedVideos });
+
+      toast({ title: "Video Removed", description: "The video has been deleted." });
+      refetch();
+    } catch (error: unknown) {
+      console.error("Error deleting video:", error);
+      toast({ variant: "destructive", title: "Deletion Failed", description: "Could not remove video." });
     }
   }
 
@@ -709,6 +758,50 @@ export default function EditPropertyPage() {
                     accept="image/*"
                     className="sr-only"
                     onChange={(e) => handleImageUpload(e.target.files)}
+                    disabled={isUploading}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <Separator />
+            <h3 className="font-headline text-xl font-semibold">Videos</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {property?.videos?.map((url) => (
+                <div key={url} className="relative group aspect-square bg-black rounded-lg overflow-hidden border-2 border-foreground/5 shadow-inner">
+                  <video src={url} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-sm">
+                    <Button variant="destructive" size="icon" className="h-10 w-10 rounded-full" onClick={(e) => { e.preventDefault(); handleRemoveVideo(url); }}>
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </div>
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/10">
+                    <FileVideo className="h-3 w-3 text-white" />
+                    <span className="text-[8px] font-black text-white uppercase tracking-widest">Walkthrough</span>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center justify-center rounded-2xl border-2 border-dashed border-foreground/10 aspect-square hover:bg-primary/5 hover:border-primary/20 transition-all group">
+                <label htmlFor="video-upload" className="flex flex-col items-center justify-center w-full h-full cursor-pointer text-center p-4">
+                  {isUploading ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                      <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em] animate-pulse">Uploading...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="h-12 w-12 rounded-xl bg-muted/5 flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-all mb-3 text-muted-foreground">
+                        <Video className="h-6 w-6" />
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-primary">Add Video</span>
+                    </>
+                  )}
+                  <input
+                    id="video-upload"
+                    type="file"
+                    accept="video/*"
+                    className="sr-only"
+                    onChange={(e) => handleVideoUpload(e.target.files)}
                     disabled={isUploading}
                   />
                 </label>

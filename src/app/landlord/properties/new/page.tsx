@@ -46,7 +46,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { amenities as allAmenities } from '@/types';
 import { cn, formatPrice } from '@/utils';
-import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon, Sparkles, Building, Loader2, Ruler, AlertCircle, Wifi, Car, AirVent, Dumbbell, Waves, Layout, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileVideo, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon, Sparkles, Building, Loader2, Ruler, AlertCircle, Wifi, Car, AirVent, Dumbbell, Waves, Layout, ShieldCheck, Video } from 'lucide-react';
 import type { Property, UserProfile } from '@/types';
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { useRouter } from 'next/navigation';
@@ -109,6 +109,17 @@ const imageSchema = z.any()
         "Only .jpg, .jpeg, .png and .webp formats are supported."
     );
 
+const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/ogg", "video/quicktime"];
+const MAX_VIDEO_SIZE = 50000000; // 50MB
+
+const videoSchema = z.any()
+    .refine((files) => !files || files.length === 0 || files.length === 1, "Only one video permitted.")
+    .refine((files) => !files || files.length === 0 || files[0]?.size <= MAX_VIDEO_SIZE, `Max video size is 50MB.`)
+    .refine(
+        (files) => !files || files.length === 0 || ACCEPTED_VIDEO_TYPES.includes(files[0]?.type),
+        "Only .mp4, .webm, .ogg and .mov formats are supported."
+    );
+
 const formSchema = z.object({
     title: z.string().min(5, 'Title must be at least 5 characters.'),
     description: z.string().min(10, 'Description must be at least 10 characters.').optional().or(z.literal('')),
@@ -134,6 +145,7 @@ const formSchema = z.object({
     bathroomImage: imageSchema,
     bedroomImage: imageSchema,
     otherImage: imageSchema.optional(),
+    propertyVideo: videoSchema.optional(),
     lat: z.number().optional(),
     lng: z.number().optional(),
 });
@@ -145,7 +157,7 @@ const steps = [
     { id: 2, name: 'Location', fields: ['address', 'country', 'city', 'state', 'zip', 'school'] },
     { id: 3, name: 'Amenities & Rules', fields: ['amenities', 'rules'] },
     { id: 4, name: 'Lease Template', fields: ['leaseTemplate'] },
-    { id: 5, name: 'Images', fields: ['kitchenImage', 'livingRoomImage', 'bathroomImage', 'bedroomImage', 'otherImage'] },
+    { id: 5, name: 'Media', fields: ['kitchenImage', 'livingRoomImage', 'bathroomImage', 'bedroomImage', 'otherImage', 'propertyVideo'] },
     { id: 6, name: 'Description', fields: ['description'] },
     { id: 7, name: 'Review & Submit', fields: [] }
 ];
@@ -357,6 +369,86 @@ const FileUpload = ({ field, label, description, icon: Icon, onUpload, onAnalysi
                                         />
                                     </label>
                                     <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">MAX 5MB • AI SECURED</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </FormControl>
+            <FormMessage />
+        </FormItem>
+    );
+};
+
+
+const VideoUpload = ({ field, label, description, icon: Icon }: { field: any; label: string; description: string; icon: any }) => {
+    const [isUploading, setIsUploading] = useState(false);
+    const { toast } = useToast();
+
+    const handleFileChange = (files: FileList | null) => {
+        if (!files || files.length === 0) {
+            field.onChange(null);
+            return;
+        }
+
+        const file = files[0];
+        if (file.size > MAX_VIDEO_SIZE) {
+            toast({
+                variant: "destructive",
+                title: "File Too Large",
+                description: "Maximum video size is 50MB.",
+            });
+            return;
+        }
+
+        if (!ACCEPTED_VIDEO_TYPES.includes(file.type)) {
+            toast({
+                variant: "destructive",
+                title: "Invalid Format",
+                description: "Please upload an MP4, WebM, OGG or MOV video.",
+            });
+            return;
+        }
+
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        field.onChange(dataTransfer.files);
+    };
+
+    return (
+        <FormItem className="h-full">
+            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                <Icon className="h-3 w-3" /> {label}
+            </FormLabel>
+            <FormControl>
+                <div className="mt-4 flex flex-col justify-center rounded-[2rem] border-2 border-dashed border-muted/20 hover:bg-primary/5 hover:border-primary/20 p-6 h-56 transition-all duration-500 group relative overflow-hidden">
+                    <div className="text-center relative z-10">
+                        {field.value?.[0] ? (
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="h-16 w-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                                    <FileVideo className="h-8 w-8" />
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-foreground truncate max-w-[200px]">{field.value[0].name}</p>
+                                    <div className="flex items-center justify-center gap-3">
+                                        <Button type="button" variant="ghost" size="sm" onClick={() => field.onChange(null)} className="text-destructive font-black text-[10px] uppercase tracking-widest h-auto p-0 hover:bg-transparent">Remove</Button>
+                                        <span className="w-1 h-1 bg-muted rounded-full" />
+                                        <label htmlFor={field.name} className="cursor-pointer text-muted-foreground hover:text-primary font-black text-[10px] uppercase tracking-widest">Replace</label>
+                                        <input id={field.name} type="file" className="sr-only" accept="video/*" onChange={(e) => handleFileChange(e.target.files)} />
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="h-16 w-16 rounded-2xl bg-muted/5 flex items-center justify-center mx-auto group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-500">
+                                    <Video className="h-8 w-8" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label htmlFor={field.name} className="relative cursor-pointer rounded-md font-black text-[10px] uppercase tracking-widest text-foreground hover:text-primary transition-colors">
+                                        <span>Add {label}</span>
+                                        <input id={field.name} type="file" className="sr-only" accept="video/*" onChange={(e) => handleFileChange(e.target.files)} />
+                                    </label>
+                                    <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">MAX 50MB • MP4 / WEBM / MOV</p>
                                 </div>
                             </div>
                         )}
@@ -582,6 +674,15 @@ export default function AddPropertyPage() {
             await uploadField(values.bedroomImage, 'bedroom');
             await uploadField(values.otherImage, 'other');
 
+            let uploadedVideoUrl = '';
+            if (values.propertyVideo && values.propertyVideo.length > 0) {
+                try {
+                    uploadedVideoUrl = await uploadImage(values.propertyVideo[0], `${basePath}/video`);
+                } catch (e) {
+                    console.error("Failed to upload video", e);
+                }
+            }
+
             const newPropertyData: Omit<Property, 'id'> = {
                 title: values.title,
                 description: values.description || '',
@@ -603,6 +704,7 @@ export default function AddPropertyPage() {
                 currency: values.currency || 'USD',
                 amenities: values.amenities,
                 images: uploadedImageUrls,
+                videos: uploadedVideoUrl ? [uploadedVideoUrl] : [],
                 landlordId: user.uid,
                 status: 'available',
                 rules: values.rules ? values.rules.split(',').map(r => r.trim()).filter(Boolean) : [],
@@ -1082,6 +1184,20 @@ export default function AddPropertyPage() {
                                                         />
                                                     )}
                                                 />
+                                                <div className="md:col-span-2 mt-6">
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="propertyVideo"
+                                                        render={({ field }) => (
+                                                            <VideoUpload
+                                                                field={field}
+                                                                label="PROPERTY VIDEO"
+                                                                description="A walkthrough video of the property."
+                                                                icon={Video}
+                                                            />
+                                                        )}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     )}

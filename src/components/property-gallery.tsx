@@ -1,0 +1,174 @@
+'use client';
+
+import React, { useState } from 'react';
+import Image from 'next/image';
+import { Play, Maximize2, X, ChevronLeft, ChevronRight, Video as VideoIcon, Camera } from 'lucide-react';
+import { cn } from '@/utils';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from "@/components/ui/carousel";
+
+interface PropertyGalleryProps {
+    images: string[];
+    videos?: string[];
+    title: string;
+}
+
+export function PropertyGallery({ images, videos = [], title }: PropertyGalleryProps) {
+    const [selectedMedia, setSelectedMedia] = useState<{ type: 'image' | 'video'; url: string } | null>(null);
+    const [activeTab, setActiveTab] = useState<'all' | 'photos' | 'videos'>(videos.length > 0 ? 'all' : 'photos');
+
+    const allMedia = [
+        ...videos.map(v => ({ type: 'video' as const, url: v })),
+        ...images.map(i => ({ type: 'image' as const, url: i }))
+    ];
+
+    const filteredMedia = activeTab === 'all'
+        ? allMedia
+        : activeTab === 'photos'
+            ? allMedia.filter(m => m.type === 'image')
+            : allMedia.filter(m => m.type === 'video');
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex bg-muted/20 p-1.5 rounded-2xl border border-white/10 backdrop-blur-md">
+                    {videos.length > 0 && (
+                        <button
+                            onClick={() => setActiveTab('all')}
+                            className={cn(
+                                "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                                activeTab === 'all' ? "bg-primary text-white shadow-lg" : "text-white/60 hover:text-white"
+                            )}
+                        >
+                            All ({allMedia.length})
+                        </button>
+                    )}
+                    <button
+                        onClick={() => setActiveTab('photos')}
+                        className={cn(
+                            "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                            activeTab === 'photos' ? "bg-primary text-white shadow-lg" : "text-white/60 hover:text-white"
+                        )}
+                    >
+                        Photos ({images.length})
+                    </button>
+                    {videos.length > 0 && (
+                        <button
+                            onClick={() => setActiveTab('videos')}
+                            className={cn(
+                                "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                                activeTab === 'videos' ? "bg-primary text-white shadow-lg" : "text-white/60 hover:text-white"
+                            )}
+                        >
+                            Videos ({videos.length})
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredMedia.map((media, index) => (
+                    <div
+                        key={index}
+                        className="group relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-muted/10 border border-white/10 cursor-pointer"
+                        onClick={() => setSelectedMedia(media)}
+                    >
+                        {media.type === 'image' ? (
+                            <Image
+                                src={media.url}
+                                alt={`${title} - ${index}`}
+                                fill
+                                className="object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                        ) : (
+                            <div className="relative w-full h-full">
+                                <video
+                                    src={media.url}
+                                    className="w-full h-full object-cover"
+                                    muted
+                                    playsInline
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 transition-colors group-hover:bg-black/20">
+                                    <div className="h-14 w-14 rounded-full bg-primary/90 flex items-center justify-center text-white scale-90 group-hover:scale-100 transition-transform">
+                                        <Play className="h-6 w-6 ml-1 fill-current" />
+                                    </div>
+                                </div>
+                                <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                                    <VideoIcon className="h-3 w-3 text-white" />
+                                    <span className="text-[10px] font-black text-white uppercase tracking-widest">Video</span>
+                                </div>
+                            </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+                            <div className="flex items-center gap-2 text-white">
+                                <Maximize2 className="h-4 w-4" />
+                                <span className="text-[10px] font-black uppercase tracking-widest">View Fullscreen</span>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <Dialog open={!!selectedMedia} onOpenChange={() => setSelectedMedia(null)}>
+                <DialogContent className="max-w-7xl border-none bg-black/95 backdrop-blur-2xl p-0 overflow-hidden rounded-[3rem]">
+                    <DialogHeader className="sr-only">
+                        <DialogTitle>Media Viewer</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="relative w-full h-full flex items-center justify-center min-h-[50vh] max-h-[90vh]">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-6 right-6 h-12 w-12 rounded-full bg-white/10 text-white hover:bg-white/20 z-50 backdrop-blur-md border border-white/10"
+                            onClick={() => setSelectedMedia(null)}
+                        >
+                            <X className="h-6 w-6" />
+                        </Button>
+
+                        {selectedMedia?.type === 'image' ? (
+                            <div className="relative w-full h-full aspect-[16/9]">
+                                <Image
+                                    src={selectedMedia.url}
+                                    alt={title}
+                                    fill
+                                    className="object-contain"
+                                />
+                            </div>
+                        ) : (
+                            <video
+                                src={selectedMedia?.url}
+                                className="w-full h-full max-h-[85vh]"
+                                controls
+                                autoPlay
+                            />
+                        )}
+
+                        <div className="absolute bottom-8 left-8 right-8 flex items-center justify-between">
+                            <div className="bg-black/60 backdrop-blur-xl px-6 py-3 rounded-2xl border border-white/10">
+                                <p className="text-white font-black uppercase tracking-widest text-sm">{title}</p>
+                                <div className="flex items-center gap-4 mt-2">
+                                    <span className="flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-widest">
+                                        {selectedMedia?.type === 'image' ? <Camera className="h-3 w-3" /> : <VideoIcon className="h-3 w-3" />}
+                                        {selectedMedia?.type}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </div>
+    );
+}

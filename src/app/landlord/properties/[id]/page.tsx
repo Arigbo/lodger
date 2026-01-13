@@ -68,6 +68,7 @@ import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Loading from '@/app/loading';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
+import { PropertyGallery } from '@/components/property-gallery';
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -248,61 +249,11 @@ export default function LandlordPropertyDetailPage() {
         </div>
 
         <div className="container mx-auto px-0 lg:px-8 py-0 lg:py-8">
-          {property.images && property.images.length > 0 ? (
-            <Carousel className="w-full relative group" setApi={setApi}>
-              <CarouselContent>
-                {property.images.map((url, index) => (
-                  <CarouselItem key={index}>
-                    <div className="relative aspect-[16/10] md:aspect-[21/9] w-full overflow-hidden lg:rounded-3xl">
-                      <Image
-                        src={url}
-                        alt={`${property.title} - Image ${index + 1}`}
-                        fill
-                        className="object-cover transition-transform duration-700 hover:scale-105"
-                        priority={index === 0}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <CarouselPrevious className="h-12 w-12 bg-white/10 border-white/20 text-white backdrop-blur-xl hover:bg-white/20" />
-              </div>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <CarouselNext className="h-12 w-12 bg-white/10 border-white/20 text-white backdrop-blur-xl hover:bg-white/20" />
-              </div>
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
-                <div className="bg-black/40 backdrop-blur-md border border-white/10 text-white px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase">
-                  {current} <span className="text-white/40">/</span> {count}
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-6 left-6 h-10 w-10 rounded-full bg-white/10 border border-white/20 text-white backdrop-blur-md hover:bg-white/20 transition-all z-20"
-                onClick={() => router.back()}
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <div className="absolute top-6 right-6 z-20">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  asChild
-                  className="h-10 w-10 rounded-full bg-white/10 border border-white/20 text-white backdrop-blur-md hover:bg-white/20 transition-all"
-                >
-                  <Link href={`/landlord/properties/edit/${property.id}`}>
-                    <Pencil className="h-5 w-5" />
-                  </Link>
-                </Button>
-              </div>
-            </Carousel>
-          ) : (
-            <div className="flex h-[300px] md:h-[500px] w-full items-center justify-center lg:rounded-[3rem] bg-muted/10 border-2 border-dashed border-white/10 text-white/40">
-              <Building className="h-16 w-16 opacity-20" />
-            </div>
-          )}
+          <PropertyGallery
+            images={property.images}
+            videos={property.videos}
+            title={property.title}
+          />
         </div>
       </div>
 

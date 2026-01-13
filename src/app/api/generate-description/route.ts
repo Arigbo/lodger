@@ -47,7 +47,7 @@ function generatePropertyDescription(data: {
         bedrooms,
         bathrooms,
         area,
-        amenities = [],
+        amenities,
         city,
         state,
         country,
@@ -90,9 +90,10 @@ function generatePropertyDescription(data: {
     }
 
     // Amenities
-    if (amenities.length > 0) {
-        const amenityList = amenities.slice(0, 5).join(', ');
-        const remaining = amenities.length - 5;
+    const localAmenities = amenities || [];
+    if (localAmenities.length > 0) {
+        const amenityList = localAmenities.slice(0, 5).join(', ');
+        const remaining = localAmenities.length - 5;
 
         let amenityText = `Enjoy modern amenities including ${amenityList}`;
         if (remaining > 0) {

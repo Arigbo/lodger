@@ -33,6 +33,7 @@ import {
     CarouselNext,
     CarouselPrevious,
 } from "@/components/ui/carousel";
+import { PropertyGallery } from "@/components/property-gallery";
 // This function is for generating dynamic metadata and is commented out
 // because this is a client component. For SEO on dynamic client-rendered pages,
 // you would typically fetch data in a parent Server Component and pass it down,
@@ -424,112 +425,11 @@ export default function PropertyDetailPage() {
                 </div>
 
                 <div className="container mx-auto px-0 lg:px-8 py-0 lg:py-8">
-                    {images.length > 0 ? (
-                        <Carousel
-                            className="w-full relative group"
-                            setApi={setApi}
-                        >
-                            <CarouselContent>
-                                {images.map((image, index) => (
-                                    <CarouselItem key={image.id}>
-                                        <div className="relative aspect-[16/10] md:aspect-[21/9] w-full overflow-hidden lg:rounded-3xl">
-                                            <Image
-                                                src={image.imageUrl}
-                                                alt={`${property.title} - Image ${index + 1}`}
-                                                fill
-                                                className="object-cover transition-transform duration-700 hover:scale-105"
-                                                priority={index === 0}
-                                            />
-                                            {/* Gradient Overlay for better text readability and depth */}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
-                                        </div>
-                                    </CarouselItem>
-                                ))}
-                            </CarouselContent>
-
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <CarouselPrevious className="h-12 w-12 bg-white/10 border-white/20 text-white backdrop-blur-xl hover:bg-white/20" />
-                            </div>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <CarouselNext className="h-12 w-12 bg-white/10 border-white/20 text-white backdrop-blur-xl hover:bg-white/20" />
-                            </div>
-
-                            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
-                                <div className="bg-black/40 backdrop-blur-md border border-white/10 text-white px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase">
-                                    {current} <span className="text-white/40">/</span> {count}
-                                </div>
-                            </div>
-
-                            {/* Back Button for Detail Page */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute top-6 left-6 h-10 w-10 rounded-full bg-white/10 border border-white/20 text-white backdrop-blur-md hover:bg-white/20 transition-all z-20"
-                                onClick={() => router.back()}
-                            >
-                                <ChevronLeft className="h-5 w-5" />
-                            </Button>
-
-                            {/* Action Buttons Top Right */}
-                            <div className="absolute top-6 right-6 flex items-center gap-3 z-20">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className={cn(
-                                        "h-10 w-10 rounded-full border backdrop-blur-md transition-all",
-                                        isBookmarked
-                                            ? "bg-primary text-primary-foreground border-primary"
-                                            : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                                    )}
-                                    onClick={toggleBookmark}
-                                >
-                                    <Heart className={cn("h-5 w-5", isBookmarked && "fill-current")} />
-                                </Button>
-
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-10 w-10 rounded-full bg-white/10 border border-white/20 text-white backdrop-blur-md hover:bg-white/20 transition-all"
-                                        >
-                                            <Share2 className="h-5 w-5" />
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-md">
-                                        <DialogHeader>
-                                            <DialogTitle>Share Property</DialogTitle>
-                                            <DialogDescription>
-                                                Spread the word about this amazing find!
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <div className="flex items-center space-x-2 mt-4">
-                                            <Input value={propertyUrl} readOnly className="bg-muted" />
-                                            <Button size="icon" onClick={handleCopyToClipboard}><LinkIcon className="h-4 w-4" /></Button>
-                                        </div>
-                                        <div className="grid grid-cols-4 gap-4 mt-6">
-                                            <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-2xl">
-                                                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(propertyUrl)}`} target="_blank"><Twitter className="h-5 w-5" /></a>
-                                            </Button>
-                                            <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-2xl">
-                                                <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(propertyUrl)}`} target="_blank"><FaWhatsapp className="h-5 w-5" /></a>
-                                            </Button>
-                                            <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-2xl">
-                                                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(propertyUrl)}`} target="_blank"><Facebook className="h-5 w-5" /></a>
-                                            </Button>
-                                            <Button asChild variant="outline" size="icon" className="h-12 w-12 rounded-2xl">
-                                                <a href={`https://www.linkedin.com/shareArticle?url=${encodeURIComponent(propertyUrl)}`} target="_blank"><Linkedin className="h-5 w-5" /></a>
-                                            </Button>
-                                        </div>
-                                    </DialogContent>
-                                </Dialog>
-                            </div>
-                        </Carousel>
-                    ) : (
-                        <div className="flex h-[300px] md:h-[500px] w-full items-center justify-center lg:rounded-[3rem] bg-muted/10 border-2 border-dashed border-white/10 text-white/40">
-                            <Building className="h-16 w-16 opacity-20" />
-                        </div>
-                    )}
+                    <PropertyGallery
+                        images={property.images}
+                        videos={property.videos}
+                        title={property.title}
+                    />
                 </div>
             </div>
 
