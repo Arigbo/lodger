@@ -60,7 +60,7 @@ const formSchema = z.object({
   description: z.string().min(10, 'Description is required.'),
   price: z.coerce.number().positive('Price must be a positive number.'),
   currency: z.string().min(3, 'Currency is required.'),
-  type: z.enum(['Apartment', 'House', 'Studio', 'Loft']),
+  type: z.enum(['Apartment', 'House', 'Studio', 'Loft', 'Self Contain']),
   address: z.string().min(5, 'Address is required.'),
   country: z.string().min(2, 'Country is required.'),
   city: z.string().min(2, 'City is required.'),

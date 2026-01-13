@@ -11,9 +11,9 @@ import Loading from "@/app/loading";
 export default function NotificationsPage() {
     const { user } = useUser();
     const router = useRouter();
-    const { notifications, isLoading, markAsRead, markAllAsRead } = useNotifications(user?.uid || null);
+    const { notifications, loading, markAsRead, markAllAsRead } = useNotifications(user?.uid || null);
 
-    if (isLoading) return <Loading />;
+    if (loading) return <Loading />;
 
     return (
         <div className="container mx-auto max-w-2xl py-8 px-4 space-y-8 animate-in fade-in duration-500">

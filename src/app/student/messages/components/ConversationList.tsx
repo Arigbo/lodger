@@ -6,7 +6,7 @@ import { cn } from '@/utils';
 import { User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import format from "date-fns/format";
+import { format } from "date-fns";
 import type { UserProfile as User } from '@/types';
 
 type Conversation = {

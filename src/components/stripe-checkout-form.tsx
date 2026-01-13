@@ -34,7 +34,7 @@ export default function StripeCheckoutForm({ amount, currency = 'USD', onSuccess
 
         setIsLoading(true);
 
-        const { error } = await stripe.confirmPayment({
+        const { error, paymentIntent } = await stripe.confirmPayment({
             elements,
             confirmParams: {
                 return_url: window.location.href, // This handles the redirect flow if needed, but we often want to avoid redirect if possible for simple cards
@@ -47,18 +47,11 @@ export default function StripeCheckoutForm({ amount, currency = 'USD', onSuccess
         if (error) {
             setErrorMessage(error.message || "An unexpected error occurred.");
             setIsLoading(false);
+        } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+            onSuccess(paymentIntent.id);
         } else {
-            // Payment successful!
-            // Retrieve payment intent to get the ID if needed, 
-            // but usually we can get it from the elements or stripe object if we confirmed it.
-            // Since we are using redirect: 'if_required', if we reach here, it's successful.
-            const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret as string);
-            if (paymentIntent && paymentIntent.status === 'succeeded') {
-                onSuccess(paymentIntent.id);
-            } else {
-                setErrorMessage("Payment confirmation failed. Please check your card.");
-                setIsLoading(false);
-            }
+            setErrorMessage("Payment confirmation failed. Please check your card.");
+            setIsLoading(false);
         }
     };
 
