@@ -23,13 +23,13 @@ export function PropertyHeroCarousel({ images, title }: PropertyHeroCarouselProp
     return (
         <div className="relative group w-full h-[300px] md:h-[350px] overflow-hidden rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] bg-black/5">
             <Carousel className="w-full h-full" opts={{ loop: true }}>
-                <CarouselContent className="h-full ml-0">
+                <CarouselContent className="h-full ml-0 [&>div]:h-full">
                     {images.map((image, index) => (
                         <CarouselItem key={index} className="pl-0 h-full">
                             <motion.div
-                                initial={{ scale: 1.1, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ duration: 1.2, ease: "easeOut" }}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.5 }}
                                 className="relative w-full h-full"
                             >
                                 <Image
@@ -38,7 +38,7 @@ export function PropertyHeroCarousel({ images, title }: PropertyHeroCarouselProp
                                     fill
                                     className="object-cover transform group-hover:scale-105 transition-transform duration-[3s]"
                                     priority={index === 0}
-                                    sizes="100vw"
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
                             </motion.div>
@@ -46,28 +46,20 @@ export function PropertyHeroCarousel({ images, title }: PropertyHeroCarouselProp
                     ))}
                 </CarouselContent>
 
-                {/* Floating Info Badges */}
-                <div className="absolute top-8 left-8 flex flex-wrap gap-3 z-30">
-                    <div className="flex bg-primary/95 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/20 shadow-2xl items-center gap-2 animate-in slide-in-from-left-4 duration-700">
-                        <div className="h-2 w-2 rounded-full bg-white animate-pulse" />
-                        <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Verified Space</span>
-                    </div>
-                </div>
-
-                <div className="absolute bottom-8 right-8 flex items-center gap-4 z-30">
-                    <div className="flex bg-white/10 backdrop-blur-2xl px-6 py-3 rounded-2xl border border-white/20 gap-6 text-white text-[11px] font-black uppercase tracking-widest shadow-2xl hover:bg-white/15 transition-colors cursor-default">
-                        <span className="flex items-center gap-2.5">
-                            <Camera className="h-4 w-4 text-primary" /> {images.length} High-Res Photos
+                <div className="absolute bottom-6 right-6 flex items-center gap-4 z-30">
+                    <div className="flex bg-black/40 backdrop-blur-2xl px-4 py-2 rounded-2xl border border-white/10 gap-4 text-white text-[10px] font-black uppercase tracking-widest shadow-2xl">
+                        <span className="flex items-center gap-2">
+                            <Camera className="h-3.5 w-3.5 text-primary" /> {images.length} Photos
                         </span>
                     </div>
                 </div>
 
                 {/* Navigation Controls */}
-                <div className="absolute top-1/2 -translate-y-1/2 left-8 transition-all duration-500 opacity-0 group-hover:opacity-100 hidden md:block z-40 transform translate-x-[-20px] group-hover:translate-x-0">
-                    <CarouselPrevious className="h-14 w-14 bg-black/20 hover:bg-primary text-white border-white/10 backdrop-blur-xl relative left-0 translate-x-0 shadow-2xl" />
+                <div className="absolute top-1/2 -translate-y-1/2 left-6 transition-all duration-500 opacity-0 group-hover:opacity-100 hidden md:block z-40">
+                    <CarouselPrevious className="h-12 w-12 bg-white/10 hover:bg-primary text-white border-white/10 backdrop-blur-xl relative left-0 translate-x-0 shadow-2xl" />
                 </div>
-                <div className="absolute top-1/2 -translate-y-1/2 right-8 transition-all duration-500 opacity-0 group-hover:opacity-100 hidden md:block z-40 transform translate-x-[20px] group-hover:translate-x-0">
-                    <CarouselNext className="h-14 w-14 bg-black/20 hover:bg-primary text-white border-white/10 backdrop-blur-xl relative right-0 translate-x-0 shadow-2xl" />
+                <div className="absolute top-1/2 -translate-y-1/2 right-6 transition-all duration-500 opacity-0 group-hover:opacity-100 hidden md:block z-40">
+                    <CarouselNext className="h-12 w-12 bg-white/10 hover:bg-primary text-white border-white/10 backdrop-blur-xl relative right-0 translate-x-0 shadow-2xl" />
                 </div>
             </Carousel>
         </div>

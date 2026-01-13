@@ -23,7 +23,7 @@ interface NotificationModalProps {
 export function NotificationModal({ open, onOpenChange, notifications, onMarkAsRead }: NotificationModalProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl p-0 overflow-hidden border-none shadow-3xl bg-white/95 backdrop-blur-xl rounded-[3rem]">
+            <DialogContent className="max-w-2xl w-[95vw] p-0 overflow-hidden border-none shadow-3xl bg-white/95 backdrop-blur-xl rounded-[2.5rem]">
                 <DialogHeader className="p-10 pb-6 bg-muted/30">
                     <div className="flex items-center justify-between">
                         <div className="space-y-1">

@@ -122,23 +122,23 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
             </div>
 
             <Dialog open={!!selectedMedia} onOpenChange={() => setSelectedMedia(null)}>
-                <DialogContent className="max-w-7xl border-none bg-black/95 backdrop-blur-2xl p-0 overflow-hidden rounded-[3rem]">
+                <DialogContent className="max-w-[95vw] md:max-w-7xl border-none bg-black/95 backdrop-blur-2xl p-0 overflow-hidden rounded-[1.5rem] md:rounded-[3rem] h-auto max-h-[90vh]">
                     <DialogHeader className="sr-only">
                         <DialogTitle>Media Viewer</DialogTitle>
                     </DialogHeader>
 
-                    <div className="relative w-full h-full flex items-center justify-center min-h-[50vh] max-h-[90vh]">
+                    <div className="relative w-full h-full flex items-center justify-center min-h-[40vh] md:min-h-[50vh]">
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="absolute top-6 right-6 h-12 w-12 rounded-full bg-white/10 text-white hover:bg-white/20 z-50 backdrop-blur-md border border-white/10"
+                            className="absolute top-4 right-4 md:top-6 md:right-6 h-10 w-10 md:h-12 md:w-12 rounded-full bg-white/10 text-white hover:bg-white/20 z-50 backdrop-blur-md border border-white/10"
                             onClick={() => setSelectedMedia(null)}
                         >
-                            <X className="h-6 w-6" />
+                            <X className="h-5 w-5 md:h-6 md:w-6" />
                         </Button>
 
                         {selectedMedia?.type === 'image' ? (
-                            <div className="relative w-full h-full aspect-[16/9]">
+                            <div className="relative w-full h-full aspect-[4/3] md:aspect-[16/9]">
                                 <Image
                                     src={selectedMedia.url}
                                     alt={title}
@@ -147,20 +147,22 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
                                 />
                             </div>
                         ) : (
-                            <video
-                                src={selectedMedia?.url}
-                                className="w-full h-full max-h-[85vh]"
-                                controls
-                                autoPlay
-                            />
+                            <div className="w-full flex items-center justify-center p-4">
+                                <video
+                                    src={selectedMedia?.url}
+                                    className="w-full h-auto max-h-[70vh] md:max-h-[85vh] rounded-xl md:rounded-3xl"
+                                    controls
+                                    autoPlay
+                                />
+                            </div>
                         )}
 
-                        <div className="absolute bottom-8 left-8 right-8 flex items-center justify-between">
-                            <div className="bg-black/60 backdrop-blur-xl px-6 py-3 rounded-2xl border border-white/10">
-                                <p className="text-white font-black uppercase tracking-widest text-sm">{title}</p>
-                                <div className="flex items-center gap-4 mt-2">
-                                    <span className="flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-widest">
-                                        {selectedMedia?.type === 'image' ? <Camera className="h-3 w-3" /> : <VideoIcon className="h-3 w-3" />}
+                        <div className="absolute bottom-4 left-4 right-4 md:bottom-8 md:left-8 md:right-8 flex items-center justify-between pointer-events-none">
+                            <div className="bg-black/60 backdrop-blur-xl px-4 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl border border-white/10">
+                                <p className="text-white font-black uppercase tracking-widest text-[10px] md:text-sm truncate max-w-[150px] md:max-w-none">{title}</p>
+                                <div className="flex items-center gap-2 md:gap-4 mt-1 md:mt-2">
+                                    <span className="flex items-center gap-1 md:gap-2 text-white/40 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">
+                                        {selectedMedia?.type === 'image' ? <Camera className="h-2 w-2 md:h-3 md:w-3" /> : <VideoIcon className="h-2 w-2 md:h-3 md:w-3" />}
                                         {selectedMedia?.type}
                                     </span>
                                 </div>

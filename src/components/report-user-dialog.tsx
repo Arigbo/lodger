@@ -81,7 +81,7 @@ export function ReportUserDialog({ isOpen, onClose, reportedUserId, reportedUser
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[425px] rounded-2xl border-2 border-destructive/20">
+            <DialogContent className="sm:max-w-[425px] w-[95vw] rounded-2xl border-2 border-destructive/20">
                 <DialogHeader>
                     <div className="flex items-center gap-3 text-destructive mb-2">
                         <div className="p-2 bg-destructive/10 rounded-full">

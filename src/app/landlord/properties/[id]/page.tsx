@@ -54,7 +54,9 @@ import {
   User,
   Users,
   GraduationCap,
-  Flag
+  Flag,
+  Share2,
+  Heart
 } from 'lucide-react';
 import type { Property, UserProfile, RentalApplication, PropertyReview } from '@/types';
 import Link from 'next/link';
@@ -275,9 +277,21 @@ export default function LandlordPropertyDetailPage() {
                 )}
               </div>
               <div className="space-y-4">
-                <h1 className="text-3xl md:text-6xl font-black tracking-tight text-foreground leading-tight uppercase font-headline">
-                  {property.title}
-                </h1>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <h1 className="text-3xl md:text-6xl font-black tracking-tight text-foreground leading-tight uppercase font-headline">
+                    {property.title}
+                  </h1>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-14 w-14 rounded-2xl border-2 bg-white hover:border-primary/20 transition-all hover:scale-105"
+                      onClick={() => setShowShareModal(true)}
+                    >
+                      <Share2 className="h-6 w-6" />
+                    </Button>
+                  </div>
+                </div>
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-muted-foreground font-bold">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-5 w-5 text-primary" />
@@ -292,19 +306,6 @@ export default function LandlordPropertyDetailPage() {
               </div>
             </div>
 
-            {/* Dedicated Media Gallery Section */}
-            <div className="space-y-8 pt-8 border-t border-border/50">
-              <div>
-                <h3 className="text-2xl font-black tracking-tight uppercase tracking-tighter">Property Gallery</h3>
-                <p className="text-sm text-muted-foreground font-medium mt-1">Explore all photos and video walkthroughs of this property</p>
-              </div>
-
-              <PropertyGallery
-                images={property.images}
-                videos={property.videos}
-                title={property.title}
-              />
-            </div>
 
             {/* Specs Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -323,13 +324,21 @@ export default function LandlordPropertyDetailPage() {
             </div>
 
             {/* Tabs */}
-            <Tabs defaultValue="overview" className="w-full">
+            <Tabs defaultValue="gallery" className="w-full">
               <TabsList className="w-full justify-start bg-transparent border-b rounded-none px-0 h-auto gap-8 mb-8">
+                <TabsTrigger value="gallery" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Gallery</TabsTrigger>
                 <TabsTrigger value="overview" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Overview</TabsTrigger>
                 <TabsTrigger value="amenities" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Amenities</TabsTrigger>
                 <TabsTrigger value="rules" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">House Rules</TabsTrigger>
                 <TabsTrigger value="reviews" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Reviews</TabsTrigger>
               </TabsList>
+              <TabsContent value="gallery" className="mt-0 space-y-6">
+                <PropertyGallery
+                  images={property.images}
+                  videos={property.videos}
+                  title={property.title}
+                />
+              </TabsContent>
               <TabsContent value="overview" className="mt-0 space-y-6">
                 <h3 className="text-2xl font-black tracking-tight uppercase">About this property</h3>
                 <p className="text-lg text-muted-foreground font-medium leading-relaxed">
@@ -585,6 +594,12 @@ export default function LandlordPropertyDetailPage() {
           reportedUserName={tenant.name}
         />
       )}
+      <SharePropertyModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        propertyId={id}
+        propertyTitle={property.title}
+      />
     </div>
   );
 }

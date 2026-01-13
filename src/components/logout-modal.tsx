@@ -20,7 +20,7 @@ interface LogoutModalProps {
 export function LogoutModal({ open, onOpenChange, onConfirm }: LogoutModalProps) {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
-            <AlertDialogContent className="rounded-[3rem] p-10 border-none shadow-3xl bg-white/95 backdrop-blur-xl">
+            <AlertDialogContent className="w-[95vw] sm:w-full max-w-lg rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 border-none shadow-3xl bg-white/95 backdrop-blur-xl">
                 <AlertDialogHeader className="space-y-4">
                     <AlertDialogTitle className="text-3xl font-black uppercase tracking-tight">
                         PROTOCOL <span className="text-destructive">TERMINATION.</span>

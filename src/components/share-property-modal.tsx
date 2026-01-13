@@ -54,7 +54,7 @@ export function SharePropertyModal({ isOpen, onClose, propertyId, propertyTitle 
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-md rounded-[2rem] p-0 overflow-hidden border-2 border-primary/20">
+            <DialogContent className="sm:max-w-md w-[95vw] rounded-[2rem] p-0 overflow-hidden border-2 border-primary/20">
                 <div className="bg-primary/5 p-8 text-center space-y-4">
                     <div className="mx-auto bg-white p-4 rounded-full w-20 h-20 flex items-center justify-center shadow-xl mb-4 animate-in zoom-in duration-500">
                         <Share2 className="h-10 w-10 text-primary" />
