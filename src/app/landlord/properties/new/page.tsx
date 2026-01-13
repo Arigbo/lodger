@@ -250,22 +250,20 @@ const FileUpload = ({ field, label, description, icon: Icon, onUpload, onAnalysi
                         }
                     } else if (response.status === 429) {
                         toast({
-                            variant: "destructive",
-                            title: "Rate Limit Exceeded",
-                            description: "Too many requests. Please wait a moment and try again.",
+                            title: "Verification Skipped",
+                            description: "AI check momentarily unavailable. Image accepted.",
                         });
-                        field.onChange(null);
+                        // Allow upload to proceed without verification
                     } else {
                         throw new Error('Moderation check failed');
                     }
                 } catch (error) {
                     console.error("Moderation API error:", error);
                     toast({
-                        variant: "destructive",
-                        title: "Moderation Failed",
-                        description: "Unable to verify image safety. Please try again.",
+                        title: "Verification Skipped",
+                        description: "Unable to verify image safety. Image accepted.",
                     });
-                    field.onChange(null);
+                    // Allow upload to proceed without verification
                 }
                 setIsScanning(false);
             };
