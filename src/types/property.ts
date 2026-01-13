@@ -20,6 +20,7 @@ export type Property = {
     area: number; // in sqft
     amenities: string[];
     images: string[];
+    videos?: string[];
     landlordId: string;
     status: 'available' | 'occupied';
     rules: string[];
