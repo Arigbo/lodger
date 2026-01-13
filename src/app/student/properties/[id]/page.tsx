@@ -403,7 +403,7 @@ export default function PropertyDetailPage() {
             />
 
             {/* Back Button */}
-            <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-8">
+            <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-0">
                 <Button
                     variant="ghost"
                     size="sm"
