@@ -109,7 +109,14 @@ export default function PaymentDialog({
           amount: totalAmount,
           currency,
           landlordId,
-          destinationAccountId,
+          metadata: {
+            tenantId,
+            propertyId,
+            tenantName,
+            months: months.toString(),
+            type: metadata.type || 'Rent',
+            ...metadata
+          }
         }),
       });
 
@@ -118,7 +125,7 @@ export default function PaymentDialog({
         setClientSecret(data.clientSecret);
         setStep(3);
       } else {
-        throw new Error(data.error || 'Failed to initialize payment');
+        throw new Error(data.message || data.error || 'Failed to initialize payment');
       }
     } catch (error: any) {
       console.error("Stripe Init Error:", error);

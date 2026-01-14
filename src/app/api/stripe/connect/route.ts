@@ -15,30 +15,42 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'User ID required' }, { status: 400 });
         }
 
-        // In a real app, verify the request is from the authenticated user.
+        // 1. Verify Authentication & Existence
+        if (!adminAuth || !adminFirestore) {
+            return NextResponse.json({ error: 'Server initialization error' }, { status: 500 });
+        }
 
-        // 1. Create a Stripe Account (Express)
-        // Ideally check if user already has one in Firestore first.
-        // For simplicity, we'll create a new one or expect the frontend to pass existing ID.
-        // Let's rely on the frontend passing current status, or better yet, do a check here if we had Admin SDK.
-        // We will assume a new account for now or passed ID.
+        const userDocRef = adminFirestore.collection('users').doc(userId);
+        const userDoc = await userDocRef.get();
 
-        let accountId;
-        // Check local DB? We don't have Admin SDK easily accessible in this context maybe?
-        // Let's create an account.
+        if (!userDoc.exists) {
+            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
 
-        const account = await stripe.accounts.create({
-            type: 'express',
-            country: 'US', // Defaulting to US for this demo
-            email: email,
-            capabilities: {
-                card_payments: { requested: true },
-                transfers: { requested: true },
-            },
-        });
-        accountId = account.id;
+        const userData = userDoc.data();
+        let accountId = userData?.stripeAccountId;
 
-        // 2. Create an Account Link (Onboarding flow)
+        // 2. Create or Retrieve Stripe Account
+        if (!accountId) {
+            const account = await stripe.accounts.create({
+                type: 'express',
+                country: 'US', // Defaulting to US for this demo, could be dynamic based on userData.country
+                email: email || userData?.email,
+                capabilities: {
+                    card_payments: { requested: true },
+                    transfers: { requested: true },
+                },
+                metadata: {
+                    userId: userId
+                }
+            });
+            accountId = account.id;
+
+            // Save to Firestore immediately
+            await userDocRef.update({ stripeAccountId: accountId });
+        }
+
+        // 3. Create an Account Link (Onboarding flow)
         const accountLink = await stripe.accountLinks.create({
             account: accountId,
             refresh_url: `${request.headers.get('origin')}/landlord/account`,
@@ -48,7 +60,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             url: accountLink.url,
-            accountId: accountId // Send back so frontend can save it to Firestore
+            accountId: accountId
         });
 
     } catch (error: any) {

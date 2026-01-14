@@ -63,6 +63,10 @@ function LandlordOverview() {
     }
   }, [userProfile, toast]);
 
+  useEffect(() => {
+    // Logic for checking overall status could go here
+  }, []);
+
   const propertiesQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(collection(firestore, 'properties'), where('landlordId', '==', user.uid));
@@ -115,6 +119,33 @@ function LandlordOverview() {
           </div>
         </div>
       </div>
+
+      {/* Stripe Connection Status Banner */}
+      {!userProfile?.stripeAccountId && (
+        <Card className="mx-4 overflow-hidden border-none bg-orange-500/5 shadow-xl shadow-orange-500/5 rounded-[2rem]">
+          <div className="flex flex-col md:flex-row items-center gap-8 p-8 md:p-10">
+            <div className="h-20 w-20 rounded-3xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+              <Wallet className="h-10 w-10 text-orange-600" />
+            </div>
+            <div className="flex-1 space-y-2 text-center md:text-left">
+              <h3 className="font-black text-2xl uppercase tracking-tight text-orange-900">Financial Sync Required</h3>
+              <p className="text-orange-800/70 font-medium max-w-2xl leading-relaxed">
+                Connect your Stripe account to enable automated rent collection. Tenants will be unable to pay via credit card until setup is complete.
+              </p>
+            </div>
+            <Button asChild size="lg" className="h-16 px-10 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-600/20">
+              <Link href="/landlord/account">COMPLETE SETUP</Link>
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {userProfile?.stripeAccountId && (
+        <div className="mx-4 px-8 py-4 rounded-3xl bg-green-500/5 border border-green-500/10 flex items-center gap-4">
+          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+          <p className="text-[10px] font-black uppercase tracking-widest text-green-700">Financial Systems Active & Synchronized</p>
+        </div>
+      )}
 
       {/* Modern Stats Overlay */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 -mt-8 mx-4">

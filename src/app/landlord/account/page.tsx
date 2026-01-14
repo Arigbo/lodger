@@ -236,19 +236,32 @@ export default function AccountPage() {
             });
             const data = await response.json();
             if (data.url) {
-                // If we got a new account ID, initiate save immediately or rely on return?
-                // The API returns { url, accountId }. Better to save accountId now IF it's new, 
-                // but simpler to rely on the return_url param logic we just added above.
-                // Actually, saving it now is safer in case they drop off during onboarding but account exists.
-                if (data.accountId && userDocRef) {
-                    await setDoc(userDocRef, { stripeAccountId: data.accountId }, { merge: true });
-                }
                 window.location.href = data.url;
             } else {
                 throw new Error(data.error || "Failed to get onboarding link");
             }
         } catch (error: any) {
             console.error("Stripe Connect Error:", error);
+            toast({ variant: "destructive", title: "Error", description: error.message });
+        }
+    }
+
+    const handleGoToStripeDashboard = async () => {
+        if (!userProfile?.stripeAccountId) return;
+        try {
+            const response = await fetch('/api/stripe/dashboard', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accountId: userProfile.stripeAccountId }),
+            });
+            const data = await response.json();
+            if (data.url) {
+                window.open(data.url, '_blank');
+            } else {
+                throw new Error(data.error || "Failed to get dashboard link");
+            }
+        } catch (error: any) {
+            console.error("Stripe Dashboard Error:", error);
             toast({ variant: "destructive", title: "Error", description: error.message });
         }
     }
@@ -528,18 +541,41 @@ export default function AccountPage() {
                                 </CardHeader>
                                 <CardContent className="p-10 space-y-6">
                                     {userProfile?.stripeAccountId ? (
-                                        <div className="space-y-4">
+                                        <div className="space-y-6">
                                             {stripeAccountStatus.status === 'active' ? (
-                                                <div className="flex items-center justify-between p-8 rounded-[2rem] bg-green-500/5 border-2 border-green-500/10">
-                                                    <div className="flex items-center gap-6">
-                                                        <div className="h-14 w-14 rounded-2xl bg-green-500/10 flex items-center justify-center">
-                                                            <Wallet className="h-7 w-7 text-green-600" />
+                                                <div className="flex flex-col gap-6">
+                                                    <div className="flex items-center justify-between p-8 rounded-[2rem] bg-green-500/5 border-2 border-green-500/10">
+                                                        <div className="flex items-center gap-6">
+                                                            <div className="h-14 w-14 rounded-2xl bg-green-500/10 flex items-center justify-center">
+                                                                <Wallet className="h-7 w-7 text-green-600" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-black uppercase tracking-tight text-green-900">STRIPE ACTIVE</p>
+                                                                <p className="text-sm font-medium text-green-700/80">{stripeAccountStatus.message}</p>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <p className="font-black uppercase tracking-tight text-green-900">STRIPE ACTIVE</p>
-                                                            <p className="text-sm font-medium text-green-700/80">{stripeAccountStatus.message}</p>
-                                                        </div>
+                                                        <div className="hidden md:block h-3 w-3 rounded-full bg-green-500 animate-pulse" />
                                                     </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <Button
+                                                            onClick={handleGoToStripeDashboard}
+                                                            variant="outline"
+                                                            className="h-14 rounded-2xl font-black text-xs uppercase tracking-widest border-2 hover:bg-muted/50 transition-all"
+                                                        >
+                                                            STREAMS & DISBURSEMENTS
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            className="h-14 rounded-2xl font-black text-xs uppercase tracking-widest border-2 opacity-50 cursor-not-allowed"
+                                                            disabled
+                                                        >
+                                                            DOWNLOAD TAX DOCUMENTS
+                                                        </Button>
+                                                    </div>
+                                                    <p className="text-xs font-medium text-muted-foreground/60 text-center uppercase tracking-widest">
+                                                        Partner ID: {userProfile.stripeAccountId}
+                                                    </p>
                                                 </div>
                                             ) : (
                                                 <div className="flex flex-col gap-6 p-8 rounded-[2rem] bg-orange-500/5 border-2 border-orange-500/10">
@@ -548,24 +584,46 @@ export default function AccountPage() {
                                                             <Clock className="h-7 w-7 text-orange-600" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-black uppercase tracking-tight text-orange-900">PENDING VERIFICATION</p>
+                                                            <p className="font-black uppercase tracking-tight text-orange-900">VERIFICATION PENDING</p>
                                                             <p className="text-sm font-medium text-orange-700/80">{stripeAccountStatus.message}</p>
                                                         </div>
                                                     </div>
-                                                    <Button onClick={handleConnectStripe} className="h-14 rounded-xl bg-orange-600 text-white font-black text-xs uppercase tracking-widest">
-                                                        COMPLETE STRIPE SETUP
-                                                    </Button>
+                                                    <div className="flex flex-col md:flex-row gap-4">
+                                                        <Button onClick={handleConnectStripe} className="flex-1 h-14 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-600/20">
+                                                            RESUME REGISTRATION
+                                                        </Button>
+                                                        <Button onClick={handleGoToStripeDashboard} variant="outline" className="flex-1 h-14 rounded-2xl border-2 font-black text-xs uppercase tracking-widest">
+                                                            CHECK STRIPE STATUS
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
                                     ) : (
-                                        <div className="space-y-6">
-                                            <p className="text-lg font-medium text-muted-foreground leading-relaxed">
-                                                To receive payments from tenants, you must synchronize a Stripe account.
-                                                This allows secure, direct transfers to your verified bank.
-                                            </p>
-                                            <Button onClick={handleConnectStripe} size="lg" className="h-16 px-10 rounded-2xl bg-[#635BFF] hover:bg-[#635BFF]/90 text-white font-black transition-all shadow-xl shadow-[#635BFF]/20">
+                                        <div className="space-y-8">
+                                            <div className="space-y-4">
+                                                <p className="text-lg font-medium text-muted-foreground leading-relaxed">
+                                                    To receive payments from tenants, you must synchronize a verified Stripe account.
+                                                    This enables secure, direct transfers to your bank and automated rent collection.
+                                                </p>
+                                                <ul className="space-y-3 font-sans font-semibold text-muted-foreground/80">
+                                                    <li className="flex items-center gap-3">
+                                                        <div className="h-2 w-2 rounded-full bg-primary" />
+                                                        Automated monthly rent collection
+                                                    </li>
+                                                    <li className="flex items-center gap-3">
+                                                        <div className="h-2 w-2 rounded-full bg-primary" />
+                                                        Direct bank deposits (Daily/Weekly)
+                                                    </li>
+                                                    <li className="flex items-center gap-3">
+                                                        <div className="h-2 w-2 rounded-full bg-primary" />
+                                                        Professional tax documentation
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <Button onClick={handleConnectStripe} size="lg" className="h-16 px-12 rounded-2xl bg-[#635BFF] hover:bg-[#635BFF]/90 text-white font-black transition-all shadow-xl shadow-[#635BFF]/20 group">
                                                 CONNECT WITH STRIPE
+                                                <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
                                             </Button>
                                         </div>
                                     )}
