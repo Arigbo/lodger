@@ -56,6 +56,7 @@ export default function TenancyDetailPage() {
         isLeaseActive: boolean;
         isLeaseExpired: boolean;
         isRentDue: boolean;
+        isAwaitingActivation: boolean;
         rentStatusText: string;
         rentDueDateText: string;
         hasPendingPayments: boolean;
@@ -73,39 +74,64 @@ export default function TenancyDetailPage() {
 
             // Only execute activation logic if the lease is currently pending
             if (lease.status === 'pending') {
-                // 1. Activate Lease
                 const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
-                await updateDoc(leaseRef, {
-                    status: 'active',
-                    paymentMethod: details.method.toLowerCase(),
-                    paymentConfirmed: details.method === 'Stripe'
-                });
+                const isOffline = details.method === 'Offline';
 
-                // 2. Update Property to Occupied
-                const propertyRef = doc(firestore, 'properties', property.id);
-                await updateDoc(propertyRef, {
-                    status: 'occupied',
-                    currentTenantId: user.uid,
-                    leaseStartDate: new Date().toISOString(),
-                });
+                if (isOffline) {
+                    // For offline, we don't activate yet, just record the selection
+                    await updateDoc(leaseRef, {
+                        paymentMethod: 'offline',
+                        paymentConfirmed: false,
+                        offlinePaymentAmount: details.amount,
+                        offlinePaymentMonths: details.months
+                    });
 
-                // 3. Notify Landlord
-                const { sendNotification } = await import('@/lib/notifications');
-                await sendNotification({
-                    toUserId: lease.landlordId,
-                    type: 'LEASE_SIGNED',
-                    firestore: firestore,
-                    propertyName: property.title,
-                    link: `/landlord/leases/${lease.id}`,
-                    customMessage: `${user.displayName || 'Tenant'} has signed the lease and paid the first month's rent.`
-                });
+                    // Send notification for offline verification
+                    const { sendNotification } = await import('@/lib/notifications');
+                    await sendNotification({
+                        toUserId: lease.landlordId,
+                        type: 'OFFLINE_PAYMENT_PENDING',
+                        firestore: firestore,
+                        propertyName: property.title,
+                        link: `/landlord/requests`
+                    });
 
-                toast({
-                    title: "Tenancy Activated",
-                    description: details.method === 'Stripe'
-                        ? "Your lease is now active and your payment has been confirmed."
-                        : "Your lease is being activated. Documentation has been sent to your landlord for verification."
-                });
+                    toast({
+                        title: "Offline Payment Recorded",
+                        description: "Waiting for landlord to confirm payment receipt. Your lease will be activated once verified."
+                    });
+                } else {
+                    // 1. Activate Lease (Stripe)
+                    await updateDoc(leaseRef, {
+                        status: 'active',
+                        paymentMethod: 'stripe',
+                        paymentConfirmed: true
+                    });
+
+                    // 2. Update Property to Occupied
+                    const propertyRef = doc(firestore, 'properties', property.id);
+                    await updateDoc(propertyRef, {
+                        status: 'occupied',
+                        currentTenantId: user.uid,
+                        leaseStartDate: new Date().toISOString(),
+                    });
+
+                    // 3. Notify Landlord
+                    const { sendNotification } = await import('@/lib/notifications');
+                    await sendNotification({
+                        toUserId: lease.landlordId,
+                        type: 'LEASE_SIGNED',
+                        firestore: firestore,
+                        propertyName: property.title,
+                        link: `/landlord/leases/${lease.id}`,
+                        customMessage: `${user.displayName || 'Tenant'} has signed the lease and paid the first month's rent.`
+                    });
+
+                    toast({
+                        title: "Tenancy Activated",
+                        description: "Your lease is now active and your payment has been confirmed."
+                    });
+                }
             } else {
                 // Regular rent payment for an active lease
                 toast({
@@ -200,17 +226,20 @@ export default function TenancyDetailPage() {
             (t.status === 'Pending' || t.status === 'Pending Verification')
         );
 
+        const isAwaitingActivation = lease?.status === 'pending' && lease?.tenantSigned && !lease?.paymentMethod;
+
         setTenancyState({
             isLeaseActive,
             isLeaseExpired,
             isRentDue,
+            isAwaitingActivation,
             rentDueDateText: format(nextRentDueDate, 'MMMM do, yyyy'),
             rentStatusText: isRentDue ? 'Rent is currently overdue' : 'Next rent payment scheduled',
             leaseEndDate,
             leaseStartDate,
             paymentAmount: property.price,
             hasPendingPayments,
-            showPayButton: isLeaseActive && isRentDue && !hasPendingPayments
+            showPayButton: (isLeaseActive && isRentDue && !hasPendingPayments) || isAwaitingActivation
         });
     }, [transactions, areTransactionsLoading, lease, isLeaseLoading, property]);
 
@@ -255,9 +284,9 @@ export default function TenancyDetailPage() {
                             <div className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-amber-500/10 text-amber-600 rounded-xl sm:rounded-2xl font-black text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest border border-amber-500/20">
                                 <Clock className="h-3 w-3" /> <span className="whitespace-nowrap">Pending</span>
                             </div>
-                        ) : tenancyState?.isRentDue && tenancyState.isLeaseActive && (
+                        ) : tenancyState?.showPayButton && (
                             <Button onClick={() => setIsPaymentDialogOpen(true)} size="lg" className="w-full sm:w-auto h-11 sm:h-12 md:h-14 rounded-xl sm:rounded-2xl px-4 sm:px-6 md:px-12 font-black text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest shadow-2xl shadow-primary/20 transition-all hover:shadow-primary/40 hover:-translate-y-1">
-                                <DollarSign className="mr-1 sm:mr-2 h-3 w-3" /> <span className="whitespace-nowrap">Pay Rent</span>
+                                <DollarSign className="mr-1 sm:mr-2 h-3 w-3" /> <span className="whitespace-nowrap">Pay</span>
                             </Button>
                         )}
                         <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 md:h-14 rounded-xl sm:rounded-2xl px-4 sm:px-6 md:px-12 font-black text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest border-2" onClick={handleMessageLandlord}>

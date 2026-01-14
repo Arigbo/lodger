@@ -128,11 +128,11 @@ export default function ViewLandlordLeasePage() {
                         )}
                     </div>
                     <div className="flex justify-center gap-4">
-                        <Button asChild variant="outline">
+                        <Button asChild variant="outline" className="rounded-xl">
                             <Link href="/landlord/leases">Return to Leases</Link>
                         </Button>
-                        <Button variant="ghost" onClick={() => window.location.reload()}>
-                            Retry
+                        <Button variant="default" className="rounded-xl" onClick={() => window.location.reload()}>
+                            Retry / Force Refresh
                         </Button>
                     </div>
                 </div>
@@ -222,8 +222,8 @@ export default function ViewLandlordLeasePage() {
                         <div className="relative bg-white border-2 border-foreground/5 shadow-2xl rounded-[3rem] p-8 md:p-12 min-h-[600px] flex flex-col">
                             <div className="flex justify-between items-start mb-12">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] sr-only text-transparent">DOCUMENT ID</p>
-                                    <p className="font-mono text-xs opacity-60 sr-only text-transparent">#{lease.id.toUpperCase()}</p>
+                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">DOCUMENT ID</p>
+                                    <p className="font-mono text-[10px] opacity-60">#{lease.id.toUpperCase()}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">ISSUE DATE</p>
