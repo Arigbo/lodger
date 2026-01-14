@@ -228,6 +228,11 @@ export default function TenancyDetailPage() {
 
         const isAwaitingActivation = lease?.status === 'pending' && lease?.tenantSigned && !lease?.paymentMethod;
 
+        // An offline payment is pending if it's selected but not confirmed, and there's no actual transaction record yet
+        const isOfflineActivationPending = lease?.status === 'pending' && lease?.paymentMethod === 'offline' && !lease?.paymentConfirmed;
+
+        const hasAnyPendingPayments = hasPendingPayments || isOfflineActivationPending;
+
         setTenancyState({
             isLeaseActive,
             isLeaseExpired,
@@ -238,8 +243,8 @@ export default function TenancyDetailPage() {
             leaseEndDate,
             leaseStartDate,
             paymentAmount: property.price,
-            hasPendingPayments,
-            showPayButton: (isLeaseActive && isRentDue && !hasPendingPayments) || isAwaitingActivation
+            hasPendingPayments: hasAnyPendingPayments,
+            showPayButton: (isLeaseActive || (lease?.status === 'pending' && lease?.tenantSigned)) && !hasAnyPendingPayments
         });
     }, [transactions, areTransactionsLoading, lease, isLeaseLoading, property]);
 
