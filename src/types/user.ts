@@ -18,6 +18,7 @@ export type UserProfile = {
     bookmarkedPropertyIds?: string[];
     avatarType?: 'photo' | 'avatar' | 'character';
     avatarValue?: string;
+    stripeDetailsSubmitted?: boolean;
 };
 
 export type User = UserProfile;

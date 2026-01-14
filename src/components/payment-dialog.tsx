@@ -258,29 +258,31 @@ export default function PaymentDialog({
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
-                  <button
-                    onClick={() => {
-                      setPaymentMethod('Stripe');
-                      initStripePayment();
-                    }}
-                    disabled={isProcessing}
-                    className="flex items-center justify-between p-6 rounded-3xl border-2 border-muted/10 hover:border-primary hover:bg-primary/5 transition-all text-left group disabled:opacity-50"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-2xl bg-muted/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                        <CreditCard className="h-6 w-6" />
+                  {destinationAccountId && (
+                    <button
+                      onClick={() => {
+                        setPaymentMethod('Stripe');
+                        initStripePayment();
+                      }}
+                      disabled={isProcessing}
+                      className="flex items-center justify-between p-6 rounded-3xl border-2 border-muted/10 hover:border-primary hover:bg-primary/5 transition-all text-left group disabled:opacity-50"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-2xl bg-muted/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                          <CreditCard className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-lg">Pay with Card</p>
+                          <p className="text-xs text-muted-foreground">Secure payment via Stripe (Visa, Mastercard, etc.)</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-lg">Pay with Card</p>
-                        <p className="text-xs text-muted-foreground">Secure payment via Stripe (Visa, Mastercard, etc.)</p>
-                      </div>
-                    </div>
-                    {isProcessing && paymentMethod === 'Stripe' ? (
-                      <div className="h-5 w-5 border-2 border-primary border-t-transparent animate-spin rounded-full" />
-                    ) : (
-                      <CheckCircle className="h-6 w-6 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                    )}
-                  </button>
+                      {isProcessing && paymentMethod === 'Stripe' ? (
+                        <div className="h-5 w-5 border-2 border-primary border-t-transparent animate-spin rounded-full" />
+                      ) : (
+                        <CheckCircle className="h-6 w-6 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                      )}
+                    </button>
+                  )}
 
                   <button
                     onClick={() => {

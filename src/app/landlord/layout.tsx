@@ -11,7 +11,7 @@ import type { UserProfile } from '@/types';
 import Loading from '@/app/loading';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, AlertCircle, ArrowRight } from "lucide-react";
+import { Menu, AlertCircle, ArrowRight, X } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
@@ -24,6 +24,7 @@ export default function LandlordLayout({
   const firestore = useFirestore();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isStripeWarningDismissed, setIsStripeWarningDismissed] = useState(false);
   const pathname = usePathname();
 
   // Dynamic Title Logic
@@ -73,7 +74,7 @@ export default function LandlordLayout({
         <title>{`Lodger | ${getPageTitle(pathname)}`}</title>
 
         {/* Stripe Onboarding Warning */}
-        {showStripeWarning && (
+        {showStripeWarning && !isStripeWarningDismissed && (
           <div className="bg-amber-600 text-white px-4 py-3 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-center sm:text-left animate-in fade-in slide-in-from-top duration-500 sticky top-0 z-50 shadow-lg">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 shrink-0" />
@@ -84,12 +85,21 @@ export default function LandlordLayout({
             <p className="text-[10px] sm:text-xs font-bold opacity-90 max-w-lg">
               You must finish your Stripe onboarding to accept payments from tenants.
             </p>
-            <Link
-              href="/landlord/account"
-              className="flex items-center gap-2 bg-white text-amber-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-amber-50 transition-colors shadow-sm"
-            >
-              Complete Setup <ArrowRight className="h-3 w-3" />
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/landlord/account"
+                className="flex items-center gap-2 bg-white text-amber-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-amber-50 transition-colors shadow-sm"
+              >
+                Complete Setup <ArrowRight className="h-3 w-3" />
+              </Link>
+              <button
+                onClick={() => setIsStripeWarningDismissed(true)}
+                className="p-1 hover:bg-white/10 rounded-full transition-colors"
+                aria-label="Dismiss warning"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         )}
 
