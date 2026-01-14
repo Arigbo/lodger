@@ -37,7 +37,7 @@ import type { LeaseAgreement } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import Image from 'next/image';
-import { UploadCloud, X, Loader2, Building, RefreshCw, AlertCircle, FileVideo, Video, Wifi, Car, Waves, Dumbbell, Home, Utensils, Sofa, ShieldCheck, Sparkles, Bath, BedDouble, ArrowRight } from 'lucide-react';
+import { UploadCloud, X, Loader2, Building, RefreshCw, AlertCircle, FileVideo, Video, Wifi, Car, Waves, Dumbbell, Home, Utensils, Sofa, ShieldCheck, Sparkles, Bath, BedDouble, ArrowRight, Image as ImageIcon } from 'lucide-react';
 import Loading from '@/app/loading';
 import Link from 'next/link';
 import { Combobox } from '@/components/ui/combobox';
