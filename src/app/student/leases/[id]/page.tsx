@@ -470,7 +470,7 @@ export default function ViewStudentLeasePage() {
                                         </div>
 
                                         <Button className="w-full h-16 rounded-2xl bg-white text-primary hover:bg-white/90 font-black text-lg gap-3 shadow-2xl transition-all hover:scale-[1.02]" onClick={() => setIsPaymentOpen(true)}>
-                                            <CheckCircle2 className="h-6 w-6" /> PROCEED TO PAYMENT
+                                            <DollarSign className="h-6 w-6" /> Pay
                                         </Button>
                                     </div>
                                 </div>
@@ -507,7 +507,7 @@ export default function ViewStudentLeasePage() {
                                         </p>
                                     </div>
                                     <Button className="w-full h-16 rounded-2xl bg-foreground text-white hover:bg-foreground/90 font-black text-lg gap-3 shadow-xl transition-all hover:scale-[1.02]" onClick={() => setIsPaymentOpen(true)}>
-                                        Make Payment
+                                        Pay
                                     </Button>
                                     <p className="text-[10px] text-center font-bold text-muted-foreground/40 uppercase tracking-widest">
                                         Next Due Date: {format(new Date(), 'MMM dd, yyyy')}
