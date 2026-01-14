@@ -46,7 +46,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { amenities as allAmenities } from '@/types';
 import { cn, formatPrice } from '@/utils';
-import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileVideo, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon, Sparkles, Building, Loader2, Ruler, AlertCircle, Wifi, Car, AirVent, Dumbbell, Waves, Layout, ShieldCheck, Video, Play } from 'lucide-react';
+import { ArrowLeft, ArrowRight, UploadCloud, FileImage, FileVideo, FileText, Utensils, Sofa, Bath, BedDouble, Image as ImageIcon, Sparkles, Building, Loader2, Ruler, AlertCircle, Wifi, Car, AirVent, Dumbbell, Waves, Layout, ShieldCheck, Video, Play, Home, RefreshCw } from 'lucide-react';
 import type { Property, UserProfile } from '@/types';
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { useRouter } from 'next/navigation';
@@ -1027,48 +1027,74 @@ export default function AddPropertyPage() {
                                                 render={() => (
                                                     <FormItem>
                                                         <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-6 block">Select Amenities</FormLabel>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                            {[
-                                                                { id: 'wifi', label: 'WiFi', icon: Wifi },
-                                                                { id: 'parking', label: 'Parking', icon: Car },
-                                                                { id: 'kitchen', label: 'Kitchen', icon: Utensils },
-                                                                { id: 'ac', label: 'Air Conditioning', icon: AirVent },
-                                                                { id: 'gym', label: 'Gym', icon: Dumbbell },
-                                                                { id: 'pool', label: 'Pool', icon: Waves },
-                                                            ].map((amenity) => (
-                                                                <FormField
-                                                                    key={amenity.id}
-                                                                    control={form.control}
-                                                                    name="amenities"
-                                                                    render={({ field }) => {
-                                                                        return (
-                                                                            <FormItem className="flex flex-row items-center space-x-4 space-y-0 p-4 md:p-6 rounded-2xl md:rounded-[2rem] border-2 border-transparent bg-muted/10 overflow-hidden transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-xl">
-                                                                                <div className="p-2 md:p-3 rounded-xl bg-white shadow-sm">
-                                                                                    <amenity.icon className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                                                                                </div>
-                                                                                <div className="flex-1 space-y-1">
-                                                                                    <FormLabel className="text-[10px] font-black uppercase tracking-[0.2em] cursor-pointer">{amenity.label}</FormLabel>
-                                                                                </div>
-                                                                                <FormControl>
-                                                                                    <Checkbox
-                                                                                        checked={field.value?.includes(amenity.id)}
-                                                                                        onCheckedChange={(checked) => {
-                                                                                            return checked
-                                                                                                ? field.onChange([...field.value, amenity.id])
-                                                                                                : field.onChange(
-                                                                                                    field.value?.filter(
-                                                                                                        (value) => value !== amenity.id
-                                                                                                    )
-                                                                                                )
-                                                                                        }}
-                                                                                        className="h-5 w-5 md:h-6 md:w-6 rounded-lg border-2"
-                                                                                    />
-                                                                                </FormControl>
-                                                                            </FormItem>
-                                                                        )
-                                                                    }}
-                                                                />
-                                                            ))}
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                                                            {allAmenities.map((amenity) => {
+                                                                // Dynamic icon mapping based on common amenity names
+                                                                const getIcon = (name: string) => {
+                                                                    const n = name.toLowerCase();
+                                                                    if (n.includes('wi-fi')) return Wifi;
+                                                                    if (n.includes('parking')) return Car;
+                                                                    if (n.includes('laundry')) return RefreshCw;
+                                                                    if (n.includes('gym')) return Dumbbell;
+                                                                    if (n.includes('pool')) return Waves;
+                                                                    if (n.includes('yard')) return Home;
+                                                                    if (n.includes('pet')) return ShieldCheck; // or PawPrint if imported
+                                                                    if (n.includes('furnished')) return Sofa;
+                                                                    if (n.includes('secure')) return ShieldCheck;
+                                                                    if (n.includes('rooftop')) return Building;
+                                                                    if (n.includes('utilities')) return Sparkles;
+                                                                    if (n.includes('dishwasher')) return Utensils;
+                                                                    return Sparkles; // Default
+                                                                };
+                                                                const Icon = getIcon(amenity);
+
+                                                                return (
+                                                                    <FormField
+                                                                        key={amenity}
+                                                                        control={form.control}
+                                                                        name="amenities"
+                                                                        render={({ field }) => {
+                                                                            const isSelected = field.value?.includes(amenity);
+                                                                            return (
+                                                                                <FormItem
+                                                                                    className={cn(
+                                                                                        "flex flex-row items-center space-x-4 space-y-0 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group",
+                                                                                        isSelected
+                                                                                            ? "bg-foreground border-foreground text-white shadow-lg"
+                                                                                            : "bg-muted/5 border-muted/10 hover:border-primary/20 hover:bg-white"
+                                                                                    )}
+                                                                                    onClick={() => {
+                                                                                        const newValue = isSelected
+                                                                                            ? field.value?.filter((v: string) => v !== amenity)
+                                                                                            : [...(field.value || []), amenity];
+                                                                                        field.onChange(newValue);
+                                                                                    }}
+                                                                                >
+                                                                                    <div className={cn(
+                                                                                        "p-2.5 rounded-xl shadow-sm transition-colors",
+                                                                                        isSelected ? "bg-white/10" : "bg-white"
+                                                                                    )}>
+                                                                                        <Icon className={cn("h-4 w-4", isSelected ? "text-white" : "text-primary")} />
+                                                                                    </div>
+                                                                                    <div className="flex-1">
+                                                                                        <FormLabel className="text-[10px] font-black uppercase tracking-[0.15em] cursor-pointer block">{amenity}</FormLabel>
+                                                                                    </div>
+                                                                                    <FormControl>
+                                                                                        <Checkbox
+                                                                                            checked={isSelected}
+                                                                                            onCheckedChange={() => { }} // Handled by div click
+                                                                                            className={cn(
+                                                                                                "h-5 w-5 rounded-lg border-2",
+                                                                                                isSelected ? "border-white/20 bg-white/10" : "border-muted/20"
+                                                                                            )}
+                                                                                        />
+                                                                                    </FormControl>
+                                                                                </FormItem>
+                                                                            )
+                                                                        }}
+                                                                    />
+                                                                );
+                                                            })}
                                                         </div>
                                                         <FormMessage />
                                                     </FormItem>
@@ -1080,9 +1106,9 @@ export default function AddPropertyPage() {
                                                 name="rules"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Rules</FormLabel>
+                                                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Operational Protocols (House Rules)</FormLabel>
                                                         <FormControl>
-                                                            <Textarea placeholder="e.g., No smoking, Quiet hours after 10 PM" {...field} className="min-h-[120px] md:min-h-[150px] rounded-2xl md:rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-medium p-4 md:p-6" />
+                                                            <Textarea placeholder="e.g., No smoking, Quiet hours after 10 PM" {...field} className="min-h-[150px] md:min-h-[200px] rounded-[2rem] bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs md:text-sm font-medium p-8 leading-relaxed italic" />
                                                         </FormControl>
                                                         <FormMessage />
                                                     </FormItem>
