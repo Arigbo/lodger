@@ -220,18 +220,18 @@ export default function TenancyDetailPage() {
         const isRentDue = isPast(nextRentDueDate);
         const isLeaseExpired = lease?.status === 'expired' || isPast(leaseEndDate);
 
-        // Check for pending payments
-        const hasPendingPayments = tenantTransactions.some(t =>
+        // Check for ANY pending payment transaction
+        const hasPendingTransaction = tenantTransactions.some(t =>
             (t.type === 'Rent' || t.type === 'Lease Activation') &&
             (t.status === 'Pending' || t.status === 'Pending Verification')
         );
 
-        const isAwaitingActivation = lease?.status === 'pending' && lease?.tenantSigned && !lease?.paymentMethod;
-
-        // An offline payment is pending if it's selected but not confirmed, and there's no actual transaction record yet
+        // An offline payment is pending if it's selected on the lease record but not confirmed
         const isOfflineActivationPending = lease?.status === 'pending' && lease?.paymentMethod === 'offline' && !lease?.paymentConfirmed;
 
-        const hasAnyPendingPayments = hasPendingPayments || isOfflineActivationPending;
+        const isAwaitingActivation = lease?.status === 'pending' && lease?.tenantSigned && !lease?.paymentMethod;
+
+        const hasAnyPending = hasPendingTransaction || isOfflineActivationPending;
 
         setTenancyState({
             isLeaseActive,
@@ -243,8 +243,8 @@ export default function TenancyDetailPage() {
             leaseEndDate,
             leaseStartDate,
             paymentAmount: property.price,
-            hasPendingPayments: hasAnyPendingPayments,
-            showPayButton: (isLeaseActive || (lease?.status === 'pending' && lease?.tenantSigned)) && !hasAnyPendingPayments
+            hasPendingPayments: hasAnyPending,
+            showPayButton: (isLeaseActive || (lease?.status === 'pending' && lease?.tenantSigned)) && !hasAnyPending
         });
     }, [transactions, areTransactionsLoading, lease, isLeaseLoading, property]);
 

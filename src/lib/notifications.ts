@@ -55,12 +55,10 @@ export const sendNotification = async ({
         // ... (existing cases)
 
         case 'OFFLINE_PAYMENT_PENDING':
-            title = 'Offline Payment Pending';
-            message = `${tenantName || 'A tenant'} has selected offline payment for ${propertyTitle || 'a property'}. Please confirm receipt of payment.`;
+            title = 'Offline Payment Submitted';
+            message = `${tenantName || 'A tenant'} has submitted an offline payment for ${propertyTitle || 'a property'}. Please verify and accept the transfer in Lease Requests.`;
             uiType = 'warning';
-            if (transactionId) {
-                finalLink = `/landlord/transactions/${transactionId}`;
-            }
+            finalLink = `/landlord/requests`;
             break;
 
         // ... (other cases)
