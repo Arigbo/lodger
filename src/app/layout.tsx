@@ -19,12 +19,12 @@ export const metadata: Metadata = {
     template: "%s | LODGER",
   },
   description: "Find your perfect student home. LODGER offers a curated collection of residences for the modern student.",
-  metadataBase: new URL('https://lodger.app'),
+  metadataBase: new URL('https://lodger-ancient.vercel.app'),
   keywords: ["student housing", "premium rentals", "university living", "student apartments"],
   openGraph: {
     title: "Lodger - Find Your Perfect Student Home",
     description: "The easiest way for university students to find and book their next rental property.",
-    url: "https://lodger.app",
+    url: "https://lodger-ancient.vercel.app",
     siteName: "Lodger",
     images: [
       {
