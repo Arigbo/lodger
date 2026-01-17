@@ -129,16 +129,7 @@ export default function Header() {
             /* APP PAGES HEADER CONTENT */
             <div className="flex items-center gap-3">
               {/* Mobile Menu Trigger for App Pages (Sidebar Toggle) */}
-              <button
-                className="md:hidden p-2 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all active:scale-95 text-muted-foreground hover:text-primary"
-                id="mobile-sidebar-trigger"
-                onClick={() => {
-                  // This will be handled by the layout listening for this ID or via a custom event
-                  window.dispatchEvent(new CustomEvent('toggle-sidebar'));
-                }}
-              >
-                <Menu className="h-5 w-5" />
-              </button>
+
               {isMounted && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -257,6 +248,16 @@ export default function Header() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
+              <button
+                className="md:hidden p-2 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all active:scale-95 text-muted-foreground hover:text-primary"
+                id="mobile-sidebar-trigger"
+                onClick={() => {
+                  // This will be handled by the layout listening for this ID or via a custom event
+                  window.dispatchEvent(new CustomEvent('toggle-sidebar'));
+                }}
+              >
+                <Menu className="h-5 w-5" />
+              </button>
             </div>
           )}
         </div>

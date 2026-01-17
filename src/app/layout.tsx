@@ -5,13 +5,13 @@ import { FirebaseClientProvider } from "@/firebase";
 import { cn } from "@/utils";
 import "./globals.css";
 import type { Metadata } from "next";
-import { Outfit, Playfair_Display, Inter, Space_Grotesk } from "next/font/google";
+// import { Outfit, Playfair_Display, Inter, Space_Grotesk } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
-const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk" });
+// const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
+// const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
+// const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+// const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk" });
 
 export const metadata: Metadata = {
   title: {
@@ -60,11 +60,11 @@ export default function RootLayout({
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body
         className={cn(
-          "min-h-screen bg-background font-sans text-foreground antialiased",
-          outfit.variable,
-          playfair.variable,
-          inter.variable,
-          spaceGrotesk.variable
+          "min-h-screen bg-background font-sans text-foreground antialiased"
+          // outfit.variable,
+          // playfair.variable,
+          // inter.variable,
+          // spaceGrotesk.variable
         )}
       >
         <SpeedInsights />

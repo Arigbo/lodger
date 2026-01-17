@@ -538,7 +538,7 @@ export default function AddPropertyPage() {
             // even if no updates were made or if profile data was incomplete.
             setHasPrefilled(true);
         }
-    }, [userProfile, hasPrefilled, form, toast]);
+    }, [userProfile, hasPrefilled]); // Removed form and toast to prevent loop
 
     const selectedCountry = form.watch('country');
     const selectedBedrooms = form.watch('bedrooms');
@@ -586,7 +586,7 @@ export default function AddPropertyPage() {
                 });
             }
         }
-    }, [selectedType, form, toast]);
+    }, [selectedType]); // Removed form and toast dependencies
 
     const generateLeaseTemplate = () => {
         const propertyData = form.getValues();
