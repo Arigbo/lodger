@@ -515,7 +515,9 @@ export default function AddPropertyPage() {
     useEffect(() => {
         if (userProfile && !hasPrefilled) {
             const currentValues = form.getValues();
-            if (!currentValues.country && !currentValues.city && !currentValues.state) {
+            const shouldUpdate = !currentValues.country && !currentValues.city && !currentValues.state;
+
+            if (shouldUpdate && (userProfile.country || userProfile.state || userProfile.city)) {
                 form.reset({
                     ...currentValues,
                     country: userProfile.country || '',
@@ -524,13 +526,15 @@ export default function AddPropertyPage() {
                 });
 
                 if (userProfile.country) {
-                    setHasPrefilled(true);
                     toast({
                         title: "Location Updated",
                         description: "Your location settings have been updated.",
                     });
                 }
             }
+            // Always set hasPrefilled to true to prevent the loop, 
+            // even if no updates were made or if profile data was incomplete.
+            setHasPrefilled(true);
         }
     }, [userProfile, hasPrefilled, form, toast]);
 

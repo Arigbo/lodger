@@ -14,7 +14,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { initiateEmailSignIn, errorEmitter, FirestorePermissionError, initiateGoogleSignIn } from '@/firebase';
+import { initiateEmailSignIn, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useAuth, useFirestore } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -151,10 +151,7 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
         }
     };
 
-    const handleGoogleSignIn = () => {
-        // We pass handleSuccessfulLogin as the callback
-        initiateGoogleSignIn(auth, userType, handleSuccessfulLogin, toast);
-    };
+
 
     return (
         <Form {...form}>
@@ -194,9 +191,7 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Sign In with Email
                 </Button>
-                <Button type="button" variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isSubmitting}>
-                    Sign In with Google
-                </Button>
+
             </form>
         </Form>
     );
