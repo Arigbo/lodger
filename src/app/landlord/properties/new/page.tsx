@@ -125,7 +125,9 @@ const formSchema = z.object({
     description: z.string().min(10, 'Description must be at least 10 characters.').optional().or(z.literal('')),
     price: z.coerce.number().positive('Price must be a positive number.'),
     currency: z.string().min(3, 'Currency is required.'),
-    type: z.enum(['Flat', 'House', 'Duplex', 'Bungalow', 'Terrace', 'Penthouse', 'Mansion', 'Studio', 'Self Contain']),
+    currency: z.string().min(3, 'Currency is required.'),
+    type: z.enum(['Flat', 'House', 'Duplex', 'Bungalow', 'Terrace', 'Penthouse', 'Mansion', 'Studio', 'Self Contain', 'BHK', 'Townhouse']),
+    address: z.string().min(5, 'Address is required.'),
     address: z.string().min(5, 'Address is required.'),
     country: z.string().min(2, 'Country is required.'),
     city: z.string().min(2, 'City is required.'),
@@ -544,9 +546,12 @@ export default function AddPropertyPage() {
     useEffect(() => {
         if (selectedCountry) {
             const currency = getCurrencyByCountry(selectedCountry);
-            form.setValue('currency', currency);
+            // Check if current currency is different before setting to avoid loop
+            if (form.getValues('currency') !== currency) {
+                form.setValue('currency', currency);
+            }
         }
-    }, [selectedCountry, form]);
+    }, [selectedCountry]); // Removed form from dependencies
 
     // Optimize property type selection based on bedrooms (Nigeria Context)
     useEffect(() => {
@@ -555,25 +560,33 @@ export default function AddPropertyPage() {
                 // In Nigeria, 1 bedroom is typically a Self Contain
                 const currentType = form.getValues('type');
                 if (!currentType || currentType === 'Flat') {
+                    // Don't auto-switch if they manually selected BHK or Studio, only generic Flat
                     form.setValue('type', 'Self Contain');
-                    toast({
-                        title: "Property Type Updated",
-                        description: "Set to 'Self Contain' based on 1 bedroom.",
-                    });
                 }
             } else if (selectedBedrooms > 1) {
                 // 2+ bedrooms are typically Flats
                 const currentType = form.getValues('type');
                 if (!currentType || currentType === 'Self Contain') {
                     form.setValue('type', 'Flat');
-                    toast({
-                        title: "Property Type Updated",
-                        description: "Set to 'Flat' based on bedrooms.",
-                    });
                 }
             }
         }
-    }, [selectedBedrooms, selectedCountry, form, toast]);
+    }, [selectedBedrooms, selectedCountry]);
+
+    // Force bedrooms to 1 for Self Contain
+    const selectedType = form.watch('type');
+    useEffect(() => {
+        if (selectedType === 'Self Contain') {
+            const currentBeds = form.getValues('bedrooms');
+            if (currentBeds !== 1) {
+                form.setValue('bedrooms', 1);
+                toast({
+                    title: "Bedrooms Updated",
+                    description: "Self Contain units are set to 1 bedroom by default.",
+                });
+            }
+        }
+    }, [selectedType, form, toast]);
 
     const generateLeaseTemplate = () => {
         const propertyData = form.getValues();

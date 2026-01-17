@@ -10,9 +10,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
 import { amenities as allAmenities } from "@/types";
-import { MapPin } from "lucide-react";
+import { MapPin, Info } from "lucide-react";
 import { Input } from "./ui/input";
 import { countries } from "@/types/countries";
+import { PROPERTY_TYPES } from "@/types/property-types";
+import { useToast } from "@/components/ui/use-toast";
 import { Combobox } from "./ui/combobox";
 import { SchoolCombobox } from "@/components/school-combobox";
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -54,6 +56,7 @@ export default function SearchFilters({
   userCurrency = 'USD',
   className,
 }: SearchFiltersProps) {
+  const { toast } = useToast();
   const [filters, setFilters] = useState<FilterState>(initialFilters || {});
   const [price, setPrice] = useState(initialFilters?.price || 3000);
 
@@ -203,10 +206,27 @@ export default function SearchFilters({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="any">Any</SelectItem>
-              <SelectItem value="Apartment">Apartment</SelectItem>
-              <SelectItem value="House">House</SelectItem>
-              <SelectItem value="Studio">Studio</SelectItem>
-              <SelectItem value="Loft">Loft</SelectItem>
+              {PROPERTY_TYPES.map((type) => (
+                <SelectItem key={type.value} value={type.value} className="group">
+                  <div className="flex items-center justify-between w-full gap-2 min-w-[120px]">
+                    <span>{type.label}</span>
+                    <div
+                      role="button"
+                      className="p-1 hover:bg-muted rounded-full transition-colors opacity-50 group-hover:opacity-100"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toast({
+                          title: type.label,
+                          description: type.description,
+                        });
+                      }}
+                    >
+                      <Info className="h-3 w-3" />
+                    </div>
+                  </div>
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
