@@ -14,7 +14,7 @@ import { MapPin, Info } from "lucide-react";
 import { Input } from "./ui/input";
 import { countries } from "@/types/countries";
 import { PROPERTY_TYPES } from "@/types/property-types";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Combobox } from "./ui/combobox";
 import { SchoolCombobox } from "@/components/school-combobox";
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
