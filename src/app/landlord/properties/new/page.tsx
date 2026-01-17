@@ -40,6 +40,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { PROPERTY_TYPES } from "@/types/property-types";
+import { Info } from "lucide-react";
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -125,9 +127,7 @@ const formSchema = z.object({
     description: z.string().min(10, 'Description must be at least 10 characters.').optional().or(z.literal('')),
     price: z.coerce.number().positive('Price must be a positive number.'),
     currency: z.string().min(3, 'Currency is required.'),
-    currency: z.string().min(3, 'Currency is required.'),
     type: z.enum(['Flat', 'House', 'Duplex', 'Bungalow', 'Terrace', 'Penthouse', 'Mansion', 'Studio', 'Self Contain', 'BHK', 'Townhouse']),
-    address: z.string().min(5, 'Address is required.'),
     address: z.string().min(5, 'Address is required.'),
     country: z.string().min(2, 'Country is required.'),
     city: z.string().min(2, 'City is required.'),
@@ -885,15 +885,27 @@ export default function AddPropertyPage() {
                                                                     </SelectTrigger>
                                                                 </FormControl>
                                                                 <SelectContent className="rounded-2xl border-2 font-black text-[10px] uppercase">
-                                                                    <SelectItem value="Self Contain">Self Contain</SelectItem>
-                                                                    <SelectItem value="Flat">Flat</SelectItem>
-                                                                    <SelectItem value="Duplex">Duplex</SelectItem>
-                                                                    <SelectItem value="Bungalow">Bungalow</SelectItem>
-                                                                    <SelectItem value="Terrace">Terrace</SelectItem>
-                                                                    <SelectItem value="Penthouse">Penthouse</SelectItem>
-                                                                    <SelectItem value="Mansion">Mansion</SelectItem>
-                                                                    <SelectItem value="House">House</SelectItem>
-                                                                    <SelectItem value="Studio">Studio</SelectItem>
+                                                                    {PROPERTY_TYPES.map((type) => (
+                                                                        <SelectItem key={type.value} value={type.value} className="group">
+                                                                            <div className="flex items-center justify-between w-full gap-2 min-w-[120px]">
+                                                                                <span>{type.label}</span>
+                                                                                <div
+                                                                                    role="button"
+                                                                                    className="p-1 hover:bg-muted rounded-full transition-colors opacity-50 group-hover:opacity-100"
+                                                                                    onClick={(e) => {
+                                                                                        e.preventDefault();
+                                                                                        e.stopPropagation();
+                                                                                        toast({
+                                                                                            title: type.label,
+                                                                                            description: type.description,
+                                                                                        });
+                                                                                    }}
+                                                                                >
+                                                                                    <Info className="h-3 w-3" />
+                                                                                </div>
+                                                                            </div>
+                                                                        </SelectItem>
+                                                                    ))}
                                                                 </SelectContent>
                                                             </Select>
                                                             <FormMessage />

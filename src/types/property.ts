@@ -1,10 +1,12 @@
+import { PropertyType } from './property-types';
+
 export type Property = {
     id: string;
     title: string;
     description: string;
     price: number;
     currency: string;
-    type: 'Apartment' | 'House' | 'Studio' | 'Loft' | 'Self Contain';
+    type: PropertyType;
     location: {
         address: string;
         country: string;
