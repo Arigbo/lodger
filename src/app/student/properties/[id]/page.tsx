@@ -4,8 +4,8 @@ import PropertyDetailClient from './PropertyDetailClient';
 import { Property } from '@/types';
 import { notFound } from 'next/navigation';
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-    const id = params.id;
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+    const { id } = await params;
     const db = getAdminDb();
 
     try {
@@ -48,8 +48,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     }
 }
 
-export default async function Page({ params }: { params: { id: string } }) {
-    const id = params.id;
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const db = getAdminDb();
 
     const propertySnap = await db.collection('properties').doc(id).get();

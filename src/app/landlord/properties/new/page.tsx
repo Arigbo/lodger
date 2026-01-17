@@ -125,7 +125,7 @@ const formSchema = z.object({
     description: z.string().min(10, 'Description must be at least 10 characters.').optional().or(z.literal('')),
     price: z.coerce.number().positive('Price must be a positive number.'),
     currency: z.string().min(3, 'Currency is required.'),
-    type: z.enum(['Apartment', 'House', 'Studio', 'Loft', 'Self Contain']),
+    type: z.enum(['Flat', 'House', 'Duplex', 'Bungalow', 'Terrace', 'Penthouse', 'Mansion', 'Studio', 'Self Contain']),
     address: z.string().min(5, 'Address is required.'),
     country: z.string().min(2, 'Country is required.'),
     city: z.string().min(2, 'City is required.'),
@@ -539,12 +539,41 @@ export default function AddPropertyPage() {
     }, [userProfile, hasPrefilled, form, toast]);
 
     const selectedCountry = form.watch('country');
+    const selectedBedrooms = form.watch('bedrooms');
+
     useEffect(() => {
         if (selectedCountry) {
             const currency = getCurrencyByCountry(selectedCountry);
             form.setValue('currency', currency);
         }
     }, [selectedCountry, form]);
+
+    // Optimize property type selection based on bedrooms (Nigeria Context)
+    useEffect(() => {
+        if (selectedCountry === 'Nigeria' || selectedCountry === 'NG') {
+            if (selectedBedrooms === 1) {
+                // In Nigeria, 1 bedroom is typically a Self Contain
+                const currentType = form.getValues('type');
+                if (!currentType || currentType === 'Flat') {
+                    form.setValue('type', 'Self Contain');
+                    toast({
+                        title: "Property Type Updated",
+                        description: "Set to 'Self Contain' based on 1 bedroom.",
+                    });
+                }
+            } else if (selectedBedrooms > 1) {
+                // 2+ bedrooms are typically Flats
+                const currentType = form.getValues('type');
+                if (!currentType || currentType === 'Self Contain') {
+                    form.setValue('type', 'Flat');
+                    toast({
+                        title: "Property Type Updated",
+                        description: "Set to 'Flat' based on bedrooms.",
+                    });
+                }
+            }
+        }
+    }, [selectedBedrooms, selectedCountry, form, toast]);
 
     const generateLeaseTemplate = () => {
         const propertyData = form.getValues();
@@ -843,11 +872,15 @@ export default function AddPropertyPage() {
                                                                     </SelectTrigger>
                                                                 </FormControl>
                                                                 <SelectContent className="rounded-2xl border-2 font-black text-[10px] uppercase">
-                                                                    <SelectItem value="Apartment">Apartment</SelectItem>
+                                                                    <SelectItem value="Self Contain">Self Contain</SelectItem>
+                                                                    <SelectItem value="Flat">Flat</SelectItem>
+                                                                    <SelectItem value="Duplex">Duplex</SelectItem>
+                                                                    <SelectItem value="Bungalow">Bungalow</SelectItem>
+                                                                    <SelectItem value="Terrace">Terrace</SelectItem>
+                                                                    <SelectItem value="Penthouse">Penthouse</SelectItem>
+                                                                    <SelectItem value="Mansion">Mansion</SelectItem>
                                                                     <SelectItem value="House">House</SelectItem>
                                                                     <SelectItem value="Studio">Studio</SelectItem>
-                                                                    <SelectItem value="Loft">Loft</SelectItem>
-                                                                    <SelectItem value="Self Contain">Self Contain</SelectItem>
                                                                 </SelectContent>
                                                             </Select>
                                                             <FormMessage />
