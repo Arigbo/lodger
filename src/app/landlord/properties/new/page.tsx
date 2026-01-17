@@ -734,23 +734,32 @@ export default function AddPropertyPage() {
     }
 
     return (
-        <div className="max-w-full overflow-x-hidden space-y-8 md:space-y-12 px-4 md:px-0 pb-32 animate-in fade-in duration-1000">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-8 pb-6 md:pb-8 border-b-4 border-foreground/5">
-                <div className="space-y-3 md:space-y-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-white shadow-lg border-2 border-primary/10">
-                            <Building className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+        <div className="max-w-full overflow-x-hidden space-y-4 md:space-y-12 px-4 md:px-0 pb-32 animate-in fade-in duration-1000">
+            {/* Mobile-optimized Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-8 pb-4 md:pb-8 border-b-2 md:border-b-4 border-foreground/5 mt-4 md:mt-0">
+                <div className="space-y-2 md:space-y-4">
+                    <div className="flex items-center gap-2 md:gap-3">
+                        <div className="p-1.5 md:p-2 rounded-lg md:rounded-xl bg-white shadow-lg border-2 border-primary/10">
+                            <Building className="h-3 w-3 md:h-5 md:w-5 text-primary" />
                         </div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">ADD PROPERTY</p>
+                        <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-primary">ADD PROPERTY</p>
                     </div>
-                    <h1 className="font-headline text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter text-foreground uppercase leading-[0.9]">
-                        CREATE <br /> <span className="text-primary">PROPERTY</span>
-                    </h1>
-                    <p className="text-sm md:text-base lg:text-lg text-muted-foreground font-medium mt-4">
+                    <div className="flex items-end justify-between">
+                        <h1 className="font-headline text-2xl sm:text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter text-foreground uppercase leading-[0.9]">
+                            CREATE <span className="text-primary">PROPERTY</span>
+                        </h1>
+                        {/* Mobile Step Indicator */}
+                        <div className="md:hidden bg-primary/5 px-4 py-2 rounded-xl border border-primary/10">
+                            <p className="text-lg font-black text-primary">{Math.round((currentStep / steps.length) * 100)}%</p>
+                        </div>
+                    </div>
+
+                    <p className="text-xs md:text-base lg:text-lg text-muted-foreground font-medium mt-1 md:mt-4 hidden md:block">
                         Define your property details and rental terms.
                     </p>
                 </div>
-                <div className="flex gap-4">
+                {/* Desktop Step Indicator */}
+                <div className="hidden md:flex gap-4">
                     <div className="bg-primary/5 px-6 md:px-8 py-3 md:py-4 rounded-2xl md:rounded-[2rem] border-2 border-primary/10">
                         <p className="text-2xl md:text-3xl font-black text-primary">{Math.round((currentStep / steps.length) * 100)}%</p>
                     </div>
@@ -761,8 +770,9 @@ export default function AddPropertyPage() {
                 <div className="absolute -top-20 -right-20 w-96 h-96 bg-primary/5 blur-3xl rounded-full -z-10" />
                 <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-blue-500/5 blur-3xl rounded-full -z-10" />
 
-                <div className="grid grid-cols-1 gap-8 md:gap-12 lg:grid-cols-4">
-                    <div className="lg:col-span-1 space-y-3 md:space-y-4">
+                <div className="grid grid-cols-1 gap-6 md:gap-12 lg:grid-cols-4">
+                    {/* Desktop Sidebar Steps */}
+                    <div className="hidden lg:block lg:col-span-1 space-y-3 md:space-y-4">
                         {steps.map((step) => (
                             <div
                                 key={step.id}
@@ -787,12 +797,26 @@ export default function AddPropertyPage() {
                     </div>
 
                     <div className="lg:col-span-3">
+                        {/* Mobile Progress Bar */}
+                        <div className="block lg:hidden mb-6">
+                            <div className="h-2 w-full bg-muted/20 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-primary transition-all duration-500 ease-out"
+                                    style={{ width: `${(currentStep / steps.length) * 100}%` }}
+                                />
+                            </div>
+                            <div className="flex justify-between mt-2">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Step {currentStep}</span>
+                                <span className="text-[10px] font-bold text-foreground uppercase tracking-widest">{steps[currentStep - 1].name}</span>
+                            </div>
+                        </div>
+
                         <Card className="rounded-2xl md:rounded-[3.5rem] border-2 border-foreground/5 bg-white shadow-3xl overflow-hidden p-4 sm:p-6 md:p-8 lg:p-12">
                             <Form {...form}>
                                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
                                     {currentStep === 1 && (
-                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                                            <div className="space-y-8">
+                                        <div className="space-y-6 md:space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <div className="space-y-6 md:space-y-8">
                                                 <FormField
                                                     control={form.control}
                                                     name="title"
@@ -800,7 +824,7 @@ export default function AddPropertyPage() {
                                                         <FormItem>
                                                             <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Title</FormLabel>
                                                             <FormControl>
-                                                                <Input placeholder="e.g., THE LUXE DOWNTOWN PENTHOUSE" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xl font-black uppercase tracking-tight" />
+                                                                <Input placeholder="e.g., THE LUXE DOWNTOWN PENTHOUSE" {...field} className="h-12 md:h-16 rounded-xl md:rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-sm md:text-xl font-black uppercase tracking-tight" />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -814,7 +838,7 @@ export default function AddPropertyPage() {
                                                             <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Type</FormLabel>
                                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                                 <FormControl>
-                                                                    <SelectTrigger className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus:ring-0 text-xs font-black uppercase tracking-widest">
+                                                                    <SelectTrigger className="h-12 md:h-16 rounded-xl md:rounded-2xl bg-muted/20 border-2 border-transparent focus:ring-0 text-[10px] md:text-xs font-black uppercase tracking-widest">
                                                                         <SelectValue placeholder="Select type" />
                                                                     </SelectTrigger>
                                                                 </FormControl>
@@ -832,7 +856,7 @@ export default function AddPropertyPage() {
                                                 />
                                             </div>
                                             <Separator className="bg-muted/10" />
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="grid grid-cols-2 gap-4 md:gap-8">
                                                 <FormField
                                                     control={form.control}
                                                     name="price"
@@ -840,7 +864,7 @@ export default function AddPropertyPage() {
                                                         <FormItem>
                                                             <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Monthly Rent</FormLabel>
                                                             <FormControl>
-                                                                <Input type="number" placeholder="0.00" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-2xl font-black text-primary" />
+                                                                <Input type="number" placeholder="0.00" {...field} className="h-12 md:h-16 rounded-xl md:rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-lg md:text-2xl font-black text-primary" />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -854,7 +878,7 @@ export default function AddPropertyPage() {
                                                             <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Currency</FormLabel>
                                                             <Select onValueChange={field.onChange} value={field.value}>
                                                                 <FormControl>
-                                                                    <SelectTrigger className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus:ring-0 text-xs font-black uppercase tracking-widest">
+                                                                    <SelectTrigger className="h-12 md:h-16 rounded-xl md:rounded-2xl bg-muted/20 border-2 border-transparent focus:ring-0 text-[10px] md:text-xs font-black uppercase tracking-widest">
                                                                         <SelectValue placeholder="CURRENCY" />
                                                                     </SelectTrigger>
                                                                 </FormControl>
@@ -871,7 +895,7 @@ export default function AddPropertyPage() {
                                                 />
                                             </div>
                                             <Separator className="bg-muted/10" />
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="grid grid-cols-2 gap-4 md:gap-8">
                                                 <FormField
                                                     control={form.control}
                                                     name="bedrooms"
@@ -879,7 +903,7 @@ export default function AddPropertyPage() {
                                                         <FormItem>
                                                             <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Bedrooms</FormLabel>
                                                             <FormControl>
-                                                                <Input type="number" placeholder="0" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                                                                <Input type="number" placeholder="0" {...field} className="h-12 md:h-16 rounded-xl md:rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -892,30 +916,19 @@ export default function AddPropertyPage() {
                                                         <FormItem>
                                                             <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Bathrooms</FormLabel>
                                                             <FormControl>
-                                                                <Input type="number" placeholder="0" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                                                                <Input type="number" placeholder="0" {...field} className="h-12 md:h-16 rounded-xl md:rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
                                                     )}
                                                 />
                                             </div>
-                                            <div className="p-6 rounded-[2rem] bg-amber-500/5 border-2 border-amber-500/10 flex gap-4 animate-in slide-in-from-bottom duration-700">
-                                                <div className="h-10 w-10 min-w-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
-                                                    <ShieldCheck className="h-5 w-5" />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Implicit Content Warning</p>
-                                                    <p className="text-[9px] font-medium text-amber-600/60 leading-relaxed uppercase tracking-tight">
-                                                        Photos are monitored for safety and context. Ensure your images show actual property interiors to avoid listing rejection.
-                                                    </p>
-                                                </div>
-                                            </div>
                                         </div>
                                     )}
 
                                     {currentStep === 2 && (
-                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-6 md:space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                                                 <FormField
                                                     control={form.control}
                                                     name="address"
@@ -923,84 +936,92 @@ export default function AddPropertyPage() {
                                                         <FormItem className="md:col-span-2">
                                                             <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Address</FormLabel>
                                                             <FormControl>
-                                                                <Input placeholder="123 PRESTIGE BOULEVARD" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                                                                <Input placeholder="123 PRESTIGE BOULEVARD" {...field} className="h-12 md:h-16 rounded-xl md:rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
                                                     )}
                                                 />
-                                                <FormField
-                                                    control={form.control}
-                                                    name="country"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Country</FormLabel>
-                                                            <FormControl>
-                                                                <Combobox
-                                                                    options={countries.map((c) => ({ label: c.name, value: c.name }))}
-                                                                    value={field.value}
-                                                                    onChange={(value) => {
-                                                                        field.onChange(value);
-                                                                        form.setValue('state', ''); // Reset state when country changes
-                                                                        form.setValue('school', ''); // Reset school when country changes
-                                                                    }}
-                                                                    placeholder="Select Country"
-                                                                />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <FormField
-                                                    control={form.control}
-                                                    name="state"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">State</FormLabel>
-                                                            <FormControl>
-                                                                <Combobox
-                                                                    options={
-                                                                        countries.find((c) => c.name === form.watch('country'))?.states.map((s) => ({
-                                                                            label: s.name,
-                                                                            value: s.name,
-                                                                        })) || []
-                                                                    }
-                                                                    value={field.value}
-                                                                    onChange={field.onChange}
-                                                                    placeholder="Select State"
-                                                                    disabled={!form.watch('country')}
-                                                                />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <FormField
-                                                    control={form.control}
-                                                    name="city"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">City</FormLabel>
-                                                            <FormControl>
-                                                                <Input placeholder="CITY NAME" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <FormField
-                                                    control={form.control}
-                                                    name="zip"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Zip Code</FormLabel>
-                                                            <FormControl>
-                                                                <Input placeholder="ZIP CODE" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
+                                                <div className="grid grid-cols-2 gap-4 md:col-span-2 md:grid-cols-2">
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="country"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Country</FormLabel>
+                                                                <FormControl>
+                                                                    <div className="[&>button]:h-12 [&>button]:md:h-16 [&>button]:rounded-xl [&>button]:md:rounded-2xl [&>button]:bg-muted/20 [&>button]:border-transparent [&>button]:text-xs [&>button]:font-black [&>button]:uppercase [&>button]:tracking-widest">
+                                                                        <Combobox
+                                                                            options={countries.map((c) => ({ label: c.name, value: c.name }))}
+                                                                            value={field.value}
+                                                                            onChange={(value) => {
+                                                                                field.onChange(value);
+                                                                                form.setValue('state', ''); // Reset state when country changes
+                                                                                form.setValue('school', ''); // Reset school when country changes
+                                                                            }}
+                                                                            placeholder="Select Country"
+                                                                        />
+                                                                    </div>
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="state"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">State</FormLabel>
+                                                                <FormControl>
+                                                                    <div className="[&>button]:h-12 [&>button]:md:h-16 [&>button]:rounded-xl [&>button]:md:rounded-2xl [&>button]:bg-muted/20 [&>button]:border-transparent [&>button]:text-xs [&>button]:font-black [&>button]:uppercase [&>button]:tracking-widest">
+                                                                        <Combobox
+                                                                            options={
+                                                                                countries.find((c) => c.name === form.watch('country'))?.states.map((s) => ({
+                                                                                    label: s.name,
+                                                                                    value: s.name,
+                                                                                })) || []
+                                                                            }
+                                                                            value={field.value}
+                                                                            onChange={field.onChange}
+                                                                            placeholder="Select State"
+                                                                            disabled={!form.watch('country')}
+                                                                        />
+                                                                    </div>
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4 md:col-span-2 md:grid-cols-2">
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="city"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">City</FormLabel>
+                                                                <FormControl>
+                                                                    <Input placeholder="CITY NAME" {...field} className="h-12 md:h-16 rounded-xl md:rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="zip"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Zip Code</FormLabel>
+                                                                <FormControl>
+                                                                    <Input placeholder="ZIP CODE" {...field} className="h-12 md:h-16 rounded-xl md:rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </div>
                                                 <FormField
                                                     control={form.control}
                                                     name="school"
@@ -1008,10 +1029,12 @@ export default function AddPropertyPage() {
                                                         <FormItem className="md:col-span-2">
                                                             <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Search Nearest School</FormLabel>
                                                             <FormControl>
-                                                                <SchoolCombobox
-                                                                    value={field.value || ''}
-                                                                    onChange={field.onChange}
-                                                                />
+                                                                <div className="[&>button]:h-12 [&>button]:md:h-16 [&>button]:rounded-xl [&>button]:md:rounded-2xl [&>button]:bg-muted/20 [&>button]:border-transparent [&>button]:text-xs [&>button]:font-black [&>button]:uppercase [&>button]:tracking-widest">
+                                                                    <SchoolCombobox
+                                                                        value={field.value || ''}
+                                                                        onChange={field.onChange}
+                                                                    />
+                                                                </div>
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -1024,14 +1047,14 @@ export default function AddPropertyPage() {
                                     )}
 
                                     {currentStep === 3 && (
-                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                        <div className="space-y-6 md:space-y-10 animate-in slide-in-from-right-4 duration-500">
                                             <FormField
                                                 control={form.control}
                                                 name="amenities"
                                                 render={() => (
                                                     <FormItem>
-                                                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-6 block">Select Amenities</FormLabel>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                                                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-4 block">Select Amenities</FormLabel>
+                                                        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                                                             {allAmenities.map((amenity) => {
                                                                 // Dynamic icon mapping based on common amenity names
                                                                 const getIcon = (name: string) => {
@@ -1062,7 +1085,7 @@ export default function AddPropertyPage() {
                                                                             return (
                                                                                 <FormItem
                                                                                     className={cn(
-                                                                                        "flex flex-row items-center space-x-4 space-y-0 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group",
+                                                                                        "flex flex-row items-center space-x-3 md:space-x-4 space-y-0 p-3 md:p-4 rounded-xl md:rounded-2xl border-2 transition-all duration-300 cursor-pointer group",
                                                                                         isSelected
                                                                                             ? "bg-foreground border-foreground text-white shadow-lg"
                                                                                             : "bg-muted/5 border-muted/10 hover:border-primary/20 hover:bg-white"
@@ -1075,20 +1098,20 @@ export default function AddPropertyPage() {
                                                                                     }}
                                                                                 >
                                                                                     <div className={cn(
-                                                                                        "p-2.5 rounded-xl shadow-sm transition-colors",
+                                                                                        "p-2 md:p-2.5 rounded-lg md:rounded-xl shadow-sm transition-colors",
                                                                                         isSelected ? "bg-white/10" : "bg-white"
                                                                                     )}>
-                                                                                        <Icon className={cn("h-4 w-4", isSelected ? "text-white" : "text-primary")} />
+                                                                                        <Icon className={cn("h-3 w-3 md:h-4 md:w-4", isSelected ? "text-white" : "text-primary")} />
                                                                                     </div>
-                                                                                    <div className="flex-1">
-                                                                                        <FormLabel className="text-[10px] font-black uppercase tracking-[0.15em] cursor-pointer block">{amenity}</FormLabel>
+                                                                                    <div className="flex-1 min-w-0">
+                                                                                        <FormLabel className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] cursor-pointer block truncate">{amenity}</FormLabel>
                                                                                     </div>
                                                                                     <FormControl>
                                                                                         <Checkbox
                                                                                             checked={isSelected}
                                                                                             onCheckedChange={() => { }} // Handled by div click
                                                                                             className={cn(
-                                                                                                "h-5 w-5 rounded-lg border-2",
+                                                                                                "h-4 w-4 md:h-5 md:w-5 rounded md:rounded-lg border-2",
                                                                                                 isSelected ? "border-white/20 bg-white/10" : "border-muted/20"
                                                                                             )}
                                                                                         />
@@ -1112,7 +1135,7 @@ export default function AddPropertyPage() {
                                                     <FormItem>
                                                         <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Operational Protocols (House Rules)</FormLabel>
                                                         <FormControl>
-                                                            <Textarea placeholder="e.g., No smoking, Quiet hours after 10 PM" {...field} className="min-h-[150px] md:min-h-[200px] rounded-[2rem] bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs md:text-sm font-medium p-8 leading-relaxed italic" />
+                                                            <Textarea placeholder="e.g., No smoking, Quiet hours after 10 PM" {...field} className="min-h-[100px] md:min-h-[200px] rounded-2xl md:rounded-[2rem] bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs md:text-sm font-medium p-6 md:p-8 leading-relaxed italic" />
                                                         </FormControl>
                                                         <FormMessage />
                                                     </FormItem>
@@ -1123,20 +1146,20 @@ export default function AddPropertyPage() {
                                     )}
 
                                     {currentStep === 4 && (
-                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                        <div className="space-y-6 md:space-y-10 animate-in slide-in-from-right-4 duration-500">
                                             <FormField
                                                 control={form.control}
                                                 name="leaseTemplate"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-4 block">Lease Template</FormLabel>
+                                                        <FormLabel className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2 md:mb-4 block">Lease Template</FormLabel>
                                                         <FormControl>
                                                             <Textarea
                                                                 {...field}
-                                                                className="min-h-[60vh] rounded-2xl md:rounded-3xl bg-muted/5 border-2 border-dashed border-primary/20 focus-visible:border-primary focus-visible:bg-white text-xs md:text-sm font-mono leading-relaxed p-6 md:p-10 transition-all duration-500"
+                                                                className="min-h-[40vh] md:min-h-[60vh] rounded-2xl md:rounded-3xl bg-muted/5 border-2 border-dashed border-primary/20 focus-visible:border-primary focus-visible:bg-white text-[10px] md:text-sm font-mono leading-relaxed p-4 md:p-10 transition-all duration-500"
                                                             />
                                                         </FormControl>
-                                                        <FormDescription className="text-[10px] font-medium mt-4 opacity-60">
+                                                        <FormDescription className="text-[9px] md:text-[10px] font-medium mt-3 md:mt-4 opacity-60">
                                                             * Fields marked as "Nill" and dates will be automatically updated with actual names and dates when the lease is signed by each party.
                                                         </FormDescription>
                                                         <FormMessage />
@@ -1147,8 +1170,8 @@ export default function AddPropertyPage() {
                                     )}
 
                                     {currentStep === 5 && (
-                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                                        <div className="space-y-6 md:space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
                                                 <FormField
                                                     control={form.control}
                                                     name="kitchenImage"
@@ -1214,7 +1237,7 @@ export default function AddPropertyPage() {
                                                         />
                                                     )}
                                                 />
-                                                <div className="md:col-span-2 mt-6">
+                                                <div className="md:col-span-2 mt-4 md:mt-6">
                                                     <FormField
                                                         control={form.control}
                                                         name="propertyVideo"
@@ -1233,17 +1256,17 @@ export default function AddPropertyPage() {
                                     )}
 
                                     {currentStep === 6 && (
-                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                                            <div className="p-6 md:p-8 rounded-2xl md:rounded-3xl bg-primary/5 border-2 border-primary/10">
-                                                <h3 className="text-base md:text-lg font-black uppercase tracking-tight mb-4">AI-Powered Description</h3>
-                                                <p className="text-xs md:text-sm text-muted-foreground mb-6">
+                                        <div className="space-y-6 md:space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <div className="p-5 md:p-8 rounded-2xl md:rounded-3xl bg-primary/5 border-2 border-primary/10">
+                                                <h3 className="text-sm md:text-lg font-black uppercase tracking-tight mb-3 md:mb-4">AI-Powered Description</h3>
+                                                <p className="text-[10px] md:text-sm text-muted-foreground mb-4 md:mb-6">
                                                     Generate a compelling property description using all the details you've provided. You can edit it after generation.
                                                 </p>
                                                 <Button
                                                     type="button"
                                                     onClick={generateDescription}
                                                     disabled={isGeneratingDescription}
-                                                    className="w-full md:w-auto h-12 md:h-14 px-6 md:px-8 rounded-xl md:rounded-2xl text-xs md:text-sm font-black uppercase tracking-widest"
+                                                    className="w-full md:w-auto h-12 md:h-14 px-6 md:px-8 rounded-xl md:rounded-2xl text-[10px] md:text-sm font-black uppercase tracking-widest"
                                                 >
                                                     {isGeneratingDescription ? (
                                                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</>
@@ -1262,7 +1285,7 @@ export default function AddPropertyPage() {
                                                             <Textarea
                                                                 placeholder="Describe the essence of your property..."
                                                                 {...field}
-                                                                className="min-h-[200px] md:min-h-[250px] rounded-2xl md:rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs md:text-sm font-medium p-4 md:p-6 leading-relaxed"
+                                                                className="min-h-[150px] md:min-h-[250px] rounded-2xl md:rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs md:text-sm font-medium p-4 md:p-6 leading-relaxed"
                                                             />
                                                         </FormControl>
                                                         <FormMessage />
@@ -1273,89 +1296,89 @@ export default function AddPropertyPage() {
                                     )}
 
                                     {currentStep === 7 && (
-                                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
-                                            <div className="p-8 md:p-12 rounded-2xl md:rounded-[3rem] bg-gradient-to-br from-primary/10 via-background to-blue-500/10 border-2 border-primary/20 relative overflow-hidden">
+                                        <div className="space-y-6 md:space-y-10 animate-in slide-in-from-right-4 duration-500">
+                                            <div className="p-6 md:p-12 rounded-3xl md:rounded-[3rem] bg-gradient-to-br from-primary/10 via-background to-blue-500/10 border-2 border-primary/20 relative overflow-hidden">
                                                 <div className="absolute top-0 right-0 p-8 opacity-10">
                                                     <Sparkles className="h-24 w-24 md:h-32 md:w-32" />
                                                 </div>
-                                                <div className="relative space-y-8">
+                                                <div className="relative space-y-6 md:space-y-8">
                                                     <div>
-                                                        <h3 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-none mb-2">Review Your Property</h3>
-                                                        <p className="text-xs md:text-sm text-muted-foreground uppercase tracking-widest">Finalize before deployment</p>
+                                                        <h3 className="text-xl md:text-4xl font-black uppercase tracking-tighter leading-none mb-2">Review Your Property</h3>
+                                                        <p className="text-[10px] md:text-sm text-muted-foreground uppercase tracking-widest">Finalize before deployment</p>
                                                     </div>
 
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
-                                                        <div className="space-y-6">
+                                                        <div className="space-y-4 md:space-y-6">
                                                             <div>
                                                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Property Title</p>
-                                                                <p className="text-lg md:text-2xl font-black uppercase tracking-tight">{form.getValues('title')}</p>
-                                                                <p className="text-muted-foreground text-xs md:text-sm mt-2">{form.getValues('address')}, {form.getValues('city')}</p>
+                                                                <p className="text-base md:text-2xl font-black uppercase tracking-tight leading-tight">{form.getValues('title')}</p>
+                                                                <p className="text-muted-foreground text-[10px] md:text-sm mt-1 md:mt-2">{form.getValues('address')}, {form.getValues('city')}</p>
                                                             </div>
                                                             <Separator className="bg-muted/20" />
                                                             <div className="grid grid-cols-2 gap-4 md:gap-6">
                                                                 <div>
                                                                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Monthly Rent</p>
-                                                                    <p className="text-base md:text-xl font-black">{form.getValues('currency')} {form.getValues('price')}</p>
+                                                                    <p className="text-sm md:text-xl font-black">{form.getValues('currency')} {form.getValues('price')}</p>
                                                                 </div>
                                                                 <div>
                                                                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Type</p>
-                                                                    <p className="text-base md:text-xl font-black uppercase tracking-tight">{form.getValues('type')}</p>
+                                                                    <p className="text-sm md:text-xl font-black uppercase tracking-tight">{form.getValues('type')}</p>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className="space-y-6 p-6 md:p-8 rounded-2xl md:rounded-3xl bg-white/50 border border-muted/20">
+                                                        <div className="space-y-6 p-5 md:p-8 rounded-2xl md:rounded-3xl bg-white/50 border border-muted/20">
                                                             <div className="grid grid-cols-2 gap-6 md:gap-8">
                                                                 <div>
                                                                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Bedrooms</p>
-                                                                    <p className="text-xl md:text-2xl font-black">{form.getValues('bedrooms')}</p>
+                                                                    <p className="text-lg md:text-2xl font-black">{form.getValues('bedrooms')}</p>
                                                                 </div>
                                                                 <div>
                                                                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Bathrooms</p>
-                                                                    <p className="text-xl md:text-2xl font-black">{form.getValues('bathrooms')}</p>
+                                                                    <p className="text-lg md:text-2xl font-black">{form.getValues('bathrooms')}</p>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="space-y-6">
+                                                <div className="space-y-4 md:space-y-6 mt-6">
                                                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Media</p>
-                                                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+                                                    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4">
                                                         {/* Images */}
                                                         {['kitchenImage', 'livingRoomImage', 'bedroomImage', 'bathroomImage', 'otherImage'].map((field) => {
                                                             const file = (form.getValues() as any)[field]?.[0];
                                                             if (!file) return null;
                                                             return (
-                                                                <div key={field} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-foreground/5 shadow-inner group">
+                                                                <div key={field} className="relative aspect-square rounded-xl md:rounded-2xl overflow-hidden border-2 border-foreground/5 shadow-inner group">
                                                                     <img src={URL.createObjectURL(file)} alt={field} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                                                                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-full border border-white/10">
-                                                                        <span className="text-[6px] font-black text-white uppercase tracking-widest">{field.replace('Image', '')}</span>
+                                                                    <div className="absolute top-1 left-1 md:top-2 md:left-2 px-1.5 md:px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-full border border-white/10">
+                                                                        <span className="text-[5px] md:text-[6px] font-black text-white uppercase tracking-widest">{field.replace('Image', '')}</span>
                                                                     </div>
                                                                 </div>
                                                             );
                                                         })}
                                                         {/* Video */}
                                                         {form.getValues('propertyVideo')?.[0] && (
-                                                            <div className="relative aspect-square rounded-2xl overflow-hidden border-2 border-primary/20 bg-black group cursor-pointer">
+                                                            <div className="relative aspect-square rounded-xl md:rounded-2xl overflow-hidden border-2 border-primary/20 bg-black group cursor-pointer">
                                                                 <video src={URL.createObjectURL(form.getValues('propertyVideo')![0])} className="w-full h-full object-cover opacity-60 transition-opacity group-hover:opacity-100" />
                                                                 <div className="absolute inset-0 flex items-center justify-center">
-                                                                    <div className="h-8 w-8 rounded-full bg-primary/90 flex items-center justify-center text-white scale-90 group-hover:scale-100 transition-transform">
-                                                                        <Play className="h-4 w-4 ml-0.5 fill-current" />
+                                                                    <div className="h-6 w-6 md:h-8 md:w-8 rounded-full bg-primary/90 flex items-center justify-center text-white scale-90 group-hover:scale-100 transition-transform">
+                                                                        <Play className="h-3 w-3 md:h-4 md:w-4 ml-0.5 fill-current" />
                                                                     </div>
                                                                 </div>
-                                                                <div className="absolute top-2 left-2 px-2 py-0.5 bg-primary rounded-full border border-white/10">
-                                                                    <span className="text-[6px] font-black text-white uppercase tracking-widest">Walkthrough</span>
+                                                                <div className="absolute top-1 left-1 md:top-2 md:left-2 px-1.5 md:px-2 py-0.5 bg-primary rounded-full border border-white/10">
+                                                                    <span className="text-[5px] md:text-[6px] font-black text-white uppercase tracking-widest">Walkthrough</span>
                                                                 </div>
                                                             </div>
                                                         )}
                                                     </div>
                                                 </div>
 
-                                                <div>
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-3">Selected Amenities</p>
-                                                    <div className="flex flex-wrap gap-2">
+                                                <div className="mt-6">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2 md:mb-3">Selected Amenities</p>
+                                                    <div className="flex flex-wrap gap-1.5 md:gap-2">
                                                         {form.getValues('amenities')?.map((amenity) => (
-                                                            <span key={amenity} className="px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-primary/10 text-primary text-[10px] md:text-xs font-black uppercase tracking-widest">
+                                                            <span key={amenity} className="px-2.5 py-1 md:px-4 md:py-2 rounded-full bg-primary/10 text-primary text-[9px] md:text-[10px] md:text-xs font-black uppercase tracking-widest">
                                                                 {amenity}
                                                             </span>
                                                         ))}
@@ -1365,7 +1388,7 @@ export default function AddPropertyPage() {
                                         </div>
                                     )}
 
-                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 md:pt-12 mt-8 md:mt-12 border-t-2 border-muted/10">
+                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 md:pt-12 mt-6 md:mt-12 border-t-2 border-muted/10">
                                         <Button
                                             type="button"
                                             variant="ghost"
