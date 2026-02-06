@@ -1,0 +1,16 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/landlord/layout,_N_T_/landlord/properties/layout,_N_T_/landlord/properties/page,_N_T_/landlord/properties"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/landlord/properties/__PAGE__",
+    "/landlord/properties",
+    "/landlord",
+    "/_index",
+    "/_head"
+  ]
+}

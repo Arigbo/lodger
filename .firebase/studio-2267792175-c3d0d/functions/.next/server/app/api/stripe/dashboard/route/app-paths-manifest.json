@@ -1,0 +1,3 @@
+{
+  "/api/stripe/dashboard/route": "app/api/stripe/dashboard/route.js"
+}

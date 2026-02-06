@@ -1,0 +1,7 @@
+# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+#
+# A good starting point is to allow all friendly robots to crawl your site:
+User-agent: *
+Allow: /
+
+Sitemap: /sitemap.xml
