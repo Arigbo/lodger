@@ -72,6 +72,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { PropertyGallery } from '@/components/property-gallery';
 import { PropertyHeroCarousel } from '@/components/property-hero-carousel';
+import dynamic from 'next/dynamic';
+
+const PropertyMap = dynamic(() => import('@/components/PropertyMap'), { 
+  ssr: false,
+  loading: () => <Skeleton className="h-[400px] w-full rounded-[2rem]" />
+});
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -344,6 +350,21 @@ export default function LandlordPropertyDetailPage() {
                 <p className="text-lg text-muted-foreground font-medium leading-relaxed">
                   {property.description}
                 </p>
+
+                {property.location.lat && property.location.lng && (
+                  <div className="pt-8 space-y-6">
+                    <h3 className="text-2xl font-black tracking-tight uppercase">Location Protocol</h3>
+                    <PropertyMap 
+                      lat={property.location.lat} 
+                      lng={property.location.lng} 
+                      title={property.title} 
+                    />
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest">
+                      <MapPin className="h-3 w-3" />
+                      Coordinates: {property.location.lat.toFixed(4)}, {property.location.lng.toFixed(4)}
+                    </div>
+                  </div>
+                )}
               </TabsContent>
               <TabsContent value="amenities" className="mt-0">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

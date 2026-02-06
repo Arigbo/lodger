@@ -36,6 +36,12 @@ import {
 import { PropertyGallery } from "@/components/property-gallery";
 import { PropertyHeroCarousel } from "@/components/property-hero-carousel";
 import { SharePropertyModal } from "@/components/share-property-modal";
+import dynamic from 'next/dynamic';
+
+const PropertyMap = dynamic(() => import('@/components/PropertyMap'), { 
+    ssr: false,
+    loading: () => <div className="h-[400px] w-full rounded-[2rem] bg-muted animate-pulse" />
+});
 
 const amenityIcons: { [key: string]: React.ReactNode } = {
     'Furnished': <Tv className="h-5 w-5 text-primary" />,
@@ -297,6 +303,21 @@ export default function PropertyDetailClient({ initialProperty, propertyId }: { 
                             <TabsContent value="overview" className="mt-0 space-y-6">
                                 <h3 className="text-2xl font-bold tracking-tight">About this property</h3>
                                 <p className="text-lg text-muted-foreground leading-relaxed">{property.description}</p>
+
+                                {property.location.lat && property.location.lng && (
+                                    <div className="pt-8 space-y-6">
+                                        <h3 className="text-2xl font-bold tracking-tight uppercase">Location</h3>
+                                        <PropertyMap 
+                                            lat={property.location.lat} 
+                                            lng={property.location.lng} 
+                                            title={property.title} 
+                                        />
+                                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-muted-foreground/40 tracking-widest">
+                                            <MapPin className="h-3 w-3" />
+                                            Coordinates: {property.location.lat.toFixed(4)}, {property.location.lng.toFixed(4)}
+                                        </div>
+                                    </div>
+                                )}
                             </TabsContent>
                             <TabsContent value="amenities" className="mt-0">
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

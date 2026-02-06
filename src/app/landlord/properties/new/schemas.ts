@@ -42,8 +42,8 @@ export const formSchema = z.object({
     bedroomImage: imageSchema,
     otherImage: imageSchema.optional(),
     propertyVideo: videoSchema.optional(),
-    lat: z.number().optional(),
-    lng: z.number().optional(),
+    lat: z.coerce.number().optional().or(z.literal('')),
+    lng: z.coerce.number().optional().or(z.literal('')),
 });
 
 export type FormValues = z.infer<typeof formSchema>;

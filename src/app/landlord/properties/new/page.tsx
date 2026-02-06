@@ -268,6 +268,8 @@ export default function AddPropertyPage() {
                     country: values.country,
                     zip: values.zip,
                     school: values.school,
+                    lat: values.lat || null,
+                    lng: values.lng || null,
                 },
                 images,
                 videos: videoUrl ? [videoUrl] : [],

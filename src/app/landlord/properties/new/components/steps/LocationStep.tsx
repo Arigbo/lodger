@@ -75,7 +75,7 @@ export const LocationStep = ({ form }: LocationStepProps) => {
                                     </FormControl>
                                     <SelectContent className="rounded-2xl border-2 font-black text-[10px] uppercase">
                                         {countries.map((country) => (
-                                            <SelectItem key={country.code} value={country.name}>{country.name}</SelectItem>
+                                            <SelectItem key={country.iso2} value={country.name}>{country.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -150,6 +150,35 @@ export const LocationStep = ({ form }: LocationStepProps) => {
                             <FormDescription className="text-[9px] font-bold text-primary/40 uppercase tracking-widest mt-4">
                                 Strategic placement near educational hubs increases conversion by 40%.
                             </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+                <FormField
+                    control={form.control}
+                    name="lat"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Latitude</FormLabel>
+                            <FormControl>
+                                <Input type="number" step="any" placeholder="6.5244" {...field} className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border-2 border-transparent focus-visible:border-primary/20 font-bold text-sm" />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="lng"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Longitude</FormLabel>
+                            <FormControl>
+                                <Input type="number" step="any" placeholder="3.3792" {...field} className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border-2 border-transparent focus-visible:border-primary/20 font-bold text-sm" />
+                            </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
