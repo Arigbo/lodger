@@ -21,6 +21,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
     try {
+        // Check if admin credentials are available before attempting to fetch
+        if (!process.env.FIREBASE_PRIVATE_KEY || !process.env.FIREBASE_CLIENT_EMAIL) {
+            console.warn('Skipping dynamic sitemap generation: Missing Firebase Admin credentials.');
+            return staticRoutes;
+        }
+
         const db = getAdminDb();
         const propertiesSnapshot = await db.collection('properties').get();
 
