@@ -235,12 +235,12 @@ export const LocationStep = ({ form }: LocationStepProps) => {
                             <Dialog>
                                 <DialogTrigger asChild>
                                     <Button type="button" className="h-12 px-6 rounded-2xl bg-primary text-black hover:bg-primary/90 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20">
-                                        Get Instructions
+                                        Request Coordinates
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent className="rounded-[3rem] border-4 p-12 max-w-xl shadow-3xl">
                                     <DialogHeader>
-                                        <DialogTitle className="text-3xl font-black uppercase tracking-tighter">Locating Your Grid Ref</DialogTitle>
+                                        <DialogTitle className="text-3xl font-black uppercase tracking-tighter">Coordinate Protocol Request</DialogTitle>
                                         <DialogDescription className="text-sm font-medium mt-4">
                                             Follow these protocols to extract exact coordinates from Google Maps.
                                         </DialogDescription>

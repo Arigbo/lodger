@@ -41,6 +41,15 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/landlord/property/:path*',
+        destination: '/landlord/properties/:path*',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

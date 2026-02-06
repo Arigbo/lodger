@@ -208,12 +208,12 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button type="button" className="h-10 px-4 rounded-xl bg-primary text-black hover:bg-primary/90 text-[9px] font-black uppercase tracking-widest">
-                          Get Instructions
+                          Request Coordinates
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="rounded-[2rem] border-2 p-8 max-w-md">
                         <DialogHeader>
-                          <DialogTitle className="text-2xl font-black uppercase tracking-tighter">Locating Your Grid Ref</DialogTitle>
+                          <DialogTitle className="text-2xl font-black uppercase tracking-tighter">Coordinate Protocol Request</DialogTitle>
                           <DialogDescription className="text-xs font-medium mt-2">Follow these protocols to extract exact coordinates from Google Maps.</DialogDescription>
                         </DialogHeader>
                         <div className="space-y-6 mt-6">
