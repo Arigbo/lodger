@@ -3,14 +3,25 @@ import * as admin from 'firebase-admin';
 // Refined Private Key Parsing
 function formatPrivateKey(key: string | undefined) {
     if (!key) return undefined;
-    return key.replace(/\\n/g, '\n').replace(/"/g, '');
+    let privateKey = key;
+
+    // Remove literal quotes if present
+    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = privateKey.substring(1, privateKey.length - 1);
+    }
+
+    // Convert escaped \n back to real newlines
+    return privateKey.replace(/\\n/g, '\n');
 }
 
 // Lazy Initialization - only runs when actually needed
 let initialized = false;
 
 function initializeAdmin() {
-    if (initialized || admin.apps.length > 0) return;
+    if (initialized || admin.apps.length > 0) {
+        initialized = true;
+        return;
+    }
 
     try {
         const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
@@ -24,15 +35,14 @@ function initializeAdmin() {
                     clientEmail,
                     privateKey,
                 }),
+                databaseURL: `https://${projectId}.firebaseio.com`,
             });
             initialized = true;
         } else {
-            if (process.env.NODE_ENV !== 'production') {
-                console.warn("Firebase Admin: Missing credentials. Skipping initialization.");
-            }
+            console.warn("Firebase Admin: Missing credentials. Skipping initialization.");
         }
-    } catch (error) {
-        console.error('Firebase admin initialization error:', error);
+    } catch (error: any) {
+        console.error('Firebase admin initialization error:', error.message);
     }
 }
 

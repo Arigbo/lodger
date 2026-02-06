@@ -19,22 +19,39 @@ try {
 
     // Fallback to individual variables (useful for Firebase App Hosting secrets)
     if (!serviceAccount && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+      // Clean the private key: handle escaped newlines and ensure it's not wrapped in literal quotes
+      let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+      // Remove literal quotes if present
+      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = privateKey.substring(1, privateKey.length - 1);
+      }
+
+      // Convert escaped \n back to real newlines
+      privateKey = privateKey.replace(/\\n/g, '\n');
+
       serviceAccount = {
         projectId: firebaseConfig.projectId,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        privateKey: privateKey,
       };
     }
 
     if (serviceAccount) {
-      adminApp = initializeApp({
-        credential: cert(serviceAccount),
-        databaseURL: `https://${firebaseConfig.projectId}.firebaseio.com`,
-      });
-      firestoreInstance = getFirestore(adminApp);
-      authInstance = getAuth(adminApp);
+      try {
+        adminApp = initializeApp({
+          credential: cert(serviceAccount),
+          databaseURL: `https://${firebaseConfig.projectId}.firebaseio.com`,
+        });
+        firestoreInstance = getFirestore(adminApp);
+        authInstance = getAuth(adminApp);
+      } catch (initError: any) {
+        console.error("Firebase Admin SDK initialization failed with valid looking credentials:", initError.message);
+        // Fallback to undefined if cert parsing failed
+        adminApp = undefined;
+      }
     } else {
-      console.warn("Firebase Admin SDK not initialized. Missing FIREBASE_SERVICE_ACCOUNT or individual credentials.");
+      console.warn("Firebase Admin SDK not initialized. Missing credentials or invalid format.");
     }
   } else {
     adminApp = getApp();
