@@ -74,7 +74,15 @@ export async function POST(request: Request) {
 
         if (!isAuthorized) {
             console.error(`Forbidden: [${userEmail || 'No Email'}] (UID: ${decodedToken.uid}) is not authorized.`);
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: corsHeaders });
+            return NextResponse.json({ 
+                error: 'Forbidden', 
+                debug: {
+                    email: userEmail,
+                    uid: decodedToken.uid,
+                    whitelist: authorizedAdmins.includes(userEmail || ''),
+                    fallbackRoleCheck: !authorizedAdmins.includes(userEmail || '')
+                }
+            }, { status: 403, headers: corsHeaders });
         }
 
         const { title, message, target, type, sendEmail } = await request.json();

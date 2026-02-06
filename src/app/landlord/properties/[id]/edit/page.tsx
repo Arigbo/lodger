@@ -45,7 +45,7 @@ export default function EditPropertyPage() {
   const { toast } = useToast();
 
   const propertyRef = useMemoFirebase(() => id ? doc(firestore, 'properties', id) : null, [firestore, id]);
-  const { data: property, isLoading: isPropertyLoading, refetch } = useDoc<Property>(propertyRef);
+  const { data: property, isLoading: isPropertyLoading, refetch, error: propertyError } = useDoc<Property>(propertyRef);
 
   const [isUploading, setIsUploading] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
@@ -241,13 +241,15 @@ export default function EditPropertyPage() {
 
   if (isUserLoading || isPropertyLoading) return <Loading />;
   
-  if (!property || (user && property.landlordId !== user.uid)) {
-    console.error(`[EditProperty] 404 Triggered:`, {
+  if (!property || (user && property.landlordId !== user.uid) || propertyError) {
+    console.error(`[EditProperty] 404/Error Triggered:`, {
         id,
         propertyExists: !!property,
+        propertyError: propertyError?.message || 'None',
         userId: user?.uid,
         landlordId: property?.landlordId,
-        mismatch: !!(user && property && property.landlordId !== user.uid)
+        mismatch: !!(user && property && property.landlordId !== user.uid),
+        docPath: propertyRef?.path
     });
     return notFound();
   }
