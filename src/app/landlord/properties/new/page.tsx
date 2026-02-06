@@ -703,6 +703,9 @@ export default function AddPropertyPage() {
             const timestamp = Date.now();
             const basePath = `properties/${user.uid}/${timestamp}`;
 
+            // Validate and upload images first
+            let uploadFailed = false;
+
             const uploadField = async (fileList: any, name: string) => {
                 if (fileList && fileList.length > 0) {
                     try {
@@ -710,6 +713,12 @@ export default function AddPropertyPage() {
                         uploadedImageUrls.push(url);
                     } catch (e) {
                         console.error(`Failed to upload ${name}`, e);
+                        uploadFailed = true;
+                        toast({
+                            variant: "destructive",
+                            title: "Upload Failed",
+                            description: `Failed to upload ${name} image. Please try again.`,
+                        });
                     }
                 }
             };
@@ -720,12 +729,26 @@ export default function AddPropertyPage() {
             await uploadField(values.bedroomImage, 'bedroom');
             await uploadField(values.otherImage, 'other');
 
+            if (uploadFailed) {
+                setIsSubmitting(false);
+                setIsConfirmOpen(false);
+                return; // Stop submission if uploads failed
+            }
+
             let uploadedVideoUrl = '';
             if (values.propertyVideo && values.propertyVideo.length > 0) {
                 try {
                     uploadedVideoUrl = await uploadImage(values.propertyVideo[0], `${basePath}/video`);
                 } catch (e) {
                     console.error("Failed to upload video", e);
+                    toast({
+                        variant: "destructive",
+                        title: "Video Upload Failed",
+                        description: "Failed to upload video. Property creation aborted.",
+                    });
+                    setIsSubmitting(false);
+                    setIsConfirmOpen(false);
+                    return;
                 }
             }
 
@@ -757,11 +780,21 @@ export default function AddPropertyPage() {
                 leaseTemplate: values.leaseTemplate,
             };
 
-            const docRef = await addDoc(collection(firestore, 'properties'), newPropertyData);
-            await updateDoc(docRef, { id: docRef.id });
+            // Generate ID first, then setDoc to ensure ID is in the document if needed (though redundancy is fine)
+            // Ideally, we should use setDoc with a generated ID if we want the ID in the doc, or just addDoc.
+            // But the previous code used addDoc then updateDoc.
+            // The cleanest way is to create a ref, then use setDoc with the ID included in the data if the type requires it.
+
+            const newPropertyRef = doc(collection(firestore, 'properties'));
+            const finalPropertyData: Property = {
+                ...newPropertyData,
+                id: newPropertyRef.id,
+            };
+
+            await import('firebase/firestore').then(({ setDoc }) => setDoc(newPropertyRef, finalPropertyData));
 
             toast({ title: "Property Added", description: "Your property is now listed in the marketplace." });
-            router.push(`/landlord/properties/${docRef.id}?new=true`);
+            router.push(`/landlord/properties/${newPropertyRef.id}?new=true`);
         } catch (e: any) {
             console.error("Error adding document: ", e);
             toast({
