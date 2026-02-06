@@ -4,7 +4,20 @@
 Write-Host "Setting up Firebase App Hosting Secrets..." -ForegroundColor Green
 Write-Host ""
 
+# Check if Firebase CLI is installed
+if (-not (Get-Command "firebase" -ErrorAction SilentlyContinue)) {
+    Write-Host "❌ Error: Firebase CLI is not installed or not in PATH." -ForegroundColor Red
+    Write-Host "Please install it with: npm install -g firebase-tools" -ForegroundColor Yellow
+    exit 1
+}
+
 # Read .env file
+if (-not (Test-Path ".env")) {
+    Write-Host "❌ Error: .env file not found in current directory." -ForegroundColor Red
+    Write-Host "Current directory: $(Get-Location)" -ForegroundColor Yellow
+    exit 1
+}
+
 $envFile = Get-Content ".env"
 $secrets = @{}
 
@@ -43,7 +56,9 @@ foreach ($secretName in $secretNames) {
         $setResult = firebase apphosting:secrets:set $secretName --data-file=$($tempFile.FullName) --force 2>&1
         
         # Clean up temp file
-        Remove-Item $tempFile.FullName
+        if (Test-Path $tempFile.FullName) {
+            Remove-Item $tempFile.FullName
+        }
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  ✓ Secret set successfully" -ForegroundColor Green
@@ -75,8 +90,8 @@ Write-Host "Done! All secrets have been configured and access granted." -Foregro
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "1. Commit and push your changes:"
-Write-Host "   git add setup-firebase-secrets.ps1 src/firebase/server.ts"
-Write-Host "   git commit -m 'fix: automate secret setup and update admin initialization'"
+Write-Host "   git add setup-firebase-secrets.ps1 src/firebase/server.ts apphosting.yaml"
+Write-Host "   git commit -m 'fix: configure secrets and robust parsing'"
 Write-Host "   git push"
 Write-Host ""
 Write-Host "2. Firebase will automatically redeploy with the new secrets and code."
