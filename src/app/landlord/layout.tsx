@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import Header from '@/components/header';
 import LandlordSidebar from "@/components/landlord-sidebar";
@@ -59,6 +59,11 @@ export default function LandlordLayout({
     }
   }, [isUserLoading, user, isProfileLoading, userProfile, router]);
 
+  // Memoize the stripe warning check to prevent infinite loops
+  const showStripeWarning = useMemo(() => {
+    if (!userProfile) return false;
+    return !userProfile.stripeAccountId || !userProfile.stripeDetailsSubmitted;
+  }, [userProfile]);
 
   // Show loading state while we verify the user and their role
   if (isUserLoading || isProfileLoading) {
@@ -67,7 +72,6 @@ export default function LandlordLayout({
 
   // If user is verified as a landlord, render the layout
   if (user && userProfile && userProfile.role === 'landlord') {
-    const showStripeWarning = !userProfile.stripeAccountId || !userProfile.stripeDetailsSubmitted;
 
     return (
       <div className="min-h-screen bg-[#fafafa] flex flex-col">
