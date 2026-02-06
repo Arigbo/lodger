@@ -23,7 +23,6 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
 }) => {
   return (
     <div className="space-y-12">
-      {/* Photos Section */}
       <div className="space-y-10">
         <div className="inline-flex items-center gap-4">
           <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
@@ -64,7 +63,6 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
         </div>
       </div>
 
-      {/* Video Section */}
       <div className="space-y-10">
         <div className="inline-flex items-center gap-4">
           <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">

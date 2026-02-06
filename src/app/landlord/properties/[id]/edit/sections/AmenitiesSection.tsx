@@ -1,7 +1,7 @@
 import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Wifi, Sofa, ShieldCheck } from 'lucide-react';
+import { Wifi } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { EditFormValues } from '../edit-schemas';
 import { amenities as allAmenities } from '@/types';

@@ -546,7 +546,7 @@ export default function LandlordPropertyDetailPage() {
                     </div>
                   </div>
                   <Button asChild className="w-full h-14 rounded-2xl text-base font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform">
-                    <Link href={`/landlord/properties/edit/${property.id}`}>Edit Inventory</Link>
+                    <Link href={`/landlord/properties/${property.id}/edit`}>Edit Inventory</Link>
                   </Button>
                 </CardContent>
               </Card>

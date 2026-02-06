@@ -1,20 +1,22 @@
 'use client';
 
-import { 
-    FormField, 
-    FormItem, 
-    FormLabel, 
-    FormControl, 
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import {
+    FormField,
+    FormItem,
+    FormLabel,
+    FormControl,
     FormMessage,
     FormDescription
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { 
-    Select, 
-    SelectContent, 
-    SelectItem, 
-    SelectTrigger, 
-    SelectValue 
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
 } from '@/components/ui/select';
 import { SchoolCombobox } from '@/components/school-combobox';
 import { countries } from '@/types/countries';
@@ -35,8 +37,11 @@ interface LocationStepProps {
 }
 
 export const LocationStep = ({ form }: LocationStepProps) => {
+    const [isSensing, setIsSensing] = useState(false);
+    const { toast } = useToast();
+
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             className="space-y-8 md:space-y-12"
@@ -222,10 +227,22 @@ export const LocationStep = ({ form }: LocationStepProps) => {
                                 type="button" 
                                 onClick={() => {
                                     if (navigator.geolocation) {
-                                        navigator.geolocation.getCurrentPosition((pos) => {
-                                            form.setValue('lat', pos.coords.latitude);
-                                            form.setValue('lng', pos.coords.longitude);
-                                        });
+                                        setIsSensing(true);
+                                        navigator.geolocation.getCurrentPosition(
+                                            async (position) => {
+                                                const { latitude, longitude } = position.coords;
+                                                form.setValue('lat', latitude);
+                                                form.setValue('lng', longitude);
+                                                
+                                                setIsSensing(false);
+                                                toast({ title: "Coordinates Acquired", description: "Geographical sync successful." });
+                                            },
+                                            () => {
+                                                setIsSensing(false);
+                                                toast({ variant: "destructive", title: "Sync Failed", description: "Could not establish a lock on your position." });
+                                            },
+                                            { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+                                        );
                                     }
                                 }}
                                 className="h-12 px-6 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/5 text-[10px] font-black uppercase tracking-widest"

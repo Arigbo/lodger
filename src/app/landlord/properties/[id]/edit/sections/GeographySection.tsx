@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Home } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
+import { useToast } from '@/hooks/use-toast';
 import { EditFormValues } from '../edit-schemas';
 import { Combobox } from '@/components/ui/combobox';
 import { SchoolCombobox } from '@/components/school-combobox';
@@ -22,6 +23,9 @@ interface GeographySectionProps {
 }
 
 export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
+  const [isSensing, setIsSensing] = useState(false);
+  const { toast } = useToast();
+
   return (
     <div className="space-y-10">
       <div className="inline-flex items-center gap-4">
@@ -195,15 +199,27 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
                       type="button" 
                       onClick={() => {
                         if (navigator.geolocation) {
-                          navigator.geolocation.getCurrentPosition((pos) => {
-                            form.setValue('lat', pos.coords.latitude);
-                            form.setValue('lng', pos.coords.longitude);
-                          });
+                          setIsSensing(true);
+                          navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                              const { latitude, longitude } = position.coords;
+                              form.setValue('lat', latitude);
+                              form.setValue('lng', longitude);
+                              setIsSensing(false);
+                              toast({ title: "Coordinates Acquired" });
+                            },
+                            () => {
+                              setIsSensing(false);
+                              toast({ variant: "destructive", title: "Sync Failed" });
+                            },
+                            { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+                          );
                         }
                       }}
+                      disabled={isSensing}
                       className="h-10 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/5 text-[9px] font-black uppercase tracking-widest"
                     >
-                      Sense Location
+                      {isSensing ? 'Sensing...' : 'Sense Location'}
                     </Button>
                     <Dialog>
                       <DialogTrigger asChild>

@@ -4,6 +4,7 @@ import { auth } from '@/firebase/admin';
 
 const ALLOWED_ORIGINS = [
     'https://lodger-admin.vercel.app',
+    'https://lodger-ancient.vercel.app',
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:3002'

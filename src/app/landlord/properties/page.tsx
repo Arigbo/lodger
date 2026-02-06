@@ -236,7 +236,7 @@ export default function LandlordPropertiesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-2xl border-2 p-2 shadow-2xl">
                           <DropdownMenuItem asChild className="rounded-xl cursor-pointer">
-                            <Link href={`/landlord/properties/edit/${property.id}`} className="flex items-center gap-3 py-3">
+                            <Link href={`/landlord/properties/${property.id}/edit`} className="flex items-center gap-3 py-3">
                               <Edit3 className="h-4 w-4" /> Edit Asset
                             </Link>
                           </DropdownMenuItem>
