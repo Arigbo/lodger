@@ -44,3 +44,13 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+# logs and temporary files
+build.log
+typecheck_output.txt
+typecheck_error.txt
+.modified
+*.log
+
+# workspace config
+*.code-workspace
