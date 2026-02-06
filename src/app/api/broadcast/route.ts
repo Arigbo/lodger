@@ -50,14 +50,15 @@ export async function POST(request: Request) {
         const idToken = authHeader.split('Bearer ')[1];
         const decodedToken = await auth.verifyIdToken(idToken);
         
+        const userEmail = decodedToken.email?.toLowerCase();
+        
         const authorizedAdmins = [
             'admin@lodger.com', 
             'arigbo.lodger@gmail.com',
             'arigbo@gmail.com',
-            'support@lodger.com'
+            'support@lodger.com',
+            'info@lodger.com'
         ];
-        
-        const userEmail = decodedToken.email?.toLowerCase();
         let isAuthorized = userEmail && authorizedAdmins.includes(userEmail);
 
         // Fallback: Check for 'admin' role in Firestore

@@ -249,7 +249,8 @@ export default function EditPropertyPage() {
         userId: user?.uid,
         landlordId: property?.landlordId,
         mismatch: !!(user && property && property.landlordId !== user.uid),
-        docPath: propertyRef?.path
+        docPath: propertyRef?.path,
+        projectId: (firebaseApp as any)?.options?.projectId
     });
     return notFound();
   }

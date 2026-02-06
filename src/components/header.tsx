@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser, useAuth } from "@/firebase/provider";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
@@ -39,6 +40,29 @@ export default function Header() {
   const firestore = useFirestore();
   const { user, role } = useUser();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(user?.uid || null);
+  const { toast } = useToast();
+  const [lastNotificationId, setLastNotificationId] = useState<string | null>(null);
+
+  // Real-time toast for new notifications
+  useEffect(() => {
+    if (!notifications.length) return;
+    
+    const latest = notifications[0];
+    if (!latest.read && latest.id !== lastNotificationId) {
+      // If it's very fresh (created in the last 10 seconds), show a toast
+      const createdAt = latest.createdAt ? new Date(latest.createdAt).getTime() : Date.now();
+      const isFresh = (Date.now() - createdAt) < 10000;
+      
+      if (isFresh && lastNotificationId !== null) { // lastNotificationId !== null prevents toast on initial load
+          toast({
+            title: latest.title,
+            description: latest.message,
+            className: "bg-primary text-black border-none rounded-2xl shadow-2xl",
+          });
+      }
+      setLastNotificationId(latest.id);
+    }
+  }, [notifications, lastNotificationId, toast]);
 
   const userDocRef = useMemoFirebase(() =>
     user ? doc(firestore, 'users', user.uid) : null,
