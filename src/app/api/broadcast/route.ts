@@ -36,11 +36,16 @@ export async function POST(request: Request) {
     const corsHeaders = getCorsHeaders(origin);
 
     try {
-        // Basic Security Check: Ensure request comes from an authorized admin session
         const authHeader = request.headers.get('Authorization');
         if (!authHeader?.startsWith('Bearer ')) {
+            console.error('Missing or malformed Authorization header');
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
         }
+
+        // Diagnostic log for Firebase Admin
+        const hasKey = !!process.env.FIREBASE_PRIVATE_KEY;
+        const hasEmail = !!process.env.FIREBASE_CLIENT_EMAIL;
+        console.log(`[Broadcast API] Auth Check - HasKey: ${hasKey}, HasEmail: ${hasEmail}`);
 
         const idToken = authHeader.split('Bearer ')[1];
         const decodedToken = await auth.verifyIdToken(idToken);

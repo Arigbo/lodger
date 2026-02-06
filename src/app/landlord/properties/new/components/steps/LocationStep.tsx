@@ -31,6 +31,12 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import dynamic from 'next/dynamic';
+
+const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), { 
+    ssr: false,
+    loading: () => <div className="h-[400px] w-full rounded-[2rem] bg-muted animate-pulse border-2 border-foreground/5" />
+});
 
 interface LocationStepProps {
     form: any;
@@ -38,7 +44,11 @@ interface LocationStepProps {
 
 export const LocationStep = ({ form }: LocationStepProps) => {
     const [isSensing, setIsSensing] = useState(false);
+    const [accuracy, setAccuracy] = useState<number | null>(null);
     const { toast } = useToast();
+
+    const lat = form.watch('lat');
+    const lng = form.watch('lng');
 
     return (
         <motion.div
@@ -171,6 +181,14 @@ export const LocationStep = ({ form }: LocationStepProps) => {
             </div>
 
             <div className="space-y-6">
+                <LocationPickerMap 
+                    lat={lat} 
+                    lng={lng} 
+                    onChange={(newLat, newLng) => {
+                        form.setValue('lat', newLat);
+                        form.setValue('lng', newLng);
+                    }} 
+                />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
                     <FormField
                         control={form.control}
@@ -213,71 +231,79 @@ export const LocationStep = ({ form }: LocationStepProps) => {
                         )}
                     />
                 </div>
+            </div>
 
-                <div className="p-8 rounded-[2.5rem] bg-[#050505] text-white border border-white/5 space-y-6">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div className="space-y-2 text-center md:text-left">
-                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary">Location Protocol</h4>
-                            <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-relaxed">
-                                Stay in the compound of the property and click &apos;Sense Location&apos; for the most accurate results.
-                            </p>
-                        </div>
-                        <div className="flex gap-4">
-                            <Button 
-                                type="button" 
-                                onClick={() => {
-                                    if (navigator.geolocation) {
-                                        setIsSensing(true);
-                                        navigator.geolocation.getCurrentPosition(
-                                            async (position) => {
-                                                const { latitude, longitude } = position.coords;
-                                                form.setValue('lat', latitude);
-                                                form.setValue('lng', longitude);
-                                                
-                                                setIsSensing(false);
-                                                toast({ title: "Coordinates Acquired", description: "Geographical sync successful." });
-                                            },
-                                            () => {
-                                                setIsSensing(false);
-                                                toast({ variant: "destructive", title: "Sync Failed", description: "Could not establish a lock on your position." });
-                                            },
-                                            { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-                                        );
-                                    }
-                                }}
-                                className="h-12 px-6 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/5 text-[10px] font-black uppercase tracking-widest"
-                            >
-                                Sense Location
-                            </Button>
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button type="button" className="h-12 px-6 rounded-2xl bg-primary text-black hover:bg-primary/90 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20">
-                                        Request Coordinates
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="rounded-[3rem] border-4 p-12 max-w-xl shadow-3xl">
-                                    <DialogHeader>
-                                        <DialogTitle className="text-3xl font-black uppercase tracking-tighter">Get Geographic Coordinates</DialogTitle>
-                                        <DialogDescription className="text-sm font-medium mt-4">
-                                            The easiest way to get your property location is to stay in the compound of the property and click <strong>Sense Location</strong> on the main form.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="space-y-8 mt-10">
-                                        {[
-                                            "Stay in the compound or at the entrance of your property.",
-                                            "Click the 'Sense Location' button next to the Latitude/Longitude fields.",
-                                            "Grant location permission to your browser when prompted.",
-                                            "Your coordinates will be automatically filled with high precision."
-                                        ].map((step, i) => (
-                                            <div key={i} className="flex gap-6 items-start">
-                                                <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 text-xs font-black ring-1 ring-primary/20">{i + 1}</div>
-                                                <p className="text-sm font-black text-muted-foreground uppercase tracking-tight leading-snug">{step}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                        </div>
+            <div className="p-8 rounded-[2.5rem] bg-[#050505] text-white border border-white/5 space-y-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="space-y-2 text-center md:text-left">
+                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary">Location Protocol</h4>
+                        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-relaxed">
+                            {accuracy ? `Current Precision: ${accuracy}m` : "Stay in the compound of the property and click 'Sense Location' for the most accurate results."}
+                        </p>
+                    </div>
+                    <div className="flex gap-4">
+                        <Button 
+                            type="button" 
+                            disabled={isSensing}
+                            onClick={() => {
+                                if (navigator.geolocation) {
+                                    setIsSensing(true);
+                                    setAccuracy(null);
+                                    navigator.geolocation.getCurrentPosition(
+                                        async (position) => {
+                                            const { latitude, longitude, accuracy } = position.coords;
+                                            form.setValue('lat', latitude);
+                                            form.setValue('lng', longitude);
+                                            setAccuracy(Math.round(accuracy));
+                                            
+                                            setIsSensing(false);
+                                            toast({ 
+                                                title: "Location Synchronized", 
+                                                description: `Position locked with ${Math.round(accuracy)}m precision.` 
+                                            });
+                                        },
+                                        (error) => {
+                                            setIsSensing(false);
+                                            let msg = "Could not establish a lock on your position.";
+                                            if (error.code === error.TIMEOUT) msg = "Location sensing timed out. Try moving to an open area.";
+                                            toast({ variant: "destructive", title: "Sync Failed", description: msg });
+                                        },
+                                        { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+                                    );
+                                }
+                            }}
+                            className="h-12 px-6 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/5 text-[10px] font-black uppercase tracking-widest"
+                        >
+                            {isSensing ? 'Scanning...' : 'Sense Location'}
+                        </Button>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button type="button" className="h-12 px-6 rounded-2xl bg-primary text-black hover:bg-primary/90 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20">
+                                    Request Coordinates
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="rounded-[3rem] border-4 p-12 max-w-xl shadow-3xl">
+                                <DialogHeader>
+                                    <DialogTitle className="text-3xl font-black uppercase tracking-tighter">Get Geographic Coordinates</DialogTitle>
+                                    <DialogDescription className="text-sm font-medium mt-4">
+                                        The easiest way to get your property location is to stay in the compound of the property and click <strong>Sense Location</strong> on the main form.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-8 mt-10">
+                                    {[
+                                        "Stay in the compound or at the entrance of your property.",
+                                        "Click the 'Sense Location' button next to the Latitude/Longitude fields.",
+                                        "Grant location permission to your browser when prompted.",
+                                        "Your coordinates will be automatically filled with high precision."
+                                    ].map((step, i) => (
+                                        <div key={i} className="flex gap-6 items-start">
+                                            <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 text-xs font-black ring-1 ring-primary/20">{i + 1}</div>
+                                            <p className="text-sm font-black text-muted-foreground uppercase tracking-tight leading-snug">{step}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </div>
             </div>

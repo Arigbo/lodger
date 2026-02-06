@@ -218,14 +218,14 @@ export default function PropertyDetailClient({ initialProperty, propertyId }: { 
         "url": propertyUrl,
         "address": {
             "@type": "PostalAddress",
-            "streetAddress": property.location.address,
-            "addressLocality": property.location.city,
-            "addressRegion": property.location.state,
+            "streetAddress": property?.location?.address || '',
+            "addressLocality": property?.location?.city || '',
+            "addressRegion": property?.location?.state || '',
         },
         "offers": {
             "@type": "Offer",
-            "price": property.price,
-            "priceCurrency": property.currency || "USD"
+            "price": property?.price || 0,
+            "priceCurrency": property?.currency || "USD"
         }
     };
 
@@ -264,8 +264,8 @@ export default function PropertyDetailClient({ initialProperty, propertyId }: { 
                                 </div>
                             </div>
                             <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-muted-foreground font-medium">
-                                <div className="flex items-center gap-2"><MapPin className="h-5 w-5 text-primary" /><span>{property.location.address}, {property.location.city}</span></div>
-                                {property.location.school && (<div className="flex items-center gap-2"><GraduationCap className="h-5 w-5 text-primary" /><span>Near {property.location.school}</span></div>)}
+                                <div className="flex items-center gap-2"><MapPin className="h-5 w-5 text-primary" /><span>{property.location?.address}, {property.location?.city}</span></div>
+                                {property.location?.school && (<div className="flex items-center gap-2"><GraduationCap className="h-5 w-5 text-primary" /><span>Near {property.location?.school}</span></div>)}
                                 <div className="flex items-center gap-2">
                                     <Star className="h-5 w-5 text-yellow-500 fill-current" />
                                     <span className="text-foreground">{averageRating.toFixed(1)}</span>
@@ -292,19 +292,19 @@ export default function PropertyDetailClient({ initialProperty, propertyId }: { 
                         <Separator className="bg-foreground/5 h-0.5 rounded-full" />
 
                         {/* Location Section - Always Visible */}
-                        {property.location.lat && property.location.lng && (
+                        {property.location?.lat && property.location?.lng && (
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-2xl font-bold tracking-tight uppercase">Location</h3>
                                     <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-muted-foreground/40 tracking-widest">
                                         <MapPin className="h-3 w-3 text-primary" />
-                                        {property.location.lat.toFixed(4)}, {property.location.lng.toFixed(4)}
+                                        {Number(property.location.lat).toFixed(4)}, {Number(property.location.lng).toFixed(4)}
                                     </div>
                                 </div>
                                 <div className="rounded-[2.5rem] overflow-hidden border-2 border-foreground/[0.02] shadow-2xl">
                                     <PropertyMap 
-                                        lat={property.location.lat} 
-                                        lng={property.location.lng} 
+                                        lat={Number(property.location.lat)} 
+                                        lng={Number(property.location.lng)} 
                                         title={property.title} 
                                     />
                                 </div>
@@ -330,7 +330,7 @@ export default function PropertyDetailClient({ initialProperty, propertyId }: { 
                             </TabsContent>
                             <TabsContent value="amenities" className="mt-0">
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                    {property.amenities.map(amenity => (
+                                    {Array.isArray(property.amenities) && property.amenities.map(amenity => (
                                         <div key={amenity} className="flex items-center gap-3 p-4 rounded-2xl border bg-card/50 backdrop-blur-sm group hover:border-primary/30 transition-all">
                                             <div className="bg-primary/10 p-2 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-all">{amenityIcons[amenity] || <CheckCircle className="h-5 w-5" />}</div>
                                             <span className="font-bold text-sm tracking-tight">{amenity}</span>
@@ -341,9 +341,11 @@ export default function PropertyDetailClient({ initialProperty, propertyId }: { 
                             <TabsContent value="rules" className="mt-0">
                                 <div className="bg-muted/20 p-8 rounded-[2rem] border-2 border-dashed border-border">
                                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {property.rules.map(rule => (
+                                        {Array.isArray(property.rules) ? property.rules.map(rule => (
                                             <li key={rule} className="flex items-start gap-3 text-muted-foreground font-medium"><div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0" />{rule}</li>
-                                        ))}
+                                        )) : (
+                                            <li className="flex items-start gap-3 text-muted-foreground font-medium"><div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0" />{property.rules}</li>
+                                        )}
                                     </ul>
                                 </div>
                             </TabsContent>

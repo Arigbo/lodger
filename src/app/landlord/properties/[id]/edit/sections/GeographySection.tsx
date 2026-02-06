@@ -17,6 +17,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import dynamic from 'next/dynamic';
+
+const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), { 
+  ssr: false,
+  loading: () => <div className="h-[400px] w-full rounded-[2rem] bg-muted animate-pulse border-2 border-foreground/5 mb-6" />
+});
 
 interface GeographySectionProps {
   form: UseFormReturn<EditFormValues>;
@@ -24,7 +30,11 @@ interface GeographySectionProps {
 
 export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
   const [isSensing, setIsSensing] = useState(false);
+  const [accuracy, setAccuracy] = useState<number | null>(null);
   const { toast } = useToast();
+
+  const lat = form.watch('lat');
+  const lng = form.watch('lng');
 
   return (
     <div className="space-y-10">
@@ -126,6 +136,18 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
             )}
           />
         </div>
+
+        <div className="space-y-6">
+          <LocationPickerMap 
+            lat={Number(lat)} 
+            lng={Number(lng)} 
+            onChange={(newLat, newLng) => {
+              form.setValue('lat', newLat);
+              form.setValue('lng', newLng);
+            }} 
+          />
+        </div>
+
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3 items-end">
           <FormField
             control={form.control}
@@ -192,7 +214,9 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
                <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="space-y-1">
                     <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Location Protocol</h4>
-                    <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Stay in the compound of the property and click &apos;Sense Location&apos; for the most accurate results.</p>
+                    <p className="text-[8px] font-black text-white/40 uppercase tracking-widest leading-relaxed">
+                      {accuracy ? `Current Precision: ${accuracy}m` : "Stay in the compound of the property and click 'Sense Location' for the most accurate results."}
+                    </p>
                   </div>
                   <div className="flex gap-2">
                     <Button 
@@ -200,26 +224,33 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
                       onClick={() => {
                         if (navigator.geolocation) {
                           setIsSensing(true);
+                          setAccuracy(null);
                           navigator.geolocation.getCurrentPosition(
                             (position) => {
-                              const { latitude, longitude } = position.coords;
+                              const { latitude, longitude, accuracy } = position.coords;
                               form.setValue('lat', latitude);
                               form.setValue('lng', longitude);
+                              setAccuracy(Math.round(accuracy));
                               setIsSensing(false);
-                              toast({ title: "Coordinates Acquired" });
+                              toast({ 
+                                title: "Coordinates Acquired",
+                                description: `Position locked with ${Math.round(accuracy)}m precision.`
+                              });
                             },
-                            () => {
+                            (error) => {
                               setIsSensing(false);
-                              toast({ variant: "destructive", title: "Sync Failed" });
+                              let msg = "Could not establish a lock on your position.";
+                              if (error.code === error.TIMEOUT) msg = "Location sensing timed out. Try moving to an open area.";
+                              toast({ variant: "destructive", title: "Sync Failed", description: msg });
                             },
-                            { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+                            { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
                           );
                         }
                       }}
                       disabled={isSensing}
                       className="h-10 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/5 text-[9px] font-black uppercase tracking-widest"
                     >
-                      {isSensing ? 'Sensing...' : 'Sense Location'}
+                      {isSensing ? 'Scanning...' : 'Sense Location'}
                     </Button>
                     <Dialog>
                       <DialogTrigger asChild>

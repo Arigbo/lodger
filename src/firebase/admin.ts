@@ -39,7 +39,9 @@ function initializeAdmin() {
             });
             initialized = true;
         } else {
-            console.warn("Firebase Admin: Missing credentials. Skipping initialization.");
+            if (!privateKey) console.warn("Firebase Admin: Missing FIREBASE_PRIVATE_KEY");
+            if (!clientEmail) console.warn("Firebase Admin: Missing FIREBASE_CLIENT_EMAIL");
+            console.warn("Firebase Admin: Skipping initialization due to missing credentials.");
         }
     } catch (error: any) {
         console.error('Firebase admin initialization error:', error.message);
