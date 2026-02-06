@@ -67,15 +67,29 @@ export function useDoc<T = any>(
     const unsubscribe = onSnapshot(
       memoizedDocRef,
       (snapshot: DocumentSnapshot<DocumentData>) => {
+        console.log('[useDoc] Snapshot received:', {
+          path: memoizedDocRef.path,
+          exists: snapshot.exists(),
+          metadata: snapshot.metadata,
+        });
+        
         if (snapshot.exists()) {
           setData({ ...(snapshot.data() as T), id: snapshot.id });
         } else {
+          console.warn('[useDoc] Document does not exist:', memoizedDocRef.path);
           setData(null);
         }
         setError(null);
         setIsLoading(false);
       },
       (error: FirestoreError) => {
+        console.error('[useDoc] Firestore error:', {
+          path: memoizedDocRef.path,
+          code: error.code,
+          message: error.message,
+          name: error.name,
+        });
+        
         const contextualError = new FirestorePermissionError({
           operation: 'get',
           path: memoizedDocRef.path,

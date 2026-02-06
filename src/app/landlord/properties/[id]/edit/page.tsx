@@ -44,8 +44,28 @@ export default function EditPropertyPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const propertyRef = useMemoFirebase(() => id ? doc(firestore, 'properties', id) : null, [firestore, id]);
+  const propertyRef = useMemoFirebase(() => {
+    console.log('[EditProperty] Creating propertyRef:', { id, firestoreExists: !!firestore });
+    return id ? doc(firestore, 'properties', id) : null;
+  }, [firestore, id]);
+  
   const { data: property, isLoading: isPropertyLoading, refetch, error: propertyError } = useDoc<Property>(propertyRef);
+
+  // Debug logging for property state changes
+  useEffect(() => {
+    console.log('[EditProperty] Property state changed:', {
+      id,
+      propertyLoaded: !!property,
+      isLoading: isPropertyLoading,
+      hasError: !!propertyError,
+      errorMessage: propertyError?.message,
+      propertyData: property ? { 
+        id: property.id, 
+        title: property.title,
+        landlordId: property.landlordId 
+      } : null
+    });
+  }, [property, isPropertyLoading, propertyError, id]);
 
   const [isUploading, setIsUploading] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
