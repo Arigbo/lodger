@@ -35,8 +35,8 @@ service cloud.firestore {
       // Admins have full access
       allow read, write: if isAdmin();
       
-      // Allow public read access for listings
-      allow get, list: if true;
+      // Allow public read access for listings (includes real-time listeners)
+      allow read: if true;
       
       // Allow creation if the authenticated user is setting themselves as the landlord
       allow create: if request.auth != null && request.resource.data.landlordId == request.auth.uid;
