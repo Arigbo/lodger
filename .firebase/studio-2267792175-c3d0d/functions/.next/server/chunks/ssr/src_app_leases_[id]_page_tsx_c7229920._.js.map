@@ -1,1 +1,0 @@
-{"version":3,"sources":["../../../../src/app/leases/%5Bid%5D/page.tsx"],"sourcesContent":["\r\n'use client';\r\n\r\nimport { notFound } from 'next/navigation';\r\n\r\nexport default function DeprecatedLeasePage() {\r\n    notFound();\r\n}\r\n"],"names":[],"mappings":"uCAGA,IAAA,EAAA,EAAA,CAAA,CAAA,OAEe,SAAS,IACpB,CAAA,EAAA,EAAA,QAAA,AAAQ,GACZ"}
