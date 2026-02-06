@@ -240,7 +240,17 @@ export default function EditPropertyPage() {
   }
 
   if (isUserLoading || isPropertyLoading) return <Loading />;
-  if (!property || (user && property.landlordId !== user.uid)) return notFound();
+  
+  if (!property || (user && property.landlordId !== user.uid)) {
+    console.error(`[EditProperty] 404 Triggered:`, {
+        id,
+        propertyExists: !!property,
+        userId: user?.uid,
+        landlordId: property?.landlordId,
+        mismatch: !!(user && property && property.landlordId !== user.uid)
+    });
+    return notFound();
+  }
 
   return (
     <div className="min-h-screen bg-transparent p-0 lg:p-8 animate-in fade-in duration-1000">
