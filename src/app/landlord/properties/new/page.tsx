@@ -67,7 +67,6 @@ function generateLeaseTextForTemplate(propertyData: Partial<FormValues>): string
 
     const rulesList = propertyData.rules || 'None';
     const rentAmount = propertyData.price ? `${propertyData.currency} ${propertyData.price}` : '{{MONTHLY_RENT}}';
-
     return `LEASE AGREEMENT
 
 This Lease Agreement (the "Agreement") is made and entered into on {{DATE_TODAY}}, by and between:
