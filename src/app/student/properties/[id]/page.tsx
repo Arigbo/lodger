@@ -18,26 +18,29 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         }
 
         const property = propertySnap.data() as Property;
+        const description = property.description || '';
+        const title = property.title || 'Property Details';
+        const images = property.images || [];
 
         return {
-            title: `${property.title} | Lodger`,
-            description: property.description.substring(0, 160),
+            title: `${title} | Lodger`,
+            description: description.substring(0, 160),
             openGraph: {
-                title: property.title,
-                description: property.description.substring(0, 160),
-                images: property.images && property.images.length > 0 ? [{
-                    url: property.images[0],
+                title: title,
+                description: description.substring(0, 160),
+                images: images.length > 0 ? [{
+                    url: images[0],
                     width: 1200,
                     height: 630,
-                    alt: property.title,
+                    alt: title,
                 }] : [],
                 type: 'website',
             },
             twitter: {
                 card: 'summary_large_image',
-                title: property.title,
-                description: property.description.substring(0, 160),
-                images: property.images && property.images.length > 0 ? [property.images[0]] : [],
+                title: title,
+                description: description.substring(0, 160),
+                images: images.length > 0 ? [images[0]] : [],
             }
         };
     } catch (error) {

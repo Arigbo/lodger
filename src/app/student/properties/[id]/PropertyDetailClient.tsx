@@ -298,13 +298,13 @@ export default function PropertyDetailClient({ initialProperty, propertyId }: { 
                                     <h3 className="text-2xl font-bold tracking-tight uppercase">Location</h3>
                                     <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-muted-foreground/40 tracking-widest">
                                         <MapPin className="h-3 w-3 text-primary" />
-                                        {Number(property.location.lat).toFixed(4)}, {Number(property.location.lng).toFixed(4)}
+                                        {Number(property.location?.lat || 0).toFixed(4)}, {Number(property.location?.lng || 0).toFixed(4)}
                                     </div>
                                 </div>
                                 <div className="rounded-[2.5rem] overflow-hidden border-2 border-foreground/[0.02] shadow-2xl">
                                     <PropertyMap 
-                                        lat={Number(property.location.lat)} 
-                                        lng={Number(property.location.lng)} 
+                                        lat={Number(property.location?.lat || 0)} 
+                                        lng={Number(property.location?.lng || 0)} 
                                         title={property.title} 
                                     />
                                 </div>

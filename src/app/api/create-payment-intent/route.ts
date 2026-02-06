@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { firestore as adminFirestore } from '@/firebase/server';
+import { firestore as adminFirestore } from '@/firebase/admin';
 
 export const dynamic = 'force-dynamic';
 

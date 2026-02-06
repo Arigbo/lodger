@@ -7,7 +7,7 @@ import PropertyCard from "@/components/property-card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { firestore } from "@/firebase/server";
+import { firestore } from "@/firebase/admin";
 import type { Property } from "@/types";
 import type { Metadata } from 'next';
 
