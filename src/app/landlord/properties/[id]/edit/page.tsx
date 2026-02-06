@@ -34,7 +34,6 @@ import { SpecificationSection } from './sections/SpecificationSection';
 import { MediaSection } from './sections/MediaSection';
 import { AmenitiesSection } from './sections/AmenitiesSection';
 import { RulesSection } from './sections/RulesSection';
-import { TestFirestoreAccess } from './test-firestore';
 
 export default function EditPropertyPage() {
   const params = useParams();
@@ -363,9 +362,6 @@ export default function EditPropertyPage() {
           </CardContent>
         </Card>
       </div>
-      
-      {/* Diagnostic Test Component */}
-      <TestFirestoreAccess propertyId={id} />
     </div>
   );
 }
