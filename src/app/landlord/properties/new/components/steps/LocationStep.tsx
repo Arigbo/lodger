@@ -20,6 +20,15 @@ import { SchoolCombobox } from '@/components/school-combobox';
 import { countries } from '@/types/countries';
 import { motion } from 'framer-motion';
 import { MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface LocationStepProps {
     form: any;
@@ -156,33 +165,104 @@ export const LocationStep = ({ form }: LocationStepProps) => {
                 />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
-                <FormField
-                    control={form.control}
-                    name="lat"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Latitude</FormLabel>
-                            <FormControl>
-                                <Input type="number" step="any" placeholder="6.5244" {...field} className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border-2 border-transparent focus-visible:border-primary/20 font-bold text-sm" />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="lng"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Longitude</FormLabel>
-                            <FormControl>
-                                <Input type="number" step="any" placeholder="3.3792" {...field} className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border-2 border-transparent focus-visible:border-primary/20 font-bold text-sm" />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+            <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+                    <FormField
+                        control={form.control}
+                        name="lat"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Latitude</FormLabel>
+                                <FormControl>
+                                    <Input 
+                                        type="number" 
+                                        step="any" 
+                                        placeholder="6.5244" 
+                                        {...field} 
+                                        onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border-2 border-transparent focus-visible:border-primary/20 font-bold text-sm" 
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="lng"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Longitude</FormLabel>
+                                <FormControl>
+                                    <Input 
+                                        type="number" 
+                                        step="any" 
+                                        placeholder="3.3792" 
+                                        {...field} 
+                                        onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border-2 border-transparent focus-visible:border-primary/20 font-bold text-sm" 
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
+                <div className="p-8 rounded-[2.5rem] bg-[#050505] text-white border border-white/5 space-y-6">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="space-y-2 text-center md:text-left">
+                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary">Coordinate Protocol Support</h4>
+                            <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-relaxed">
+                                Ensure absolute precision in your property's geographical positioning.
+                            </p>
+                        </div>
+                        <div className="flex gap-4">
+                            <Button 
+                                type="button" 
+                                onClick={() => {
+                                    if (navigator.geolocation) {
+                                        navigator.geolocation.getCurrentPosition((pos) => {
+                                            form.setValue('lat', pos.coords.latitude);
+                                            form.setValue('lng', pos.coords.longitude);
+                                        });
+                                    }
+                                }}
+                                className="h-12 px-6 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/5 text-[10px] font-black uppercase tracking-widest"
+                            >
+                                Sense Location
+                            </Button>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button type="button" className="h-12 px-6 rounded-2xl bg-primary text-black hover:bg-primary/90 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20">
+                                        Get Instructions
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="rounded-[3rem] border-4 p-12 max-w-xl shadow-3xl">
+                                    <DialogHeader>
+                                        <DialogTitle className="text-3xl font-black uppercase tracking-tighter">Locating Your Grid Ref</DialogTitle>
+                                        <DialogDescription className="text-sm font-medium mt-4">
+                                            Follow these protocols to extract exact coordinates from Google Maps.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-8 mt-10">
+                                        {[
+                                            "Open Google Maps on your preferred terminal (Desktop or Mobile).",
+                                            "Locate your asset and long-press (or right-click) the primary entrance.",
+                                            "Extract the numeric coordinates (e.g., 6.452, 3.388) from the context menu.",
+                                            "Input the values directly into the Latitude and Longitude fields."
+                                        ].map((step, i) => (
+                                            <div key={i} className="flex gap-6 items-start">
+                                                <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 text-xs font-black ring-1 ring-primary/20">{i + 1}</div>
+                                                <p className="text-sm font-black text-muted-foreground uppercase tracking-tight leading-snug">{step}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+                    </div>
+                </div>
             </div>
         </motion.div>
     );
