@@ -32,36 +32,51 @@ Write-Host ""
 
 foreach ($secretName in $secretNames) {
     if ($secrets.ContainsKey($secretName)) {
-        Write-Host "Setting $secretName..." -ForegroundColor Cyan
+        Write-Host "Working on $secretName..." -ForegroundColor Cyan
         
         # Create a temporary file with the secret value
         $tempFile = New-TemporaryFile
         $secrets[$secretName] | Out-File -FilePath $tempFile.FullName -NoNewline -Encoding utf8
         
         # Set the secret using Firebase CLI
-        $output = firebase apphosting:secrets:set $secretName --data-file=$($tempFile.FullName) 2>&1
+        Write-Host "  Setting secret value..." -ForegroundColor Gray
+        $setResult = firebase apphosting:secrets:set $secretName --data-file=$($tempFile.FullName) --force 2>&1
         
         # Clean up temp file
         Remove-Item $tempFile.FullName
         
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "  ✓ $secretName set successfully" -ForegroundColor Green
-        } else {
-            Write-Host "  ✗ Failed to set $secretName" -ForegroundColor Red
-            Write-Host "  Error: $output" -ForegroundColor Red
+            Write-Host "  ✓ Secret set successfully" -ForegroundColor Green
+            
+            # Grant access to the secret for the 'studio' backend
+            Write-Host "  Granting access to 'studio' backend..." -ForegroundColor Gray
+            $grantResult = firebase apphosting:secrets:grantaccess $secretName --backend studio 2>&1
+            
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "  ✓ Access granted successfully" -ForegroundColor Green
+            }
+            else {
+                Write-Host "  ⚠ Warning: Could not grant access automatically." -ForegroundColor Yellow
+                Write-Host "  $grantResult"
+            }
         }
-    } else {
+        else {
+            Write-Host "  ✗ Failed to set $secretName" -ForegroundColor Red
+            Write-Host "  $setResult" -ForegroundColor Red
+        }
+    }
+    else {
         Write-Host "  ⚠ $secretName not found in .env file" -ForegroundColor Yellow
     }
     Write-Host ""
 }
 
-Write-Host "Done! All secrets have been configured." -ForegroundColor Green
+Write-Host "Done! All secrets have been configured and access granted." -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "1. Commit and push your changes:"
-Write-Host "   git add apphosting.yaml src/ai/genkit.ts"
-Write-Host "   git commit -m 'fix: configure environment variables for deployment'"
+Write-Host "   git add setup-firebase-secrets.ps1 src/firebase/server.ts"
+Write-Host "   git commit -m 'fix: automate secret setup and update admin initialization'"
 Write-Host "   git push"
 Write-Host ""
-Write-Host "2. Firebase will automatically redeploy with the new configuration"
+Write-Host "2. Firebase will automatically redeploy with the new secrets and code."

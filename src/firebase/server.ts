@@ -14,9 +14,17 @@ let authInstance: Auth | undefined;
 // This is a secure way to handle credentials on the server.
 try {
   if (!getApps().length) {
-    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
-      ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-      : undefined;
+    const serviceAccountVar = process.env.FIREBASE_SERVICE_ACCOUNT;
+    let serviceAccount = serviceAccountVar ? JSON.parse(serviceAccountVar) : undefined;
+
+    // Fallback to individual variables (useful for Firebase App Hosting secrets)
+    if (!serviceAccount && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+      serviceAccount = {
+        projectId: firebaseConfig.projectId,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      };
+    }
 
     if (serviceAccount) {
       adminApp = initializeApp({
@@ -26,7 +34,7 @@ try {
       firestoreInstance = getFirestore(adminApp);
       authInstance = getAuth(adminApp);
     } else {
-      console.warn("Firebase Admin SDK not initialized. FIREBASE_SERVICE_ACCOUNT env var is missing.");
+      console.warn("Firebase Admin SDK not initialized. Missing FIREBASE_SERVICE_ACCOUNT or individual credentials.");
     }
   } else {
     adminApp = getApp();
@@ -34,7 +42,7 @@ try {
     authInstance = getAuth(adminApp);
   }
 } catch (error) {
-    console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT or initialize Firebase Admin SDK.", error);
+  console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT or initialize Firebase Admin SDK.", error);
 }
 
 // Export the instances directly. They will be undefined if initialization failed.
