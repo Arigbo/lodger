@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { dispatchBroadcast } from '@/lib/server-actions';
-import { auth } from '@/firebase/admin';
+import { auth, db } from '@/firebase/admin';
 
 const ALLOWED_ORIGINS = [
     'https://lodger-admin.vercel.app',
@@ -50,10 +50,30 @@ export async function POST(request: Request) {
         const idToken = authHeader.split('Bearer ')[1];
         const decodedToken = await auth.verifyIdToken(idToken);
         
-        const authorizedAdmins = ['admin@lodger.com', 'arigbo.lodger@gmail.com'];
+        const authorizedAdmins = [
+            'admin@lodger.com', 
+            'arigbo.lodger@gmail.com',
+            'arigbo@gmail.com',
+            'support@lodger.com'
+        ];
         
-        if (!decodedToken.email || !authorizedAdmins.includes(decodedToken.email)) {
-            console.error(`Unauthorized broadcast attempt from: ${decodedToken.email}`);
+        const userEmail = decodedToken.email?.toLowerCase();
+        let isAuthorized = userEmail && authorizedAdmins.includes(userEmail);
+
+        // Fallback: Check for 'admin' role in Firestore
+        if (!isAuthorized) {
+            try {
+                const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+                if (userDoc.exists && userDoc.data()?.role === 'admin') {
+                    isAuthorized = true;
+                }
+            } catch (err) {
+                console.error('Role check failed:', err);
+            }
+        }
+
+        if (!isAuthorized) {
+            console.error(`Forbidden: [${userEmail || 'No Email'}] (UID: ${decodedToken.uid}) is not authorized.`);
             return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: corsHeaders });
         }
 
