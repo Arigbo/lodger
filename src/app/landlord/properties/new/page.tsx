@@ -1181,10 +1181,12 @@ export default function AddPropertyPage() {
                                                                                             ? "bg-foreground border-foreground text-white shadow-lg"
                                                                                             : "bg-muted/5 border-muted/10 hover:border-primary/20 hover:bg-white"
                                                                                     )}
-                                                                                    onClick={() => {
-                                                                                        const newValue = isSelected
-                                                                                            ? field.value?.filter((v: string) => v !== amenity)
-                                                                                            : [...(field.value || []), amenity];
+                                                                                    onClick={(e) => {
+                                                                                        e.preventDefault();
+                                                                                        const currentValues = field.value || [];
+                                                                                        const newValue = currentValues.includes(amenity)
+                                                                                            ? currentValues.filter((v: string) => v !== amenity)
+                                                                                            : [...currentValues, amenity];
                                                                                         field.onChange(newValue);
                                                                                     }}
                                                                                 >
