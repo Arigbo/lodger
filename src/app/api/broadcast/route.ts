@@ -59,13 +59,27 @@ export async function POST(request: Request) {
             'support@lodger.com',
             'info@lodger.com'
         ];
+        
+        console.log('[Broadcast] Authorization check:', {
+            email: userEmail,
+            uid: decodedToken.uid,
+            inWhitelist: authorizedAdmins.includes(userEmail || '')
+        });
+        
         let isAuthorized = userEmail && authorizedAdmins.includes(userEmail);
 
         // Fallback: Check for 'admin' role in Firestore
         if (!isAuthorized) {
             try {
                 const userDoc = await db.collection('users').doc(decodedToken.uid).get();
-                if (userDoc.exists && userDoc.data()?.role === 'admin') {
+                const hasAdminRole = userDoc.exists && userDoc.data()?.role === 'admin';
+                console.log('[Broadcast] Firestore role check:', {
+                    uid: decodedToken.uid,
+                    docExists: userDoc.exists,
+                    role: userDoc.data()?.role,
+                    hasAdminRole
+                });
+                if (hasAdminRole) {
                     isAuthorized = true;
                 }
             } catch (err) {
