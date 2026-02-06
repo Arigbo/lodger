@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -478,6 +478,10 @@ export default function AddPropertyPage() {
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
     const [hasPrefilled, setHasPrefilled] = useState(false);
 
+    // Refs to prevent circular updates
+    const isUpdatingType = useRef(false);
+    const isUpdatingBedrooms = useRef(false);
+
     // Track image moderation analysis for all images
     const [imageAnalysis, setImageAnalysis] = useState<{
         kitchen: { safety: string, context: string, reason?: string } | null;
@@ -555,19 +559,25 @@ export default function AddPropertyPage() {
 
     // Optimize property type selection based on bedrooms (Nigeria Context)
     useEffect(() => {
+        if (isUpdatingBedrooms.current) return; // Prevent circular updates
+
         if (selectedCountry === 'Nigeria' || selectedCountry === 'NG') {
             if (selectedBedrooms === 1) {
                 // In Nigeria, 1 bedroom is typically a Self Contain
                 const currentType = form.getValues('type');
                 if (!currentType || currentType === 'Flat') {
                     // Don't auto-switch if they manually selected BHK or Studio, only generic Flat
+                    isUpdatingType.current = true;
                     form.setValue('type', 'Self Contain');
+                    setTimeout(() => { isUpdatingType.current = false; }, 0);
                 }
             } else if (selectedBedrooms > 1) {
                 // 2+ bedrooms are typically Flats
                 const currentType = form.getValues('type');
                 if (!currentType || currentType === 'Self Contain') {
+                    isUpdatingType.current = true;
                     form.setValue('type', 'Flat');
+                    setTimeout(() => { isUpdatingType.current = false; }, 0);
                 }
             }
         }
@@ -576,14 +586,18 @@ export default function AddPropertyPage() {
     // Force bedrooms to 1 for Self Contain
     const selectedType = form.watch('type');
     useEffect(() => {
+        if (isUpdatingType.current) return; // Prevent circular updates
+
         if (selectedType === 'Self Contain') {
             const currentBeds = form.getValues('bedrooms');
             if (currentBeds !== 1) {
+                isUpdatingBedrooms.current = true;
                 form.setValue('bedrooms', 1);
                 toast({
                     title: "Bedrooms Updated",
                     description: "Self Contain units are set to 1 bedroom by default.",
                 });
+                setTimeout(() => { isUpdatingBedrooms.current = false; }, 0);
             }
         }
     }, [selectedType]); // Removed form and toast dependencies

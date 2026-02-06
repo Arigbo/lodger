@@ -1,4 +1,3 @@
-
 "use client";
 
 import PropertyCard from "@/components/property-card";
@@ -8,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Home } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
 import type { Property } from "@/types";
@@ -43,10 +42,10 @@ export default function StudentDashboardPage() {
     return <Loading />;
   }
 
-  const stats = {
+  const stats = useMemo(() => ({
     activeRents: rentedProperties?.length || 0,
     pendingApps: pendingApplications?.length || 0,
-  };
+  }), [rentedProperties, pendingApplications]);
 
   return (
     <div className="space-y-12">
