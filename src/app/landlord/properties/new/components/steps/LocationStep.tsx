@@ -212,9 +212,9 @@ export const LocationStep = ({ form }: LocationStepProps) => {
                 <div className="p-8 rounded-[2.5rem] bg-[#050505] text-white border border-white/5 space-y-6">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                         <div className="space-y-2 text-center md:text-left">
-                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary">Coordinate Protocol Support</h4>
+                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary">Location Protocol</h4>
                             <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-relaxed">
-                                Ensure absolute precision in your property's geographical positioning.
+                                Stay in the compound of the property and click &apos;Sense Location&apos; for the most accurate results.
                             </p>
                         </div>
                         <div className="flex gap-4">
@@ -240,17 +240,17 @@ export const LocationStep = ({ form }: LocationStepProps) => {
                                 </DialogTrigger>
                                 <DialogContent className="rounded-[3rem] border-4 p-12 max-w-xl shadow-3xl">
                                     <DialogHeader>
-                                        <DialogTitle className="text-3xl font-black uppercase tracking-tighter">Coordinate Protocol Request</DialogTitle>
+                                        <DialogTitle className="text-3xl font-black uppercase tracking-tighter">Get Geographic Coordinates</DialogTitle>
                                         <DialogDescription className="text-sm font-medium mt-4">
-                                            Follow these protocols to extract exact coordinates from Google Maps.
+                                            The easiest way to get your property location is to stay in the compound of the property and click <strong>Sense Location</strong> on the main form.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="space-y-8 mt-10">
                                         {[
-                                            "Open Google Maps on your preferred terminal (Desktop or Mobile).",
-                                            "Locate your asset and long-press (or right-click) the primary entrance.",
-                                            "Extract the numeric coordinates (e.g., 6.452, 3.388) from the context menu.",
-                                            "Input the values directly into the Latitude and Longitude fields."
+                                            "Stay in the compound or at the entrance of your property.",
+                                            "Click the 'Sense Location' button next to the Latitude/Longitude fields.",
+                                            "Grant location permission to your browser when prompted.",
+                                            "Your coordinates will be automatically filled with high precision."
                                         ].map((step, i) => (
                                             <div key={i} className="flex gap-6 items-start">
                                                 <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 text-xs font-black ring-1 ring-primary/20">{i + 1}</div>

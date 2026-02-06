@@ -289,6 +289,30 @@ export default function PropertyDetailClient({ initialProperty, propertyId }: { 
                             </div>
                         </div>
 
+                        <Separator className="bg-foreground/5 h-0.5 rounded-full" />
+
+                        {/* Location Section - Always Visible */}
+                        {property.location.lat && property.location.lng && (
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-2xl font-bold tracking-tight uppercase">Location</h3>
+                                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-muted-foreground/40 tracking-widest">
+                                        <MapPin className="h-3 w-3 text-primary" />
+                                        {property.location.lat.toFixed(4)}, {property.location.lng.toFixed(4)}
+                                    </div>
+                                </div>
+                                <div className="rounded-[2.5rem] overflow-hidden border-2 border-foreground/[0.02] shadow-2xl">
+                                    <PropertyMap 
+                                        lat={property.location.lat} 
+                                        lng={property.location.lng} 
+                                        title={property.title} 
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        <Separator className="bg-foreground/5 h-0.5 rounded-full" />
+
                         <Tabs defaultValue="gallery" className="w-full">
                             <TabsList className="w-full justify-start bg-transparent border-b rounded-none px-0 h-auto gap-8 mb-8">
                                 <TabsTrigger value="gallery" className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4">Gallery</TabsTrigger>
@@ -303,21 +327,6 @@ export default function PropertyDetailClient({ initialProperty, propertyId }: { 
                             <TabsContent value="overview" className="mt-0 space-y-6">
                                 <h3 className="text-2xl font-bold tracking-tight">About this property</h3>
                                 <p className="text-lg text-muted-foreground leading-relaxed">{property.description}</p>
-
-                                {property.location.lat && property.location.lng && (
-                                    <div className="pt-8 space-y-6">
-                                        <h3 className="text-2xl font-bold tracking-tight uppercase">Location</h3>
-                                        <PropertyMap 
-                                            lat={property.location.lat} 
-                                            lng={property.location.lng} 
-                                            title={property.title} 
-                                        />
-                                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-muted-foreground/40 tracking-widest">
-                                            <MapPin className="h-3 w-3" />
-                                            Coordinates: {property.location.lat.toFixed(4)}, {property.location.lng.toFixed(4)}
-                                        </div>
-                                    </div>
-                                )}
                             </TabsContent>
                             <TabsContent value="amenities" className="mt-0">
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

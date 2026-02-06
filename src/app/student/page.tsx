@@ -38,14 +38,14 @@ export default function StudentDashboardPage() {
   const { data: rentedProperties, isLoading: propsLoading } = useCollection<Property>(propertiesQuery);
   const { data: pendingApplications, isLoading: appsLoading } = useCollection<any>(applicationsQuery);
 
-  if (isUserLoading || propsLoading || appsLoading || !user) {
-    return <Loading />;
-  }
-
   const stats = useMemo(() => ({
     activeRents: rentedProperties?.length || 0,
     pendingApps: pendingApplications?.length || 0,
   }), [rentedProperties, pendingApplications]);
+
+  if (isUserLoading || propsLoading || appsLoading || !user) {
+    return <Loading />;
+  }
 
   return (
     <div className="space-y-12">

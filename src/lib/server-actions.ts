@@ -119,21 +119,24 @@ export async function dispatchBroadcast({
 
         await batch.commit();
 
-        // 3. Handle Emails via Resend (Optional)
-        if (sendEmail && emails.length > 0 && process.env.RESEND_API_KEY) {
-            try {
-                const { Resend } = await import('resend');
-                const resend = new Resend(process.env.RESEND_API_KEY);
-                
-                // We send in chunks if necessary, but for now we'll batch send
-                await Promise.all(emails.map(email => 
-                    resend.emails.send({
-                        from: 'Lodger <notifications@lodger.com>', // User needs to verify domain in Resend
-                        ...email
-                    })
-                ));
-            } catch (emailError) {
-                console.error("Email delivery failed:", emailError);
+        if (sendEmail && emails.length > 0) {
+            if (process.env.RESEND_API_KEY) {
+                try {
+                    const { Resend } = await import('resend');
+                    const resend = new Resend(process.env.RESEND_API_KEY);
+                    
+                    await Promise.all(emails.map(email => 
+                        resend.emails.send({
+                            from: 'Lodger <notifications@lodger.com>',
+                            ...email
+                        })
+                    ));
+                    console.log(`Successfully queued ${emails.length} emails via Resend`);
+                } catch (emailError) {
+                    console.error("Email delivery failed:", emailError);
+                }
+            } else {
+                console.warn("RESEND_API_KEY is missing. Skipping email delivery.");
             }
         }
 

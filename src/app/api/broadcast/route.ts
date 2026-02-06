@@ -13,9 +13,10 @@ export async function POST(request: Request) {
         const idToken = authHeader.split('Bearer ')[1];
         const decodedToken = await auth.verifyIdToken(idToken);
         
-        // Check if user has admin email or custom claim
-        if (decodedToken.email !== 'admin@lodger.com') {
-            // Optional: Check custom claims or firestore admin_users
+        const authorizedAdmins = ['admin@lodger.com', 'arigbo.lodger@gmail.com']; // Expanded list
+        
+        if (!decodedToken.email || !authorizedAdmins.includes(decodedToken.email)) {
+            console.error(`Unauthorized broadcast attempt from: ${decodedToken.email}`);
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

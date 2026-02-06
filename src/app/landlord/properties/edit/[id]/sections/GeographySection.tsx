@@ -187,8 +187,8 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
             <div className="p-6 rounded-2xl bg-[#050505] text-white border border-white/5 space-y-4">
                <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="space-y-1">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Coordinate Protocol Assistance</h4>
-                    <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Help tenants find your property on the global grid.</p>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Location Protocol</h4>
+                    <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Stay in the compound of the property and click &apos;Sense Location&apos; for the most accurate results.</p>
                   </div>
                   <div className="flex gap-2">
                     <Button 
@@ -213,15 +213,15 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
                       </DialogTrigger>
                       <DialogContent className="rounded-[2rem] border-2 p-8 max-w-md">
                         <DialogHeader>
-                          <DialogTitle className="text-2xl font-black uppercase tracking-tighter">Coordinate Protocol Request</DialogTitle>
-                          <DialogDescription className="text-xs font-medium mt-2">Follow these protocols to extract exact coordinates from Google Maps.</DialogDescription>
+                          <DialogTitle className="text-2xl font-black uppercase tracking-tighter">Get Geographic Coordinates</DialogTitle>
+                          <DialogDescription className="text-xs font-medium mt-2">The easiest way to get your property location is to stay in the compound of the property and click <strong>Sense Location</strong>.</DialogDescription>
                         </DialogHeader>
                         <div className="space-y-6 mt-6">
                           {[
-                            "Open Google Maps on your desktop or mobile device.",
-                            "Locate your property and right-click (or long-press) the exact entrance.",
-                            "A pop-up will appear displaying the Latitude and Longitude (e.g., 6.52, 3.37).",
-                            "Click the coordinates to copy them, or transcribe them into the terminal fields here."
+                            "Stay in the compound or at the entrance of your property.",
+                            "Click the 'Sense Location' button next to the Latitude/Longitude fields.",
+                            "Grant location permission to your browser when prompted.",
+                            "Your coordinates will be automatically filled with high precision."
                           ].map((step, i) => (
                             <div key={i} className="flex gap-4">
                               <span className="flex-shrink-0 h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-black">{i + 1}</span>

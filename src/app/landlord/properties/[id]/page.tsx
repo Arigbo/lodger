@@ -4,6 +4,7 @@ import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation
 import { formatPrice, cn } from '@/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Separator } from "@/components/ui/separator";
 import {
   Card,
   CardContent,
@@ -311,10 +312,9 @@ export default function LandlordPropertyDetailPage() {
                 </div>
               </div>
             </div>
-
-
+            
             {/* Specs Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
               {[
                 { icon: BedDouble, label: "Bedrooms", val: property.bedrooms },
                 { icon: Bath, label: "Bathrooms", val: property.bathrooms },
@@ -328,6 +328,30 @@ export default function LandlordPropertyDetailPage() {
                 </div>
               ))}
             </div>
+            
+            <Separator className="bg-foreground/5 h-0.5 rounded-full" />
+
+            {/* Location Section - Always Visible */}
+            {property.location.lat && property.location.lng && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-black tracking-tight uppercase font-headline">Geographic Location</h3>
+                  <div className="flex items-center gap-2 text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest">
+                    <MapPin className="h-3 w-3 text-primary" />
+                    {property.location.lat.toFixed(4)}, {property.location.lng.toFixed(4)}
+                  </div>
+                </div>
+                <div className="rounded-[2.5rem] overflow-hidden border-2 border-foreground/[0.02] shadow-2xl">
+                    <PropertyMap 
+                    lat={property.location.lat} 
+                    lng={property.location.lng} 
+                    title={property.title} 
+                    />
+                </div>
+              </div>
+            )}
+
+            <Separator className="bg-foreground/5 h-0.5 rounded-full" />
 
             {/* Tabs Content */}
             <Tabs defaultValue="gallery" className="w-full">
@@ -350,21 +374,6 @@ export default function LandlordPropertyDetailPage() {
                 <p className="text-lg text-muted-foreground font-medium leading-relaxed">
                   {property.description}
                 </p>
-
-                {property.location.lat && property.location.lng && (
-                  <div className="pt-8 space-y-6">
-                    <h3 className="text-2xl font-black tracking-tight uppercase">Location Protocol</h3>
-                    <PropertyMap 
-                      lat={property.location.lat} 
-                      lng={property.location.lng} 
-                      title={property.title} 
-                    />
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest">
-                      <MapPin className="h-3 w-3" />
-                      Coordinates: {property.location.lat.toFixed(4)}, {property.location.lng.toFixed(4)}
-                    </div>
-                  </div>
-                )}
               </TabsContent>
               <TabsContent value="amenities" className="mt-0">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
