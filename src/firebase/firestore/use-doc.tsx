@@ -92,6 +92,10 @@ export function useDoc<T = any>(
     return () => unsubscribe();
   }, [memoizedDocRef, refetchKey]); // Re-run if the memoizedDocRef or refetchKey changes.
 
+  if(memoizedDocRef && !(memoizedDocRef as any).__memo) {
+    throw new Error('useDoc reference was not properly memoized using useMemoFirebase. This can cause infinite loops and unnecessary Firestore reads.');
+  }
+
   return { data, isLoading, error, refetch };
 }
 

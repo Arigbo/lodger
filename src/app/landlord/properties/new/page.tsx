@@ -1155,12 +1155,11 @@ export default function AddPropertyPage() {
                                             <FormField
                                                 control={form.control}
                                                 name="amenities"
-                                                render={() => (
+                                                render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-4 block">Select Amenities</FormLabel>
                                                         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                                                             {allAmenities.map((amenity) => {
-                                                                // Dynamic icon mapping based on common amenity names
                                                                 const getIcon = (name: string) => {
                                                                     const n = name.toLowerCase();
                                                                     if (n.includes('wi-fi')) return Wifi;
@@ -1169,63 +1168,52 @@ export default function AddPropertyPage() {
                                                                     if (n.includes('gym')) return Dumbbell;
                                                                     if (n.includes('pool')) return Waves;
                                                                     if (n.includes('yard')) return Home;
-                                                                    if (n.includes('pet')) return ShieldCheck; // or PawPrint if imported
+                                                                    if (n.includes('pet')) return ShieldCheck;
                                                                     if (n.includes('furnished')) return Sofa;
                                                                     if (n.includes('secure')) return ShieldCheck;
                                                                     if (n.includes('rooftop')) return Building;
                                                                     if (n.includes('utilities')) return Sparkles;
                                                                     if (n.includes('dishwasher')) return Utensils;
-                                                                    return Sparkles; // Default
+                                                                    return Sparkles;
                                                                 };
                                                                 const Icon = getIcon(amenity);
+                                                                const isSelected = field.value?.includes(amenity);
 
                                                                 return (
-                                                                    <FormField
+                                                                    <div
                                                                         key={amenity}
-                                                                        control={form.control}
-                                                                        name="amenities"
-                                                                        render={({ field }) => {
-                                                                            const isSelected = field.value?.includes(amenity);
-                                                                            return (
-                                                                                <FormItem
-                                                                                    className={cn(
-                                                                                        "flex flex-row items-center space-x-3 md:space-x-4 space-y-0 p-3 md:p-4 rounded-xl md:rounded-2xl border-2 transition-all duration-300 cursor-pointer group",
-                                                                                        isSelected
-                                                                                            ? "bg-foreground border-foreground text-white shadow-lg"
-                                                                                            : "bg-muted/5 border-muted/10 hover:border-primary/20 hover:bg-white"
-                                                                                    )}
-                                                                                    onClick={(e) => {
-                                                                                        e.preventDefault();
-                                                                                        const currentValues = field.value || [];
-                                                                                        const newValue = currentValues.includes(amenity)
-                                                                                            ? currentValues.filter((v: string) => v !== amenity)
-                                                                                            : [...currentValues, amenity];
-                                                                                        field.onChange(newValue);
-                                                                                    }}
-                                                                                >
-                                                                                    <div className={cn(
-                                                                                        "p-2 md:p-2.5 rounded-lg md:rounded-xl shadow-sm transition-colors",
-                                                                                        isSelected ? "bg-white/10" : "bg-white"
-                                                                                    )}>
-                                                                                        <Icon className={cn("h-3 w-3 md:h-4 md:w-4", isSelected ? "text-white" : "text-primary")} />
-                                                                                    </div>
-                                                                                    <div className="flex-1 min-w-0">
-                                                                                        <FormLabel className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] cursor-pointer block truncate">{amenity}</FormLabel>
-                                                                                    </div>
-                                                                                    <FormControl>
-                                                                                        <Checkbox
-                                                                                            checked={isSelected}
-                                                                                            onCheckedChange={() => { }} // Handled by div click
-                                                                                            className={cn(
-                                                                                                "h-4 w-4 md:h-5 md:w-5 rounded md:rounded-lg border-2",
-                                                                                                isSelected ? "border-white/20 bg-white/10" : "border-muted/20"
-                                                                                            )}
-                                                                                        />
-                                                                                    </FormControl>
-                                                                                </FormItem>
-                                                                            )
+                                                                        className={cn(
+                                                                            "flex flex-row items-center space-x-3 md:space-x-4 space-y-0 p-3 md:p-4 rounded-xl md:rounded-2xl border-2 transition-all duration-300 cursor-pointer group",
+                                                                            isSelected
+                                                                                ? "bg-foreground border-foreground text-white shadow-lg"
+                                                                                : "bg-muted/5 border-muted/10 hover:border-primary/20 hover:bg-white"
+                                                                        )}
+                                                                        onClick={() => {
+                                                                            const currentValues = field.value || [];
+                                                                            const newValue = isSelected
+                                                                                ? currentValues.filter((v: string) => v !== amenity)
+                                                                                : [...currentValues, amenity];
+                                                                            field.onChange(newValue);
                                                                         }}
-                                                                    />
+                                                                    >
+                                                                        <div className={cn(
+                                                                            "p-2 md:p-2.5 rounded-lg md:rounded-xl shadow-sm transition-colors",
+                                                                            isSelected ? "bg-white/10" : "bg-white"
+                                                                        )}>
+                                                                            <Icon className={cn("h-3 w-3 md:h-4 md:w-4", isSelected ? "text-white" : "text-primary")} />
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0 pointer-events-none">
+                                                                            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] block truncate">{amenity}</span>
+                                                                        </div>
+                                                                        <Checkbox
+                                                                            checked={isSelected}
+                                                                            onCheckedChange={() => { }} // Logic handled by parent div
+                                                                            className={cn(
+                                                                                "h-4 w-4 md:h-5 md:w-5 rounded md:rounded-lg border-2 pointer-events-none",
+                                                                                isSelected ? "border-white/20 bg-white/10" : "border-muted/20"
+                                                                            )}
+                                                                        />
+                                                                    </div>
                                                                 );
                                                             })}
                                                         </div>
