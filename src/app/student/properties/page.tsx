@@ -681,7 +681,26 @@ export default function PropertiesPage() {
 
       {/* Main Content Area */}
       <div className="space-y-16">
-        {isSearching ? (
+        {!allProperties || allProperties.length === 0 ? (
+          /* System Empty State (No properties listed yet) */
+          <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
+            <CardContent className="flex flex-col items-center justify-center py-32 text-center">
+              <div className="relative mb-12">
+                <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150 animate-pulse" />
+                <div className="relative flex h-40 w-40 items-center justify-center rounded-[3rem] bg-muted/30">
+                  <HomeIcon className="h-20 w-20 text-primary opacity-20" />
+                </div>
+              </div>
+              <h3 className="text-4xl font-black tracking-tight">
+                Landlords are trying to give you the best
+              </h3>
+              <p className="mx-auto mt-6 max-w-sm text-xl font-medium text-muted-foreground/80 leading-relaxed">
+                Check back soon! We are currently synchronizing with premium
+                residences for the modern student.
+              </p>
+            </CardContent>
+          </Card>
+        ) : isSearching ? (
           /* Search Results View */
           <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -717,15 +736,15 @@ export default function PropertiesPage() {
                   <div className="relative mb-12">
                     <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150 animate-pulse" />
                     <div className="relative flex h-40 w-40 items-center justify-center rounded-[3rem] bg-muted/30">
-                      <HomeIcon className="h-20 w-20 text-primary opacity-20" />
+                      <Search className="h-20 w-20 text-primary opacity-20" />
                     </div>
                   </div>
                   <h3 className="text-4xl font-black tracking-tight">
-                    Landlords are trying to give you the best
+                    No homes match your search
                   </h3>
                   <p className="mx-auto mt-6 max-w-sm text-xl font-medium text-muted-foreground/80 leading-relaxed">
-                    Adjust your search or broad filters to find more premium
-                    accommodations in your area.
+                    Try adjusting your filters or search terms to find more
+                    accommodations.
                   </p>
                   <Button
                     size="lg"
