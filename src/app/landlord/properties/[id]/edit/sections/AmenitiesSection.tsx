@@ -33,59 +33,52 @@ export const AmenitiesSection: React.FC<AmenitiesSectionProps> = ({ form }) => {
       <FormField
         control={form.control}
         name="amenities"
-        render={() => (
+        render={({ field }) => (
           <FormItem>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {allAmenities.map((amenity) => {
                 const Icon = AMENITY_ICONS[amenity] || DEFAULT_ICON;
+                const isChecked = field.value?.includes(amenity);
+
                 return (
-                  <FormField
+                  <div
                     key={amenity}
-                    control={form.control}
-                    name="amenities"
-                    render={({ field }) => {
-                      const isChecked = field.value?.includes(amenity);
-                      return (
-                        <FormItem
-                          key={amenity}
-                          className={cn(
-                            "relative flex flex-col items-center justify-center p-6 rounded-3xl border-2 transition-all cursor-pointer group",
-                            isChecked
-                              ? "border-primary bg-primary/5 shadow-lg shadow-primary/5"
-                              : "border-transparent bg-muted/20 hover:bg-muted/30",
-                          )}
-                          onClick={() => {
-                            const current = field.value || [];
-                            const updated = isChecked
-                              ? current.filter((v) => v !== amenity)
-                              : [...current, amenity];
-                            field.onChange(updated);
-                          }}
-                        >
-                          <FormControl>
-                            <Checkbox
-                              checked={isChecked}
-                              onCheckedChange={() => {}}
-                              className="hidden"
-                            />
-                          </FormControl>
-                          <div
-                            className={cn(
-                              "h-10 w-10 flex items-center justify-center rounded-2xl transition-colors mb-3",
-                              isChecked
-                                ? "bg-primary text-black"
-                                : "bg-foreground/5 text-muted-foreground group-hover:text-foreground",
-                            )}
-                          >
-                            <Icon className="h-5 w-5" />
-                          </div>
-                          <FormLabel className="text-[10px] font-black uppercase tracking-widest text-center cursor-pointer">
-                            {amenity}
-                          </FormLabel>
-                        </FormItem>
-                      );
+                    className={cn(
+                      "relative flex flex-col items-center justify-center p-6 rounded-3xl border-2 transition-all cursor-pointer group",
+                      isChecked
+                        ? "border-primary bg-primary/5 shadow-lg shadow-primary/5"
+                        : "border-transparent bg-muted/20 hover:bg-muted/30",
+                    )}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const current = field.value || [];
+                      const updated = isChecked
+                        ? current.filter((v: string) => v !== amenity)
+                        : [...current, amenity];
+                      field.onChange(updated);
                     }}
-                  />
+                  >
+                    <FormControl>
+                      <Checkbox
+                        checked={isChecked}
+                        onCheckedChange={() => {}}
+                        className="hidden"
+                      />
+                    </FormControl>
+                    <div
+                      className={cn(
+                        "h-10 w-10 flex items-center justify-center rounded-2xl transition-colors mb-3",
+                        isChecked
+                          ? "bg-primary text-black"
+                          : "bg-foreground/5 text-muted-foreground group-hover:text-foreground",
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <FormLabel className="text-[10px] font-black uppercase tracking-widest text-center cursor-pointer">
+                      {amenity}
+                    </FormLabel>
+                  </div>
                 );
               })}
             </div>
