@@ -1,40 +1,40 @@
-import React, { useState } from 'react';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Home } from 'lucide-react';
-import { UseFormReturn } from 'react-hook-form';
-import { useToast } from '@/hooks/use-toast';
-import { EditFormValues } from '../edit-schemas';
-import { Combobox } from '@/components/ui/combobox';
-import { SchoolCombobox } from '@/components/school-combobox';
-import { countries } from '@/types/countries';
-import { Button } from '@/components/ui/button';
+import React from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import dynamic from 'next/dynamic';
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Home } from "lucide-react";
+import { UseFormReturn } from "react-hook-form";
+import { useToast } from "@/hooks/use-toast";
+import { EditFormValues } from "../edit-schemas";
+import { Combobox } from "@/components/ui/combobox";
+import { SchoolCombobox } from "@/components/school-combobox";
+import { countries } from "@/types/countries";
+import dynamic from "next/dynamic";
 
-const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), { 
-  ssr: false,
-  loading: () => <div className="h-[400px] w-full rounded-[2rem] bg-muted animate-pulse border-2 border-foreground/5 mb-6" />
-});
+const LocationPickerMap = dynamic(
+  () => import("@/components/LocationPickerMap"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[400px] w-full rounded-[2rem] bg-muted animate-pulse border-2 border-foreground/5 mb-6" />
+    ),
+  },
+);
 
 interface GeographySectionProps {
   form: UseFormReturn<EditFormValues>;
 }
 
 export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
-  const [isSensing, setIsSensing] = useState(false);
-  const [accuracy, setAccuracy] = useState<number | null>(null);
   const { toast } = useToast();
 
-  const lat = form.watch('lat');
-  const lng = form.watch('lng');
+  const lat = form.watch("lat");
+  const lng = form.watch("lng");
 
   return (
     <div className="space-y-10">
@@ -42,7 +42,9 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
         <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
           <Home className="h-5 w-5 md:h-6 md:w-6" />
         </div>
-        <h3 className="font-headline text-xl md:text-3xl font-black uppercase tracking-tighter">Geographic Position</h3>
+        <h3 className="font-headline text-xl md:text-3xl font-black uppercase tracking-tighter">
+          Geographic Position
+        </h3>
       </div>
 
       <div className="space-y-8">
@@ -51,9 +53,15 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Street Address</FormLabel>
+              <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                Street Address
+              </FormLabel>
               <FormControl>
-                <Input placeholder="123 UNIVERSITY AVE" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                <Input
+                  placeholder="123 UNIVERSITY AVE"
+                  {...field}
+                  className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -65,14 +73,19 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
             name="country"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Country</FormLabel>
+                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                  Country
+                </FormLabel>
                 <FormControl>
                   <Combobox
-                    options={countries.map((c) => ({ label: c.name, value: c.name }))}
+                    options={countries.map((c) => ({
+                      label: c.name,
+                      value: c.name,
+                    }))}
                     value={field.value}
                     onChange={(value) => {
                       field.onChange(value);
-                      form.setValue('state', ''); // Reset state when country changes
+                      form.setValue("state", ""); // Reset state when country changes
                     }}
                     placeholder="SELECT COUNTRY"
                   />
@@ -87,20 +100,28 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
             name="state"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">State/Province</FormLabel>
+                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                  State/Province
+                </FormLabel>
                 <FormControl>
                   <Combobox
                     options={
-                      countries.find((c) => c.name === form.watch('country'))?.states.map((s) => ({
-                        label: s.name,
-                        value: s.name,
-                      })) || []
+                      countries
+                        .find((c) => c.name === form.watch("country"))
+                        ?.states.map((s) => ({
+                          label: s.name,
+                          value: s.name,
+                        })) || []
                     }
                     value={field.value}
                     onChange={field.onChange}
                     placeholder="SELECT STATE"
-                    disabled={!form.watch('country')}
-                    emptyText={!form.watch('country') ? "Select a country first" : "No states found"}
+                    disabled={!form.watch("country")}
+                    emptyText={
+                      !form.watch("country")
+                        ? "Select a country first"
+                        : "No states found"
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -114,9 +135,15 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
             name="city"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">City</FormLabel>
+                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                  City
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder="URBANVILLE" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                  <Input
+                    placeholder="URBANVILLE"
+                    {...field}
+                    className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -127,9 +154,15 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
             name="zip"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">ZIP Code</FormLabel>
+                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                  ZIP Code
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder="90210" {...field} className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" />
+                  <Input
+                    placeholder="90210"
+                    {...field}
+                    className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -138,26 +171,28 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
         </div>
 
         <div className="space-y-6">
-          <LocationPickerMap 
-            lat={Number(lat)} 
-            lng={Number(lng)} 
+          <LocationPickerMap
+            lat={Number(lat)}
+            lng={Number(lng)}
             onChange={(newLat, newLng) => {
-              form.setValue('lat', newLat);
-              form.setValue('lng', newLng);
-            }} 
+              form.setValue("lat", newLat);
+              form.setValue("lng", newLng);
+            }}
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3 items-end">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 items-end">
           <FormField
             control={form.control}
             name="school"
             render={({ field }) => (
-              <FormItem className="md:col-span-1">
-                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Search Institution</FormLabel>
+              <FormItem>
+                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                  Search Institution
+                </FormLabel>
                 <FormControl>
                   <SchoolCombobox
-                    value={field.value || ''}
+                    value={field.value || ""}
                     onChange={field.onChange}
                   />
                 </FormControl>
@@ -166,122 +201,69 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
             )}
           />
 
-          <div className="md:col-span-2 space-y-6">
-            <div className="flex flex-col md:flex-row gap-6">
-              <FormField
-                control={form.control}
-                name="lat"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Latitude</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        step="any"
-                        placeholder="6.5244" 
-                        {...field} 
-                        onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                        className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lng"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Longitude</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        step="any"
-                        placeholder="3.3792" 
-                        {...field} 
-                        onChange={(e) => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                        className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest" 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="p-6 rounded-2xl bg-[#050505] text-white border border-white/5 space-y-4">
-               <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Location Protocol</h4>
-                    <p className="text-[8px] font-black text-white/40 uppercase tracking-widest leading-relaxed">
-                      {accuracy ? `Current Precision: ${accuracy}m` : "Stay in the compound of the property and click 'Sense Location' for the most accurate results."}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      type="button" 
-                      onClick={() => {
-                        if (navigator.geolocation) {
-                          setIsSensing(true);
-                          setAccuracy(null);
-                          navigator.geolocation.getCurrentPosition(
-                            (position) => {
-                              const { latitude, longitude, accuracy } = position.coords;
-                              form.setValue('lat', latitude);
-                              form.setValue('lng', longitude);
-                              setAccuracy(Math.round(accuracy));
-                              setIsSensing(false);
-                              toast({ 
-                                title: "Coordinates Acquired",
-                                description: `Position locked with ${Math.round(accuracy)}m precision.`
-                              });
-                            },
-                            (error) => {
-                              setIsSensing(false);
-                              let msg = "Could not establish a lock on your position.";
-                              if (error.code === error.TIMEOUT) msg = "Location sensing timed out. Try moving to an open area.";
-                              toast({ variant: "destructive", title: "Sync Failed", description: msg });
-                            },
-                            { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
-                          );
-                        }
-                      }}
-                      disabled={isSensing}
-                      className="h-10 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/5 text-[9px] font-black uppercase tracking-widest"
-                    >
-                      {isSensing ? 'Scanning...' : 'Sense Location'}
-                    </Button>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button type="button" className="h-10 px-4 rounded-xl bg-primary text-black hover:bg-primary/90 text-[9px] font-black uppercase tracking-widest">
-                          Request Coordinates
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="rounded-[2rem] border-2 p-8 max-w-md">
-                        <DialogHeader>
-                          <DialogTitle className="text-2xl font-black uppercase tracking-tighter">Get Geographic Coordinates</DialogTitle>
-                          <DialogDescription className="text-xs font-medium mt-2">The easiest way to get your property location is to stay in the compound of the property and click <strong>Sense Location</strong>.</DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-6 mt-6">
-                          {[
-                            "Stay in the compound or at the entrance of your property.",
-                            "Click the 'Sense Location' button next to the Latitude/Longitude fields.",
-                            "Grant location permission to your browser when prompted.",
-                            "Your coordinates will be automatically filled with high precision."
-                          ].map((step, i) => (
-                            <div key={i} className="flex gap-4">
-                              <span className="flex-shrink-0 h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-black">{i + 1}</span>
-                              <p className="text-xs font-bold text-muted-foreground uppercase leading-tight tracking-wide">{step}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-               </div>
-            </div>
+          <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-muted/30 border border-border/50">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Use the{" "}
+              <span className="text-foreground">"Get Accurate Location"</span>{" "}
+              button on the map for precision.
+            </p>
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="lat"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                  Latitude
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="any"
+                    placeholder="6.5244"
+                    {...field}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === "" ? "" : parseFloat(e.target.value),
+                      )
+                    }
+                    className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="lng"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                  Longitude
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="any"
+                    placeholder="3.3792"
+                    {...field}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === "" ? "" : parseFloat(e.target.value),
+                      )
+                    }
+                    className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
       </div>
     </div>

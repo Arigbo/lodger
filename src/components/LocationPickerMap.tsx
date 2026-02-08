@@ -1,14 +1,23 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useEffect, useState } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMapEvents,
+  useMap,
+} from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { Target, Loader2 } from "lucide-react";
+import { Button } from "./ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 // Fix for default marker icons in Leaflet
 const DefaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 });
@@ -23,7 +32,11 @@ interface LocationPickerMapProps {
 }
 
 // Component to handle map clicks and marker updates
-function MapEvents({ onChange }: { onChange: (lat: number, lng: number) => void }) {
+function MapEvents({
+  onChange,
+}: {
+  onChange: (lat: number, lng: number) => void;
+}) {
   useMapEvents({
     click(e) {
       onChange(e.latlng.lat, e.latlng.lng);
@@ -33,7 +46,13 @@ function MapEvents({ onChange }: { onChange: (lat: number, lng: number) => void 
 }
 
 // Component to recenter map when coordinates change externally (e.g., from Sensing)
-function ChangeView({ center, zoom }: { center: [number, number], zoom: number }) {
+function ChangeView({
+  center,
+  zoom,
+}: {
+  center: [number, number];
+  zoom: number;
+}) {
   const map = useMap();
   useEffect(() => {
     map.setView(center, zoom);
@@ -41,7 +60,14 @@ function ChangeView({ center, zoom }: { center: [number, number], zoom: number }
   return null;
 }
 
-export default function LocationPickerMap({ lat, lng, onChange, zoom = 15 }: LocationPickerMapProps) {
+export default function LocationPickerMap({
+  lat,
+  lng,
+  onChange,
+  zoom = 15,
+}: LocationPickerMapProps) {
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const { toast } = useToast();
   const position: [number, number] = [lat || 6.5244, lng || 3.3792]; // Default to Lagos if empty
   const [markerPos, setMarkerPos] = useState<[number, number]>(position);
 
@@ -57,11 +83,46 @@ export default function LocationPickerMap({ lat, lng, onChange, zoom = 15 }: Loc
     onChange(lat, lng);
   };
 
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Geolocation is not supported by your browser.",
+      });
+      return;
+    }
+
+    setIsGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        onChange(latitude, longitude);
+        setMarkerPos([latitude, longitude]);
+        setIsGettingLocation(false);
+        toast({
+          title: "Location Found",
+          description: `Location set with ${Math.round(accuracy)}m accuracy.`,
+        });
+      },
+      (error) => {
+        setIsGettingLocation(false);
+        toast({
+          variant: "destructive",
+          title: "Location Error",
+          description:
+            "Could not retrieve your location. Please check permissions.",
+        });
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    );
+  };
+
   return (
     <div className="w-full h-[300px] md:h-[400px] rounded-[2rem] overflow-hidden border-2 border-foreground/5 shadow-xl relative z-0">
-      <MapContainer 
-        center={position} 
-        zoom={zoom} 
+      <MapContainer
+        center={position}
+        zoom={zoom}
         scrollWheelZoom={true}
         className="h-full w-full"
       >
@@ -70,22 +131,45 @@ export default function LocationPickerMap({ lat, lng, onChange, zoom = 15 }: Loc
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <MapEvents onChange={(newLat, newLng) => {
-          setMarkerPos([newLat, newLng]);
-          onChange(newLat, newLng);
-        }} />
-        <Marker 
-          position={markerPos} 
+        <MapEvents
+          onChange={(newLat, newLng) => {
+            setMarkerPos([newLat, newLng]);
+            onChange(newLat, newLng);
+          }}
+        />
+        <Marker
+          position={markerPos}
           draggable={true}
           eventHandlers={{
             dragend: handleMarkerDrag,
           }}
-        >
-        </Marker>
+        ></Marker>
       </MapContainer>
+
+      <div className="absolute top-4 right-4 z-[1000]">
+        <Button
+          type="button"
+          size="sm"
+          onClick={handleGetCurrentLocation}
+          disabled={isGettingLocation}
+          className="bg-white hover:bg-white/90 text-black font-black uppercase tracking-widest text-[10px] h-10 px-4 rounded-xl border-2 shadow-xl flex gap-2"
+        >
+          {isGettingLocation ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Target className="h-3 w-3" />
+          )}
+          {isGettingLocation ? "Finding..." : "Get Accurate Location"}
+        </Button>
+      </div>
+
       <div className="absolute bottom-4 left-4 z-[1000] bg-background/80 backdrop-blur-md px-4 py-2 rounded-xl border-2 border-primary/20 shadow-lg">
-        <p className="text-[10px] font-black uppercase tracking-widest text-primary">Map Protocol Active</p>
-        <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">Click or drag marker to adjust positioning</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+          Map Interaction Active
+        </p>
+        <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">
+          Click or drag marker for precision
+        </p>
       </div>
     </div>
   );
