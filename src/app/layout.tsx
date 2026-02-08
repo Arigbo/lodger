@@ -5,25 +5,42 @@ import { FirebaseClientProvider } from "@/firebase";
 import { cn } from "@/utils";
 import "./globals.css";
 import type { Metadata } from "next";
-import { Outfit, Playfair_Display, Inter, Space_Grotesk } from "next/font/google";
-
+import {
+  Outfit,
+  Playfair_Display,
+  Inter,
+  Space_Grotesk,
+} from "next/font/google";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
-const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+});
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk" });
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+});
 
 export const metadata: Metadata = {
   title: {
     default: "LODGER | Student Living",
     template: "%s | LODGER",
   },
-  description: "Find your perfect student home. LODGER offers a curated collection of residences for the modern student.",
-  metadataBase: new URL('https://lodger-ancient.vercel.app'),
-  keywords: ["student housing", "premium rentals", "university living", "student apartments"],
+  description:
+    "Find your perfect student home. LODGER offers a curated collection of residences for the modern student.",
+  metadataBase: new URL("https://lodger-ancient.vercel.app"),
+  keywords: [
+    "student housing",
+    "premium rentals",
+    "university living",
+    "student apartments",
+  ],
   openGraph: {
     title: "Lodger - Find Your Perfect Student Home",
-    description: "The easiest way for university students to find and book their next rental property.",
+    description:
+      "The easiest way for university students to find and book their next rental property.",
     url: "https://lodger-ancient.vercel.app",
     siteName: "Lodger",
     images: [
@@ -39,7 +56,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Lodger - Find Your Perfect Student Home",
-    description: "The easiest way for university students to find and book their next rental property.",
+    description:
+      "The easiest way for university students to find and book their next rental property.",
     images: ["/og-image.png"],
   },
   robots: {
@@ -48,8 +66,10 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: "/favicon.ico",
-  }
+  },
 };
+
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function RootLayout({
   children,
@@ -64,15 +84,16 @@ export default function RootLayout({
           outfit.variable,
           playfair.variable,
           inter.variable,
-          spaceGrotesk.variable
+          spaceGrotesk.variable,
         )}
       >
-
         <FirebaseClientProvider>
           <HeaderAndFooterProvider>
-            {children}
-            <Toaster />
-            <SupportBubble />
+            <TooltipProvider>
+              {children}
+              <Toaster />
+              <SupportBubble />
+            </TooltipProvider>
           </HeaderAndFooterProvider>
         </FirebaseClientProvider>
       </body>

@@ -15,9 +15,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sparkles, AlertCircle } from "lucide-react";
+import { Sparkles, AlertCircle, Info } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { EditFormValues } from "../edit-schemas";
+
+import { PROPERTY_TYPES } from "@/types/property-types";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface IdentitySectionProps {
   form: UseFormReturn<EditFormValues>;
@@ -157,17 +164,30 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="rounded-2xl border-2 font-black text-[10px] uppercase">
-                      <SelectItem value="Self Contain">Self Contain</SelectItem>
-                      <SelectItem value="Flat">Flat / Apartment</SelectItem>
-                      <SelectItem value="BHK">BHK</SelectItem>
-                      <SelectItem value="Studio">Studio</SelectItem>
-                      <SelectItem value="Duplex">Duplex</SelectItem>
-                      <SelectItem value="Bungalow">Bungalow</SelectItem>
-                      <SelectItem value="Terrace">Terrace</SelectItem>
-                      <SelectItem value="Townhouse">Townhouse</SelectItem>
-                      <SelectItem value="Penthouse">Penthouse</SelectItem>
-                      <SelectItem value="Mansion">Mansion</SelectItem>
-                      <SelectItem value="House">House</SelectItem>
+                      {PROPERTY_TYPES.map((type) => (
+                        <SelectItem
+                          key={type.value}
+                          value={type.value}
+                          className="group py-3"
+                        >
+                          <div className="flex items-center justify-between w-full gap-8 min-w-[160px]">
+                            <span>{type.label}</span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div
+                                  role="button"
+                                  className="p-1.5 hover:bg-primary/10 rounded-full transition-colors opacity-30 group-hover:opacity-100 text-primary"
+                                >
+                                  <Info className="h-3.5 w-3.5" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-[200px] font-bold text-[10px] uppercase tracking-widest text-primary p-4 rounded-xl border-2">
+                                <p>{type.description}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
