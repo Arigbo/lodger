@@ -43,7 +43,7 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
           <Home className="h-5 w-5 md:h-6 md:w-6" />
         </div>
         <h3 className="font-headline text-xl md:text-3xl font-black uppercase tracking-tighter">
-          Geographic Position
+          Location
         </h3>
       </div>
 
@@ -188,7 +188,7 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                  Search Institution
+                  Nearby School/University
                 </FormLabel>
                 <FormControl>
                   <SchoolCombobox
@@ -204,9 +204,9 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
           <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-muted/30 border border-border/50">
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Use the{" "}
+              Click the{" "}
               <span className="text-foreground">"Get Accurate Location"</span>{" "}
-              button on the map for precision.
+              button on the map for better accuracy.
             </p>
           </div>
         </div>

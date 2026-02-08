@@ -24,7 +24,7 @@ export const AmenitiesSection: React.FC<AmenitiesSectionProps> = ({ form }) => {
           <Wifi className="h-5 w-5 md:h-6 md:w-6" />
         </div>
         <h3 className="font-headline text-xl md:text-3xl font-black uppercase tracking-tighter">
-          System Amenities
+          Amenities
         </h3>
       </div>
 

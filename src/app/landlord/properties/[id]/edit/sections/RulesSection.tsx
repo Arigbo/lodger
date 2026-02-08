@@ -1,9 +1,16 @@
-import React from 'react';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
-import { ShieldCheck } from 'lucide-react';
-import { UseFormReturn } from 'react-hook-form';
-import { EditFormValues } from '../edit-schemas';
+import React from "react";
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { ShieldCheck } from "lucide-react";
+import { UseFormReturn } from "react-hook-form";
+import { EditFormValues } from "../edit-schemas";
 
 interface RulesSectionProps {
   form: UseFormReturn<EditFormValues>;
@@ -16,7 +23,9 @@ export const RulesSection: React.FC<RulesSectionProps> = ({ form }) => {
         <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
           <ShieldCheck className="h-5 w-5 md:h-6 md:w-6" />
         </div>
-        <h3 className="font-headline text-xl md:text-3xl font-black uppercase tracking-tighter">Operational Protocols</h3>
+        <h3 className="font-headline text-xl md:text-3xl font-black uppercase tracking-tighter">
+          Rules
+        </h3>
       </div>
 
       <FormField
@@ -24,7 +33,9 @@ export const RulesSection: React.FC<RulesSectionProps> = ({ form }) => {
         name="rules"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Property Rules</FormLabel>
+            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+              Property Rules
+            </FormLabel>
             <FormControl>
               <Textarea
                 placeholder="NO SMOKING, NO PETS, QUIET HOURS 10PM-6AM..."
@@ -33,7 +44,7 @@ export const RulesSection: React.FC<RulesSectionProps> = ({ form }) => {
               />
             </FormControl>
             <FormDescription className="text-[10px] font-medium uppercase tracking-tight text-muted-foreground/40 mt-3 pl-2">
-              Separate distinct rules with commas for system parsing.
+              Separate each rule with a comma.
             </FormDescription>
             <FormMessage />
           </FormItem>
