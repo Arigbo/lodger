@@ -1,10 +1,18 @@
-'use client';
+"use client";
 
-import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
-import { FirebaseApp } from 'firebase/app';
-import { Firestore, doc, getDoc } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged } from 'firebase/auth';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
+import React, {
+  DependencyList,
+  createContext,
+  useContext,
+  ReactNode,
+  useMemo,
+  useState,
+  useEffect,
+} from "react";
+import { FirebaseApp } from "firebase/app";
+import { Firestore, doc, getDoc } from "firebase/firestore";
+import { Auth, User, onAuthStateChanged } from "firebase/auth";
+import { FirebaseErrorListener } from "@/components/FirebaseErrorListener";
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -16,7 +24,7 @@ interface FirebaseProviderProps {
 // Internal state for user authentication
 interface UserAuthState {
   user: User | null;
-  role: 'student' | 'landlord' | null;
+  role: "student" | "landlord" | null;
   isUserLoading: boolean;
   userError: Error | null;
 }
@@ -29,7 +37,7 @@ export interface FirebaseContextState {
   auth: Auth | null; // The Auth service instance
   // User authentication state
   user: User | null;
-  role: 'student' | 'landlord' | null;
+  role: "student" | "landlord" | null;
   isUserLoading: boolean; // True during initial auth check
   userError: Error | null; // Error from auth listener
 }
@@ -40,7 +48,7 @@ export interface FirebaseServicesAndUser {
   firestore: Firestore;
   auth: Auth;
   user: User | null;
-  role: 'student' | 'landlord' | null;
+  role: "student" | "landlord" | null;
   isUserLoading: boolean;
   userError: Error | null;
 }
@@ -48,13 +56,15 @@ export interface FirebaseServicesAndUser {
 // Return type for useUser() - specific to user auth state
 export interface UserHookResult {
   user: User | null;
-  role: 'student' | 'landlord' | null;
+  role: "student" | "landlord" | null;
   isUserLoading: boolean;
   userError: Error | null;
 }
 
 // React Context
-export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
+export const FirebaseContext = createContext<FirebaseContextState | undefined>(
+  undefined,
+);
 
 /**
  * FirebaseProvider manages and provides Firebase services and user authentication state.
@@ -74,38 +84,74 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
   // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
-    if (!auth) { // If no Auth service instance, cannot determine user state
-      setUserAuthState({ user: null, role: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
+    if (!auth) {
+      // If no Auth service instance, cannot determine user state
+      setUserAuthState({
+        user: null,
+        role: null,
+        isUserLoading: false,
+        userError: new Error("Auth service not provided."),
+      });
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth,
+    const unsubscribe = onAuthStateChanged(
+      auth,
       async (user) => {
         if (user) {
           try {
             // Fetch user role from Firestore
-            const userDocRef = doc(firestore, 'users', user.uid);
+            const userDocRef = doc(firestore, "users", user.uid);
             const userDocSnap = await getDoc(userDocRef);
 
-            let role: 'student' | 'landlord' | null = null;
+            let role: "student" | "landlord" | null = null;
             if (userDocSnap.exists()) {
               const userData = userDocSnap.data();
-              role = userData.role as 'student' | 'landlord' || null;
+              role = (userData.role as "student" | "landlord") || null;
+
+              // Check for banned status
+              if (
+                userData.banned &&
+                window.location.pathname !== "/auth/banned"
+              ) {
+                window.location.href = "/auth/banned";
+                return;
+              }
             }
 
-            setUserAuthState({ user, role, isUserLoading: false, userError: null });
+            setUserAuthState({
+              user,
+              role,
+              isUserLoading: false,
+              userError: null,
+            });
           } catch (error: any) {
             console.error("Error fetching user role:", error);
             // Still set user, but maybe log error? Or keep role null.
-            setUserAuthState({ user, role: null, isUserLoading: false, userError: error });
+            setUserAuthState({
+              user,
+              role: null,
+              isUserLoading: false,
+              userError: error,
+            });
           }
         } else {
-          setUserAuthState({ user: null, role: null, isUserLoading: false, userError: null });
+          setUserAuthState({
+            user: null,
+            role: null,
+            isUserLoading: false,
+            userError: null,
+          });
         }
       },
       (error) => {
-        setUserAuthState({ user: null, role: null, isUserLoading: false, userError: error });
-      }
+        setUserAuthState({
+          user: null,
+          role: null,
+          isUserLoading: false,
+          userError: error,
+        });
+      },
     );
 
     return () => unsubscribe();
@@ -141,11 +187,18 @@ export const useFirebase = (): FirebaseServicesAndUser => {
   const context = useContext(FirebaseContext);
 
   if (context === undefined) {
-    throw new Error('useFirebase must be used within a FirebaseProvider.');
+    throw new Error("useFirebase must be used within a FirebaseProvider.");
   }
 
-  if (!context.areServicesAvailable || !context.firebaseApp || !context.firestore || !context.auth) {
-    throw new Error('Firebase core services not available. Check FirebaseProvider props.');
+  if (
+    !context.areServicesAvailable ||
+    !context.firebaseApp ||
+    !context.firestore ||
+    !context.auth
+  ) {
+    throw new Error(
+      "Firebase core services not available. Check FirebaseProvider props.",
+    );
   }
 
   return {
@@ -179,10 +232,13 @@ export const useFirebaseApp = (): FirebaseApp => {
 
 type MemoFirebase<T> = T & { __memo?: boolean };
 
-export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | (MemoFirebase<T>) {
+export function useMemoFirebase<T>(
+  factory: () => T,
+  deps: DependencyList,
+): T | MemoFirebase<T> {
   const memoized = useMemo(factory, deps);
 
-  if (typeof memoized !== 'object' || memoized === null) return memoized;
+  if (typeof memoized !== "object" || memoized === null) return memoized;
   (memoized as MemoFirebase<T>).__memo = true;
 
   return memoized;
@@ -197,4 +253,3 @@ export const useUser = (): UserHookResult => {
   const { user, role, isUserLoading, userError } = useFirebase();
   return { user, role, isUserLoading, userError };
 };
-
