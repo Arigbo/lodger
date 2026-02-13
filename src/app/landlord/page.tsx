@@ -15,6 +15,7 @@ import {
   Calendar,
   Building,
   PlusCircle,
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
