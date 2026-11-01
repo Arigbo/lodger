@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { apiRateLimit, authRateLimit, paymentRateLimit, uploadRateLimit, getClientIdentifier, checkRateLimit } from '@/lib/rate-limit';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     try {
         // Skip rate limiting in development if RATE_LIMIT_ENABLED is not set
         if (process.env.NODE_ENV === 'development' && process.env.RATE_LIMIT_ENABLED !== 'true') {
@@ -48,12 +48,12 @@ export async function middleware(request: NextRequest) {
     } catch (error) {
         // Log the error and allow the request to proceed
         // This prevents the whole site from going down if the rate limiting service (e.g., Upstash) fails
-        console.error('Middleware Error:', error);
+        console.error('Proxy Error:', error);
         return NextResponse.next();
     }
 }
 
-// Configure which routes to apply middleware to
+// Configure which routes to apply proxy to
 export const config = {
     matcher: [
         '/api/:path*',

@@ -6,6 +6,7 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -138,6 +139,16 @@ export const BasicInfoStep = ({ form }: BasicInfoStepProps) => {
                 </div>
               </FormControl>
               <FormMessage />
+              <FormDescription
+                breakdown={
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                    <Info className="h-3.5 w-3.5" />
+                    20% of the total amount will be deducted as commission.
+                    <br />
+                    You will receive the remaining 80% of the total amount.
+                  </p>
+                }
+              />
             </FormItem>
           )}
         />
