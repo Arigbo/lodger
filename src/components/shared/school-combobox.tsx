@@ -212,7 +212,7 @@ export function SchoolCombobox({
                         />
                         <CommandList>
                             <CommandEmpty className="p-2">
-                                <p className="text-sm text-muted-foreground mb-2">{emptyText}</p>
+                                <p className="text-sm text-muted-foreground mb-2">{loading ? "Loading schools…" : emptyText}</p>
                                 <Button
                                     size="sm"
                                     variant="secondary"

@@ -13,9 +13,10 @@ import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { FileText, Wand2 } from 'lucide-react';
 import { generateLeaseTextForTemplate } from '@/app/landlord/properties/new/utils';
+import type { PropertyForm } from "../../types";
 
 interface LeaseTemplateStepProps {
-    form: any;
+    form: PropertyForm;
 }
 
 export const LeaseTemplateStep = ({ form }: LeaseTemplateStepProps) => {

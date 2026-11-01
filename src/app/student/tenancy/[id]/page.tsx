@@ -22,6 +22,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AlertTriangle, FileText, User as UserIcon, MessageSquare, Clock, DollarSign, Signature } from "lucide-react";
+import { toDate } from "@/lib/dates";
 
 
 export default function TenancyDetailPage() {
@@ -205,7 +206,7 @@ export default function TenancyDetailPage() {
         if (areTransactionsLoading || isLeaseLoading || !property) return;
 
         const tenantTransactions = transactions || [];
-        const leaseStartDate = property?.leaseStartDate ? new Date(property.leaseStartDate) : (lease?.createdAt ? (typeof lease.createdAt.toDate === 'function' ? lease.createdAt.toDate() : new Date(lease.createdAt)) : new Date());
+        const leaseStartDate = property?.leaseStartDate ? new Date(property.leaseStartDate) : (toDate(lease?.createdAt) ?? new Date());
         const leaseEndDate = add(leaseStartDate, { years: 1 });
 
         // Calculate total months paid from completed rent transactions
@@ -443,7 +444,7 @@ export default function TenancyDetailPage() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {transactions && transactions.length > 0 ? transactions.map((t, idx) => (
+                                        {transactions && transactions.length > 0 ? transactions.map((t) => (
                                             <TableRow key={t.id} className="border-muted/10 hover:bg-muted/5 transition-colors">
                                                 <TableCell className="px-4 lg:px-8 font-bold text-muted-foreground/80">{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
                                                 <TableCell className="font-bold">{t.type}</TableCell>
@@ -470,7 +471,7 @@ export default function TenancyDetailPage() {
 
                             {/* Mobile Card View */}
                             <div className="md:hidden divide-y divide-muted/10">
-                                {transactions && transactions.length > 0 ? transactions.map((t, idx) => (
+                                {transactions && transactions.length > 0 ? transactions.map((t) => (
                                     <div key={t.id} className="p-4 hover:bg-muted/5 transition-colors">
                                         <div className="flex items-start justify-between mb-3">
                                             <div>
@@ -532,14 +533,8 @@ export default function TenancyDetailPage() {
                             <div className="p-8 border-t border-muted/20 bg-muted/5 flex items-center justify-between">
                                 <p className="text-sm font-medium text-muted-foreground">
                                     Last updated: {(() => {
-                                        const dateValue = lease?.createdAt;
-                                        if (!dateValue) return 'N/A';
-
-                                        const d = (dateValue && typeof dateValue.toDate === 'function')
-                                            ? dateValue.toDate()
-                                            : new Date(dateValue);
-
-                                        return isNaN(d.getTime()) ? 'N/A' : format(d, 'PPP');
+                                        const d = toDate(lease?.createdAt);
+                                        return d ? format(d, 'PPP') : 'N/A';
                                     })()}
                                 </p>
                                 <Button variant="outline" className="rounded-2xl font-bold">Download Signed Copy (PDF)</Button>

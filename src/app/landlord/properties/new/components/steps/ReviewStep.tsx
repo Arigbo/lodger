@@ -12,17 +12,20 @@ import {
     ShieldCheck,
     AlertCircle
 } from 'lucide-react';
+import type { PropertyForm, ImageAnalysisMap } from "../../types";
 
 interface ReviewStepProps {
-    form: any;
-    imageAnalysis: any;
+    form: PropertyForm;
+    /** Jumps back to the media step so flagged photos can be replaced. */
+    onEditMedia?: () => void;
+    imageAnalysis: ImageAnalysisMap;
 }
 
-export const ReviewStep = ({ form, imageAnalysis }: ReviewStepProps) => {
+export const ReviewStep = ({ form, imageAnalysis, onEditMedia }: ReviewStepProps) => {
     const values = form.getValues();
     
     // Check if there are any pending issues with images
-    const hasImageIssues = Object.values(imageAnalysis).some((analysis: any) => 
+    const hasImageIssues = Object.values(imageAnalysis).some((analysis) => 
         analysis && (analysis.safety === 'UNSAFE' || analysis.context === 'IRRELEVANT')
     );
 
@@ -166,10 +169,10 @@ export const ReviewStep = ({ form, imageAnalysis }: ReviewStepProps) => {
                             {hasImageIssues && (
                                 <button 
                                     type="button"
-                                    onClick={() => form.setValue('currentStep', 5)} // This depends on how the parent handles it
+                                    onClick={onEditMedia}
                                     className="text-xs font-semibold text-orange-600 underline uppercase tracking-wider hover:text-orange-700 transition-colors"
                                 >
-                                    Fix Media Errors
+                                    Review flagged photos
                                 </button>
                             )}
                         </div>

@@ -13,6 +13,17 @@ export const metadata: Metadata = {
     alternates: { canonical: "/blog" },
 };
 
+type BlogPost = {
+    id: string;
+    slug: string;
+    title: string;
+    excerpt?: string;
+    coverImage?: string;
+    category?: string;
+    publishedAt: string;
+    author: { name: string; image?: string };
+};
+
 const BLOG_API_URL = process.env.NEXT_PUBLIC_BLOG_API_URL || "https://lodger-blog.vercel.app/api/v1/posts";
 const PUBLIC_BLOG_URL = process.env.NEXT_PUBLIC_BLOG_URL || "https://lodger-blog.vercel.app/post";
 
@@ -79,7 +90,7 @@ export default async function BlogPage({
                 <div className="container mx-auto max-w-6xl">
                     {posts.length > 0 ? (
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {posts.map((post: any, index: number) => (
+                            {posts.map((post: BlogPost) => (
                                 <Link
                                     href={`${PUBLIC_BLOG_URL}/${post.slug}`}
                                     key={post.id}

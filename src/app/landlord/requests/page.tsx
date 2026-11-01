@@ -18,7 +18,7 @@ import Loading from '@/app/loading';
 import { sendNotification } from '@/lib/notifications';
 import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { PageHeader, StatCard, StatGrid, EmptyState } from "@/components/dashboard";
+import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -75,7 +75,7 @@ export default function RentalRequestsPage() {
       setIsLoading(true);
       const requestsQuery = query(collection(firestore, 'rentalApplications'), where('landlordId', '==', landlord.uid));
       const requestsSnapshot = await getDocs(requestsQuery);
-      const allRequests: RentalApplication[] = requestsSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as RentalApplication));
+      const allRequests: RentalApplication[] = requestsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as RentalApplication));
 
       if (allRequests.length === 0) {
         setAggregatedRequests([]);
@@ -94,7 +94,7 @@ export default function RentalRequestsPage() {
         for (const chunk of userChunks) {
           const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
           const userSnapshots = await getDocs(usersQuery);
-          userSnapshots.forEach((doc: any) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile));
+          userSnapshots.forEach((doc) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile));
         }
       }
 
@@ -103,7 +103,7 @@ export default function RentalRequestsPage() {
         for (const chunk of propertyChunks) {
           const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
           const propertySnapshots = await getDocs(propertiesQuery);
-          propertySnapshots.forEach((doc: any) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+          propertySnapshots.forEach((doc) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
         }
       }
 
@@ -128,7 +128,7 @@ export default function RentalRequestsPage() {
       );
 
       const leasesSnapshot = await getDocs(leasesQuery);
-      const leases: LeaseAgreement[] = leasesSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as LeaseAgreement));
+      const leases: LeaseAgreement[] = leasesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as LeaseAgreement));
 
       if (leases.length === 0) {
         setPendingOfflinePayments([]);
@@ -146,7 +146,7 @@ export default function RentalRequestsPage() {
         for (const chunk of tenantChunks) {
           const tenantsQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
           const tenantSnapshots = await getDocs(tenantsQuery);
-          tenantSnapshots.forEach((doc: any) => tenantsMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile));
+          tenantSnapshots.forEach((doc) => tenantsMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile));
         }
       }
 
@@ -155,7 +155,7 @@ export default function RentalRequestsPage() {
         for (const chunk of propertyChunks) {
           const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
           const propertySnapshots = await getDocs(propertiesQuery);
-          propertySnapshots.forEach((doc: any) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+          propertySnapshots.forEach((doc) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
         }
       }
 

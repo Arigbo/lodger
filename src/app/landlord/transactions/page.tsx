@@ -33,7 +33,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import Loading from '@/app/loading';
-import { PageHeader, StatCard, StatGrid, EmptyState } from "@/components/dashboard";
+import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { downloadCsv, toCsv } from "@/lib/csv";
 
 
@@ -75,7 +75,7 @@ export default function TransactionsPage() {
     try {
       const transactionsQuery = query(collection(firestore, 'transactions'), where('landlordId', '==', landlord.uid));
       const transactionsSnapshot = await getDocs(transactionsQuery);
-      const allTransactions: Transaction[] = transactionsSnapshot.docs.map((doc_ref: any) => ({ id: doc_ref.id, ...doc_ref.data() })) as Transaction[];
+      const allTransactions: Transaction[] = transactionsSnapshot.docs.map((doc_ref) => ({ id: doc_ref.id, ...doc_ref.data() })) as Transaction[];
 
       if (allTransactions.length === 0) {
         setAggregatedTransactions([]);
@@ -94,7 +94,7 @@ export default function TransactionsPage() {
         for (const chunk of userChunks) {
           const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
           const usersSnapshot = await getDocs(usersQuery);
-          usersSnapshot.forEach((doc_ref: any) => usersMap.set(doc_ref.id, { id: doc_ref.id, ...doc_ref.data() } as User));
+          usersSnapshot.forEach((doc_ref) => usersMap.set(doc_ref.id, { id: doc_ref.id, ...doc_ref.data() } as User));
         }
       }
 
@@ -103,7 +103,7 @@ export default function TransactionsPage() {
         for (const chunk of propertyChunks) {
           const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
           const propertiesSnapshot = await getDocs(propertiesQuery);
-          propertiesSnapshot.forEach((doc_ref: any) => propertiesMap.set(doc_ref.id, { id: doc_ref.id, ...doc_ref.data() } as Property));
+          propertiesSnapshot.forEach((doc_ref) => propertiesMap.set(doc_ref.id, { id: doc_ref.id, ...doc_ref.data() } as Property));
         }
       }
 

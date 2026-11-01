@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import Loading from '@/app/loading';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import type { Notification } from "@/types/notification";
 
 export default function NotificationDetailsPage() {
     const params = useParams();
@@ -18,7 +19,7 @@ export default function NotificationDetailsPage() {
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
     const notifRef = useMemoFirebase(() => id ? doc(firestore, 'notifications', id) : null, [firestore, id]);
-    const { data: notification, isLoading } = useDoc<any>(notifRef);
+    const { data: notification, isLoading } = useDoc<Notification>(notifRef);
 
     useEffect(() => {
         if (notification && !notification.read && notifRef) {

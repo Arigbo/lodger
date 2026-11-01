@@ -12,6 +12,7 @@ import {
 import { doc, getDoc } from 'firebase/firestore';
 import { getSdks } from '@/firebase';
 import { FirestorePermissionError, errorEmitter } from '@/firebase';
+import type { toast as toastFn } from "@/hooks/use-toast";
 
 /** Initiate anonymous sign-in (non-blocking). */
 export function initiateAnonymousSignIn(authInstance: Auth): void {
@@ -37,7 +38,7 @@ export function initiateGoogleSignIn(
   auth: Auth, 
   userType: 'student' | 'landlord',
   onSuccess: (uid: string, isNewUser: boolean) => void,
-  toast: (options: any) => void
+  toast: (options: Parameters<typeof toastFn>[0]) => void
 ): void {
   const provider = new GoogleAuthProvider();
   signInWithPopup(auth, provider)

@@ -85,7 +85,7 @@ export default function EditPropertyPage() {
 
   const form = useForm<EditFormValues>({
     resolver: zodResolver(editFormSchema),
-    defaultValues: DEFAULT_EDIT_VALUES as any,
+    defaultValues: DEFAULT_EDIT_VALUES,
   });
 
   useEffect(() => {
@@ -95,7 +95,7 @@ export default function EditPropertyPage() {
         description: property.description || "",
         price: property.price || 0,
         currency: property.currency || "USD",
-        type: property.type as any,
+        type: property.type,
         address: property.location?.address || "",
         country: property.location?.country || "",
         city: property.location?.city || "",
@@ -171,7 +171,7 @@ export default function EditPropertyPage() {
             description: `${file.name}: ${result.error}`,
           });
         }
-      } catch (error: any) {
+      } catch (error) {
         toast({
           variant: "destructive",
           title: "Upload Failed",
@@ -334,16 +334,6 @@ export default function EditPropertyPage() {
     (user && property.landlordId !== user.uid) ||
     propertyError
   ) {
-    console.error(`[EditProperty] 404/Error Triggered:`, {
-      id,
-      propertyExists: !!property,
-      propertyError: propertyError?.message || "None",
-      userId: user?.uid,
-      landlordId: property?.landlordId,
-      mismatch: !!(user && property && property.landlordId !== user.uid),
-      docPath: propertyRef?.path,
-      projectId: (firebaseApp as any)?.options?.projectId,
-    });
     return notFound();
   }
 

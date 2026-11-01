@@ -39,6 +39,7 @@ import { ReviewStep } from '@/app/landlord/properties/new/components/steps/Revie
 
 // Types
 import type { Property, UserProfile } from '@/types';
+import type { ImageAnalysisMap } from './types';
 import { authHeaders } from "@/lib/api-client";
 
 export default function AddPropertyPage() {
@@ -61,7 +62,7 @@ export default function AddPropertyPage() {
     const isUpdatingType = useRef(false);
     const isUpdatingBedrooms = useRef(false);
 
-    const [imageAnalysis, setImageAnalysis] = useState({
+    const [imageAnalysis, setImageAnalysis] = useState<ImageAnalysisMap>({
         kitchen: null,
         livingRoom: null,
         bedroom: null,
@@ -336,9 +337,9 @@ export default function AddPropertyPage() {
                                     {currentStep === 2 && <LocationStep form={form} />}
                                     {currentStep === 3 && <AmenitiesStep form={form} />}
                                     {currentStep === 4 && <LeaseTemplateStep form={form} />}
-                                    {currentStep === 5 && <MediaUploadStep form={form} imageAnalysis={imageAnalysis} setImageAnalysis={setImageAnalysis} />}
+                                    {currentStep === 5 && <MediaUploadStep form={form} setImageAnalysis={setImageAnalysis} />}
                                     {currentStep === 6 && <AIStep form={form} isGeneratingDescription={isGeneratingDescription} generateAIDescription={generateAIDescription} />}
-                                    {currentStep === 7 && <ReviewStep form={form} imageAnalysis={imageAnalysis} />}
+                                    {currentStep === 7 && <ReviewStep form={form} imageAnalysis={imageAnalysis} onEditMedia={() => setCurrentStep(5)} />}
                                 </section>
                             </AnimatePresence>
 

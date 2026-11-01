@@ -9,7 +9,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Home } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { useToast } from "@/hooks/use-toast";
 import { EditFormValues } from "@/app/landlord/properties/[id]/edit/edit-schemas";
 import { Combobox } from "@/components/ui/combobox";
 import { SchoolCombobox } from "@/components/shared/school-combobox";
@@ -31,7 +30,6 @@ interface GeographySectionProps {
 }
 
 export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
-  const { toast } = useToast();
 
   const lat = form.watch("lat");
   const lng = form.watch("lng");

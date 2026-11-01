@@ -24,9 +24,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
+import type { PropertyForm } from "../../types";
 
 interface BasicInfoStepProps {
-  form: any;
+  form: PropertyForm;
 }
 
 export const BasicInfoStep = ({ form }: BasicInfoStepProps) => {

@@ -41,11 +41,12 @@ import { cn } from "@/lib/utils";
 import { useAuth, useFirebaseApp, useFirestore } from "@/firebase/provider";
 import { useToast } from "@/hooks/use-toast";
 import { initiateEmailSignUp } from "@/firebase";
-import { countries, Country } from "@/data/countries";
+import { countries } from "@/data/countries";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
 import { SchoolCombobox } from "@/components/shared/school-combobox";
 import { sendNotification } from "@/lib/notifications";
+import { getErrorMessage, getErrorCode } from "@/lib/errors";
 
 const formSchema = z
   .object({
@@ -146,7 +147,6 @@ export default function SignupPage() {
   const firestore = useFirestore(); // Get Firestore instance
   const firebaseApp = useFirebaseApp();
   const { toast } = useToast();
-  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [states, setStates] = useState<{ name: string }[]>([]);
 
   const form = useForm<FormValues>({
@@ -174,10 +174,8 @@ export default function SignupPage() {
   useEffect(() => {
     if (countryValue) {
       const countryData = countries.find((c) => c.name === countryValue);
-      setSelectedCountry(countryData || null);
       setStates(countryData?.states || []);
     } else {
-      setSelectedCountry(null);
       setStates([]);
     }
   }, [countryValue]);
@@ -373,16 +371,16 @@ export default function SignupPage() {
       });
 
       router.push("/auth/login");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Signup error:", error);
-      if (error.code === "auth/email-already-in-use") {
+      if (getErrorCode(error) === "auth/email-already-in-use") {
         setError("email", {
           type: "manual",
           message:
             "This email address is already in use. Please try another one.",
         });
         setCurrentStep(2); // Go back to the relevant step
-      } else if (error.code && error.code.includes("permission-denied")) {
+      } else if (getErrorCode(error)?.includes("permission-denied")) {
         toast({
           variant: "destructive",
           title: "Access Denied",
@@ -395,7 +393,7 @@ export default function SignupPage() {
           variant: "destructive",
           title: "Registration Failed",
           description:
-            error.message ||
+            getErrorMessage(error) ||
             "There was a problem creating your account. Please try again.",
         });
       }

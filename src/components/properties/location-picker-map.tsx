@@ -77,7 +77,7 @@ export default function LocationPickerMap({
     }
   }, [lat, lng]);
 
-  const handleMarkerDrag = (e: any) => {
+  const handleMarkerDrag = (e: L.DragEndEvent) => {
     const { lat, lng } = e.target.getLatLng();
     setMarkerPos([lat, lng]);
     onChange(lat, lng);
@@ -105,7 +105,7 @@ export default function LocationPickerMap({
           description: `Location set with ${Math.round(accuracy)}m accuracy.`,
         });
       },
-      (error) => {
+      () => {
         setIsGettingLocation(false);
         toast({
           variant: "destructive",

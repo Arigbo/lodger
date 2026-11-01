@@ -9,7 +9,6 @@ import {
 } from "@stripe/react-stripe-js";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { formatPrice } from "@/lib/utils";
 
 interface StripeCheckoutFormProps {
@@ -23,7 +22,6 @@ export default function StripeCheckoutForm({ amount, currency = 'USD', onSuccess
     const elements = useElements();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const { toast } = useToast();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

@@ -15,17 +15,18 @@ import {
     RefreshCw
 } from 'lucide-react';
 import { authHeaders } from "@/lib/api-client";
+import type { FileField } from "../types";
+import type { LucideIcon } from "lucide-react";
 
 interface FileUploadProps {
-    field: any;
+    field: FileField;
     label: string;
     description: string;
-    icon: any;
-    onUpload?: (files: FileList) => void;
+    icon: LucideIcon;
     onAnalysisChange?: (analysis: { safety: string, context: string, reason?: string } | null) => void;
 }
 
-export const FileUpload = ({ field, label, description, icon: Icon, onUpload, onAnalysisChange }: FileUploadProps) => {
+export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisChange }: FileUploadProps) => {
     const [isScanning, setIsScanning] = useState(false);
     const [analysis, setAnalysis] = useState<{ safety: string, context: string, reason?: string } | null>(null);
     const { toast } = useToast();
@@ -150,6 +151,7 @@ export const FileUpload = ({ field, label, description, icon: Icon, onUpload, on
                     <Icon className="h-3.5 w-3.5 text-primary/60" /> 
                     {label}
                 </span>
+                <span className="sr-only">{description}</span>
                 <AnimatePresence mode="wait">
                     {analysis && (
                         <motion.div 

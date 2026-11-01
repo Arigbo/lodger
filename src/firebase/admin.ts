@@ -1,6 +1,7 @@
 import 'server-only';
 import * as admin from 'firebase-admin';
 import { firebaseConfig } from '@/firebase/config';
+import { getErrorMessage } from "@/lib/errors";
 
 // Refined Private Key Parsing - handles multiple escape scenarios
 function formatPrivateKey(key: string | undefined) {
@@ -82,8 +83,8 @@ function initializeAdmin() {
             const missing = [!privateKey && 'FIREBASE_PRIVATE_KEY', !clientEmail && 'FIREBASE_CLIENT_EMAIL'].filter(Boolean).join(', ');
             console.warn(`Firebase Admin: not initialised (missing ${missing}). Server-side data features are disabled.`);
         }
-    } catch (error: any) {
-        console.error('Firebase admin initialization error:', error.message);
+    } catch (error) {
+        console.error('Firebase admin initialization error:', getErrorMessage(error));
     }
 }
 

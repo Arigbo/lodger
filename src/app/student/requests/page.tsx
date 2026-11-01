@@ -103,7 +103,7 @@ export default function StudentRequestsPage() {
         for (const chunk of userChunks) {
           const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
           const userSnapshots = await getDocs(usersQuery);
-          userSnapshots.forEach((doc: any) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+          userSnapshots.forEach((doc) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
         }
       }
 
@@ -112,7 +112,7 @@ export default function StudentRequestsPage() {
         for (const chunk of propertyChunks) {
           const propertyPromises = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
           const propertySnapshots = await getDocs(propertyPromises);
-          propertySnapshots.forEach((doc: any) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+          propertySnapshots.forEach((doc) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
         }
       }
 
@@ -128,19 +128,6 @@ export default function StudentRequestsPage() {
 
     aggregateData();
   }, [studentRequests, areRequestsLoading, firestore]);
-
-  const getStatusVariant = (status: RentalApplication['status']) => {
-    switch (status) {
-      case 'approved':
-        return 'secondary';
-      case 'declined':
-        return 'destructive';
-      case 'pending':
-        return 'default';
-      default:
-        return 'outline';
-    }
-  };
 
   const [requestToDelete, setRequestToDelete] = React.useState<string | null>(null);
   const [requestToEdit, setRequestToEdit] = React.useState<RentalApplication | null>(null);

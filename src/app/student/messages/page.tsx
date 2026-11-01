@@ -45,6 +45,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/lib/errors";
+import { toMillis } from "@/lib/dates";
 
 type Conversation = {
   id: string;
@@ -56,6 +59,7 @@ type Conversation = {
 };
 
 export default function MessagesPage() {
+    const { toast } = useToast();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
@@ -67,7 +71,6 @@ export default function MessagesPage() {
   const [selectedParticipant, setSelectedParticipant] = useState<User | null>(
     null,
   );
-  const [isClient, setIsClient] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -106,7 +109,6 @@ export default function MessagesPage() {
   const { data: userProfile } = useDoc<User>(userDocRef);
 
   useEffect(() => {
-    setIsClient(true);
   }, []);
 
   const allMessagesQuery = useMemoFirebase(() => {
@@ -141,12 +143,8 @@ export default function MessagesPage() {
         if (otherParticipantId) {
           if (
             !conversationsMap.has(otherParticipantId) ||
-            (msg.timestamp &&
-              conversationsMap.get(otherParticipantId)!.lastMessage.timestamp &&
-              msg.timestamp.toMillis() >
-                conversationsMap
-                  .get(otherParticipantId)!
-                  .lastMessage.timestamp.toMillis())
+            toMillis(msg.timestamp) >
+              toMillis(conversationsMap.get(otherParticipantId)?.lastMessage.timestamp)
           ) {
             conversationsMap.set(otherParticipantId, {
               lastMessage: msg,
@@ -187,7 +185,7 @@ export default function MessagesPage() {
       );
       const usersSnapshot = await getDocs(usersQuery);
       const usersMap = new Map<string, User>();
-      usersSnapshot.forEach((docSnap: any) =>
+      usersSnapshot.forEach((docSnap) =>
         usersMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as User),
       );
 
@@ -339,7 +337,7 @@ export default function MessagesPage() {
           link: `/landlord/messages?conversationId=${user.uid}`,
         });
       })
-      .catch((serverError: any) => {
+      .catch((serverError: unknown) => {
         console.error("FAILED_TO_SEND_MESSAGE", serverError);
         // const permissionError = new FirestorePermissionError({
         //     path: messagesRef.path,
@@ -347,9 +345,7 @@ export default function MessagesPage() {
         //     requestResourceData: messageData,
         // });
         // errorEmitter.emit('permission-error', permissionError);
-        alert(
-          `Failed to send message: ${serverError.message || "Unknown error"}`,
-        );
+        toast({ variant: "destructive", title: "Message not sent", description: getErrorMessage(serverError, "Please try again.") });
       });
   };
 
