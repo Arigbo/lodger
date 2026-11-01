@@ -6,23 +6,17 @@ import type { LeaseAgreement, Property, UserProfile } from "@/types";
 
 const fmt = (iso?: string) => (iso ? format(new Date(iso), "d MMMM yyyy") : "—");
 
-/** Where a lease is in its lifecycle: 0 sent, 1 signed, 2 paid, 3 active. */
+export const LEASE_STEPS = ["Request accepted", "Tenant signs", "First rent", "Active"];
+
+/** Index of the step the lease is on in LEASE_STEPS (LEASE_STEPS.length = done). */
 export function leaseStage(lease: LeaseAgreement): number {
-  if (lease.status === "active" || lease.status === "terminating" || lease.status === "expired") return 4;
-  if (lease.paymentMethod === "offline" && !lease.paymentConfirmed) return 2;
-  if (lease.tenantSigned && lease.landlordSigned) return 2;
-  if (lease.tenantSigned || lease.landlordSigned) return 1;
-  return 0;
+  if (lease.status !== "pending") return LEASE_STEPS.length;
+  if (lease.tenantSigned) return 2;
+  return 1;
 }
 
 export function LeaseProgress({ lease, className }: { lease: LeaseAgreement; className?: string }) {
-  return (
-    <JourneyStepper
-      className={className}
-      steps={["Lease sent", "Both signed", "First rent", "Active"]}
-      current={Math.min(leaseStage(lease) === 2 && lease.paymentMethod === "offline" ? 2 : leaseStage(lease), 4)}
-    />
-  );
+  return <JourneyStepper className={className} steps={LEASE_STEPS} current={leaseStage(lease)} />;
 }
 
 type LeaseDocumentProps = {
