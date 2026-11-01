@@ -12,9 +12,8 @@ import {
   where,
   getDocs,
 } from "firebase/firestore";
-import {
-  getStorage,
-} from "firebase/storage";
+
+
 import { Building, RefreshCw, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -23,7 +22,6 @@ import {
   useFirestore,
   useDoc,
   useMemoFirebase,
-  useFirebaseApp,
 } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
@@ -61,7 +59,6 @@ export default function EditPropertyPage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const firebaseApp = useFirebaseApp();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -150,7 +147,7 @@ export default function EditPropertyPage() {
     setIsUploading(true);
 
     const newImageUrls: string[] = [];
-    const storage = getStorage(firebaseApp);
+    const storage = null; // uploads go through uploadMedia (provider-agnostic)
 
     for (const file of Array.from(files)) {
       try {

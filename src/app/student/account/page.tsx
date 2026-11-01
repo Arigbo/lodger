@@ -50,7 +50,6 @@ import {
   useMemoFirebase,
   errorEmitter,
   FirestorePermissionError,
-  useFirebaseApp,
 } from "@/firebase";
 import type { UserProfile } from "@/types";
 import { doc, setDoc } from "firebase/firestore";
@@ -58,7 +57,6 @@ import { useRef, useEffect, useState } from "react";
 import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { useToast } from "@/hooks/use-toast";
 import { countries } from "@/data/countries";
-import { getStorage } from "firebase/storage";
 import { uploadProfileImage } from "@/firebase/storage";
 import { SchoolCombobox } from "@/components/shared/school-combobox";
 import { Combobox } from "@/components/ui/combobox";
@@ -98,7 +96,6 @@ export default function AccountPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const firebaseApp = useFirebaseApp();
   const [isUploading, setIsUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -171,7 +168,7 @@ export default function AccountPage() {
 
     setIsUploading(true);
     try {
-      const storage = getStorage(firebaseApp);
+      const storage = null; // uploads go through uploadMedia (provider-agnostic)
       const downloadURL = await uploadProfileImage(storage, user.uid, file);
 
       if (userDocRef) {

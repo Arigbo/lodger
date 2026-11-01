@@ -28,7 +28,6 @@ import {
   useFirestore,
   useDoc,
   useMemoFirebase,
-  useFirebaseApp,
 } from "@/firebase";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -47,7 +46,6 @@ import { doc, setDoc } from "firebase/firestore";
 import type { UserProfile } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { uploadProfileImage } from "@/firebase/storage";
-import { getStorage } from "firebase/storage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Pencil, User, Wallet, Clock } from "lucide-react";
 import { PageSkeleton } from "@/components/dashboard/skeletons";
@@ -98,7 +96,6 @@ export default function AccountPage() {
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const firestore = useFirestore();
-  const firebaseApp = useFirebaseApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -322,7 +319,7 @@ export default function AccountPage() {
 
     setIsUploading(true);
     try {
-      const storage = getStorage(firebaseApp);
+      const storage = null; // uploads go through uploadMedia (provider-agnostic)
       const downloadURL = await uploadProfileImage(storage, user.uid, file);
 
       await setDoc(

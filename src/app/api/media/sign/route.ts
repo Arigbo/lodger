@@ -14,7 +14,7 @@ export const POST = withApiHandler(async (request: Request) => {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
-  if (!cloudName || !apiKey || !apiSecret) throw new ApiError(503, 'Media uploads are not configured.');
+  if (!cloudName || !apiKey || !apiSecret) throw new ApiError(503, 'Media uploads are not configured.', 'media/not-configured');
 
   const { path } = await readJson<{ path?: string }>(request);
   if (!path || !/^[\w./-]{1,200}$/.test(path) || path.includes('..')) throw new ApiError(400, 'Invalid upload path.');

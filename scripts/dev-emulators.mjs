@@ -11,6 +11,8 @@ const env = {
   FIREBASE_AUTH_EMULATOR_HOST: '127.0.0.1:9099',
   FIREBASE_STORAGE_EMULATOR_HOST: '127.0.0.1:9199',
   GCLOUD_PROJECT: 'demo-lodger',
+  // The Storage emulator is free, so local uploads never need Cloudinary keys.
+  NEXT_PUBLIC_MEDIA_PROVIDER: 'firebase',
 };
 
 const args = ['next', process.argv[2] === 'start' ? 'start' : 'dev', ...process.argv.slice(3)];

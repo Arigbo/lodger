@@ -23,7 +23,8 @@ The app runs with only the public Firebase web config (committed in `src/firebas
 | `npm run check` | Typecheck + lint + unit tests (run before pushing) |
 | `npm run lint` / `lint:fix` | ESLint (flat config, `eslint.config.mjs`) |
 | `npm test` | Vitest unit tests (`src/**/*.test.ts`) |
-| `npm run deploy:rules` | Deploy Firestore/Storage rules and indexes |
+| `npm run deploy:rules` | Deploy Firestore rules and indexes |
+| `npm run deploy:storage-rules` | Deploy Storage rules (only if you use Firebase Storage, which needs Blaze) |
 | `npm run emulators` · `npm run seed` · `npm run dev:emulators` | Run fully offline against Firebase emulators with demo accounts (`student@demo.lodger` / `landlord@demo.lodger`, password `password123`) |
 | `npm run reset:firebase -- --project <id>` | Preview, then (with `--yes`) wipe all Firestore data and Auth users in a project. Add `--storage` to also empty the bucket |
 
@@ -68,9 +69,24 @@ src/
 
 ## Environment & deployment
 
-See [`.env.example`](.env.example) for every variable. Production runs on Firebase App Hosting (`apphosting.yaml` maps secrets). `scripts/setup-firebase-secrets.ps1` helps create them. Set `NEXT_PUBLIC_SITE_URL` to the production domain so canonical URLs, the sitemap and social cards are correct.
+See [`.env.example`](.env.example) for every variable. Set `NEXT_PUBLIC_SITE_URL` to the production domain so canonical URLs, the sitemap and social cards are correct.
 
-After changing `firestore.rules`, `storage.rules` or `firestore.indexes.json`, deploy them with `npm run deploy:rules`.
+After changing `firestore.rules` or `firestore.indexes.json`, deploy them with `npm run deploy:rules`.
+
+### Running on the free Spark plan
+
+Lodger runs without Firebase's paid Blaze plan:
+
+| Piece | Free option |
+| --- | --- |
+| Firestore and Auth | Included in Spark (daily read and write limits apply). |
+| Photos and videos | **Cloudinary free plan.** This is the default (`NEXT_PUBLIC_MEDIA_PROVIDER=cloudinary`). New Firebase Storage buckets need Blaze. See [`docs/media-storage.md`](docs/media-storage.md). |
+| Hosting (pages and API routes) | **Vercel Hobby** (free). Import the repo, add the variables from `.env.example`, and deploy. Firebase App Hosting and Cloud Functions need Blaze. |
+| Rate limiting | Upstash Redis free tier (optional; without it, limits are kept in memory). |
+| Image moderation | Gemini API free tier via `GOOGLE_GENAI_API_KEY` (optional; uploads go through unchecked without it). |
+| Card payments | Stripe has no monthly fee; it takes a cut of each payment. Bank-transfer payments work without Stripe. |
+
+If you upgrade to Blaze later, `apphosting.yaml` already maps the secrets for Firebase App Hosting (`scripts/setup-firebase-secrets.ps1` creates them).
 
 ### Admins
 

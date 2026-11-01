@@ -2,17 +2,26 @@
 
 import { getApp } from 'firebase/app';
 import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
-import { apiPost } from '@/lib/api-client';
+import { ApiRequestError, apiPost } from '@/lib/api-client';
 import { compressImage } from './compress-image';
 
 /**
- * Where uploaded photos and videos are stored. Switch with
- * NEXT_PUBLIC_MEDIA_PROVIDER=cloudinary (see docs/media-storage.md).
+ * Where uploaded photos and videos are stored (see docs/media-storage.md).
+ *
+ * Cloudinary is the default because its free plan works with Firebase's free
+ * Spark plan; new Firebase Storage buckets need the paid Blaze plan. Local
+ * development against the emulators uses the free Storage emulator instead.
+ * Override with NEXT_PUBLIC_MEDIA_PROVIDER=firebase | cloudinary.
  */
 export type MediaProvider = 'firebase' | 'cloudinary';
 
-export const mediaProvider: MediaProvider =
-  process.env.NEXT_PUBLIC_MEDIA_PROVIDER === 'cloudinary' ? 'cloudinary' : 'firebase';
+function resolveProvider(): MediaProvider {
+  const configured = process.env.NEXT_PUBLIC_MEDIA_PROVIDER;
+  if (configured === 'firebase' || configured === 'cloudinary') return configured;
+  return process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === 'true' ? 'firebase' : 'cloudinary';
+}
+
+export const mediaProvider: MediaProvider = resolveProvider();
 
 type UploadOptions = {
   /** Skip client-side compression (e.g. already-optimised files). */
@@ -38,7 +47,12 @@ async function uploadToFirebase(file: File, path: string): Promise<string> {
 }
 
 async function uploadToCloudinary(file: File, path: string): Promise<string> {
-  const sig = await apiPost<CloudinarySignature>('/api/media/sign', { path });
+  const sig = await apiPost<CloudinarySignature>('/api/media/sign', { path }).catch((error: unknown) => {
+    if (error instanceof ApiRequestError && error.status === 503) {
+      throw Object.assign(new Error(error.message), { code: 'media/not-configured' });
+    }
+    throw error;
+  });
   const body = new FormData();
   body.append('file', file);
   body.append('api_key', sig.apiKey);

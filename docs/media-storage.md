@@ -10,22 +10,20 @@ from 3–5 MB to 150–400 KB, roughly 10x less storage and bandwidth.
 
 Set `NEXT_PUBLIC_MEDIA_PROVIDER` in `.env.local` (and in your host's env):
 
-| Provider | Value | Free allowance (check current pricing) | Notes |
+| Provider | Value | Cost | Notes |
 | --- | --- | --- | --- |
-| Firebase Storage | `firebase` (default) | Requires the Blaze plan for `*.firebasestorage.app` buckets; Blaze includes a no-cost tier | No extra setup. A `storage/quota-exceeded` error usually means the project is on Spark or over quota. |
-| Cloudinary | `cloudinary` | Free plan with monthly credits | Images are served from a global CDN with on-the-fly optimisation. |
+| Cloudinary | `cloudinary` (default) | Free plan with monthly credits; no card needed | Works with Firebase's free Spark plan. Images are served from a global CDN. |
+| Firebase Storage | `firebase` | New `*.firebasestorage.app` buckets need the **Blaze** plan | A `storage/quota-exceeded` error on Spark means Storage isn't available. |
 
-### Firebase (default)
-
-Nothing to configure. If uploads fail with `storage/quota-exceeded`, open the
-Firebase console, go to **Usage and billing**, and either upgrade to Blaze
-(pay-as-you-go with a free tier) or switch to Cloudinary below.
+If the variable is left unset, Cloudinary is used, except when you run against the
+local emulators (`npm run dev:emulators`). Those always use the free Storage
+emulator, so you can develop without any keys.
 
 ### Cloudinary
 
 1. Create a free account at cloudinary.com and copy the **Cloud name**,
    **API key** and **API secret** from the dashboard.
-2. Add them to `.env.local` (and App Hosting secrets in production):
+2. Add them to `.env.local`, and to your host's environment variables in production (for example, Vercel → Settings → Environment Variables):
 
    ```env
    NEXT_PUBLIC_MEDIA_PROVIDER=cloudinary
@@ -43,10 +41,16 @@ pass through the Lodger server. The server always fixes the folder to the
 caller's own user ID, and `/api/media/delete` only deletes files inside it.
 The API secret never reaches the browser.
 
-Existing images keep working: URLs are stored as plain links, so old Firebase
+Existing images keep working, if any were uploaded: URLs are stored as plain links, so old Firebase
 images and new Cloudinary images can coexist. Nothing needs migrating.
 
 ## Drafts and storage
 
 Saving a listing draft uploads only newly chosen photos. Re-saving doesn't
 upload them again, and deleting a draft also deletes its photos.
+
+## Firebase Storage (Blaze only)
+
+If the project is on Blaze, set `NEXT_PUBLIC_MEDIA_PROVIDER=firebase` and
+deploy the Storage rules with `npm run deploy:storage-rules`. No other keys are
+needed.

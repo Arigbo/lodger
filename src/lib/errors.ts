@@ -22,7 +22,12 @@ export function describeUploadError(error: unknown): { title: string; descriptio
       return {
         title: 'Photo storage is unavailable',
         description:
-          "This project's Firebase Storage quota is used up or not enabled on its current plan. Your listing wasn't saved — please contact support.",
+          'Firebase Storage needs the Blaze plan. Set NEXT_PUBLIC_MEDIA_PROVIDER=cloudinary to use the free Cloudinary plan instead (see docs/media-storage.md).',
+      };
+    case 'media/not-configured':
+      return {
+        title: 'Photo uploads are not set up yet',
+        description: 'Add the Cloudinary keys (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) and restart the app.',
       };
     case 'storage/unauthorized':
     case 'storage/unauthenticated':
