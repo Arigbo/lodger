@@ -1,215 +1,248 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Bell, BookOpen, Building, CheckCircle2, Home, LifeBuoy, PlusCircle, Users, Wallet, Wrench, X } from "lucide-react";
-import { collection, doc, query, updateDoc, where } from "firebase/firestore";
-import PropertyCard from "@/components/properties/property-card";
-import { EmptyState, PageHeader, StatCard, StatGrid } from "@/components/dashboard";
+import { formatDistanceToNow } from "date-fns";
+import {
+  BadgeCheck,
+  Building2,
+  CheckCircle2,
+  Inbox,
+  PenLine,
+  Percent,
+  Plus,
+  UserPlus,
+  Wallet,
+  Wrench,
+} from "lucide-react";
+import { collection, query, where } from "firebase/firestore";
+import { EmptyState, PageHeader, PageSkeleton, SectionCard, StatCard, StatGrid, StatusBadge } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { siteConfig } from "@/config/site";
-import type { MaintenanceRequest, Property, RentalApplication } from "@/types";
+import { useAsyncResult } from "@/hooks/use-async-result";
+import { fetchDocsByIds } from "@/lib/firestore-batch";
+import { formatPrice } from "@/lib/utils";
+import type { LeaseAgreement, MaintenanceRequest, Property, RentalApplication, UserProfile } from "@/types";
 
-export default function LandlordDashboardPage() {
-  const { user, profile } = useUser();
+type InboxItem = {
+  id: string;
+  icon: typeof Inbox;
+  tone: string;
+  title: string;
+  detail: string;
+  when?: string;
+  href: string;
+  cta: string;
+  priority: number;
+};
+
+function useLandlordCollection<T>(name: string, ...filters: [string, "==", unknown][]) {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const key = JSON.stringify(filters);
+  const q = useMemoFirebase(
+    () => (user ? query(collection(firestore, name), where("landlordId", "==", user.uid), ...filters.map(([f, op, v]) => where(f, op, v))) : null),
+    [user, firestore, name, key], // `key` stands in for `filters`
+  );
+  return useCollection<T>(q);
+}
+
+export default function LandlordHomePage() {
+  const { profile } = useUser();
   const firestore = useFirestore();
 
-  const propertiesQuery = useMemoFirebase(
-    () => (user ? query(collection(firestore, "properties"), where("landlordId", "==", user.uid)) : null),
-    [user, firestore],
-  );
-  const requestsQuery = useMemoFirebase(
-    () =>
-      user
-        ? query(
-            collection(firestore, "rentalApplications"),
-            where("landlordId", "==", user.uid),
-            where("status", "==", "pending"),
-          )
-        : null,
-    [user, firestore],
-  );
-  const maintenanceQuery = useMemoFirebase(
-    () =>
-      user
-        ? query(
-            collection(firestore, "maintenanceRequests"),
-            where("landlordId", "==", user.uid),
-            where("status", "==", "Pending"),
-          )
-        : null,
-    [user, firestore],
-  );
+  const { data: properties, isLoading: propertiesLoading } = useLandlordCollection<Property>("properties");
+  const { data: requests } = useLandlordCollection<RentalApplication>("rentalApplications", ["status", "==", "pending"]);
+  const { data: leases } = useLandlordCollection<LeaseAgreement>("leaseAgreements", ["status", "==", "pending"]);
+  const { data: repairs } = useLandlordCollection<MaintenanceRequest>("maintenanceRequests", ["status", "==", "Pending"]);
 
-  const { data: properties, isLoading: propsLoading } = useCollection<Property>(propertiesQuery);
-  const { data: requests } = useCollection<RentalApplication>(requestsQuery);
-  const { data: maintenance } = useCollection<MaintenanceRequest>(maintenanceQuery);
+  const tenantIds = [...(requests ?? []).map((r) => r.tenantId), ...(leases ?? []).map((l) => l.tenantId)];
+  const idsKey = [...new Set(tenantIds)].sort().join(",");
+  const { data: people } = useAsyncResult(idsKey || null, (key) => fetchDocsByIds<UserProfile>(firestore, "users", key.split(",")), {
+    keepPrevious: true,
+  });
 
-  const total = properties?.length ?? 0;
-  const occupied = properties?.filter((p) => p.status === "occupied").length ?? 0;
-  const available = total - occupied;
-  const pendingRequests = requests?.length ?? 0;
-  const openMaintenance = maintenance?.length ?? 0;
+  if (propertiesLoading) return <PageSkeleton variant="overview" />;
 
+  const props = properties ?? [];
+  const byId = new Map(props.map((p) => [p.id, p]));
+  const occupied = props.filter((p) => p.status === "occupied");
+  const occupancy = props.length ? Math.round((occupied.length / props.length) * 100) : 0;
+  const currency = props[0]?.currency || profile?.currency || "USD";
+  const rentRoll = occupied.filter((p) => p.currency === currency).reduce((sum, p) => sum + (p.price || 0), 0);
   const payoutsReady = !!profile?.stripeAccountId && !!profile?.stripeDetailsSubmitted;
-  const showPayoutCard = !payoutsReady && !profile?.stripeBannerDismissed;
+  const name = (id: string) => people?.get(id)?.name ?? "A student";
+  const title = (id: string) => byId.get(id)?.title ?? "your property";
 
-  const dismissPayoutCard = () => {
-    if (user) updateDoc(doc(firestore, "users", user.uid), { stripeBannerDismissed: true }).catch(console.error);
-  };
-
-  const attention = [
-    pendingRequests > 0 && {
+  const inbox: InboxItem[] = [
+    ...(leases ?? [])
+      .filter((l) => l.paymentMethod === "offline" && !l.paymentConfirmed)
+      .map((l) => ({
+        id: `pay-${l.id}`,
+        icon: Wallet,
+        tone: "bg-emerald-50 text-emerald-700",
+        title: `Confirm ${name(l.tenantId)}'s bank transfer`,
+        detail: title(l.propertyId),
+        href: "/landlord/requests",
+        cta: "Confirm",
+        priority: 0,
+      })),
+    ...(requests ?? []).map((r) => ({
+      id: `req-${r.id}`,
+      icon: UserPlus,
+      tone: "bg-sky-50 text-sky-700",
+      title: `${name(r.tenantId)} wants to rent`,
+      detail: title(r.propertyId),
+      when: r.applicationDate,
       href: "/landlord/requests",
-      icon: Bell,
-      label: `${pendingRequests} rental request${pendingRequests === 1 ? "" : "s"} waiting for a reply`,
-    },
-    openMaintenance > 0 && {
-      href: "/landlord/maintenance",
+      cta: "Review",
+      priority: 1,
+    })),
+    ...(repairs ?? []).map((m) => ({
+      id: `fix-${m.id}`,
       icon: Wrench,
-      label: `${openMaintenance} open maintenance issue${openMaintenance === 1 ? "" : "s"}`,
-    },
-  ].filter(Boolean) as { href: string; icon: typeof Bell; label: string }[];
+      tone: m.priority === "High" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-800",
+      title: m.title,
+      detail: `${title(m.propertyId)} · ${m.priority} priority`,
+      when: m.requestDate,
+      href: "/landlord/maintenance",
+      cta: "Respond",
+      priority: m.priority === "High" ? 0 : 2,
+    })),
+    ...(leases ?? [])
+      .filter((l) => !l.landlordSigned)
+      .map((l) => ({
+        id: `sign-${l.id}`,
+        icon: PenLine,
+        tone: "bg-primary/10 text-primary",
+        title: "Lease waiting for your signature",
+        detail: `${name(l.tenantId)} · ${title(l.propertyId)}`,
+        href: `/landlord/leases/${l.id}`,
+        cta: "Sign",
+        priority: 1,
+      })),
+  ].sort((a, b) => a.priority - b.priority);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       <PageHeader
         title={`Welcome back${profile?.name ? `, ${profile.name.split(" ")[0]}` : ""}`}
-        description="An overview of your properties, tenants and requests."
+        description="Here's what needs your attention across your properties today."
         actions={
-          <>
-            <Button asChild variant="outline" className="rounded-xl">
-              <Link href="/landlord/requests">
-                <Users className="mr-2 h-4 w-4" /> View requests
-              </Link>
-            </Button>
-            <Button asChild className="rounded-xl">
-              <Link href="/landlord/properties/new">
-                <PlusCircle className="mr-2 h-4 w-4" /> Add property
-              </Link>
-            </Button>
-          </>
+          <Button asChild className="rounded-xl sm:hidden">
+            <Link href="/landlord/properties/new">
+              <Plus className="mr-1.5 h-4 w-4" /> Add property
+            </Link>
+          </Button>
         }
       />
 
-      {showPayoutCard && (
-        <section className="relative flex flex-col gap-4 rounded-2xl border border-amber-500/30 bg-amber-50 p-5 sm:flex-row sm:items-center">
-          <div className="rounded-xl bg-amber-500/15 p-3 text-amber-700">
-            <Wallet aria-hidden className="h-6 w-6" />
-          </div>
-          <div className="flex-1">
-            <h2 className="font-semibold text-amber-900">Set up payouts to get paid online</h2>
-            <p className="text-sm text-amber-800/90">
-              Connect Stripe so tenants can pay rent by card, straight into your bank account.
-            </p>
-          </div>
-          <Button asChild className="rounded-xl bg-amber-600 text-white hover:bg-amber-700">
-            <Link href="/landlord/account">Set up payouts</Link>
-          </Button>
-          <button
-            type="button"
-            onClick={dismissPayoutCard}
-            aria-label="Dismiss"
-            className="absolute right-3 top-3 rounded-full p-1.5 text-amber-700 transition-colors hover:bg-amber-100 sm:static"
-          >
-            <X aria-hidden className="h-4 w-4" />
-          </button>
-        </section>
-      )}
-
       <StatGrid>
-        <StatCard label="Properties" value={propsLoading ? "—" : total} icon={Building} href="/landlord/properties" />
-        <StatCard label="Occupied" value={propsLoading ? "—" : occupied} icon={Users} tone="success" href="/landlord/tenants" />
-        <StatCard label="Available" value={propsLoading ? "—" : available} icon={Home} tone="info" href="/landlord/properties" />
-        <StatCard
-          label="New requests"
-          value={pendingRequests}
-          icon={Bell}
-          tone="warning"
-          href="/landlord/requests"
-        />
+        <div className="rounded-2xl border bg-card p-4 shadow-sm sm:p-5">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-muted-foreground">Occupancy</p>
+            <Percent aria-hidden className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <p className="mt-1 text-2xl font-bold">{occupancy}%</p>
+          <Progress value={occupancy} className="mt-3 h-1.5" aria-label={`${occupancy}% occupied`} />
+          <p className="mt-2 text-xs text-muted-foreground">
+            {occupied.length} of {props.length} homes let
+          </p>
+        </div>
+        <StatCard label="Monthly rent roll" value={formatPrice(rentRoll, currency)} icon={Wallet} tone="success" hint="From occupied homes" />
+        <StatCard label="New requests" value={requests?.length ?? 0} icon={Inbox} tone="info" href="/landlord/requests" hint="Waiting for a reply" />
+        <StatCard label="Open repairs" value={repairs?.length ?? 0} icon={Wrench} tone="warning" href="/landlord/maintenance" hint="Reported by tenants" />
       </StatGrid>
 
-      <section aria-labelledby="attention-heading" className="space-y-3">
-        <h2 id="attention-heading" className="text-lg font-semibold">
-          Needs your attention
-        </h2>
-        {attention.length ? (
-          <ul className="divide-y rounded-2xl border bg-card">
-            {attention.map(({ href, icon: Icon, label }) => (
-              <li key={href}>
-                <Link href={href} className="group flex items-center gap-3 px-4 py-3.5 text-sm font-medium hover:bg-accent/50">
-                  <Icon aria-hidden className="h-4 w-4 text-amber-600" />
-                  <span className="flex-1">{label}</span>
-                  <ArrowRight aria-hidden className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="flex items-center gap-2 rounded-2xl border bg-card px-4 py-3.5 text-sm text-muted-foreground">
-            <CheckCircle2 aria-hidden className="h-4 w-4 text-emerald-600" /> You&apos;re all caught up.
-          </p>
-        )}
-      </section>
-
-      <section aria-labelledby="properties-heading" className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 id="properties-heading" className="text-lg font-semibold">
-            Your properties
-          </h2>
-          {total > 0 && (
-            <Link href="/landlord/properties" className="text-sm font-medium text-primary hover:underline">
-              See all
-            </Link>
-          )}
-        </div>
-        {total > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {properties!.slice(0, 3).map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))}
-          </div>
-        ) : (
-          !propsLoading && (
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        <SectionCard
+          className="lg:col-span-2"
+          title="Action inbox"
+          description={inbox.length ? `${inbox.length} item${inbox.length === 1 ? "" : "s"} need you` : "Nothing waiting on you"}
+        >
+          {inbox.length ? (
+            <ul className="divide-y">
+              {inbox.slice(0, 8).map((item) => (
+                <li key={item.id} className="flex items-center gap-4 px-5 py-3.5">
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.tone}`}>
+                    <item.icon aria-hidden className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{item.title}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {item.detail}
+                      {item.when && ` · ${formatDistanceToNow(new Date(item.when), { addSuffix: true })}`}
+                    </p>
+                  </div>
+                  <Button asChild size="sm" variant="outline" className="h-8 rounded-lg">
+                    <Link href={item.href}>{item.cta}</Link>
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : (
             <EmptyState
-              icon={Building}
-              title="No properties yet"
-              description="Add your first property to start receiving requests from students."
-              action={
-                <Button asChild className="rounded-xl">
-                  <Link href="/landlord/properties/new">Add your first property</Link>
-                </Button>
-              }
+              className="m-5 border-none bg-transparent py-10"
+              icon={CheckCircle2}
+              title="You're all caught up"
+              description="New requests, payments to confirm and repairs will show up here."
             />
-          )
-        )}
-      </section>
+          )}
+        </SectionCard>
 
-      <section className="grid gap-4 sm:grid-cols-2">
-        <a
-          href={`mailto:${siteConfig.supportEmail}`}
-          className="group flex items-start gap-4 rounded-2xl border bg-card p-5 transition-colors hover:border-primary/40"
-        >
-          <LifeBuoy aria-hidden className="h-6 w-6 text-primary" />
-          <div>
-            <p className="font-semibold">Need help?</p>
-            <p className="text-sm text-muted-foreground">Questions about listings or payments? Email our support team.</p>
-          </div>
-        </a>
-        <a
-          href={siteConfig.blogUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group flex items-start gap-4 rounded-2xl border bg-card p-5 transition-colors hover:border-primary/40"
-        >
-          <BookOpen aria-hidden className="h-6 w-6 text-primary" />
-          <div>
-            <p className="font-semibold">Landlord tips</p>
-            <p className="text-sm text-muted-foreground">Guides on pricing, listing photos and finding great tenants.</p>
-          </div>
-        </a>
-      </section>
+        <div className="space-y-6">
+          <SectionCard title="Payouts" bodyClassName="p-5">
+            {payoutsReady ? (
+              <div className="flex items-start gap-3">
+                <BadgeCheck aria-hidden className="mt-0.5 h-5 w-5 text-emerald-600" />
+                <div>
+                  <p className="text-sm font-medium">Online rent payments are on</p>
+                  <p className="text-sm text-muted-foreground">Card payments go straight to your bank via Stripe.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Connect Stripe so tenants can pay rent by card, straight into your bank account.
+                </p>
+                <Button asChild size="sm" className="w-full rounded-lg">
+                  <Link href="/landlord/account">Set up payouts</Link>
+                </Button>
+              </div>
+            )}
+          </SectionCard>
+
+          <SectionCard title="Your properties" action={props.length ? { href: "/landlord/properties", label: "Manage" } : undefined}>
+            {props.length ? (
+              <ul className="divide-y">
+                {props.slice(0, 5).map((p) => (
+                  <li key={p.id}>
+                    <Link href={`/landlord/properties/${p.id}`} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-accent/50">
+                      <Building2 aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">{p.title}</span>
+                        <span className="block text-xs text-muted-foreground">{formatPrice(p.price, p.currency)}/mo</span>
+                      </span>
+                      <StatusBadge status={p.status} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState
+                className="m-5 border-none bg-transparent py-8"
+                icon={Building2}
+                title="No properties yet"
+                action={
+                  <Button asChild size="sm" className="rounded-lg">
+                    <Link href="/landlord/properties/new">Add your first property</Link>
+                  </Button>
+                }
+              />
+            )}
+          </SectionCard>
+        </div>
+      </div>
     </div>
   );
 }

@@ -15,7 +15,7 @@ import PaymentDialog from '@/components/payments/payment-dialog';
 import type { LeaseAgreement, Property, UserProfile as User } from '@/types';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { sendNotification } from '@/lib/notifications';
 import { formatPrice, cn } from '@/lib/utils';
 
@@ -52,7 +52,7 @@ export default function ViewStudentLeasePage() {
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
     if (isLoading) {
-        return <Loading />;
+        return <PageSkeleton variant="detail" />;
     }
 
     if (!lease || !currentUser || (currentUser.uid !== lease.tenantId)) {

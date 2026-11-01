@@ -16,7 +16,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import type { LeaseAgreement, UserProfile as User, Property } from '@/types';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { EmptyState } from "@/components/dashboard";
 import { FileX } from "lucide-react";
 
@@ -83,7 +83,7 @@ export default function ViewLandlordLeasePage() {
 
 
     if (isLoading) {
-        return <Loading />;
+        return <PageSkeleton variant="detail" />;
     }
 
     // After main lease and user are loaded, check if they exist or if match fails
@@ -105,7 +105,7 @@ export default function ViewLandlordLeasePage() {
 
     // Wait for supporting data if we have the main lease
     if (isSupportingDataLoading) {
-        return <Loading />;
+        return <PageSkeleton variant="detail" />;
     }
 
     const getStatusVariant = (status: 'active' | 'expired' | 'pending' | 'terminating') => {

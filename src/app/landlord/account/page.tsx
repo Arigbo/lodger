@@ -50,7 +50,7 @@ import { uploadProfileImage } from "@/firebase/storage";
 import { getStorage } from "firebase/storage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Pencil, User, Wallet, Clock } from "lucide-react";
-import Loading from "@/app/loading";
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { useSearchParams, useRouter } from "next/navigation";
 import { countries } from "@/data/countries";
 import { Combobox } from "@/components/ui/combobox";
@@ -416,7 +416,7 @@ export default function AccountPage() {
   }
 
   if (isUserLoading || isProfileLoading) {
-    return <Loading />;
+    return <PageSkeleton variant="form" />;
   }
 
   if (!user || !userProfile || !userDocRef) {

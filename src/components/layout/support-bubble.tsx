@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import { usePathname } from 'next/navigation';
+import { siteConfig } from '@/config/site';
 import {
     Dialog,
     DialogContent,
@@ -12,7 +13,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Phone, MessageSquare } from "lucide-react";
 
+/** Floating help button for public pages (dashboards offer help in the account menu). */
 export function SupportBubble() {
+    const pathname = usePathname();
+    if (pathname.startsWith("/student") || pathname.startsWith("/landlord")) return null;
+
     return (
         <Dialog>
             <DialogTrigger asChild>
@@ -37,7 +42,7 @@ export function SupportBubble() {
                         className="h-16 justify-start gap-4 text-lg font-semibold bg-green-50 border-green-200 hover:bg-green-100 dark:bg-green-900/10 dark:border-green-800"
                         asChild
                     >
-                        <a href="https://wa.me/2348109432202" target="_blank" rel="noopener noreferrer">
+                        <a href={siteConfig.supportWhatsApp} target="_blank" rel="noopener noreferrer">
                             <MessageSquare className="h-6 w-6 text-green-600" />
                             Whatsapp: 08109432202
                         </a>
@@ -47,7 +52,7 @@ export function SupportBubble() {
                         className="h-16 justify-start gap-4 text-lg font-semibold bg-blue-50 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/10 dark:border-blue-800"
                         asChild
                     >
-                        <a href="tel:08109432202">
+                        <a href={`tel:${siteConfig.supportPhone}`}>
                             <Phone className="h-6 w-6 text-blue-600" />
                             Phone: 08109432202
                         </a>

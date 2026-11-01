@@ -7,7 +7,7 @@ import type { Property, UserProfile } from '@/types';
 import { Heart, Search } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -45,7 +45,7 @@ export default function BookmarksPage() {
     const isLoading = isProfileLoading || arePropertiesLoading;
 
     if (isLoading) {
-        return <Loading />;
+        return <PageSkeleton variant="grid" />;
     }
 
     return (

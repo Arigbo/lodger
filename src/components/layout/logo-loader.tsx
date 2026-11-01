@@ -1,82 +1,20 @@
-'use client';
+import { LogoMark } from "@/components/layout/logo";
 
-import React from 'react';
-import { motion } from 'framer-motion';
-
+/**
+ * Branded loader for public routes: a calm, CSS-only mark with an
+ * indeterminate progress bar (no animation library, no layout overlay).
+ */
 export default function LogoLoader() {
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-md">
-            <div className="relative flex flex-col items-center">
-                <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{
-                        scale: [1, 1.05, 1],
-                        opacity: 1,
-                    }}
-                    transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "linear"
-                    }}
-                    className="relative"
-                >
-                    <svg
-                        width="80"
-                        height="80"
-                        viewBox="0 0 100 100"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="text-primary"
-                    >
-                        <motion.path
-                            d="M20 80V30L50 10L80 30V80H60V50H40V80H20Z"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            initial={{ pathLength: 0, opacity: 0 }}
-                            animate={{ pathLength: 1, opacity: 1 }}
-                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        />
-                        <motion.path
-                            d="M40 80V60H60V80"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            initial={{ pathLength: 0, opacity: 0 }}
-                            animate={{ pathLength: 1, opacity: 1 }}
-                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                        />
-                    </svg>
-                </motion.div>
-
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="mt-6 flex flex-col items-center"
-                >
-                    <h2 className="text-xl font-bold tracking-tighter text-foreground uppercase">LODGER</h2>
-                    <div className="mt-2 flex gap-1">
-                        <motion.div
-                            animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
-                            transition={{ duration: 1, repeat: Infinity }}
-                            className="h-1.5 w-1.5 rounded-full bg-primary"
-                        />
-                        <motion.div
-                            animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
-                            transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
-                            className="h-1.5 w-1.5 rounded-full bg-primary"
-                        />
-                        <motion.div
-                            animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
-                            transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
-                            className="h-1.5 w-1.5 rounded-full bg-primary"
-                        />
-                    </div>
-                </motion.div>
-            </div>
-        </div>
-    );
+  return (
+    <div role="status" aria-live="polite" className="flex min-h-[60vh] flex-col items-center justify-center gap-5">
+      <span className="sr-only">Loading</span>
+      <div className="relative">
+        <span aria-hidden className="absolute inset-0 animate-ping rounded-xl bg-primary/20 [animation-duration:1.8s]" />
+        <LogoMark className="relative h-12 w-12 drop-shadow-sm" />
+      </div>
+      <div aria-hidden className="h-1 w-32 overflow-hidden rounded-full bg-primary/10">
+        <div className="h-full w-1/3 animate-progress-indeterminate rounded-full bg-primary" />
+      </div>
+    </div>
+  );
 }

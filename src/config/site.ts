@@ -24,6 +24,8 @@ export const siteConfig = {
   ],
   blogUrl: 'https://lodger-blog.vercel.app/',
   supportEmail: 'support@lodger.com',
+  supportWhatsApp: 'https://wa.me/2348109432202',
+  supportPhone: '08109432202',
   themeColor: '#77773c',
   social: {
     twitter: '',

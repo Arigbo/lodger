@@ -31,7 +31,7 @@ import {
   documentId,
   writeBatch,
 } from "firebase/firestore";
-import Loading from "@/app/loading";
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { sendNotification } from "@/lib/notifications";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -357,7 +357,7 @@ export default function MessagesPage() {
   );
 
   if (isUserLoading || isDataLoading) {
-    return <Loading />;
+    return <PageSkeleton variant="list" />;
   }
 
   return (

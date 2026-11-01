@@ -17,7 +17,7 @@ import { formatPrice } from '@/lib/utils';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { PageHeader } from "@/components/dashboard";
 import { useAsyncResult } from "@/hooks/use-async-result";
 import { fetchDocsByIds } from "@/lib/firestore-batch";
@@ -71,7 +71,7 @@ export default function LandlordLeasesPage() {
   };
 
   if (isUserLoading || areLeasesLoading || isAggregating) {
-    return <Loading />;
+    return <PageSkeleton variant="list" />;
   }
 
   return (

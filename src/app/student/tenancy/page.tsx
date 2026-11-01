@@ -10,7 +10,7 @@ import type { LeaseAgreement, Property } from '@/types';
 import { Building } from 'lucide-react';
 import PropertyCard from '@/components/properties/property-card';
 import React from 'react';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from "@/components/dashboard";
 import { useAsyncResult } from "@/hooks/use-async-result";
@@ -41,7 +41,7 @@ export default function TenancyDashboardPage() {
 
 
     if (isUserLoading || isLoading) {
-        return <Loading />;
+        return <PageSkeleton variant="grid" />;
     }
 
     return (

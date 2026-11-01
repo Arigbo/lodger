@@ -26,7 +26,7 @@ export function StatCard({ label, value, icon: Icon, hint, tone = "default", hre
   const body = (
     <div
       className={cn(
-        "flex h-full items-start gap-4 rounded-2xl border bg-card p-5 transition-colors",
+        "flex h-full flex-col items-start gap-3 rounded-2xl border bg-card p-4 shadow-sm transition-colors sm:flex-row sm:gap-4 sm:p-5",
         href && "hover:border-primary/40 hover:bg-accent/40",
         className,
       )}
@@ -38,7 +38,7 @@ export function StatCard({ label, value, icon: Icon, hint, tone = "default", hre
       )}
       <div className="min-w-0">
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <p className="mt-1 truncate text-2xl font-bold tracking-tight text-foreground">{value}</p>
+        <p className="mt-1 break-words text-xl font-bold tracking-tight text-foreground sm:text-2xl">{value}</p>
         {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
       </div>
     </div>

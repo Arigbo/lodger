@@ -34,7 +34,7 @@ import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@
 import { doc, collection, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 
 
 export default function TenantDetailPage() {
@@ -231,7 +231,7 @@ export default function TenantDetailPage() {
     const isLoading = isUserLoading || isTenantLoading || areLeasesLoading || isPropertyLoading || areTransactionsLoading || !rentStatus;
 
     if (isLoading) {
-        return <Loading />;
+        return <PageSkeleton variant="detail" />;
     }
 
     if (!isTenantLoading && !tenant) {

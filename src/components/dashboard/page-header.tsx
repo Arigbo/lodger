@@ -18,7 +18,7 @@ type PageHeaderProps = {
 /** Consistent heading block for every dashboard page. */
 export function PageHeader({ title, description, eyebrow, actions, back, className }: PageHeaderProps) {
   return (
-    <header className={cn("mb-8 flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between", className)}>
+    <header className={cn("mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between", className)}>
       <div className="min-w-0 space-y-1.5">
         {back && (
           <Link
@@ -29,7 +29,7 @@ export function PageHeader({ title, description, eyebrow, actions, back, classNa
           </Link>
         )}
         {eyebrow && <p className="text-xs font-semibold uppercase tracking-wider text-primary">{eyebrow}</p>}
-        <h1 className="font-headline text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{title}</h1>
+        <h1 className="font-headline text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]">{title}</h1>
         {description && <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}

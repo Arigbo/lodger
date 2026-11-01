@@ -32,7 +32,7 @@ import { addDays, format } from "date-fns";
 import { Calendar } from '@/components/ui/calendar';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { downloadCsv, toCsv } from "@/lib/csv";
 import { useAsyncResult } from "@/hooks/use-async-result";
@@ -115,7 +115,7 @@ export default function TransactionsPage() {
     );
   };
 
-  if (isUserLoading || isLoading) return <Loading />;
+  if (isUserLoading || isLoading) return <PageSkeleton variant="list" />;
 
   return (
     <div className="space-y-8 pb-8 animate-in fade-in duration-1000">

@@ -7,7 +7,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Clock, ExternalLink, Bell } from 'lucide-react';
 import { format } from 'date-fns';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import type { Notification } from "@/types/notification";
@@ -27,7 +27,7 @@ export default function NotificationDetailsPage() {
         }
     }, [notification, notifRef]);
 
-    if (isLoading) return <Loading />;
+    if (isLoading) return <PageSkeleton variant="detail" />;
 
     if (!notification) {
         return (

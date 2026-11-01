@@ -21,7 +21,7 @@ import { Search } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -131,7 +131,7 @@ export default function StudentRequestsPage() {
   };
 
   if (isUserLoading || areRequestsLoading || isAggregating) {
-    return <Loading />;
+    return <PageSkeleton variant="list" />;
   }
 
   return (

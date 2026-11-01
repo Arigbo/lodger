@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc, getDoc, getDocs, deleteDoc } from 'firebase/firestore';
 import type { Property, RentalApplication, UserProfile as User } from '@/types';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { useToast } from '@/hooks/use-toast';
 import { sendNotification } from '@/lib/notifications';
 import { formatPrice } from '@/lib/utils';
@@ -152,7 +152,7 @@ export default function LandlordPropertiesPage() {
   });
 
   if (isLoading) {
-    return <Loading />;
+    return <PageSkeleton variant="grid" />;
   }
 
   return (

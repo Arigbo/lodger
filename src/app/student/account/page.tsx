@@ -55,7 +55,7 @@ import {
 import type { UserProfile } from "@/types";
 import { doc, setDoc } from "firebase/firestore";
 import { useRef, useEffect, useState } from "react";
-import Loading from "@/app/loading";
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { useToast } from "@/hooks/use-toast";
 import { countries } from "@/data/countries";
 import { getStorage } from "firebase/storage";
@@ -290,7 +290,7 @@ export default function AccountPage() {
   }
 
   if (isUserLoading || isProfileLoading) {
-    return <Loading />;
+    return <PageSkeleton variant="form" />;
   }
 
   if (!user || !userProfile) {

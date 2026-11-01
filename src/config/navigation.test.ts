@@ -16,6 +16,6 @@ describe('navigation', () => {
 
   it('derives page titles', () => {
     expect(getDashboardPageTitle('landlord', '/landlord/properties/1/edit')).toBe('Properties');
-    expect(getDashboardPageTitle('student', '/student')).toBe('Dashboard');
+    expect(getDashboardPageTitle('student', '/student')).toBe('Home');
   });
 });

@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { PageHeader } from "@/components/dashboard";
 import { useAsyncResult } from "@/hooks/use-async-result";
 import { fetchDocsByIds } from "@/lib/firestore-batch";
@@ -70,7 +70,7 @@ export default function StudentLeasesPage() {
   };
 
   if (isUserLoading || areLeasesLoading || isAggregating) {
-    return <Loading />;
+    return <PageSkeleton variant="list" />;
   }
 
   return (

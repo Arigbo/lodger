@@ -20,7 +20,7 @@ import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { PageHeader } from "@/components/dashboard";
 import { useAsyncResult } from "@/hooks/use-async-result";
 import { fetchDocsByIds } from "@/lib/firestore-batch";
@@ -55,7 +55,7 @@ export default function TenantsPage() {
   const isLoading = arePropertiesLoading || areTenantsLoading;
 
   if (isLoading || isUserLoading) {
-    return <Loading />;
+    return <PageSkeleton variant="list" />;
   }
 
   return (

@@ -14,7 +14,7 @@ import LeaseGenerationDialog from '@/components/leases/lease-generation-dialog';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, query, where, addDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { sendNotification } from '@/lib/notifications';
 import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -228,7 +228,7 @@ export default function RentalRequestsPage() {
   };
 
   if (isUserLoading || isLoading) {
-    return <Loading />;
+    return <PageSkeleton variant="list" />;
   }
 
   return (

@@ -18,7 +18,7 @@ import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { collection, query, where, doc, updateDoc } from 'firebase/firestore';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { useAsyncResult } from "@/hooks/use-async-result";
 import { fetchDocsByIds } from "@/lib/firestore-batch";
@@ -97,7 +97,7 @@ export default function MaintenancePage() {
   };
 
   if (isUserLoading || isLoading) {
-    return <Loading />;
+    return <PageSkeleton variant="list" />;
   }
 
   return (

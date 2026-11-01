@@ -64,7 +64,7 @@ import {
   documentId,
 } from "firebase/firestore";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import Loading from "@/app/loading";
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PropertyGallery } from "@/components/properties/property-gallery";
 import { PropertyHeroCarousel } from "@/components/properties/property-hero-carousel";
@@ -213,7 +213,7 @@ export default function LandlordPropertyDetailPage() {
     isLandlordLoading ||
     areReviewsLoading;
 
-  if (isLoading) return <Loading />;
+  if (isLoading) return <PageSkeleton variant="detail" />;
 
   if (!property) {
     return (

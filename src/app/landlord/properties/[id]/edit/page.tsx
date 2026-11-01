@@ -45,7 +45,7 @@ import { AlertCircle } from "lucide-react";
 
 import { Property, LeaseAgreement } from "@/types";
 import { sendNotification } from "@/lib/notifications";
-import Loading from "@/app/loading";
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 
 import { editFormSchema, EditFormValues } from "@/app/landlord/properties/[id]/edit/edit-schemas";
 import { DEFAULT_EDIT_VALUES } from "@/app/landlord/properties/[id]/edit/edit-constants";
@@ -329,7 +329,7 @@ export default function EditPropertyPage() {
     }
   }
 
-  if (isUserLoading || isPropertyLoading) return <Loading />;
+  if (isUserLoading || isPropertyLoading) return <PageSkeleton variant="form" />;
 
   if (
     !property ||

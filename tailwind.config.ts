@@ -54,6 +54,17 @@ export default {
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
       },
+      keyframes: {
+        shimmer: { '100%': { transform: 'translateX(100%)' } },
+        'progress-indeterminate': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(400%)' },
+        },
+      },
+      animation: {
+        shimmer: 'shimmer 1.6s infinite',
+        'progress-indeterminate': 'progress-indeterminate 1.4s ease-in-out infinite',
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',

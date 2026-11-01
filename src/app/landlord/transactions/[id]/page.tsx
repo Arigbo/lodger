@@ -14,7 +14,7 @@ import { formatPrice, cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ArrowLeft, Calendar, DollarSign, Building, Download, ExternalLink, ShieldCheck, CheckCircle, Loader2, XCircle } from 'lucide-react';
 import { updateDoc } from 'firebase/firestore';
-import Loading from '@/app/loading';
+import { PageSkeleton } from "@/components/dashboard/skeletons";
 import Link from 'next/link';
 
 export default function TransactionDetailPage() {
@@ -133,7 +133,7 @@ export default function TransactionDetailPage() {
         fetchData();
     }, [transactionId, firestore]);
 
-    if (isLoading) return <Loading />;
+    if (isLoading) return <PageSkeleton variant="detail" />;
     if (!transaction) return (
         <div className="flex flex-col items-center justify-center py-20">
             <h2 className="text-2xl font-bold tracking-tight">Transaction Not Found</h2>
