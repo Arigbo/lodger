@@ -1,36 +1,24 @@
-'use client';
+"use client";
 
 import * as React from 'react';
-import {
-  Card,
-} from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { UserProfile as User, Property } from '@/types';
-import { MoreHorizontal, Users, Mail, User as UserIcon, Building, ShieldCheck, MapPin, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { Building2, GraduationCap, Mail, MessageSquare, Phone, Search, Users } from 'lucide-react';
 import { collection, query, where } from 'firebase/firestore';
-import { Badge } from '@/components/ui/badge';
-import { PageSkeleton } from "@/components/dashboard/skeletons";
-import { PageHeader } from "@/components/dashboard";
-import { useAsyncResult } from "@/hooks/use-async-result";
-import { fetchDocsByIds } from "@/lib/firestore-batch";
+import { EmptyState, PageHeader, PageSkeleton } from '@/components/dashboard';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useAsyncResult } from '@/hooks/use-async-result';
+import { fetchDocsByIds } from '@/lib/firestore-batch';
+import { formatPrice } from '@/lib/utils';
+import type { Property, UserProfile as User } from '@/types';
 
 type TenantWithProperty = {
   tenant: User;
   property: Property;
 };
 
-// Helper function to split an array into chunks for 'in' queries.
 
 export default function TenantsPage() {
   const { user: landlord, isUserLoading } = useUser();
@@ -54,127 +42,110 @@ export default function TenantsPage() {
     }, { keepPrevious: true });
   const isLoading = arePropertiesLoading || areTenantsLoading;
 
+  const [search, setSearch] = React.useState('');
+
   if (isLoading || isUserLoading) {
     return <PageSkeleton variant="list" />;
   }
 
+  const term = search.trim().toLowerCase();
+  const visible = tenantsWithProperties.filter(
+    ({ tenant, property }) => !term || [tenant.name, tenant.email, property.title].some((v) => v?.toLowerCase().includes(term)),
+  );
+
   return (
-    <div className="space-y-8 pb-8 animate-in fade-in duration-1000">
+    <div className="space-y-6">
       <PageHeader
         title="Tenants"
-        description={`${tenantsWithProperties.length} active tenant${tenantsWithProperties.length === 1 ? "" : "s"} across your properties.`}
+        description={`${tenantsWithProperties.length} tenant${tenantsWithProperties.length === 1 ? '' : 's'} living in your properties.`}
       />
 
-      {tenantsWithProperties.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {tenantsWithProperties.map(({ tenant, property }) => (
-            <Card key={`${tenant.id}-${property.id}`} className="group relative overflow-hidden rounded-3xl bg-card border border-muted/10 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-500 p-8 md:p-8 flex flex-col justify-between min-h-[400px]">
-              {/* Decorative Background Element */}
-              <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-bl-[6rem] -mr-12 -mt-12 group-hover:scale-110 transition-transform duration-700" />
-
-              <div className="relative z-10 space-y-8">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-6">
-                    <div className="relative">
-                      <Avatar className="h-24 w-24 rounded-3xl ring-4 ring-primary/5 ring-offset-4 ring-offset-white shadow-sm">
-                        <AvatarImage src={tenant.profileImageUrl} className="object-cover" />
-                        <AvatarFallback className="bg-muted text-2xl font-bold">
-                          {tenant.name?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-2xl bg-card border border-primary/10 flex items-center justify-center shadow-lg">
-                        <ShieldCheck className="h-5 w-5 text-primary" />
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <h3 className="text-2xl font-bold tracking-tight group-hover:text-primary transition-colors">{tenant.name}</h3>
-                      <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground/60">
-                        <Mail className="h-3 w-3" /> {tenant.email}
-                      </div>
-                    </div>
-                  </div>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-12 w-12 rounded-2xl bg-muted/20 hover:bg-primary hover:text-white transition-all">
-                        <MoreHorizontal className="h-6 w-6" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="rounded-2xl p-2 border border-foreground/5 shadow-sm">
-                      <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wider px-4 py-2 border-b border-muted/30 mb-1">Tenant Actions</DropdownMenuLabel>
-                      <DropdownMenuItem asChild className="rounded-xl focus:bg-primary focus:text-white cursor-pointer py-3 px-4 font-semibold text-xs uppercase tracking-wider gap-2">
-                        <Link href={`/landlord/tenants/${tenant.id}`}>
-                          <UserIcon className="h-4 w-4" /> View Full Profile
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="rounded-xl focus:bg-primary focus:text-white cursor-pointer py-3 px-4 font-semibold text-xs uppercase tracking-wider gap-2">
-                        <Link href={`/landlord/messages?conversationId=${tenant.id}`}>
-                          <Mail className="h-4 w-4" /> Initiate Correspondence
-                        </Link>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                <Separator className="bg-muted/30" />
-
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Property</p>
-                    <Link href={`/landlord/properties/${property.id}`} className="group/property flex flex-col gap-1">
-                      <span className="text-xl font-bold tracking-tight group-hover/property:text-primary transition-colors flex items-center gap-2">
-                        <Building className="h-5 w-5 opacity-40" /> {property.title}
-                      </span>
-                      <span className="text-xs font-bold text-muted-foreground/60 flex items-center gap-1">
-                        <MapPin className="h-3 w-3" /> {property.location.address}, {property.location.city}
-                      </span>
-                    </Link>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Tenancy Status</p>
-                      <Badge variant="outline" className="px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border border-primary/20 text-primary">
-                        {property.status}
-                      </Badge>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Status</p>
-                      <p className="font-bold text-sm uppercase tracking-tight">Active tenancy</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative z-10 pt-10 mt-auto">
-                <Link href={`/landlord/tenants/${tenant.id}`}>
-                  <Button className="w-full h-16 rounded-2xl bg-foreground text-white hover:bg-primary transition-all duration-500 font-semibold text-xs uppercase tracking-wider gap-3 shadow-sm">
-                    View tenancy <ArrowRight className="h-5 w-5" />
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-          ))}
-        </div>
+      {tenantsWithProperties.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          title="No tenants yet"
+          description="Tenants appear here once a lease is signed and the first payment is made."
+          action={
+            <Button asChild variant="outline" className="rounded-xl">
+              <Link href="/landlord/requests">Review requests</Link>
+            </Button>
+          }
+        />
       ) : (
-        <div className="flex flex-col items-center justify-center py-32 space-y-10 animate-in zoom-in duration-700">
-          <div className="relative">
-            <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-            <div className="relative h-40 w-40 rounded-3xl bg-card border border-muted/10 shadow-sm flex items-center justify-center overflow-hidden">
-              <Users className="h-16 w-16 text-muted-foreground/20" />
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
-            </div>
+        <>
+          <div className="relative max-w-sm">
+            <Search aria-hidden className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, email or property"
+              aria-label="Search tenants"
+              className="h-10 rounded-xl pl-9"
+            />
           </div>
-          <div className="space-y-4 text-center">
-            <h3 className="text-3xl font-bold tracking-tight">No tenants yet</h3>
-            <p className="text-xl text-muted-foreground font-medium max-w-sm mx-auto opacity-60 leading-relaxed">
-              Tenants appear here once a lease has been signed.
-            </p>
-          </div>
-        </div>
+          <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {visible.map(({ tenant, property }) => (
+              <li key={`${tenant.id}-${property.id}`} className="flex flex-col rounded-2xl border bg-card p-5 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={tenant.profileImageUrl} alt="" className="object-cover" />
+                    <AvatarFallback className="bg-primary/10 font-semibold text-primary">{tenant.name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">{tenant.name}</p>
+                    {tenant.school && (
+                      <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                        <GraduationCap aria-hidden className="h-3.5 w-3.5" /> {tenant.school}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <dl className="mt-4 space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Building2 aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <dt className="sr-only">Property</dt>
+                    <dd className="min-w-0 flex-1 truncate">
+                      <Link href={`/landlord/properties/${property.id}`} className="hover:underline">
+                        {property.title}
+                      </Link>
+                    </dd>
+                    <dd className="shrink-0 text-muted-foreground">{formatPrice(property.price, property.currency)}/mo</dd>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Mail aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <dt className="sr-only">Email</dt>
+                    <dd className="truncate">
+                      <a href={`mailto:${tenant.email}`} className="hover:underline">{tenant.email}</a>
+                    </dd>
+                  </div>
+                  {tenant.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <dt className="sr-only">Phone</dt>
+                      <dd>
+                        <a href={`tel:${tenant.phone}`} className="hover:underline">{tenant.phone}</a>
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+
+                <div className="mt-5 flex gap-2 border-t pt-4">
+                  <Button asChild size="sm" className="flex-1 rounded-lg">
+                    <Link href={`/landlord/tenants/${tenant.id}`}>Manage tenancy</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline" className="rounded-lg" aria-label={`Message ${tenant.name}`}>
+                    <Link href={`/landlord/messages?conversationId=${tenant.id}`}>
+                      <MessageSquare className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {visible.length === 0 && <EmptyState icon={Search} title="No tenants match your search" />}
+        </>
       )}
     </div>
   );
 }
-
-

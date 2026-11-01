@@ -2,13 +2,22 @@
 
 import * as React from 'react';
 import { useState } from 'react';
-import {
-  Card,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { UserProfile, Property, RentalApplication, LeaseAgreement } from '@/types/';
-import { Check, X, Bell, User as UserIcon, Wallet, ShieldCheck, Clock, ExternalLink } from 'lucide-react';
+import { Check, GraduationCap, Inbox, MessageSquare, Wallet } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import Link from 'next/link';
 import LeaseGenerationDialog from '@/components/leases/lease-generation-dialog';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -18,7 +27,7 @@ import { PageSkeleton } from "@/components/dashboard/skeletons";
 import { sendNotification } from '@/lib/notifications';
 import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
+import { EmptyState, PageHeader, SectionCard, StatusBadge } from "@/components/dashboard";
 import { useAsyncResult } from "@/hooks/use-async-result";
 import { fetchDocsByIds } from "@/lib/firestore-batch";
 
@@ -92,9 +101,18 @@ export default function RentalRequestsPage() {
 
   const isLoading = isUserLoading || areRequestsLoading || isAggregating;
 
-  const pendingRequests = aggregatedRequests.filter(req => req.request.status === 'pending');
+  const [tab, setTab] = useState<'pending' | 'approved' | 'declined'>('pending');
+  const [requestToDecline, setRequestToDecline] = useState<AggregatedRequest | null>(null);
 
   const handleAcceptClick = (request: AggregatedRequest) => {
+    if (!request.property?.leaseTemplate) {
+      toast({
+        variant: "destructive",
+        title: "Add a lease template first",
+        description: "This property has no lease template yet. Add one from the property's edit page, then accept again.",
+      });
+      return;
+    }
     setSelectedRequest(request);
     setDialogOpen(true);
   };
@@ -113,7 +131,7 @@ export default function RentalRequestsPage() {
         link: `/student/requests`
       });
     }
-    toast({ title: "Inquiry Declined", description: "The applicant has been notified of your decision." });
+    toast({ title: "Request declined", description: "The student has been notified." });
   };
 
   const handleLeaseSigned = async (finalText: string) => {
@@ -221,7 +239,7 @@ export default function RentalRequestsPage() {
         propertyTitle: propertyTitle,
         link: `/student/leases/${leaseId}`
       });
-      toast({ title: "Payment Rejected", description: "The tenant has been asked to choose another payment method." });
+      toast({ title: "Payment marked as not received", description: "The tenant has been asked to choose another payment method." });
     } catch (error) {
       console.error('Error rejecting offline payment:', error);
     }
@@ -231,187 +249,182 @@ export default function RentalRequestsPage() {
     return <PageSkeleton variant="list" />;
   }
 
+  const counts = {
+    pending: aggregatedRequests.filter((r) => r.request.status === 'pending').length,
+    approved: aggregatedRequests.filter((r) => r.request.status === 'approved').length,
+    declined: aggregatedRequests.filter((r) => r.request.status === 'declined').length,
+  };
+  const visible = aggregatedRequests.filter((r) => r.request.status === tab);
+
   return (
-    <div className="space-y-8 pb-8 animate-in fade-in duration-1000">
+    <div className="space-y-6">
       <PageHeader
         title="Rental requests"
-        description="Review applications from students and confirm offline payments."
+        description="Review students who want to rent your homes, and confirm bank-transfer payments."
       />
 
-      <StatGrid className="lg:grid-cols-3">
-        <StatCard label="Pending applications" value={pendingRequests.length} icon={UserIcon} tone="warning" />
-        <StatCard label="Payments to confirm" value={pendingOfflinePayments.length} icon={UserIcon} tone="info" />
-      </StatGrid>
-
-      {/* Application Stream */}
-      <div className="space-y-10">
-        <div className="flex items-center gap-4 px-2">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <UserIcon className="h-5 w-5 text-primary" />
-          </div>
-          <h2 className="text-3xl font-bold tracking-tight">Active Applications</h2>
-        </div>
-
-        {pendingRequests.length === 0 ? (
-          <Card className="rounded-3xl border border-dashed border-foreground/10 bg-muted/5 p-24 text-center space-y-8">
-            <div className="h-32 w-32 rounded-3xl bg-card shadow-sm flex items-center justify-center mx-auto relative group overflow-hidden">
-              <Bell className="h-14 w-14 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
-              <div className="absolute inset-0 bg-primary/5 rounded-3xl" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-2xl font-bold tracking-tight">No Requests</h3>
-              <p className="text-lg text-muted-foreground max-w-sm mx-auto">
-                No incoming applications at the moment.
-              </p>
-            </div>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 gap-8">
-            {pendingRequests.map((aggregatedRequest) => {
-              const { request, applicant, property } = aggregatedRequest;
-              if (!applicant || !property) return null;
-              return (
-                <Card key={request.id} className="group overflow-hidden rounded-3xl border border-foreground/5 bg-card hover:shadow-md transition-all duration-500 p-8 md:p-8">
-                  <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Applicant Profile */}
-                    <div className="flex items-center gap-6 lg:w-1/3 border-r-2 border-muted/5 pr-10">
-                      <div className="relative">
-                        <Avatar className="h-24 w-24 rounded-3xl ring-4 ring-primary/5 ring-offset-4 ring-offset-white">
-                          <AvatarImage src={applicant?.profileImageUrl} className="object-cover" />
-                          <AvatarFallback className="bg-muted text-2xl font-bold">
-                            {applicant?.name?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg">
-                          <ShieldCheck className="h-5 w-5" />
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Applicant profile</p>
-                        <h3 className="text-2xl font-bold tracking-tight">{applicant?.name}</h3>
-                        <p className="text-xs font-bold text-muted-foreground/60">{applicant?.email}</p>
-                      </div>
-                    </div>
-
-                    {/* Property Connection */}
-                    <div className="flex-1 space-y-6">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-2">
-                          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Property</p>
-                          <Link href={`/landlord/properties/${property.id}`} className="group/link flex items-center gap-2 text-xl font-bold tracking-tight hover:text-primary transition-colors">
-                            {property.title} <ExternalLink className="h-4 w-4 opacity-0 group-hover/link:opacity-100 transition-opacity" />
-                          </Link>
-                          <p className="text-xs font-medium text-muted-foreground leading-relaxed">
-                            &quot;{request.messageToLandlord || "Application submitted without a message."}&quot;
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Submitted on</p>
-                          <p className="text-sm font-bold text-foreground">{new Date(request.applicationDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-4 pt-4 border-t-2 border-muted/5">
-                        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/20 text-xs font-semibold uppercase tracking-wider">
-                          <Clock className="h-3 w-3 text-primary" /> Status: {request.status}
-                        </div>
-                        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/20 text-xs font-semibold uppercase tracking-wider">
-                          <Wallet className="h-3 w-3 text-primary" /> Monthly Rent: {formatPrice(property.price, property.currency)}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Decision Matrix */}
-                    <div className="lg:w-1/4 flex flex-col sm:flex-row lg:flex-col gap-4 justify-center items-stretch lg:border-l-2 lg:border-muted/5 lg:pl-10">
-                      <Button
-                        onClick={() => handleAcceptClick(aggregatedRequest)}
-                        className="h-16 flex-1 rounded-2xl bg-foreground text-white hover:bg-primary transition-all font-semibold text-xs md:text-xs uppercase tracking-wider gap-3 shadow-sm"
-                      >
-                        <Check className="h-5 w-5" /> Accept
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => handleDeclineClick(request.id)}
-                        className="h-16 flex-1 rounded-2xl border hover:bg-destructive hover:text-white hover:border-destructive transition-all font-semibold text-xs md:text-xs uppercase tracking-wider gap-3"
-                      >
-                        <X className="h-5 w-5" /> Decline
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              )
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Offline Payment Sector */}
       {pendingOfflinePayments.length > 0 && (
-        <div className="space-y-10">
-          <div className="flex items-center gap-4 px-2">
-            <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
-              <Wallet className="h-5 w-5 text-orange-600" />
-            </div>
-            <h2 className="text-3xl font-bold tracking-tight">Offline Payment <span className="text-orange-600">Verification</span></h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <SectionCard
+          title={
+            <span className="flex items-center gap-2">
+              <Wallet aria-hidden className="h-4 w-4 text-emerald-600" /> Payments to confirm
+            </span>
+          }
+          description="Only confirm once the money has arrived in your account."
+        >
+          <ul className="divide-y">
             {pendingOfflinePayments.map(({ lease, tenant, property }) => {
               if (!tenant || !property) return null;
               return (
-                <Card key={lease.id} className="group relative overflow-hidden rounded-3xl border border-orange-500/10 bg-card hover:shadow-md transition-all duration-500 p-8">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 rounded-bl-[4rem] -mr-6 -mt-6" />
-
-                  <div className="space-y-8 relative z-10">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-16 w-16 rounded-2xl ring-2 ring-orange-500/10">
-                        <AvatarImage src={tenant.profileImageUrl} className="object-cover" />
-                        <AvatarFallback className="bg-muted text-xl font-bold">
-                          {tenant.name?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h4 className="text-xl font-bold tracking-tight">{tenant.name}</h4>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Tenant</p>
-                      </div>
-                    </div>
-
-                    <div className="p-6 rounded-2xl bg-orange-500/5 border border-orange-500/5 space-y-4">
-                      <div className="flex justify-between items-center">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-orange-600/60">Offline payment</p>
-                        <p className="text-2xl font-bold text-orange-600">{formatPrice(lease.offlinePaymentAmount || property.price, property.currency)}</p>
-                      </div>
-                      <div className="flex justify-between items-center pt-4 border-t border-orange-500/10">
-                        <p className="text-xs font-bold text-muted-foreground/60">Lease term</p>
-                        <p className="text-xs font-semibold uppercase">{lease.offlinePaymentMonths || 1} Month(s) Pre-Paid</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40 text-center">Verify physical receipt of funds before proceeding</p>
-                      <div className="grid grid-cols-2 gap-4">
-                        <Button
-                          onClick={() => handleApproveOfflinePayment(lease.id, tenant.id, property.id, property.title)}
-                          className="h-14 rounded-xl bg-orange-600 text-white hover:bg-orange-700 transition-all font-semibold text-xs uppercase tracking-wider gap-2 shadow-lg"
-                        >
-                          <Check className="h-4 w-4" /> Verify payment
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleRejectOfflinePayment(lease.id, tenant.id, property.title)}
-                          className="h-14 rounded-xl border border-orange-500/20 hover:bg-orange-50 text-orange-600 transition-all font-semibold text-xs uppercase tracking-wider gap-2"
-                        >
-                          <X className="h-4 w-4" /> Reject
-                        </Button>
-                      </div>
+                <li key={lease.id} className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <PersonAvatar person={tenant} />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{tenant.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {property.title} · {lease.offlinePaymentMonths || 1} month{(lease.offlinePaymentMonths || 1) === 1 ? '' : 's'}
+                      </p>
                     </div>
                   </div>
-                </Card>
-              )
+                  <p className="text-lg font-semibold sm:text-right">
+                    {formatPrice(lease.offlinePaymentAmount || property.price, property.currency)}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="rounded-lg"
+                      onClick={() => handleApproveOfflinePayment(lease.id, tenant.id, property.id, property.title)}
+                    >
+                      <Check className="mr-1.5 h-4 w-4" /> Received
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-lg"
+                      onClick={() => handleRejectOfflinePayment(lease.id, tenant.id, property.title)}
+                    >
+                      Not received
+                    </Button>
+                  </div>
+                </li>
+              );
             })}
-          </div>
-        </div>
+          </ul>
+        </SectionCard>
       )}
+
+      <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)}>
+        <TabsList className="h-auto rounded-xl p-1">
+          {(['pending', 'approved', 'declined'] as const).map((key) => (
+            <TabsTrigger key={key} value={key} className="gap-2 rounded-lg px-3 py-1.5 capitalize">
+              {key === 'pending' ? 'To review' : key}
+              <span className="rounded-full bg-muted px-1.5 text-xs text-muted-foreground">{counts[key]}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
+      {visible.length === 0 ? (
+        <EmptyState
+          icon={Inbox}
+          title={tab === 'pending' ? 'No requests to review' : `No ${tab} requests`}
+          description={
+            tab === 'pending'
+              ? 'When a student asks to rent one of your homes, it will appear here.'
+              : 'Requests you have handled will be listed here.'
+          }
+          action={
+            tab === 'pending' ? (
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link href="/landlord/properties">Manage listings</Link>
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <ul className="space-y-3">
+          {visible.map((item) => {
+            const { request, applicant, property } = item;
+            return (
+              <li key={request.id} className="rounded-2xl border bg-card p-5 shadow-sm">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+                  <div className="flex min-w-0 flex-1 gap-4">
+                    <PersonAvatar person={applicant} />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <p className="font-semibold">{applicant?.name ?? 'Student'}</p>
+                        <StatusBadge status={request.status} />
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(request.applicationDate), { addSuffix: true })}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Wants to rent{' '}
+                        <Link href={`/landlord/properties/${property?.id}`} className="font-medium text-foreground hover:underline">
+                          {property?.title ?? 'a property'}
+                        </Link>
+                        {property && <> · {formatPrice(property.price, property.currency)}/mo</>}
+                      </p>
+                      {applicant?.school && (
+                        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <GraduationCap aria-hidden className="h-3.5 w-3.5" /> {applicant.school}
+                        </p>
+                      )}
+                      {request.messageToLandlord && (
+                        <blockquote className="rounded-xl bg-muted/60 px-4 py-3 text-sm italic text-foreground/80">
+                          &ldquo;{request.messageToLandlord}&rdquo;
+                        </blockquote>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 lg:w-56 lg:flex-col">
+                    {request.status === 'pending' && (
+                      <>
+                        <Button className="flex-1 rounded-lg" onClick={() => handleAcceptClick(item)}>
+                          <Check className="mr-1.5 h-4 w-4" /> Accept & send lease
+                        </Button>
+                        <Button variant="outline" className="flex-1 rounded-lg" onClick={() => setRequestToDecline(item)}>
+                          Decline
+                        </Button>
+                      </>
+                    )}
+                    <Button asChild variant="ghost" className="flex-1 rounded-lg">
+                      <Link href={`/landlord/messages?conversationId=${request.tenantId}`}>
+                        <MessageSquare className="mr-1.5 h-4 w-4" /> Message
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <AlertDialog open={!!requestToDecline} onOpenChange={(open) => !open && setRequestToDecline(null)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Decline this request?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {requestToDecline?.applicant?.name ?? 'The student'} will be notified that you declined their request for{' '}
+              {requestToDecline?.property?.title ?? 'this property'}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-lg">Keep request</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (requestToDecline) handleDeclineClick(requestToDecline.request.id);
+                setRequestToDecline(null);
+              }}
+            >
+              Decline request
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {selectedRequest && landlordProfile && selectedRequest.applicant && selectedRequest.property?.leaseTemplate && (
         <LeaseGenerationDialog
@@ -428,4 +441,11 @@ export default function RentalRequestsPage() {
   );
 }
 
-
+function PersonAvatar({ person }: { person: UserProfile | null }) {
+  return (
+    <Avatar className="h-11 w-11 shrink-0">
+      <AvatarImage src={person?.profileImageUrl} alt="" className="object-cover" />
+      <AvatarFallback className="bg-primary/10 font-semibold text-primary">{person?.name?.[0]?.toUpperCase() ?? '?'}</AvatarFallback>
+    </Avatar>
+  );
+}

@@ -1,28 +1,12 @@
-
-'use client';
+"use client";
 
 import * as React from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Card,
-  CardContent,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import type { RentalApplication, UserProfile as User, Property } from '@/types';
-import { Search } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
-import { PageSkeleton } from "@/components/dashboard/skeletons";
-import { cn } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
+import { Home, MessageSquare, PenLine, Pencil, Search, Send, Trash2 } from 'lucide-react';
+import { collection, deleteDoc, doc, query, updateDoc, where } from 'firebase/firestore';
+import { EmptyState, PageHeader, PageSkeleton, StatusBadge } from '@/components/dashboard';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,21 +16,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { optimizedImageProps } from '@/config/images';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useAsyncResult } from '@/hooks/use-async-result';
 import { useToast } from '@/hooks/use-toast';
-import { PageHeader } from "@/components/dashboard";
-import { useAsyncResult } from "@/hooks/use-async-result";
-import { fetchDocsByIds } from "@/lib/firestore-batch";
+import { fetchDocsByIds } from '@/lib/firestore-batch';
+import { formatPrice } from '@/lib/utils';
+import type { Property, RentalApplication, UserProfile as User } from '@/types';
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -83,6 +64,7 @@ export default function StudentRequestsPage() {
         .sort((x, y) => new Date(y.request.applicationDate).getTime() - new Date(x.request.applicationDate).getTime());
     }, { keepPrevious: true });
 
+  const [filter, setFilter] = React.useState<'open' | 'closed'>('open');
   const [requestToDelete, setRequestToDelete] = React.useState<string | null>(null);
   const [requestToEdit, setRequestToEdit] = React.useState<RentalApplication | null>(null);
   const [editMessage, setEditMessage] = React.useState('');
@@ -94,8 +76,8 @@ export default function StudentRequestsPage() {
     try {
       await deleteDoc(doc(firestore, 'rentalApplications', requestToDelete));
       toast({
-        title: "Request Deleted",
-        description: "Your rental application has been cancelled.",
+        title: "Request withdrawn",
+        description: "The landlord will no longer see this request.",
       });
       setRequestToDelete(null);
     } catch (error) {
@@ -116,8 +98,8 @@ export default function StudentRequestsPage() {
         messageToLandlord: editMessage
       });
       toast({
-        title: "Request Updated",
-        description: "Your application details have been updated.",
+        title: "Message updated",
+        description: "The landlord will see your new message.",
       });
       setRequestToEdit(null);
     } catch (error) {
@@ -134,198 +116,176 @@ export default function StudentRequestsPage() {
     return <PageSkeleton variant="list" />;
   }
 
-  return (
-    <div className="space-y-10 animate-in fade-in duration-700">
-      <PageHeader title="My requests" description="Track the rental requests you've sent to landlords." />
+  const isOpen = (r: AggregatedRequest) => r.request.status !== 'declined';
+  const visible = aggregatedRequests.filter((r) => (filter === 'open' ? isOpen(r) : !isOpen(r)));
+  const openCount = aggregatedRequests.filter(isOpen).length;
 
-      {aggregatedRequests.length > 0 ? (
-        <Card className="overflow-hidden border border-foreground/5 bg-card shadow-sm rounded-3xl">
-          <div className="hidden md:block overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/30 border-none">
-                  <TableHead className="px-8 font-bold text-foreground">Property</TableHead>
-                  <TableHead className="font-bold text-foreground">Landlord</TableHead>
-                  <TableHead className="font-bold text-foreground">Date Applied</TableHead>
-                  <TableHead className="font-bold text-foreground">Status</TableHead>
-                  <TableHead className="text-right px-8 font-bold text-foreground">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {aggregatedRequests.map(({ request, landlord, property }) => (
-                  <TableRow key={request.id} className="border-muted/10 hover:bg-muted/5 transition-colors text-xs sm:text-xs md:text-sm">
-                    <TableCell className="px-8 font-bold">
-                      <Link href={`/student/properties/${property?.id}`} className="hover:text-primary transition-colors whitespace-nowrap">
-                        {property?.title || 'Unknown Property'}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="font-medium whitespace-nowrap">{landlord?.name || 'N/A'}</TableCell>
-                    <TableCell className="font-medium text-muted-foreground whitespace-nowrap">
-                      {new Date(request.applicationDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={cn(
-                        "rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-wider border-none",
-                        request.status === 'approved' ? "bg-green-500/10 text-green-600" :
-                          request.status === 'declined' ? "bg-red-500/10 text-red-600" :
-                            "bg-primary/10 text-primary"
-                      )}>
-                        {request.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right px-8 space-x-2 whitespace-nowrap">
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="My requests"
+        description="Homes you've asked to rent, and what happens next."
+        actions={
+          <Button asChild variant="outline" className="rounded-xl">
+            <Link href="/student/properties">
+              <Search className="mr-1.5 h-4 w-4" /> Find more homes
+            </Link>
+          </Button>
+        }
+      />
+
+      <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+        <TabsList className="h-auto rounded-xl p-1">
+          <TabsTrigger value="open" className="gap-2 rounded-lg px-3 py-1.5">
+            Active <span className="rounded-full bg-muted px-1.5 text-xs text-muted-foreground">{openCount}</span>
+          </TabsTrigger>
+          <TabsTrigger value="closed" className="gap-2 rounded-lg px-3 py-1.5">
+            Closed{' '}
+            <span className="rounded-full bg-muted px-1.5 text-xs text-muted-foreground">{aggregatedRequests.length - openCount}</span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {visible.length === 0 ? (
+        <EmptyState
+          icon={Send}
+          title={filter === 'open' ? 'No active requests' : 'Nothing here yet'}
+          description={
+            filter === 'open'
+              ? 'Find a home you like and send the landlord a request from the listing page.'
+              : 'Requests that were declined will be listed here.'
+          }
+          action={
+            <Button asChild className="rounded-xl">
+              <Link href="/student/properties">Browse homes</Link>
+            </Button>
+          }
+        />
+      ) : (
+        <ul className="space-y-3">
+          {visible.map(({ request, landlord, property }) => {
+            const image = property?.images?.[0];
+            const next =
+              request.status === 'pending'
+                ? { text: `Waiting for ${landlord?.name ?? 'the landlord'} to reply.`, tone: 'text-amber-700' }
+                : request.status === 'approved'
+                  ? { text: 'Accepted! Review and sign your lease to secure the home.', tone: 'text-emerald-700' }
+                  : { text: 'This request was not accepted. Similar homes may still be available.', tone: 'text-muted-foreground' };
+            return (
+              <li key={request.id} className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+                <div className="flex flex-col sm:flex-row">
+                  <Link
+                    href={`/student/properties/${request.propertyId}`}
+                    className="relative aspect-[16/9] w-full shrink-0 bg-muted sm:aspect-auto sm:w-48"
+                  >
+                    {image ? (
+                      <Image {...optimizedImageProps(image)} alt={property?.title ?? ''} fill sizes="(max-width: 640px) 100vw, 192px" className="object-cover" />
+                    ) : (
+                      <Home aria-hidden className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 text-muted-foreground" />
+                    )}
+                  </Link>
+                  <div className="flex flex-1 flex-col gap-3 p-5">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <Link href={`/student/properties/${request.propertyId}`} className="font-semibold hover:underline">
+                          {property?.title ?? 'Property'}
+                        </Link>
+                        <p className="text-sm text-muted-foreground">
+                          {property && `${formatPrice(property.price, property.currency)}/mo · `}
+                          Sent {formatDistanceToNow(new Date(request.applicationDate), { addSuffix: true })}
+                        </p>
+                      </div>
+                      <StatusBadge status={request.status} />
+                    </div>
+                    <p className={`text-sm ${next.tone}`}>{next.text}</p>
+                    {request.messageToLandlord && (
+                      <p className="line-clamp-2 text-sm italic text-muted-foreground">&ldquo;{request.messageToLandlord}&rdquo;</p>
+                    )}
+                    <div className="mt-auto flex flex-wrap gap-2 pt-1">
                       {request.status === 'approved' && (
-                        <Button size="sm" className="rounded-xl font-bold" asChild>
-                          <Link href="/student/leases">View Lease</Link>
+                        <Button asChild size="sm" className="rounded-lg">
+                          <Link href="/student/leases">
+                            <PenLine className="mr-1.5 h-4 w-4" /> Review lease
+                          </Link>
                         </Button>
                       )}
                       {request.status === 'pending' && (
                         <Button
-                          variant="outline"
                           size="sm"
-                          className="rounded-xl font-bold"
+                          variant="outline"
+                          className="rounded-lg"
                           onClick={() => {
                             setRequestToEdit(request);
                             setEditMessage(request.messageToLandlord || '');
                           }}
                         >
-                          Edit
+                          <Pencil className="mr-1.5 h-4 w-4" /> Edit message
                         </Button>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="rounded-xl font-bold text-red-500 hover:bg-red-50"
-                        onClick={() => setRequestToDelete(request.id)}
-                      >
-                        {request.status === 'pending' ? 'Withdraw' : 'Clear'}
+                      {request.status === 'declined' && (
+                        <Button asChild size="sm" className="rounded-lg">
+                          <Link href="/student/properties">Find similar homes</Link>
+                        </Button>
+                      )}
+                      <Button asChild size="sm" variant="ghost" className="rounded-lg">
+                        <Link href={`/student/messages?contact=${request.landlordId}`}>
+                          <MessageSquare className="mr-1.5 h-4 w-4" /> Message
+                        </Link>
                       </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Mobile Card View */}
-          <div className="md:hidden divide-y divide-muted/10">
-            {aggregatedRequests.map(({ request, landlord, property }) => (
-              <div key={request.id} className="p-6 space-y-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <Link href={`/student/properties/${property?.id}`} className="font-bold text-sm uppercase tracking-tight hover:text-primary transition-colors block mb-1">
-                      {property?.title || 'Unknown Property'}
-                    </Link>
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                      Applied: {new Date(request.applicationDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </p>
+                      {request.status !== 'approved' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => setRequestToDelete(request.id)}
+                        >
+                          <Trash2 className="mr-1.5 h-4 w-4" /> {request.status === 'pending' ? 'Withdraw' : 'Remove'}
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <Badge className={cn(
-                    "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider border-none",
-                    request.status === 'approved' ? "bg-green-500/10 text-green-600" :
-                      request.status === 'declined' ? "bg-red-500/10 text-red-600" :
-                        "bg-primary/10 text-primary"
-                  )}>
-                    {request.status}
-                  </Badge>
                 </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-muted/20 flex items-center justify-center text-xs font-semibold uppercase">
-                    {landlord?.name?.[0] || 'L'}
-                  </div>
-                  <p className="text-xs font-medium text-muted-foreground">{landlord?.name || 'Unknown Landlord'}</p>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  {request.status === 'approved' ? (
-                    <Button size="sm" className="flex-1 rounded-xl font-semibold text-xs uppercase tracking-wider h-10" asChild>
-                      <Link href="/student/leases">View Lease</Link>
-                    </Button>
-                  ) : request.status === 'pending' ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 rounded-xl font-semibold text-xs uppercase tracking-wider h-10 border"
-                      onClick={() => {
-                        setRequestToEdit(request);
-                        setEditMessage(request.messageToLandlord || '');
-                      }}
-                    >
-                      Edit
-                    </Button>
-                  ) : null}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-xl font-semibold text-xs uppercase tracking-wider text-red-500 h-10 px-4"
-                    onClick={() => setRequestToDelete(request.id)}
-                  >
-                    {request.status === 'pending' ? 'Withdraw' : 'Clear'}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      ) : (
-        <Card className="overflow-hidden border-none bg-card shadow-sm">
-          <CardContent className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="relative mb-8">
-              <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150" />
-              <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-muted/30">
-                <Search className="h-10 w-10 text-primary opacity-20" />
-              </div>
-            </div>
-            <h2 className="text-2xl font-bold tracking-tight">No Active Requests</h2>
-            <p className="mx-auto mt-2 max-w-sm text-muted-foreground font-medium">
-              You haven&apos;t submitted any rental applications yet.
-            </p>
-            <Button className="mt-8 rounded-2xl px-8 font-bold" asChild>
-              <Link href="/student/properties">Explore Properties</Link>
-            </Button>
-          </CardContent>
-        </Card>
+              </li>
+            );
+          })}
+        </ul>
       )}
 
       <AlertDialog open={!!requestToDelete} onOpenChange={(open) => !open && setRequestToDelete(null)}>
-        <AlertDialogContent className="w-[95vw] sm:max-w-md rounded-3xl border-none shadow-sm p-6">
-          <AlertDialogHeader className="space-y-4">
-            <AlertDialogTitle className="text-3xl font-bold">Withdraw this request?</AlertDialogTitle>
-            <AlertDialogDescription className="text-lg font-medium text-muted-foreground">
-              Are you sure you want to withdraw this application? This action cannot be reversed.
-            </AlertDialogDescription>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Withdraw this request?</AlertDialogTitle>
+            <AlertDialogDescription>The landlord will no longer see your request. You can send a new one later.</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-4 mt-8">
-            <AlertDialogCancel className="h-14 rounded-2xl border font-semibold text-xs uppercase tracking-wider">Keep request</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteRequest} className="h-14 rounded-2xl bg-red-500 text-white hover:bg-red-600 font-semibold text-xs uppercase tracking-wider shadow-sm">
-              Withdraw application
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-lg">Keep request</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteRequest} className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Withdraw
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit Dialog */}
       <Dialog open={!!requestToEdit} onOpenChange={(open) => !open && setRequestToEdit(null)}>
-        <DialogContent className="sm:max-w-md w-[95vw] rounded-3xl border-none shadow-sm p-6">
-          <DialogHeader className="space-y-4">
-            <DialogTitle className="text-3xl font-bold">Edit Application</DialogTitle>
-            <DialogDescription className="text-lg font-medium text-muted-foreground">
-              Update your message to the landlord.
-            </DialogDescription>
+        <DialogContent className="rounded-2xl sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit your message</DialogTitle>
+            <DialogDescription>Tell the landlord a little about yourself and when you'd like to move in.</DialogDescription>
           </DialogHeader>
-          <div className="py-8 space-y-3">
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40 ml-1">Message</label>
-            <Textarea
-              value={editMessage}
-              onChange={(e) => setEditMessage(e.target.value)}
-              placeholder="Introduce yourself and explain why you're a good fit..."
-              className="min-h-[200px] rounded-3xl border bg-muted/5 focus:bg-card transition-all p-6 text-lg font-medium leading-relaxed"
-            />
-          </div>
-          <DialogFooter className="gap-4">
-            <Button variant="ghost" className="h-14 rounded-2xl font-semibold text-xs uppercase tracking-wider" onClick={() => setRequestToEdit(null)}>Cancel</Button>
-            <Button onClick={handleUpdateRequest} className="h-11 rounded-2xl px-6 font-semibold text-xs uppercase tracking-wider shadow-sm">Save changes</Button>
+          <Textarea
+            value={editMessage}
+            onChange={(e) => setEditMessage(e.target.value)}
+            rows={6}
+            className="rounded-xl"
+            placeholder="Hi! I'm a 300-level student at…"
+          />
+          <DialogFooter className="gap-2">
+            <Button variant="outline" className="rounded-lg" onClick={() => setRequestToEdit(null)}>
+              Cancel
+            </Button>
+            <Button className="rounded-lg" onClick={handleUpdateRequest} disabled={!editMessage.trim()}>
+              Save message
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

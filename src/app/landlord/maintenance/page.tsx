@@ -1,27 +1,38 @@
-'use client';
+"use client";
 
 import * as React from 'react';
-import {
-  Card,
-} from '@/components/ui/card';
+import Link from 'next/link';
+import { formatDistanceToNow } from 'date-fns';
+import { ArrowRight, Building2, CheckCircle2, MessageSquare, User as UserIcon } from 'lucide-react';
+import { collection, doc, query, updateDoc, where } from 'firebase/firestore';
+import { EmptyState, PageHeader, PageSkeleton, StatusBadge } from '@/components/dashboard';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import type { MaintenanceRequest, UserProfile as User, Property } from '@/types';
-import { MoreHorizontal, Wrench, Clock, AlertCircle, CheckCircle2, XCircle, Building, User as UserIcon, Calendar, ArrowRight, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useAsyncResult } from '@/hooks/use-async-result';
 import { useToast } from '@/hooks/use-toast';
-import { collection, query, where, doc, updateDoc } from 'firebase/firestore';
-import { PageSkeleton } from "@/components/dashboard/skeletons";
-import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
-import { useAsyncResult } from "@/hooks/use-async-result";
-import { fetchDocsByIds } from "@/lib/firestore-batch";
+import { fetchDocsByIds } from '@/lib/firestore-batch';
+import { cn } from '@/lib/utils';
+import type { MaintenanceRequest, Property, UserProfile as User } from '@/types';
+
+const COLUMNS: { status: MaintenanceRequest['status']; label: string; hint: string }[] = [
+  { status: 'Pending', label: 'Open', hint: 'New issues to look at' },
+  { status: 'In Progress', label: 'In progress', hint: 'Being fixed' },
+  { status: 'Completed', label: 'Done', hint: 'Resolved issues' },
+];
+
+const PRIORITY_STYLES: Record<MaintenanceRequest['priority'], string> = {
+  High: 'bg-red-50 text-red-700 ring-red-200',
+  Medium: 'bg-amber-50 text-amber-800 ring-amber-200',
+  Low: 'bg-muted text-muted-foreground ring-border',
+};
 
 type AggregatedRequest = MaintenanceRequest & {
   tenantName: string;
@@ -77,158 +88,130 @@ export default function MaintenancePage() {
     }
   };
 
-  const getPriorityVariant = (priority: MaintenanceRequest['priority']) => {
-    switch (priority) {
-      case 'High': return 'destructive';
-      case 'Medium': return 'default';
-      case 'Low': return 'secondary';
-      default: return 'outline';
-    }
-  };
-
-  const getStatusIcon = (status: MaintenanceRequest['status']) => {
-    switch (status) {
-      case 'Completed': return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
-      case 'In Progress': return <Clock className="h-4 w-4 text-primary animate-pulse" />;
-      case 'Pending': return <AlertCircle className="h-4 w-4 text-orange-500" />;
-      case 'Cancelled': return <XCircle className="h-4 w-4 text-muted-foreground" />;
-      default: return <AlertCircle className="h-4 w-4" />;
-    }
-  };
+  const [mobileColumn, setMobileColumn] = React.useState<MaintenanceRequest['status']>('Pending');
 
   if (isUserLoading || isLoading) {
     return <PageSkeleton variant="list" />;
   }
 
+  const byStatus = (status: MaintenanceRequest['status']) =>
+    requests
+      .filter((r) => r.status === status)
+      .sort((a, b) => (a.priority === 'High' ? -1 : 0) - (b.priority === 'High' ? -1 : 0));
+
   return (
-    <div className="space-y-8 pb-8 animate-in fade-in duration-1000">
-      <PageHeader title="Maintenance" description="Repair requests reported by your tenants." />
+    <div className="space-y-6">
+      <PageHeader title="Maintenance" description="Repair requests reported by your tenants. Move each job along as it gets fixed." />
 
-      <StatGrid className="lg:grid-cols-3">
-        <StatCard label="Open" value={requests.filter((r) => r.status === 'Pending').length} icon={Wrench} tone="warning" />
-        <StatCard label="In progress" value={requests.filter((r) => r.status === 'In Progress').length} icon={Wrench} tone="info" />
-        <StatCard label="Total requests" value={requests.length} icon={Wrench} className="col-span-2 lg:col-span-1" />
-      </StatGrid>
+      {requests.length === 0 ? (
+        <EmptyState
+          icon={CheckCircle2}
+          title="No repair requests"
+          description="When a tenant reports an issue it will appear here so you can track it until it's fixed."
+        />
+      ) : (
+        <>
+          <Tabs value={mobileColumn} onValueChange={(v) => setMobileColumn(v as MaintenanceRequest['status'])} className="lg:hidden">
+            <TabsList className="grid h-auto w-full grid-cols-3 rounded-xl p-1">
+              {COLUMNS.map((c) => (
+                <TabsTrigger key={c.status} value={c.status} className="gap-1.5 rounded-lg py-1.5">
+                  {c.label} <span className="text-xs text-muted-foreground">{byStatus(c.status).length}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
 
-      <div className="space-y-10">
-        <div className="flex items-center gap-4 px-2">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Wrench className="h-5 w-5 text-primary" />
+          <div className="grid gap-5 lg:grid-cols-3">
+            {COLUMNS.map((column) => {
+              const items = byStatus(column.status);
+              return (
+                <section
+                  key={column.status}
+                  aria-labelledby={`col-${column.status}`}
+                  className={cn('rounded-2xl bg-muted/50 p-3', column.status !== mobileColumn && 'hidden lg:block')}
+                >
+                  <header className="mb-3 flex items-center justify-between px-2 pt-1">
+                    <div>
+                      <h2 id={`col-${column.status}`} className="text-sm font-semibold">
+                        {column.label}
+                      </h2>
+                      <p className="text-xs text-muted-foreground">{column.hint}</p>
+                    </div>
+                    <span className="rounded-full bg-background px-2 py-0.5 text-xs font-semibold">{items.length}</span>
+                  </header>
+
+                  {items.length === 0 ? (
+                    <p className="rounded-xl border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">Nothing here</p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {items.map((request) => (
+                        <li key={request.id} className="space-y-3 rounded-xl border bg-card p-4 shadow-sm">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-medium leading-snug">{request.title}</p>
+                            <span
+                              className={cn(
+                                'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset',
+                                PRIORITY_STYLES[request.priority],
+                              )}
+                            >
+                              {request.priority}
+                            </span>
+                          </div>
+                          {request.description && <p className="line-clamp-3 text-sm text-muted-foreground">{request.description}</p>}
+                          <div className="space-y-1 text-xs text-muted-foreground">
+                            <Link href={`/landlord/properties/${request.propertyId}`} className="flex items-center gap-1.5 hover:text-foreground">
+                              <Building2 aria-hidden className="h-3.5 w-3.5" /> {request.propertyName}
+                            </Link>
+                            <Link href={`/landlord/tenants/${request.tenantId}`} className="flex items-center gap-1.5 hover:text-foreground">
+                              <UserIcon aria-hidden className="h-3.5 w-3.5" /> {request.tenantName}
+                            </Link>
+                            <p>
+                              {request.category} · reported {formatDistanceToNow(new Date(request.requestDate), { addSuffix: true })}
+                            </p>
+                          </div>
+                          <div className="flex gap-2 border-t pt-3">
+                            {column.status !== 'Completed' && (
+                              <Button
+                                size="sm"
+                                className="h-8 flex-1 rounded-lg"
+                                onClick={() => handleUpdateStatus(request.id, column.status === 'Pending' ? 'In Progress' : 'Completed')}
+                              >
+                                {column.status === 'Pending' ? 'Start work' : 'Mark done'} <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="sm" variant="outline" className="h-8 rounded-lg">
+                                  Move
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="rounded-xl">
+                                <DropdownMenuLabel className="text-xs text-muted-foreground">Move to</DropdownMenuLabel>
+                                {(['Pending', 'In Progress', 'Completed', 'Cancelled'] as const)
+                                  .filter((s) => s !== request.status)
+                                  .map((s) => (
+                                    <DropdownMenuItem key={s} onSelect={() => handleUpdateStatus(request.id, s)}>
+                                      <StatusBadge status={s} />
+                                    </DropdownMenuItem>
+                                  ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            <Button asChild size="sm" variant="ghost" className="h-8 rounded-lg" aria-label={`Message ${request.tenantName}`}>
+                              <Link href={`/landlord/messages?conversationId=${request.tenantId}`}>
+                                <MessageSquare className="h-4 w-4" />
+                              </Link>
+                            </Button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              );
+            })}
           </div>
-          <h2 className="text-3xl font-bold tracking-tight">Active Maintenance</h2>
-        </div>
-
-        {requests.length > 0 ? (
-          <div className="grid grid-cols-1 gap-8">
-            {requests.map((request) => (
-              <Card key={request.id} className="group relative overflow-hidden rounded-3xl bg-card border border-foreground/5 shadow-sm hover:shadow-md transition-all duration-500 p-8 md:p-8">
-                <div className="flex flex-col lg:flex-row gap-6">
-                  {/* Service Metadata */}
-                  <div className="lg:w-1/4 border-r-2 border-muted/5 pr-10 space-y-6">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(request.status)}
-                        <Badge variant="outline" className="px-3 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider border-muted/20">
-                          {request.status}
-                        </Badge>
-                      </div>
-                      <h3 className="text-2xl font-bold tracking-tight group-hover:text-primary transition-colors leading-tight">
-                        {request.title}
-                      </h3>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg bg-muted/20 flex items-center justify-center">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider">Logged On</p>
-                          <p className="text-xs font-bold">{new Date(request.requestDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg bg-muted/20 flex items-center justify-center">
-                          <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider">Priority Level</p>
-                          <Badge variant={getPriorityVariant(request.priority)} className="h-4 px-2 text-xs font-semibold uppercase">{request.priority}</Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Request Body */}
-                  <div className="flex-1 space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="space-y-2">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Property</p>
-                        <Link href={`/landlord/properties/${request.propertyId}`} className="group/link flex items-center gap-2 text-xl font-bold tracking-tight hover:text-primary transition-colors">
-                          <Building className="h-5 w-5 opacity-40" /> {request.propertyName} <ExternalLink className="h-3 w-3 opacity-0 group-hover/link:opacity-100 transition-opacity" />
-                        </Link>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Tenant</p>
-                        <Link href={`/landlord/tenants/${request.tenantId}`} className="group/link flex items-center gap-2 text-xl font-bold tracking-tight hover:text-primary transition-colors">
-                          <UserIcon className="h-5 w-5 opacity-40" /> {request.tenantName} <ExternalLink className="h-3 w-3 opacity-0 group-hover/link:opacity-100 transition-opacity" />
-                        </Link>
-                      </div>
-                    </div>
-
-                    <div className="p-6 rounded-2xl bg-muted/10 border border-muted/5 min-h-[100px]">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40 mb-3">Service Details</p>
-                      <p className="text-sm font-medium text-muted-foreground leading-relaxed">
-                        {request.description || "No tactical details provided by the tenant."}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Administrative Terminal */}
-                  <div className="lg:w-1/5 flex lg:flex-col gap-3 justify-center">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-center text-muted-foreground/40 hidden lg:block mb-2">Manage Request</p>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button className="h-14 rounded-xl bg-foreground text-white hover:bg-primary transition-all font-semibold text-xs uppercase tracking-wider gap-2 shadow-lg">
-                          Update status <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="rounded-2xl p-2 border border-foreground/5 shadow-sm">
-                        <DropdownMenuItem onClick={() => handleUpdateStatus(request.id, 'In Progress')} className="rounded-xl focus:bg-primary focus:text-white cursor-pointer py-3 px-4 font-semibold text-xs uppercase tracking-wider">
-                          Mark in progress
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleUpdateStatus(request.id, 'Completed')} className="rounded-xl focus:bg-emerald-500 focus:text-white cursor-pointer py-3 px-4 font-semibold text-xs uppercase tracking-wider">
-                          Mark completed
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleUpdateStatus(request.id, 'Cancelled')} className="rounded-xl focus:bg-destructive focus:text-white cursor-pointer py-3 px-4 font-semibold text-xs uppercase tracking-wider text-destructive">
-                          Cancel request
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <Link href={`/landlord/messages?conversationId=${request.tenantId}`} className="w-full">
-                      <Button variant="outline" className="w-full h-14 rounded-xl border hover:bg-muted font-semibold text-xs uppercase tracking-wider gap-2">
-                        Contact <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="rounded-3xl border border-dashed border-foreground/10 bg-muted/5 p-24 text-center space-y-8">
-            <div className="h-32 w-32 rounded-3xl bg-card shadow-sm flex items-center justify-center mx-auto relative group overflow-hidden">
-              <Wrench className="h-14 w-14 text-muted-foreground/20 group-hover:rotate-12 transition-transform" />
-              <div className="absolute inset-0 bg-primary/5 rounded-3xl" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-2xl font-bold tracking-tight">Systems Clear</h3>
-              <p className="text-lg text-muted-foreground max-w-sm mx-auto">
-                No active maintenance requests found at this time.
-              </p>
-            </div>
-          </Card>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 }
