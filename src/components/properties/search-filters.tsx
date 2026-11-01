@@ -27,8 +27,6 @@ import { PROPERTY_TYPES } from "@/types/property-types";
 import { useToast } from "@/hooks/use-toast";
 import { Combobox } from "@/components/ui/combobox";
 import { SchoolCombobox } from "@/components/shared/school-combobox";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy } from "firebase/firestore";
 import { cn, formatPrice } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 

@@ -15,7 +15,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
@@ -44,8 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { initiateEmailSignUp } from "@/firebase";
 import { countries, Country } from "@/data/countries";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, setDoc, collection, addDoc } from "firebase/firestore";
-import { schools } from "@/data/schools";
+import { doc, setDoc } from "firebase/firestore";
 import { SchoolCombobox } from "@/components/shared/school-combobox";
 import { sendNotification } from "@/lib/notifications";
 

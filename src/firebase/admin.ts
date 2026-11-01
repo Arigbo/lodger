@@ -102,25 +102,3 @@ export function getAdminAuth() {
     }
     return admin.auth();
 }
-
-// Export specific instances for compatibility
-export const db = new Proxy({} as admin.firestore.Firestore, {
-    get: (_target, prop) => {
-        const firestore = getAdminDb();
-        // @ts-ignore
-        const value = firestore[prop];
-        return typeof value === 'function' ? value.bind(firestore) : value;
-    }
-});
-
-export const auth = new Proxy({} as admin.auth.Auth, {
-    get: (_target, prop) => {
-        const authInstance = getAdminAuth();
-        // @ts-ignore
-        const value = authInstance[prop];
-        return typeof value === 'function' ? value.bind(authInstance) : value;
-    }
-});
-
-// Alias for server.ts compatibility
-export const firestore = db;

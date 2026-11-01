@@ -1,6 +1,6 @@
-// @ts-nocheck
+import { describe, expect, it } from 'vitest';
 import { generateLeaseText, LeaseData } from '@/lib/lease';
-import { UserProfile, Property } from '@/types';
+import type { UserProfile, Property } from '@/types';
 
 describe('generateLeaseText', () => {
     const landlord: Partial<UserProfile> = {

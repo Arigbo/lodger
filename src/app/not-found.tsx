@@ -1,10 +1,17 @@
 import Link from "next/link";
 import { Compass } from "lucide-react";
+import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
+import Header from "@/components/layout/header";
+import Footer from "@/components/layout/footer";
+
+export const metadata: Metadata = { title: "Page not found", robots: { index: false } };
 
 export default function NotFound() {
   return (
-    <main id="main-content" className="flex min-h-[80vh] flex-col items-center justify-center px-4 text-center">
+    <>
+    <Header />
+    <main id="main-content" className="flex min-h-[70vh] flex-col items-center justify-center px-4 text-center">
       <div className="rounded-2xl bg-primary/10 p-4 text-primary">
         <Compass aria-hidden className="h-8 w-8" />
       </div>
@@ -22,5 +29,7 @@ export default function NotFound() {
         </Button>
       </div>
     </main>
+    <Footer />
+    </>
   );
 }

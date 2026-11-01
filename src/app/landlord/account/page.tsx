@@ -22,7 +22,6 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useUser,
@@ -30,7 +29,6 @@ import {
   useDoc,
   useMemoFirebase,
   useFirebaseApp,
-  useAuth,
 } from "@/firebase";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -51,7 +49,7 @@ import { useToast } from "@/hooks/use-toast";
 import { uploadProfileImage } from "@/firebase/storage";
 import { getStorage } from "firebase/storage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Pencil, User, Trash2, Wallet, Clock } from "lucide-react";
+import { Pencil, User, Wallet, Clock } from "lucide-react";
 import Loading from "@/app/loading";
 import { useSearchParams, useRouter } from "next/navigation";
 import { countries } from "@/data/countries";

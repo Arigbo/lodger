@@ -3,21 +3,15 @@
 import * as React from 'react';
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import type { MaintenanceRequest, UserProfile as User, Property } from '@/types';
 import { MoreHorizontal, Wrench, Clock, AlertCircle, CheckCircle2, XCircle, Building, User as UserIcon, Calendar, ArrowRight, ExternalLink } from 'lucide-react';
 import Link from 'next/link';

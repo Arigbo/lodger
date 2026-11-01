@@ -4,33 +4,26 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  LayoutDashboard,
   Users,
   Clock,
   Home,
   ArrowRight,
   Wallet,
-  Activity,
-  ExternalLink,
-  Calendar,
   Building,
   PlusCircle,
   X,
 } from "lucide-react";
-import { format } from "date-fns";
 import {
   useUser,
   useFirestore,
   useCollection,
-  useDoc,
   useMemoFirebase,
 } from "@/firebase";
 import { collection, query, where, doc } from "firebase/firestore";
-import type { Property, UserProfile, RentalApplication } from "@/types";
+import type { Property } from "@/types";
 import Loading from "@/app/loading";
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import PropertyCard from "@/components/properties/property-card";
 
@@ -52,49 +45,14 @@ export default function LandlordDashboardPage() {
 }
 
 function LandlordOverview() {
-  const { user } = useUser();
+  const { user, profile: userProfile } = useUser();
   const firestore = useFirestore();
-  const { toast } = useToast();
 
   const userDocRef = useMemoFirebase(() => {
     if (!user) return null;
     return doc(firestore, "users", user.uid);
   }, [user, firestore]);
 
-  const { data: userProfile } = useDoc<UserProfile>(userDocRef);
-
-  useEffect(() => {
-    if (
-      userProfile &&
-      !userProfile.stripeAccountId &&
-      !userProfile.stripeBannerDismissed
-    ) {
-      const timer = setTimeout(() => {
-        toast({
-          title: "Link Your Bank Account (Stripe)",
-          description:
-            "Connect your Stripe account to start receiving rent payments automatically.",
-          action: (
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              className="rounded-xl border-2 font-black text-[10px] uppercase tracking-widest bg-white"
-            >
-              <Link href="/landlord/account">SYNC NOW</Link>
-            </Button>
-          ),
-          duration: 10000,
-        });
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [userProfile, toast]);
-
-  useEffect(() => {
-    // Logic for checking overall status could go here
-  }, []);
 
   const propertiesQuery = useMemoFirebase(() => {
     if (!user) return null;

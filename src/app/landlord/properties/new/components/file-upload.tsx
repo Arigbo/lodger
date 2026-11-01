@@ -8,12 +8,10 @@ import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/f
 import { cn } from '@/lib/utils';
 import { 
     UploadCloud, 
-    FileImage, 
     Loader2, 
     AlertCircle, 
     ShieldCheck, 
     X,
-    Image as ImageIcon,
     RefreshCw
 } from 'lucide-react';
 import { authHeaders } from "@/lib/api-client";

@@ -43,10 +43,9 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
-import { Property, UserProfile, LeaseAgreement } from "@/types";
+import { Property, LeaseAgreement } from "@/types";
 import { sendNotification } from "@/lib/notifications";
 import Loading from "@/app/loading";
-import { cn } from "@/lib/utils";
 
 import { editFormSchema, EditFormValues } from "@/app/landlord/properties/[id]/edit/edit-schemas";
 import { DEFAULT_EDIT_VALUES } from "@/app/landlord/properties/[id]/edit/edit-constants";

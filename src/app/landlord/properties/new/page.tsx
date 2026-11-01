@@ -4,14 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { collection, doc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // UI Components
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
-import { Card } from '@/components/ui/card';
 import { 
     Building, 
     ArrowLeft, 

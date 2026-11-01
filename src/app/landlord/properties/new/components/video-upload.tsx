@@ -3,11 +3,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
 import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import { 
-    Video, 
     X, 
     Play, 
     Film,

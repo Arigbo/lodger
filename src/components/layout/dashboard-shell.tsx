@@ -84,6 +84,7 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
 /** Nudges users to finish the one setup step that blocks their main flow. */
 function SetupBanner({ role }: { role: DashboardRole }) {
   const { profile } = useUser();
+  const pathname = usePathname();
   const [dismissed, setDismissed] = useState(false);
   if (!profile || dismissed) return null;
 
@@ -95,7 +96,11 @@ function SetupBanner({ role }: { role: DashboardRole }) {
           href: "/student/account",
           cta: "Update profile",
         }
-      : role === "landlord" && (!profile.stripeAccountId || !profile.stripeDetailsSubmitted)
+      : role === "landlord" &&
+          // The overview page shows its own, richer payout card.
+          pathname !== "/landlord" &&
+          !profile.stripeBannerDismissed &&
+          (!profile.stripeAccountId || !profile.stripeDetailsSubmitted)
         ? {
             title: "Finish your payout setup",
             body: "Connect Stripe so tenants can pay rent online straight to your account.",

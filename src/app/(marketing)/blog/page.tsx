@@ -1,11 +1,9 @@
-import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { formatDistanceToNow, format } from "date-fns";
+import { format } from "date-fns";
 import { Search, ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

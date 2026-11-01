@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { Property } from "@/types";
 import { cn, formatPrice } from "@/lib/utils";
 import { getCurrencyByCountry, convertCurrency } from "@/lib/currencies";
-import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { useMemo } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BedDouble, Bath, Ruler, MapPin, Building, PlusCircle, Heart, GraduationCap } from "lucide-react";
 import { usePathname } from "next/navigation";
-import type { UserProfile } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
 type PropertyCardProps = {

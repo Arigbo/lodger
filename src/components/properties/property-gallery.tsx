@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Play, Maximize2, X, ChevronLeft, ChevronRight, Video as VideoIcon, Camera } from 'lucide-react';
+import { Play, Maximize2, X, Video as VideoIcon, Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,13 +11,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import {
-    Carousel,
-    CarouselContent,
-    CarouselItem,
-    CarouselNext,
-    CarouselPrevious,
-} from "@/components/ui/carousel";
+
+
 
 interface PropertyGalleryProps {
     images: string[];

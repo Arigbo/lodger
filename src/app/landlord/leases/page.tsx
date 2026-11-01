@@ -2,24 +2,13 @@
 'use client';
 
 import * as React from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+
+
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import type { LeaseAgreement, UserProfile as User, Property } from '@/types';
 import { FileText, FileStack, ArrowRight, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';

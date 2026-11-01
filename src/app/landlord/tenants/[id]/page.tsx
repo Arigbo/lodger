@@ -1,7 +1,7 @@
 
 'use client';
 
-import { notFound, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import type { UserProfile as User, Property, Transaction, LeaseAgreement } from '@/types';
 import {
     Card,
@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Phone, Mail, AlertTriangle, Coins, Pencil, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
-import { format, differenceInDays, isPast, addMonths, differenceInMonths } from "date-fns";
+import { format, differenceInDays, isPast, addMonths } from "date-fns";
 import { cn, formatPrice } from '@/lib/utils';
 import {
     AlertDialog,

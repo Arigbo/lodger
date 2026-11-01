@@ -1,8 +1,7 @@
 'use client';
 
-import { 
-    FormLabel
-} from '@/components/ui/form';
+
+
 import { motion } from 'framer-motion';
 import { Utensils, Sofa, Bath, BedDouble, ImageIcon, Video } from 'lucide-react';
 import { FileUpload } from '@/app/landlord/properties/new/components/file-upload';

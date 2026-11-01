@@ -21,10 +21,9 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Upload, User as UserIcon, Trash2 } from "lucide-react";
+import { Upload, User as UserIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,

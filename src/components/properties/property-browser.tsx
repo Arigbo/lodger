@@ -8,11 +8,9 @@ import type { FilterState } from "@/components/properties/search-filters";
 import {
   Search,
   SlidersHorizontal,
-  MapPin as MapPinIcon,
   Home as HomeIcon,
-  X,
 } from "lucide-react";
-import { haversineDistance, cn } from "@/lib/utils";
+import { haversineDistance } from "@/lib/utils";
 import { getCurrencyByCountry, convertCurrency } from "@/lib/currencies";
 import {
   useUser,
@@ -38,14 +36,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "@/components/ui/dialog";
+
+
 import { Card, CardContent } from "@/components/ui/card";
 import {
   GraduationCap,

@@ -1,7 +1,6 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import Image from "next/image";
 import { formatPrice, cn } from "@/lib/utils";
 import { getCurrencyByCountry, convertCurrency } from "@/lib/currencies";
 import { Badge } from "@/components/ui/badge";
@@ -10,8 +9,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,39 +19,21 @@ import {
   Bath,
   Ruler,
   MapPin,
-  CheckCircle,
-  Wifi,
-  ParkingCircle,
-  Dog,
-  Wind,
-  Tv,
   MessageSquare,
-  Phone,
-  Bookmark,
   Share2,
   Mail,
-  Twitter,
-  Link as LinkIcon,
-  Facebook,
-  Linkedin,
-  User as UserIcon,
   Building,
-  Users,
   GraduationCap,
   ChevronLeft,
   Heart,
-  Video,
-  Maximize2,
 } from "lucide-react";
 import PropertyCard from "@/components/properties/property-card";
 import type {
   Property,
   UserProfile,
   PropertyReview,
-  ImagePlaceholder,
-  RentalApplication,
 } from "@/types";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -68,7 +47,6 @@ import {
 import Link from "next/link";
 import { FaWhatsapp } from "react-icons/fa";
 import { useToast } from "@/hooks/use-toast";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -77,8 +55,6 @@ import {
   useDoc,
   useCollection,
   useMemoFirebase,
-  errorEmitter,
-  FirestorePermissionError,
 } from "@/firebase";
 import {
   doc,

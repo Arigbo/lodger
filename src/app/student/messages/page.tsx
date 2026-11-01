@@ -18,8 +18,6 @@ import {
   useCollection,
   useMemoFirebase,
   useDoc,
-  errorEmitter,
-  FirestorePermissionError,
 } from "@/firebase";
 import {
   collection,
@@ -31,7 +29,6 @@ import {
   serverTimestamp,
   limit,
   documentId,
-  updateDoc,
   writeBatch,
 } from "firebase/firestore";
 import Loading from "@/app/loading";

@@ -12,19 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { amenities as allAmenities } from "@/types";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Sparkles,
-  Utensils,
-  Sofa,
-  Bath,
-  BedDouble,
-  Wifi,
-  Car,
-  AirVent,
-  Dumbbell,
-  Waves,
-  Layout as LayoutIcon,
-} from "lucide-react";
+
+
 
 import { AMENITY_ICONS, DEFAULT_ICON } from "@/lib/amenity-icons";
 

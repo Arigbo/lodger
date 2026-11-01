@@ -3,7 +3,6 @@
 import PropertyCard from "@/components/properties/property-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Home } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

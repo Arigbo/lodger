@@ -9,9 +9,8 @@ import {
   signInWithPopup,
   UserCredential,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { getSdks } from '@/firebase';
-import type { Toast } from '@/hooks/use-toast';
 import { FirestorePermissionError, errorEmitter } from '@/firebase';
 
 /** Initiate anonymous sign-in (non-blocking). */

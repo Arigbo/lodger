@@ -2,15 +2,14 @@
 'use client';
 
 import { useState } from 'react';
-import { notFound, useParams } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useParams } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { CheckCircle2, FileClock, Hourglass, Check, Signature, AlertTriangle, Printer, DollarSign, Building, Loader2 } from 'lucide-react';
+import { CheckCircle2, FileClock, Hourglass, Signature, AlertTriangle, Printer, DollarSign, Building, Loader2 } from 'lucide-react';
 import { cn, formatPrice } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc } from 'firebase/firestore';
