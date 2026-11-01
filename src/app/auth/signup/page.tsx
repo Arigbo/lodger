@@ -15,7 +15,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
@@ -38,15 +37,15 @@ import {
   X,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 import { useAuth, useFirebaseApp, useFirestore } from "@/firebase/provider";
 import { useToast } from "@/hooks/use-toast";
 import { initiateEmailSignUp } from "@/firebase";
-import { countries, Country } from "@/types/countries";
+import { countries, Country } from "@/data/countries";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, setDoc, collection, addDoc } from "firebase/firestore";
-import { schools } from "@/data/schools";
-import { SchoolCombobox } from "@/components/school-combobox";
+import { doc, setDoc } from "firebase/firestore";
+import { SchoolCombobox } from "@/components/shared/school-combobox";
+import { sendNotification } from "@/lib/notifications";
 
 const formSchema = z
   .object({
@@ -163,6 +162,12 @@ export default function SignupPage() {
   });
 
   const { setError, watch } = form;
+
+  // Preselect the account type from links such as /auth/signup?type=landlord.
+  useEffect(() => {
+    const type = new URLSearchParams(window.location.search).get("type");
+    if (type === "landlord" || type === "student") form.setValue("userType", type);
+  }, [form]);
   const userType = watch("userType");
   const countryValue = watch("country");
 
@@ -355,15 +360,13 @@ export default function SignupPage() {
 
       await setDoc(doc(firestore, "users", uid), userData);
 
-      // Create Welcome Notification
-      /*
-            await sendNotification({
-               toUserId: uid,
-               type: 'WELCOME',
-               firestore: firestore,
-               link: '/profile' 
-            });
-            */
+      await sendNotification({
+        toUserId: uid,
+        type: "WELCOME",
+        firestore,
+        link: `/${values.userType}/account`,
+      });
+
       toast({
         title: "Account Created!",
         description: "Welcome to Lodger! Please sign in.",

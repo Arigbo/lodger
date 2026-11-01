@@ -6,11 +6,11 @@ import {
   useRouter,
   useSearchParams,
 } from "next/navigation";
-import { formatPrice, cn } from "@/utils";
+import { formatPrice, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Table,
@@ -21,38 +21,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+
+
 import {
   BedDouble,
   Bath,
   Ruler,
-  Check,
-  Pencil,
   Building,
   MapPin,
-  Loader2,
-  CheckCircle2,
-  MessageSquare,
-  DollarSign,
   ChevronLeft,
   Star,
-  Wifi,
-  Dog,
-  Wind,
-  Tv,
-  ParkingCircle,
   User,
-  Users,
-  GraduationCap,
   Flag,
   Share2,
-  Heart,
 } from "lucide-react";
 import type {
   Property,
@@ -61,10 +42,10 @@ import type {
   PropertyReview,
 } from "@/types";
 import Link from "next/link";
-import React, { useState, useEffect, useMemo } from "react";
-import LeaseGenerationDialog from "@/components/lease-generation-dialog";
-import { SharePropertyModal } from "@/components/share-property-modal";
-import { ReportUserDialog } from "@/components/report-user-dialog";
+import React, { useState, useEffect } from "react";
+import LeaseGenerationDialog from "@/components/leases/lease-generation-dialog";
+import { SharePropertyModal } from "@/components/properties/share-property-modal";
+import { ReportUserDialog } from "@/components/shared/report-user-dialog";
 import {
   useUser,
   useFirestore,
@@ -85,12 +66,11 @@ import {
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import Loading from "@/app/loading";
 import { Skeleton } from "@/components/ui/skeleton";
-import Image from "next/image";
-import { PropertyGallery } from "@/components/property-gallery";
-import { PropertyHeroCarousel } from "@/components/property-hero-carousel";
+import { PropertyGallery } from "@/components/properties/property-gallery";
+import { PropertyHeroCarousel } from "@/components/properties/property-hero-carousel";
 import dynamic from "next/dynamic";
 
-const PropertyMap = dynamic(() => import("@/components/PropertyMap"), {
+const PropertyMap = dynamic(() => import("@/components/properties/property-map"), {
   ssr: false,
   loading: () => <Skeleton className="h-[400px] w-full rounded-[2rem]" />,
 });

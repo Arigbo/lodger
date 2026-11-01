@@ -1,4 +1,4 @@
-import { FormValues } from './schemas';
+import { FormValues } from '@/app/landlord/properties/new/schemas';
 
 export function generateLeaseTextForTemplate(propertyData: Partial<FormValues>): string {
     const amenitiesList = propertyData.amenities && propertyData.amenities.length > 0

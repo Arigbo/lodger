@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,6 +18,7 @@ import { useAuth, useFirestore } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
 import type { UserProfile } from '@/types';
 
 const loginSchema = z.object({
@@ -85,22 +85,23 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
                 userData = userDoc.data() as UserProfile;
             }
 
-            // Verify role matches the selected user type
+            // Verify role matches the selected user type. Sign the user back out so
+            // they are not left half-authenticated on the wrong dashboard.
             if (userData?.role && userData.role !== userType) {
+                if (auth) await signOut(auth);
                 toast({
                     variant: "destructive",
-                    title: "Invalid Credentials",
-                    description: "The email or password you entered is incorrect. Please check your credentials and try again.",
+                    title: `This is a ${userData.role} account`,
+                    description: `Switch to the "${userData.role === 'landlord' ? 'Landlord' : 'Student'}" tab to sign in.`,
                 });
                 return;
             }
 
-            // Redirect based on role
-            if (userData?.role === 'landlord') {
-                router.push('/landlord');
-            } else {
-                router.push('/student');
-            }
+            const home = userData?.role === 'landlord' ? '/landlord' : '/student';
+            // Honour ?redirect= when it points inside the user's own area.
+            const redirect = new URLSearchParams(window.location.search).get('redirect');
+            const target = redirect && redirect.startsWith(home) && !redirect.startsWith('//') ? redirect : home;
+            router.push(target);
 
         } catch (error: unknown) {
             console.error("Error during login process:", error);

@@ -1,10 +1,11 @@
 
 import type { Config } from 'tailwindcss';
+import animate from 'tailwindcss-animate';
+import typography from '@tailwindcss/typography';
 
 export default {
   darkMode: ['class'],
   content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
@@ -14,7 +15,7 @@ export default {
         sans: ['var(--font-outfit)', 'sans-serif'],
         serif: ['var(--font-playfair)', 'serif'],
         body: ['var(--font-outfit)', 'sans-serif'],
-        headline: ['var(--font-space-grotesk)', 'sans-serif'],
+        headline: ['var(--font-space-grotesk)', 'var(--font-outfit)', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
@@ -31,6 +32,7 @@ export default {
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
+          light: 'hsl(var(--primary-light))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -51,61 +53,13 @@ export default {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
-        chart: {
-          '1': 'hsl(var(--chart-1))',
-          '2': 'hsl(var(--chart-2))',
-          '3': 'hsl(var(--chart-3))',
-          '4': 'hsl(var(--chart-4))',
-          '5': 'hsl(var(--chart-5))',
-        },
       },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
-      keyframes: {
-        'accordion-down': {
-          from: {
-            height: '0',
-          },
-          to: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-        },
-        'accordion-up': {
-          from: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-          to: {
-            height: '0',
-          },
-        },
-        'slide-in-icon': {
-          '0%': { transform: 'translateX(-150%)', opacity: '0' },
-          '40%': { transform: 'translateX(0)', opacity: '1' },
-          '100%': { transform: 'translateX(0)', opacity: '1' },
-        },
-        'slide-and-fade': {
-          '0%': { transform: 'translateY(100%) translateX(-50%)', opacity: '0' },
-          '30%': { transform: 'translateY(0) translateX(20px)', opacity: '1' },
-          '70%': { transform: 'translateY(0) translateX(20px)', opacity: '1' },
-          '100%': { transform: 'translateY(100%) translateX(-50%)', opacity: '0' },
-        },
-        pulse: {
-          '50%': {
-            opacity: '0.5',
-          },
-        },
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-        'slide-in-icon': 'slide-in-icon 1.5s ease-out forwards',
-        'slide-and-fade': 'slide-and-fade 1.5s ease-out forwards',
-        'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-      },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [animate, typography],
 } satisfies Config;

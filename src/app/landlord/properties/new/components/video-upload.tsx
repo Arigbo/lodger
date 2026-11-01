@@ -3,17 +3,15 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
 import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { cn } from '@/utils';
+import { cn } from '@/lib/utils';
 import { 
-    Video, 
     X, 
     Play, 
     Film,
     Loader2
 } from 'lucide-react';
-import { MAX_VIDEO_SIZE } from '../constants';
+import { MAX_VIDEO_SIZE } from '@/app/landlord/properties/new/constants';
 
 interface VideoUploadProps {
     field: any;

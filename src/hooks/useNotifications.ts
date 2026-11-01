@@ -4,6 +4,7 @@ import {
     query,
     where,
     orderBy,
+    limit,
     onSnapshot,
     doc,
     updateDoc,
@@ -12,13 +13,14 @@ import {
 import { useFirestore } from '@/firebase/provider';
 import { Notification } from '@/types/notification';
 
+const NOTIFICATION_LIMIT = 50;
+
 export function useNotifications(userId: string | null) {
     const firestore = useFirestore();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        console.log('[useNotifications] useEffect triggered - userId:', userId, 'firestore:', !!firestore);
         if (!userId || !firestore) {
             setNotifications([]);
             setLoading(false);
@@ -29,7 +31,9 @@ export function useNotifications(userId: string | null) {
         const q = query(
             notificationsRef,
             where('userId', '==', userId),
-            orderBy('createdAt', 'desc')
+            orderBy('createdAt', 'desc'),
+            // Firestore rules require list queries on notifications to be bounded.
+            limit(NOTIFICATION_LIMIT)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -38,7 +42,6 @@ export function useNotifications(userId: string | null) {
                 ...doc.data(),
             })) as Notification[];
 
-            console.log('[useNotifications] Loaded notifications:', newNotifications.length, newNotifications);
             setNotifications(newNotifications);
             setLoading(false);
         }, (error) => {

@@ -1,12 +1,11 @@
 'use client';
 
-import { 
-    FormLabel
-} from '@/components/ui/form';
+
+
 import { motion } from 'framer-motion';
 import { Utensils, Sofa, Bath, BedDouble, ImageIcon, Video } from 'lucide-react';
-import { FileUpload } from '../file-upload';
-import { VideoUpload } from '../video-upload';
+import { FileUpload } from '@/app/landlord/properties/new/components/file-upload';
+import { VideoUpload } from '@/app/landlord/properties/new/components/video-upload';
 
 interface MediaUploadStepProps {
     form: any;

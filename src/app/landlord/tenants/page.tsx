@@ -4,10 +4,6 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import {
   DropdownMenu,
@@ -20,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { UserProfile as User, Property } from '@/types';
-import { MoreHorizontal, Users, Mail, User as UserIcon, Building, ShieldCheck, MapPin, ExternalLink, Calendar, ArrowRight } from 'lucide-react';
+import { MoreHorizontal, Users, Mail, User as UserIcon, Building, ShieldCheck, MapPin, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';

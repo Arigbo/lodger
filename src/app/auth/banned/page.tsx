@@ -11,10 +11,9 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertOctagon, ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { useAuth } from "@/firebase/provider";
 import { signOut } from "firebase/auth";
-import { SupportBubble } from "@/components/support-bubble";
+import { SupportBubble } from "@/components/layout/support-bubble";
 
 export default function BannedPage() {
   const auth = useAuth();

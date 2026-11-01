@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { cn } from '@/utils';
+import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
 
 interface Step {

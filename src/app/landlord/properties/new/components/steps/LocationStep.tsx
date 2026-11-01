@@ -17,14 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SchoolCombobox } from "@/components/school-combobox";
-import { countries } from "@/types/countries";
+import { SchoolCombobox } from "@/components/shared/school-combobox";
+import { countries } from "@/data/countries";
 import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const LocationPickerMap = dynamic(
-  () => import("@/components/LocationPickerMap"),
+  () => import("@/components/properties/location-picker-map"),
   {
     ssr: false,
     loading: () => (

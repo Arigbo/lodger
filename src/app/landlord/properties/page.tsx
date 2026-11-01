@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { MoreHorizontal, Plus, PlusCircle, Building, Search, Filter, ArrowUpDown, Trash2, Edit3, Eye, User as UserIcon, MapPin, DollarSign, ArrowRight } from 'lucide-react';
+import { MoreHorizontal, Plus, Building, Search, ArrowUpDown, Trash2, Edit3, Eye, User as UserIcon, MapPin, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc, getDoc, getDocs, deleteDoc } from 'firebase/firestore';
@@ -10,7 +10,7 @@ import type { Property, UserProfile as User } from '@/types';
 import Loading from '@/app/loading';
 import { useToast } from '@/hooks/use-toast';
 import { sendNotification } from '@/lib/notifications';
-import { formatPrice, cn } from '@/utils';
+import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -18,9 +18,6 @@ import { Separator } from '@/components/ui/separator';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import {
   Select,
@@ -33,7 +30,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -94,7 +90,11 @@ export default function LandlordPropertiesPage() {
 
     try {
       const propertyTitle = properties?.find(p => p.id === propertyToDelete)?.title || 'Property';
-      const requestsQuery = query(collection(firestore, 'rentalApplications'), where('propertyId', '==', propertyToDelete));
+      const requestsQuery = query(
+        collection(firestore, 'rentalApplications'),
+        where('propertyId', '==', propertyToDelete),
+        where('landlordId', '==', user!.uid),
+      );
       const requestsSnap = await getDocs(requestsQuery);
 
       const notificationPromises = requestsSnap.docs.map(doc => {

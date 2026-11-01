@@ -12,8 +12,7 @@ import {
   PawPrint, 
   WashingMachine, 
   Trees, 
-  Flame,
-  Tv, 
+  Flame, 
   Waves
 } from 'lucide-react';
 

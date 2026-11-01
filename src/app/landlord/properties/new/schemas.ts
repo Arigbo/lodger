@@ -1,5 +1,5 @@
 import * as z from 'zod';
-import { MAX_FILE_SIZE, ACCEPTED_IMAGE_TYPES, MAX_VIDEO_SIZE, ACCEPTED_VIDEO_TYPES } from './constants';
+import { MAX_FILE_SIZE, ACCEPTED_IMAGE_TYPES, MAX_VIDEO_SIZE, ACCEPTED_VIDEO_TYPES } from '@/app/landlord/properties/new/constants';
 
 export const imageSchema = z.any()
     .refine((files) => !files || files.length === 0 || files.length === 1, "Only one image per slot.")

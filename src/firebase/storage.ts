@@ -6,6 +6,7 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
+import { authHeaders } from "@/lib/api-client";
 
 /**
  * Type definition for image moderation analysis results
@@ -51,7 +52,7 @@ export async function moderateImage(
   // Call moderation API
   const response = await fetch('/api/moderate-image', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await authHeaders(),
     body: JSON.stringify({
       imageBase64: base64,
       mimeType: imageFile.type
@@ -196,15 +197,10 @@ export async function uploadProfileImage(
     };
 
     // Upload the file
-    console.log(
-      `Starting upload for user ${userId}, file: ${file.name}, size: ${file.size}, type: ${file.type}`
-    );
     const snapshot = await uploadBytes(storageRef, file, metadata);
-    console.log("Upload successful, retrieving download URL...");
 
     // Get the download URL
     const downloadURL = await getDownloadURL(snapshot.ref);
-    console.log("Download URL retrieved successfully");
 
     return downloadURL;
   } catch (error: any) {

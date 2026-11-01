@@ -4,24 +4,19 @@ import * as React from 'react';
 import { useState } from 'react';
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { UserProfile, Property, RentalApplication, LeaseAgreement } from '@/types/';
-import { Check, X, Bell, User as UserIcon, MessageSquare, Calendar, Building, Wallet, ArrowRight, ShieldCheck, Clock, ExternalLink } from 'lucide-react';
+import { Check, X, Bell, User as UserIcon, Wallet, ShieldCheck, Clock, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
-import LeaseGenerationDialog from '@/components/lease-generation-dialog';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import LeaseGenerationDialog from '@/components/leases/lease-generation-dialog';
+import { useUser, useFirestore } from '@/firebase';
 import { collection, doc, query, where, getDocs, addDoc, updateDoc, documentId, getDoc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Loading from '@/app/loading';
 import { sendNotification } from '@/lib/notifications';
-import { formatPrice } from '@/utils';
+import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 type AggregatedRequest = {

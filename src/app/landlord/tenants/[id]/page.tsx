@@ -1,7 +1,7 @@
 
 'use client';
 
-import { notFound, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import type { UserProfile as User, Property, Transaction, LeaseAgreement } from '@/types';
 import {
     Card,
@@ -15,8 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Phone, Mail, AlertTriangle, Coins, Pencil, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
-import { format, differenceInDays, isPast, addMonths, differenceInMonths } from "date-fns";
-import { cn, formatPrice } from '@/utils';
+import { format, differenceInDays, isPast, addMonths } from "date-fns";
+import { cn, formatPrice } from '@/lib/utils';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -62,7 +62,12 @@ export default function TenantDetailPage() {
     const propertyRef = useMemoFirebase(() => lease ? doc(firestore, 'properties', lease.propertyId) : null, [lease, firestore]);
     const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
 
-    const transactionsQuery = useMemoFirebase(() => tenant ? query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.id)) : null, [tenant, firestore]);
+    const transactionsQuery = useMemoFirebase(
+        () => tenant && currentUser
+            ? query(collection(firestore, 'transactions'), where('tenantId', '==', tenant.id), where('landlordId', '==', currentUser.uid))
+            : null,
+        [tenant, currentUser, firestore],
+    );
     const { data: tenantTransactions, isLoading: areTransactionsLoading } = useCollection<Transaction>(transactionsQuery);
     const { toast } = useToast();
 

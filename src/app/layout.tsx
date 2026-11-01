@@ -1,100 +1,78 @@
-import { HeaderAndFooterProvider } from "@/components/header-and-footer-provider";
-import { SupportBubble } from "@/components/support-bubble";
-import { Toaster } from "@/components/ui/toaster";
+import type { Metadata, Viewport } from "next";
+import { Outfit, Playfair_Display, Space_Grotesk } from "next/font/google";
 import { FirebaseClientProvider } from "@/firebase";
-import { cn } from "@/utils";
+import { SupportBubble } from "@/components/layout/support-bubble";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { JsonLd } from "@/components/shared/json-ld";
+import { siteConfig } from "@/config/site";
+import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
+import { cn } from "@/lib/utils";
 import "./globals.css";
-import type { Metadata } from "next";
-import {
-  Outfit,
-  Playfair_Display,
-  Inter,
-  Space_Grotesk,
-} from "next/font/google";
 
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-});
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space-grotesk",
-});
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk", display: "swap" });
+const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair", display: "swap" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
   title: {
-    default: "LODGER | Student Living",
-    template: "%s | LODGER",
+    default: `${siteConfig.name} — Find verified student homes near campus`,
+    template: `%s | ${siteConfig.name}`,
   },
-  description:
-    "Find your perfect student home. LODGER offers a curated collection of residences for the modern student.",
-  metadataBase: new URL("https://lodger-ancient.vercel.app"),
-  keywords: [
-    "student housing",
-    "premium rentals",
-    "university living",
-    "student apartments",
-  ],
+  description: siteConfig.description,
+  applicationName: siteConfig.name,
+  keywords: [...siteConfig.keywords],
+  authors: [{ name: siteConfig.name, url: siteConfig.url }],
+  creator: siteConfig.name,
   openGraph: {
-    title: "Lodger - Find Your Perfect Student Home",
-    description:
-      "The easiest way for university students to find and book their next rental property.",
-    url: "https://lodger-ancient.vercel.app",
-    siteName: "Lodger",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-      },
-    ],
-    locale: "en_NG",
     type: "website",
+    locale: siteConfig.locale,
+    url: siteConfig.url,
+    siteName: siteConfig.name,
+    title: `${siteConfig.name} — Find verified student homes near campus`,
+    description: siteConfig.description,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lodger - Find Your Perfect Student Home",
-    description:
-      "The easiest way for university students to find and book their next rental property.",
-    images: ["/og-image.png"],
+    title: `${siteConfig.name} — Find verified student homes near campus`,
+    description: siteConfig.description,
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/favicon.ico" }],
   },
+  formatDetection: { telephone: false },
 };
 
-import { TooltipProvider } from "@/components/ui/tooltip";
+export const viewport: Viewport = {
+  themeColor: siteConfig.themeColor,
+  width: "device-width",
+  initialScale: 1,
+};
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body
         className={cn(
           "min-h-screen bg-background font-sans text-foreground antialiased",
           outfit.variable,
-          playfair.variable,
-          inter.variable,
           spaceGrotesk.variable,
+          playfair.variable,
         )}
       >
+        <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
         <FirebaseClientProvider>
-          <HeaderAndFooterProvider>
-            <TooltipProvider>
-              {children}
-              <Toaster />
-              <SupportBubble />
-            </TooltipProvider>
-          </HeaderAndFooterProvider>
+          <TooltipProvider>
+            {children}
+            <Toaster />
+            <SupportBubble />
+          </TooltipProvider>
         </FirebaseClientProvider>
       </body>
     </html>

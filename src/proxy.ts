@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { apiRateLimit, authRateLimit, paymentRateLimit, uploadRateLimit, getClientIdentifier, checkRateLimit } from '@/lib/rate-limit';
+import { apiRateLimit, authRateLimit, paymentRateLimit, uploadRateLimit, getClientIdentifier, checkRateLimit } from '@/lib/server/rate-limit';
 
+/**
+ * Edge proxy (formerly `middleware`): applies tiered rate limits to API routes.
+ * See docs/rate-limiting.md.
+ */
 export async function proxy(request: NextRequest) {
     try {
         // Skip rate limiting in development if RATE_LIMIT_ENABLED is not set
@@ -17,6 +21,9 @@ export async function proxy(request: NextRequest) {
 
         if (pathname.startsWith('/api/auth')) {
             rateLimit = authRateLimit;
+        } else if (pathname.startsWith('/api/webhooks')) {
+            // Stripe retries webhooks from shared IPs; never rate limit them.
+            return NextResponse.next();
         } else if (pathname.includes('/payment') || pathname.includes('/stripe')) {
             rateLimit = paymentRateLimit;
         } else if (pathname.includes('/upload')) {
@@ -48,12 +55,12 @@ export async function proxy(request: NextRequest) {
     } catch (error) {
         // Log the error and allow the request to proceed
         // This prevents the whole site from going down if the rate limiting service (e.g., Upstash) fails
-        console.error('Proxy Error:', error);
+        console.error('Proxy error:', error);
         return NextResponse.next();
     }
 }
 
-// Configure which routes to apply proxy to
+// Configure which routes to apply middleware to
 export const config = {
     matcher: [
         '/api/:path*',

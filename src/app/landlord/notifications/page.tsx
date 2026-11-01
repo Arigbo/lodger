@@ -2,9 +2,9 @@
 
 import { useUser } from "@/firebase/provider";
 import { useNotifications } from "@/hooks/useNotifications";
-import { NotificationItem } from "@/components/notification-item";
+import { NotificationItem } from "@/components/notifications/notification-item";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Bell, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Loading from "@/app/loading";
 

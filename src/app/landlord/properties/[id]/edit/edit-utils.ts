@@ -1,4 +1,4 @@
-import { MOCK_RATES } from './edit-constants';
+import { MOCK_RATES } from '@/app/landlord/properties/[id]/edit/edit-constants';
 
 export const convertPrice = (
   currentPrice: number,

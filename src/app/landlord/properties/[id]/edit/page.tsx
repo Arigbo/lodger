@@ -43,21 +43,20 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
-import { Property, UserProfile, LeaseAgreement } from "@/types";
+import { Property, LeaseAgreement } from "@/types";
 import { sendNotification } from "@/lib/notifications";
 import Loading from "@/app/loading";
-import { cn } from "@/utils";
 
-import { editFormSchema, EditFormValues } from "./edit-schemas";
-import { DEFAULT_EDIT_VALUES } from "./edit-constants";
-import { convertPrice, parseRules } from "./edit-utils";
+import { editFormSchema, EditFormValues } from "@/app/landlord/properties/[id]/edit/edit-schemas";
+import { DEFAULT_EDIT_VALUES } from "@/app/landlord/properties/[id]/edit/edit-constants";
+import { convertPrice, parseRules } from "@/app/landlord/properties/[id]/edit/edit-utils";
 
-import { IdentitySection } from "./sections/IdentitySection";
-import { GeographySection } from "./sections/GeographySection";
-import { SpecificationSection } from "./sections/SpecificationSection";
-import { MediaSection } from "./sections/MediaSection";
-import { AmenitiesSection } from "./sections/AmenitiesSection";
-import { RulesSection } from "./sections/RulesSection";
+import { IdentitySection } from "@/app/landlord/properties/[id]/edit/sections/IdentitySection";
+import { GeographySection } from "@/app/landlord/properties/[id]/edit/sections/GeographySection";
+import { SpecificationSection } from "@/app/landlord/properties/[id]/edit/sections/SpecificationSection";
+import { MediaSection } from "@/app/landlord/properties/[id]/edit/sections/MediaSection";
+import { AmenitiesSection } from "@/app/landlord/properties/[id]/edit/sections/AmenitiesSection";
+import { RulesSection } from "@/app/landlord/properties/[id]/edit/sections/RulesSection";
 
 export default function EditPropertyPage() {
   const params = useParams();
@@ -69,10 +68,6 @@ export default function EditPropertyPage() {
   const { toast } = useToast();
 
   const propertyRef = useMemoFirebase(() => {
-    console.log("[EditProperty] Creating propertyRef:", {
-      id,
-      firestoreExists: !!firestore,
-    });
     return id ? doc(firestore, "properties", id) : null;
   }, [firestore, id]);
 
@@ -82,24 +77,6 @@ export default function EditPropertyPage() {
     refetch,
     error: propertyError,
   } = useDoc<Property>(propertyRef);
-
-  // Debug logging for property state changes
-  useEffect(() => {
-    console.log("[EditProperty] Property state changed:", {
-      id,
-      propertyLoaded: !!property,
-      isLoading: isPropertyLoading,
-      hasError: !!propertyError,
-      errorMessage: propertyError?.message,
-      propertyData: property
-        ? {
-            id: property.id,
-            title: property.title,
-            landlordId: property.landlordId,
-          }
-        : null,
-    });
-  }, [property, isPropertyLoading, propertyError, id]);
 
   const [isUploading, setIsUploading] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
@@ -314,6 +291,7 @@ export default function EditPropertyPage() {
         const leasesQuery = query(
           collection(firestore, "leaseAgreements"),
           where("propertyId", "==", id),
+          where("landlordId", "==", user!.uid),
         );
         const leasesSnapshot = await getDocs(leasesQuery);
         for (const leaseDoc of leasesSnapshot.docs) {

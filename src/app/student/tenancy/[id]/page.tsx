@@ -2,19 +2,18 @@
 'use client';
 
 import { notFound, useParams, useRouter } from "next/navigation";
-import { formatPrice, cn } from "@/utils";
+import { formatPrice, cn } from "@/lib/utils";
 import { add } from "date-fns/add";
 import { format, isPast } from "date-fns";
-import PaymentDialog from '@/components/payment-dialog';
+import PaymentDialog from '@/components/payments/payment-dialog';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import TenancySkeleton from "@/components/tenancy-skeleton";
+import TenancySkeleton from "@/components/leases/tenancy-skeleton";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
 import { doc, collection, query, where, updateDoc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Property, UserProfile as User, Transaction, LeaseAgreement } from "@/types";
-import { Separator } from "@/components/ui/separator";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

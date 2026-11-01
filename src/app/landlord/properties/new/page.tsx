@@ -4,14 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { collection, doc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // UI Components
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
-import { Card } from '@/components/ui/card';
 import { 
     Building, 
     ArrowLeft, 
@@ -23,23 +22,24 @@ import {
 // Hooks & Firebase
 import { useFirestore, useUser, useFirebaseApp, useDoc, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/utils';
-import { getCurrencyByCountry } from '@/utils/currencies';
+import { cn } from '@/lib/utils';
+import { getCurrencyByCountry } from '@/lib/currencies';
 
 // Local Components & Constants
-import { steps } from './constants';
-import { formSchema, type FormValues } from './schemas';
-import { StepNavigation } from './components/step-navigation';
-import { BasicInfoStep } from './components/steps/BasicInfoStep';
-import { LocationStep } from './components/steps/LocationStep';
-import { AmenitiesStep } from './components/steps/AmenitiesStep';
-import { LeaseTemplateStep } from './components/steps/LeaseTemplateStep';
-import { MediaUploadStep } from './components/steps/MediaUploadStep';
-import { AIStep } from './components/steps/AIStep';
-import { ReviewStep } from './components/steps/ReviewStep';
+import { steps } from '@/app/landlord/properties/new/constants';
+import { formSchema, type FormValues } from '@/app/landlord/properties/new/schemas';
+import { StepNavigation } from '@/app/landlord/properties/new/components/step-navigation';
+import { BasicInfoStep } from '@/app/landlord/properties/new/components/steps/BasicInfoStep';
+import { LocationStep } from '@/app/landlord/properties/new/components/steps/LocationStep';
+import { AmenitiesStep } from '@/app/landlord/properties/new/components/steps/AmenitiesStep';
+import { LeaseTemplateStep } from '@/app/landlord/properties/new/components/steps/LeaseTemplateStep';
+import { MediaUploadStep } from '@/app/landlord/properties/new/components/steps/MediaUploadStep';
+import { AIStep } from '@/app/landlord/properties/new/components/steps/AIStep';
+import { ReviewStep } from '@/app/landlord/properties/new/components/steps/ReviewStep';
 
 // Types
 import type { Property, UserProfile } from '@/types';
+import { authHeaders } from "@/lib/api-client";
 
 export default function AddPropertyPage() {
     const [currentStep, setCurrentStep] = useState(1);
@@ -181,7 +181,7 @@ export default function AddPropertyPage() {
             const formData = form.getValues();
             const response = await fetch('/api/generate-description', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: await authHeaders(),
                 body: JSON.stringify({
                     title: formData.title,
                     type: formData.type,

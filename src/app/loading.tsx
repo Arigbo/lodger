@@ -1,4 +1,4 @@
-import LogoLoader from "@/components/logo-loader";
+import LogoLoader from "@/components/layout/logo-loader";
 
 export default function Loading() {
   return <LogoLoader />;

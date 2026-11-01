@@ -1,16 +1,14 @@
 
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import type { LeaseAgreement, Property } from '@/types';
 import { Building } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import PropertyCard from '@/components/property-card';
+import PropertyCard from '@/components/properties/property-card';
 import React from 'react';
 import Loading from '@/app/loading';
 import { Badge } from '@/components/ui/badge';

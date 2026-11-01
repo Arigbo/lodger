@@ -1,5 +1,6 @@
+import 'server-only';
 import * as admin from 'firebase-admin';
-import { firebaseConfig } from './config';
+import { firebaseConfig } from '@/firebase/config';
 
 // Refined Private Key Parsing - handles multiple escape scenarios
 function formatPrivateKey(key: string | undefined) {
@@ -14,7 +15,7 @@ function formatPrivateKey(key: string | undefined) {
     }
 
     // Convert escaped \n back to real newlines, handle double-escaped as well
-    privateKey = privateKey.replace(/\\n/g, '\n').replace(/\n/g, '\n');
+    privateKey = privateKey.replace(/\\n/g, '\n');
 
     // Ensure the key has the proper header and footer if they are missing or malformed
     if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
@@ -29,6 +30,7 @@ function formatPrivateKey(key: string | undefined) {
 
 // Lazy Initialization - only runs when actually needed
 let initialized = false;
+let warned = false;
 
 function initializeAdmin() {
     if (initialized || admin.apps.length > 0) {
@@ -68,14 +70,20 @@ function initializeAdmin() {
                 databaseURL: `https://${projectId}.firebaseio.com`,
             });
             initialized = true;
-        } else {
-            if (!privateKey) console.warn("Firebase Admin: Missing FIREBASE_PRIVATE_KEY");
-            if (!clientEmail) console.warn("Firebase Admin: Missing FIREBASE_CLIENT_EMAIL");
-            console.warn(`Firebase Admin: Skipping initialization due to missing credentials for project ${projectId}`);
+        } else if (!warned) {
+            warned = true;
+            const missing = [!privateKey && 'FIREBASE_PRIVATE_KEY', !clientEmail && 'FIREBASE_CLIENT_EMAIL'].filter(Boolean).join(', ');
+            console.warn(`Firebase Admin: not initialised (missing ${missing}). Server-side data features are disabled.`);
         }
     } catch (error: any) {
         console.error('Firebase admin initialization error:', error.message);
     }
+}
+
+/** True when Admin SDK credentials are present and initialisation succeeded. */
+export function isAdminConfigured(): boolean {
+    initializeAdmin();
+    return admin.apps.length > 0;
 }
 
 // Getter functions
@@ -94,25 +102,3 @@ export function getAdminAuth() {
     }
     return admin.auth();
 }
-
-// Export specific instances for compatibility
-export const db = new Proxy({} as admin.firestore.Firestore, {
-    get: (_target, prop) => {
-        const firestore = getAdminDb();
-        // @ts-ignore
-        const value = firestore[prop];
-        return typeof value === 'function' ? value.bind(firestore) : value;
-    }
-});
-
-export const auth = new Proxy({} as admin.auth.Auth, {
-    get: (_target, prop) => {
-        const authInstance = getAdminAuth();
-        // @ts-ignore
-        const value = authInstance[prop];
-        return typeof value === 'function' ? value.bind(authInstance) : value;
-    }
-});
-
-// Alias for server.ts compatibility
-export const firestore = db;

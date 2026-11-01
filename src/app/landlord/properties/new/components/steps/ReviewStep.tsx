@@ -1,12 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { cn, formatPrice } from '@/utils';
+import { cn, formatPrice } from '@/lib/utils';
 import { 
     Check, 
-    Home, 
     MapPin, 
     Sparkles, 
     FileText, 

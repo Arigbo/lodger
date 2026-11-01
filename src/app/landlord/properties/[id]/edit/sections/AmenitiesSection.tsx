@@ -8,9 +8,9 @@ import {
 } from "@/components/ui/form";
 import { Wifi } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { EditFormValues } from "../edit-schemas";
+import { EditFormValues } from "@/app/landlord/properties/[id]/edit/edit-schemas";
 import { amenities as allAmenities } from "@/types";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 interface AmenitiesSectionProps {
   form: UseFormReturn<EditFormValues>;

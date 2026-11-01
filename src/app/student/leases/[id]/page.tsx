@@ -1,44 +1,29 @@
 
 'use client';
 import React from 'react';
-import { notFound, useParams } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useParams } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Signature, CheckCircle2, FileClock, Hourglass, Check, DollarSign, Download, Printer, ShieldAlert, FileText } from 'lucide-react';
+import { Signature, CheckCircle2, FileClock, Hourglass, DollarSign, Download, Printer, ShieldAlert, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import PaymentDialog from '@/components/payment-dialog';
+import PaymentDialog from '@/components/payments/payment-dialog';
 import type { LeaseAgreement, Property, UserProfile as User } from '@/types';
-import { doc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Loading from '@/app/loading';
 import { sendNotification } from '@/lib/notifications';
-import { formatPrice, cn } from '@/utils';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2 } from 'lucide-react';
+import { formatPrice, cn } from '@/lib/utils';
+
+
+
+
 import { useState } from 'react';
+import { authHeaders } from "@/lib/api-client";
 
 export default function ViewStudentLeasePage() {
     const params = useParams();
@@ -61,16 +46,6 @@ export default function ViewStudentLeasePage() {
     const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
 
     const isLoading = isUserLoading || isLeaseLoading || isLandlordLoading || isTenantLoading || isPropertyLoading;
-
-    React.useEffect(() => {
-        console.log('Lease Page Debug:', {
-            id,
-            leaseExists: !!lease,
-            currentUserUid: currentUser?.uid,
-            leaseTenantId: lease?.tenantId,
-            match: currentUser?.uid === lease?.tenantId
-        });
-    }, [id, lease, currentUser]);
 
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
     const [monthsToPay, setMonthsToPay] = useState(1);
@@ -163,7 +138,7 @@ export default function ViewStudentLeasePage() {
                     try {
                         await fetch('/api/notify-applicants', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: await authHeaders(),
                             body: JSON.stringify({
                                 propertyId: lease.propertyId,
                                 winnerTenantId: currentUser.uid,

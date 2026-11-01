@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Clock, ExternalLink, Bell } from 'lucide-react';
 import { format } from 'date-fns';
 import Loading from '@/app/loading';
-import { cn } from '@/utils';
+import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 export default function NotificationDetailsPage() {
