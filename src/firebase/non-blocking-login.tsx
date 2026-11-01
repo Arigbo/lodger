@@ -10,7 +10,7 @@ import {
   UserCredential,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { getSdks } from '.';
+import { getSdks } from '@/firebase';
 import type { Toast } from '@/hooks/use-toast';
 import { FirestorePermissionError, errorEmitter } from '@/firebase';
 

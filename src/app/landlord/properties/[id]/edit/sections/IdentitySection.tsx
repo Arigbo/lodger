@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Sparkles, AlertCircle, Info } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { EditFormValues } from "../edit-schemas";
+import { EditFormValues } from "@/app/landlord/properties/[id]/edit/edit-schemas";
 
 import { PROPERTY_TYPES } from "@/types/property-types";
 import {

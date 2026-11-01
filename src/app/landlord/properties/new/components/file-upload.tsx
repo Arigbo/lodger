@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { cn } from '@/utils';
+import { cn } from '@/lib/utils';
 import { 
     UploadCloud, 
     FileImage, 
@@ -16,6 +16,7 @@ import {
     Image as ImageIcon,
     RefreshCw
 } from 'lucide-react';
+import { authHeaders } from "@/lib/api-client";
 
 interface FileUploadProps {
     field: any;
@@ -80,7 +81,7 @@ export const FileUpload = ({ field, label, description, icon: Icon, onUpload, on
                 try {
                     const response = await fetch('/api/moderate-image', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: await authHeaders(),
                         body: JSON.stringify({
                             imageBase64: base64,
                             mimeType: cleanFile.type

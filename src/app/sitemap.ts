@@ -1,56 +1,37 @@
-import { MetadataRoute } from 'next';
-import { getAdminDb } from "@/firebase/admin"; // We need to ensure we have a way to access admin DB here, strictly server-side
-import { Property } from '@/types';
+import type { MetadataRoute } from "next";
+import { absoluteUrl } from "@/config/site";
+import { getPropertySitemapEntries } from "@/lib/data/properties";
+import { propertyPath } from "@/lib/seo";
 
-// TODO: Replace with your actual domain
-const BASE_URL = 'https://lodger.app';
+export const revalidate = 3600;
+
+const staticRoutes: { path: string; priority: number; changeFrequency: "daily" | "weekly" | "monthly" | "yearly" }[] = [
+  { path: "/", priority: 1, changeFrequency: "daily" },
+  { path: "/properties", priority: 0.9, changeFrequency: "daily" },
+  { path: "/about", priority: 0.6, changeFrequency: "monthly" },
+  { path: "/blog", priority: 0.6, changeFrequency: "weekly" },
+  { path: "/auth/signup", priority: 0.5, changeFrequency: "yearly" },
+  { path: "/auth/login", priority: 0.4, changeFrequency: "yearly" },
+  { path: "/privacy", priority: 0.2, changeFrequency: "yearly" },
+  { path: "/terms", priority: 0.2, changeFrequency: "yearly" },
+];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const staticRoutes = [
-        '',
-        '/auth/login',
-        '/auth/signup',
-        '/privacy',
-        '/terms',
-        '/student/properties'
-    ].map((route) => ({
-        url: `${BASE_URL}${route}`,
-        lastModified: new Date(),
-        changeFrequency: 'daily' as const,
-        priority: route === '' ? 1 : 0.8,
-    }));
+  const now = new Date();
+  const properties = await getPropertySitemapEntries();
 
-    try {
-        // Check if admin credentials are available before attempting to fetch
-        if (!process.env.FIREBASE_PRIVATE_KEY || !process.env.FIREBASE_CLIENT_EMAIL) {
-            console.warn('Skipping dynamic sitemap generation: Missing Firebase Admin credentials.');
-            return staticRoutes;
-        }
-
-        const db = getAdminDb();
-        const propertiesSnapshot = await db.collection('properties').get();
-
-        // Check if we have documents
-        if (propertiesSnapshot.empty) {
-            return staticRoutes;
-        }
-
-        const dynamicRoutes = propertiesSnapshot.docs.map((doc) => {
-            const data = doc.data();
-            // Fallback to current date if specific date field is missing, or use a field like 'updatedAt' if available
-            const lastModified = new Date();
-
-            return {
-                url: `${BASE_URL}/student/properties/${doc.id}`,
-                lastModified: lastModified,
-                changeFrequency: 'weekly' as const,
-                priority: 0.9,
-            };
-        });
-
-        return [...staticRoutes, ...dynamicRoutes];
-    } catch (error) {
-        console.error('Error generating sitemap:', error);
-        return staticRoutes;
-    }
+  return [
+    ...staticRoutes.map(({ path, priority, changeFrequency }) => ({
+      url: absoluteUrl(path),
+      lastModified: now,
+      changeFrequency,
+      priority,
+    })),
+    ...properties.map(({ id, updatedAt }) => ({
+      url: absoluteUrl(propertyPath(id)),
+      lastModified: updatedAt ? new Date(updatedAt) : now,
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    })),
+  ];
 }

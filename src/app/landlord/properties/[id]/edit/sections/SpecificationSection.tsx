@@ -9,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Building } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { EditFormValues } from "../edit-schemas";
+import { EditFormValues } from "@/app/landlord/properties/[id]/edit/edit-schemas";
 
 interface SpecificationSectionProps {
   form: UseFormReturn<EditFormValues>;

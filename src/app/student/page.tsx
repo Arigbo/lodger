@@ -1,6 +1,6 @@
 "use client";
 
-import PropertyCard from "@/components/property-card";
+import PropertyCard from "@/components/properties/property-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";

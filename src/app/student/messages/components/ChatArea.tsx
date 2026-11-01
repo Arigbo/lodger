@@ -3,12 +3,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/utils';
+import { cn } from '@/lib/utils';
 import { Phone, Video, User as UserIcon, ArrowLeft, Send } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
-import { MessageItem } from './MessageItem';
-import { MessageInput } from './MessageInput';
+import { MessageItem } from '@/app/student/messages/components/MessageItem';
+import { MessageInput } from '@/app/student/messages/components/MessageInput';
 import type { UserProfile as User, Message } from '@/types';
 
 interface ChatAreaProps {

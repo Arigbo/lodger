@@ -1,4 +1,4 @@
-import { PropertyType } from './property-types';
+import { PropertyType } from '@/types/property-types';
 
 export type Property = {
     id: string;

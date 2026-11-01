@@ -54,9 +54,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Pencil, User, Trash2, Wallet, Clock } from "lucide-react";
 import Loading from "@/app/loading";
 import { useSearchParams, useRouter } from "next/navigation";
-import { countries } from "@/types/countries";
+import { countries } from "@/data/countries";
 import { Combobox } from "@/components/ui/combobox";
-import { getCurrencyByCountry } from "@/utils/currencies";
+import { getCurrencyByCountry } from "@/lib/currencies";
 import {
   Select,
   SelectContent,
@@ -64,6 +64,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { authHeaders } from "@/lib/api-client";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -200,18 +201,12 @@ export default function AccountPage() {
       });
 
       try {
-        console.log("Fetching Stripe status for:", userProfile.stripeAccountId);
         const response = await fetch("/api/stripe/account-status", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ accountId: userProfile.stripeAccountId }),
+          headers: await authHeaders(),
+          body: JSON.stringify({}),
         });
 
-        console.log(
-          "Stripe status response:",
-          response.status,
-          response.statusText,
-        );
 
         if (!response.ok) {
           const text = await response.text();
@@ -262,8 +257,8 @@ export default function AccountPage() {
     try {
       const response = await fetch("/api/stripe/connect", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.uid, email: user.email }),
+        headers: await authHeaders(),
+        body: JSON.stringify({}),
       });
       const data = await response.json();
       if (data.url) {
@@ -286,8 +281,8 @@ export default function AccountPage() {
     try {
       const response = await fetch("/api/stripe/dashboard", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId: userProfile.stripeAccountId }),
+        headers: await authHeaders(),
+        body: JSON.stringify({}),
       });
       const data = await response.json();
       if (data.url) {

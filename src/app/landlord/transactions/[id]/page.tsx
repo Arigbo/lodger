@@ -10,7 +10,7 @@ import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Transaction, UserProfile as User, Property } from '@/types';
 import { sendNotification } from '@/lib/notifications';
-import { formatPrice, cn } from '@/utils';
+import { formatPrice, cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ArrowLeft, Calendar, DollarSign, User as UserIcon, Building, Download, ExternalLink, ShieldCheck, CheckCircle, Loader2, XCircle } from 'lucide-react';
 import { updateDoc } from 'firebase/firestore';

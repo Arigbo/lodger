@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { amenities as allAmenities } from "@/types";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,

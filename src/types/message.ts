@@ -1,4 +1,4 @@
-import { UserProfile } from "./user";
+import { UserProfile } from "@/types/user";
 
 export type Conversation = {
     id: string; // Corresponds to the participant's user ID

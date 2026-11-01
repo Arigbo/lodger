@@ -10,7 +10,7 @@ import { collection, query, where, getDocs, documentId } from 'firebase/firestor
 import type { LeaseAgreement, Property } from '@/types';
 import { Building } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import PropertyCard from '@/components/property-card';
+import PropertyCard from '@/components/properties/property-card';
 import React from 'react';
 import Loading from '@/app/loading';
 import { Badge } from '@/components/ui/badge';

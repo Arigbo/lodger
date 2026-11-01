@@ -2,67 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-/* body {
-  font-family: Arial, Helvetica, sans-serif;
-} */
-
+/*
+ * Design tokens (HSL channels, consumed by tailwind.config.ts).
+ * Primary is the Lodger olive, darkened to keep white text above WCAG AA 4.5:1.
+ */
 @layer base {
   :root {
-    --font-inter: 'Inter', sans-serif;
-    --font-space-grotesk: 'Space Grotesk', sans-serif;
     --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
+    --foreground: 224 71% 4%;
     --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
+    --card-foreground: 224 71% 4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 60 31% 42%;
+    --popover-foreground: 224 71% 4%;
+    --primary: 60 33% 35%;
     --primary-foreground: 60 90% 98%;
-    --secondary: 220 13% 91%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 13% 91%;
-    --muted-foreground: 220 8.9% 43.1%;
-    --accent: 226 70% 94%;
-    /* Soft Indigo/Blue */
-    --accent-foreground: 226 70% 10%;
-    --destructive: 0 84.2% 60.2%;
+    --primary-light: 60 50% 68%;
+    --secondary: 220 14% 94%;
+    --secondary-foreground: 221 39% 11%;
+    --muted: 220 14% 95%;
+    --muted-foreground: 220 9% 40%;
+    --accent: 60 40% 94%;
+    --accent-foreground: 60 40% 15%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 60 31% 42%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --border: 220 13% 90%;
+    --input: 220 13% 88%;
+    --ring: 60 33% 35%;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 224 71.4% 4.1%;
+    --background: 224 71% 4%;
     --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1%;
+    --card: 224 50% 7%;
     --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
+    --popover: 224 50% 7%;
     --popover-foreground: 210 20% 98%;
-    --primary: 60 31% 42%;
-    --primary-foreground: 60 90% 98%;
-    --secondary: 215 27.9% 16.9%;
+    --primary: 60 40% 55%;
+    --primary-foreground: 60 30% 8%;
+    --primary-light: 60 50% 72%;
+    --secondary: 215 28% 17%;
     --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 217.9 10.6% 64.9%;
+    --muted: 215 28% 17%;
+    --muted-foreground: 218 11% 65%;
+    --accent: 215 28% 17%;
     --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 85.7% 97.3%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 60 31% 42%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --destructive: 0 63% 45%;
+    --destructive-foreground: 0 86% 97%;
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 60 40% 55%;
   }
 }
 
@@ -71,8 +60,13 @@
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground;
+    text-rendering: optimizeLegibility;
   }
 
   /* Ensure Combobox/Command items are always interactive */
@@ -80,13 +74,40 @@
     cursor: pointer !important;
     pointer-events: auto !important;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+  }
 }

@@ -10,7 +10,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ShieldCheck } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { EditFormValues } from "../edit-schemas";
+import { EditFormValues } from "@/app/landlord/properties/[id]/edit/edit-schemas";
 
 interface RulesSectionProps {
   form: UseFormReturn<EditFormValues>;

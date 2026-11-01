@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { cn } from '@/utils';
+import { cn } from '@/lib/utils';
 import type { UserProfile as User, Message } from '@/types';
 import { Send, Search, MessageSquare, MoreVertical, Phone, Video, User as UserIcon, ArrowLeft, Flag } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { format, formatDistanceToNow } from 'date-fns';
-import { ReportUserDialog } from '@/components/report-user-dialog';
+import { ReportUserDialog } from '@/components/shared/report-user-dialog';
 import {
     DropdownMenu,
     DropdownMenuContent,

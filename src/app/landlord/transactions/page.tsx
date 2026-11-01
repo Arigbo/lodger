@@ -24,7 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Transaction, UserProfile as User, Property } from '@/types';
-import { formatPrice, cn } from '@/utils';
+import { formatPrice, cn } from '@/lib/utils';
 import { DollarSign, Download, Calendar as CalendarIcon, X as ClearIcon, TrendingUp, Wallet, Building, ChevronRight, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { DateRange } from 'react-day-picker';

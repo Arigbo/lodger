@@ -24,7 +24,7 @@ import type { LeaseAgreement, UserProfile as User, Property } from '@/types';
 import { FileText, FileStack, ArrowRight, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { formatPrice } from '@/utils';
+import { formatPrice } from '@/lib/utils';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';

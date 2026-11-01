@@ -10,14 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Home } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
-import { EditFormValues } from "../edit-schemas";
+import { EditFormValues } from "@/app/landlord/properties/[id]/edit/edit-schemas";
 import { Combobox } from "@/components/ui/combobox";
-import { SchoolCombobox } from "@/components/school-combobox";
-import { countries } from "@/types/countries";
+import { SchoolCombobox } from "@/components/shared/school-combobox";
+import { countries } from "@/data/countries";
 import dynamic from "next/dynamic";
 
 const LocationPickerMap = dynamic(
-  () => import("@/components/LocationPickerMap"),
+  () => import("@/components/properties/location-picker-map"),
   {
     ssr: false,
     loading: () => (

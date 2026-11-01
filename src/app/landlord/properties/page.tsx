@@ -10,7 +10,7 @@ import type { Property, UserProfile as User } from '@/types';
 import Loading from '@/app/loading';
 import { useToast } from '@/hooks/use-toast';
 import { sendNotification } from '@/lib/notifications';
-import { formatPrice, cn } from '@/utils';
+import { formatPrice, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -94,7 +94,11 @@ export default function LandlordPropertiesPage() {
 
     try {
       const propertyTitle = properties?.find(p => p.id === propertyToDelete)?.title || 'Property';
-      const requestsQuery = query(collection(firestore, 'rentalApplications'), where('propertyId', '==', propertyToDelete));
+      const requestsQuery = query(
+        collection(firestore, 'rentalApplications'),
+        where('propertyId', '==', propertyToDelete),
+        where('landlordId', '==', user!.uid),
+      );
       const requestsSnap = await getDocs(requestsQuery);
 
       const notificationPromises = requestsSnap.docs.map(doc => {

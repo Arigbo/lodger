@@ -23,7 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import type { LeaseAgreement, UserProfile as User, Property } from '@/types';
 import { FileText, Signature } from 'lucide-react';
 import Link from 'next/link';
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import Loading from '@/app/loading';

@@ -58,12 +58,12 @@ import { doc, setDoc } from "firebase/firestore";
 import { useRef, useEffect, useState } from "react";
 import Loading from "@/app/loading";
 import { useToast } from "@/hooks/use-toast";
-import { countries } from "@/types/countries";
+import { countries } from "@/data/countries";
 import { getStorage } from "firebase/storage";
 import { uploadProfileImage } from "@/firebase/storage";
-import { SchoolCombobox } from "@/components/school-combobox";
+import { SchoolCombobox } from "@/components/shared/school-combobox";
 import { Combobox } from "@/components/ui/combobox";
-import { getCurrencyByCountry } from "@/utils/currencies";
+import { getCurrencyByCountry } from "@/lib/currencies";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),

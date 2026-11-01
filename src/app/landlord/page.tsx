@@ -31,8 +31,8 @@ import Loading from "@/app/loading";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/utils";
-import PropertyCard from "@/components/property-card";
+import { cn } from "@/lib/utils";
+import PropertyCard from "@/components/properties/property-card";
 
 export default function LandlordDashboardPage() {
   const { user, isUserLoading } = useUser();

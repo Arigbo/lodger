@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { CheckCircle2, FileClock, Hourglass, Check, Signature, AlertTriangle, Printer, DollarSign, Building, Loader2 } from 'lucide-react';
-import { cn, formatPrice } from "@/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc } from 'firebase/firestore';
 import Link from 'next/link';
@@ -80,15 +80,6 @@ export default function ViewLandlordLeasePage() {
         }
     };
 
-    console.log('Lease Detail Debug:', {
-        id,
-        isUserLoading,
-        isLeaseLoading,
-        currentUserUid: currentUser?.uid,
-        leaseExists: !!lease,
-        leaseLandlordId: lease?.landlordId,
-        match: currentUser && lease ? currentUser.uid === lease.landlordId : 'N/A'
-    });
 
     if (isLoading) {
         return <Loading />;

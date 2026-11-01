@@ -6,7 +6,7 @@ import {
   useRouter,
   useSearchParams,
 } from "next/navigation";
-import { formatPrice, cn } from "@/utils";
+import { formatPrice, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -62,9 +62,9 @@ import type {
 } from "@/types";
 import Link from "next/link";
 import React, { useState, useEffect, useMemo } from "react";
-import LeaseGenerationDialog from "@/components/lease-generation-dialog";
-import { SharePropertyModal } from "@/components/share-property-modal";
-import { ReportUserDialog } from "@/components/report-user-dialog";
+import LeaseGenerationDialog from "@/components/leases/lease-generation-dialog";
+import { SharePropertyModal } from "@/components/properties/share-property-modal";
+import { ReportUserDialog } from "@/components/shared/report-user-dialog";
 import {
   useUser,
   useFirestore,
@@ -86,11 +86,11 @@ import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import Loading from "@/app/loading";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
-import { PropertyGallery } from "@/components/property-gallery";
-import { PropertyHeroCarousel } from "@/components/property-hero-carousel";
+import { PropertyGallery } from "@/components/properties/property-gallery";
+import { PropertyHeroCarousel } from "@/components/properties/property-hero-carousel";
 import dynamic from "next/dynamic";
 
-const PropertyMap = dynamic(() => import("@/components/PropertyMap"), {
+const PropertyMap = dynamic(() => import("@/components/properties/property-map"), {
   ssr: false,
   loading: () => <Skeleton className="h-[400px] w-full rounded-[2rem]" />,
 });

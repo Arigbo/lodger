@@ -1,9 +1,11 @@
+export type UserRole = 'landlord' | 'student' | 'admin';
+
 export type UserProfile = {
     id: string;
     name: string;
     email: string;
     profileImageUrl: string;
-    role: 'landlord' | 'student';
+    role: UserRole;
     country?: string;
     state?: string;
     school?: string;
@@ -19,6 +21,9 @@ export type UserProfile = {
     avatarType?: 'photo' | 'avatar' | 'character';
     avatarValue?: string;
     stripeDetailsSubmitted?: boolean;
+    stripeBannerDismissed?: boolean;
+    banned?: boolean;
+    createdAt?: string;
 };
 
 export type User = UserProfile;

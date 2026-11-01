@@ -26,7 +26,7 @@ import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import Loading from '@/app/loading';
-import { cn } from '@/utils';
+import { cn } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,

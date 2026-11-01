@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import PropertyCard from "@/components/property-card";
+import PropertyCard from "@/components/properties/property-card";
 import type { Property, UserProfile } from '@/types';
 import { Heart, Search } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';

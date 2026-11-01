@@ -1,87 +1,69 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
-import { firestore as adminFirestore } from '@/firebase/admin';
+import type Stripe from 'stripe';
+import { ApiError, readJson, requireUser, withApiHandler } from '@/lib/server/api';
+import { getStripe } from '@/lib/server/stripe';
+import { getAdminDb } from '@/firebase/admin';
 
 export const dynamic = 'force-dynamic';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2025-12-15.clover',
-});
+const MAX_AMOUNT = 1_000_000; // sanity cap in major currency units
 
-export async function POST(request: Request) {
-    try {
-        const { amount, currency, landlordId, metadata } = await request.json();
+type Body = {
+  amount?: number;
+  currency?: string;
+  landlordId?: string;
+  metadata?: Record<string, string | number | undefined>;
+};
 
-        if (!landlordId) {
-            return NextResponse.json({ error: 'Landlord ID required' }, { status: 400 });
-        }
+/**
+ * Creates a PaymentIntent for rent. The tenant is always the signed-in user,
+ * and funds are routed to the landlord's connected account when available.
+ */
+export const POST = withApiHandler(async (request: Request) => {
+  const { uid } = await requireUser(request);
+  const { amount, currency = 'usd', landlordId, metadata = {} } = await readJson<Body>(request);
 
-        if (!amount || amount <= 0) {
-            return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
-        }
+  if (!landlordId) throw new ApiError(400, 'Landlord ID is required.');
+  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0 || amount > MAX_AMOUNT) {
+    throw new ApiError(400, 'Invalid payment amount.');
+  }
+  if (!/^[a-z]{3}$/i.test(currency)) throw new ApiError(400, 'Invalid currency.');
 
-        console.log('Creating PaymentIntent for landlord:', landlordId, 'Amount:', amount);
-
-        // 1. Fetch Landlord's Stripe Account ID from Firestore securely
-        let destinationAccountId: string | undefined;
-
-        if (adminFirestore) {
-            const landlordDoc = await adminFirestore.collection('users').doc(landlordId).get();
-            if (landlordDoc.exists) {
-                destinationAccountId = landlordDoc.data()?.stripeAccountId;
-            }
-        }
-
-        if (!destinationAccountId) {
-            console.warn(`Landlord ${landlordId} has no Stripe Account ID connected.`);
-            // Optionally: Fail if we require Stripe Connect, or proceed as platform payment
-            // For now, let's proceed but log it.
-        }
-
-        const paymentIntentData: Stripe.PaymentIntentCreateParams = {
-            amount: Math.round(amount * 100),
-            currency: (currency || 'usd').toLowerCase(),
-            automatic_payment_methods: { enabled: true },
-            metadata: {
-                ...metadata,
-                landlordId,
-            }
-        };
-
-        // Only add transfer_data if destinationAccountId is provided
-        if (destinationAccountId) {
-            paymentIntentData.transfer_data = {
-                destination: destinationAccountId,
-            };
-            // Platform Fee Application (Optional: e.g., 5%)
-            // paymentIntentData.application_fee_amount = Math.round(amount * 100 * 0.05);
-        }
-
-        try {
-            const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
-            return NextResponse.json({
-                clientSecret: paymentIntent.client_secret,
-                destinationAccountId: destinationAccountId
-            });
-        } catch (stripeError: any) {
-            // Handle specific Stripe errors
-            console.error('Stripe Error:', stripeError);
-
-            if (stripeError.code === 'insufficient_capabilities_for_transfer' && destinationAccountId) {
-                // Landlord hasn't completed onboarding or lacks transfer capability
-                return NextResponse.json({
-                    error: 'Landlord not ready for payments',
-                    message: 'The property owner needs to complete their Stripe setup to receive payments.'
-                }, { status: 400 });
-            }
-
-            throw stripeError;
-        }
-    } catch (error: any) {
-        console.error('Create Payment Intent Internal Error:', error);
-        return NextResponse.json(
-            { error: `Internal Server Error: ${error.message}` },
-            { status: 500 }
-        );
+  const db = getAdminDb();
+  const propertyId = typeof metadata.propertyId === 'string' ? metadata.propertyId : undefined;
+  if (propertyId) {
+    const property = await db.collection('properties').doc(propertyId).get();
+    if (!property.exists || property.data()?.landlordId !== landlordId) {
+      throw new ApiError(400, 'Property and landlord do not match.');
     }
-}
+  }
+
+  const landlord = await db.collection('users').doc(landlordId).get();
+  const destination: string | undefined = landlord.data()?.stripeAccountId;
+
+  // Stripe metadata values must be strings.
+  const cleanMetadata = Object.fromEntries(
+    Object.entries({ ...metadata, landlordId, tenantId: uid })
+      .filter(([, v]) => v !== undefined && v !== null)
+      .map(([k, v]) => [k, String(v).slice(0, 500)]),
+  );
+
+  const params: Stripe.PaymentIntentCreateParams = {
+    amount: Math.round(amount * 100),
+    currency: currency.toLowerCase(),
+    automatic_payment_methods: { enabled: true },
+    metadata: cleanMetadata,
+    ...(destination ? { transfer_data: { destination } } : {}),
+  };
+
+  try {
+    const intent = await getStripe().paymentIntents.create(params);
+    return NextResponse.json({ clientSecret: intent.client_secret });
+  } catch (error) {
+    const code = (error as { code?: string }).code;
+    if (code === 'insufficient_capabilities_for_transfer') {
+      throw new ApiError(400, 'The property owner needs to finish their Stripe setup before accepting card payments.');
+    }
+    throw error;
+  }
+});

@@ -12,13 +12,13 @@ import { Signature, CheckCircle2, FileClock, Hourglass, Check, DollarSign, Downl
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import PaymentDialog from '@/components/payment-dialog';
+import PaymentDialog from '@/components/payments/payment-dialog';
 import type { LeaseAgreement, Property, UserProfile as User } from '@/types';
 import { doc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Loading from '@/app/loading';
 import { sendNotification } from '@/lib/notifications';
-import { formatPrice, cn } from '@/utils';
+import { formatPrice, cn } from '@/lib/utils';
 import {
     Dialog,
     DialogContent,
@@ -39,6 +39,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { authHeaders } from "@/lib/api-client";
 
 export default function ViewStudentLeasePage() {
     const params = useParams();
@@ -61,16 +62,6 @@ export default function ViewStudentLeasePage() {
     const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
 
     const isLoading = isUserLoading || isLeaseLoading || isLandlordLoading || isTenantLoading || isPropertyLoading;
-
-    React.useEffect(() => {
-        console.log('Lease Page Debug:', {
-            id,
-            leaseExists: !!lease,
-            currentUserUid: currentUser?.uid,
-            leaseTenantId: lease?.tenantId,
-            match: currentUser?.uid === lease?.tenantId
-        });
-    }, [id, lease, currentUser]);
 
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
     const [monthsToPay, setMonthsToPay] = useState(1);
@@ -163,7 +154,7 @@ export default function ViewStudentLeasePage() {
                     try {
                         await fetch('/api/notify-applicants', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: await authHeaders(),
                             body: JSON.stringify({
                                 propertyId: lease.propertyId,
                                 winnerTenantId: currentUser.uid,

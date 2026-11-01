@@ -1,7 +1,7 @@
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/utils';
+import { cn } from '@/lib/utils';
 import { User as UserIcon } from 'lucide-react';
 import { format } from "date-fns";
 import type { Message } from '@/types';
