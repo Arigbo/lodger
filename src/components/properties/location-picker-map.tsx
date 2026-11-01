@@ -71,11 +71,12 @@ export default function LocationPickerMap({
   const position: [number, number] = [lat || 6.5244, lng || 3.3792]; // Default to Lagos if empty
   const [markerPos, setMarkerPos] = useState<[number, number]>(position);
 
-  useEffect(() => {
-    if (lat && lng) {
-      setMarkerPos([lat, lng]);
-    }
-  }, [lat, lng]);
+  // Follow coordinates typed into the form (adjusted during render).
+  const [syncedCoords, setSyncedCoords] = useState({ lat, lng });
+  if ((syncedCoords.lat !== lat || syncedCoords.lng !== lng) && lat && lng) {
+    setSyncedCoords({ lat, lng });
+    setMarkerPos([lat, lng]);
+  }
 
   const handleMarkerDrag = (e: L.DragEndEvent) => {
     const { lat, lng } = e.target.getLatLng();

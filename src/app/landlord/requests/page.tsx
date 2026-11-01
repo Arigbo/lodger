@@ -11,14 +11,16 @@ import type { UserProfile, Property, RentalApplication, LeaseAgreement } from '@
 import { Check, X, Bell, User as UserIcon, Wallet, ShieldCheck, Clock, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import LeaseGenerationDialog from '@/components/leases/lease-generation-dialog';
-import { useUser, useFirestore } from '@/firebase';
-import { collection, doc, query, where, getDocs, addDoc, updateDoc, documentId, getDoc } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { collection, doc, query, where, addDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Loading from '@/app/loading';
 import { sendNotification } from '@/lib/notifications';
 import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
+import { useAsyncResult } from "@/hooks/use-async-result";
+import { fetchDocsByIds } from "@/lib/firestore-batch";
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -26,150 +28,69 @@ type AggregatedRequest = {
   property: Property | null;
 };
 
-// Helper function to split an array into chunks
-function chunkArray<T>(array: T[], size: number): T[][] {
-  if (array.length === 0) return [];
-  const chunks: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-  return chunks;
-}
 
 export default function RentalRequestsPage() {
-  const { user: landlord, isUserLoading } = useUser();
+  const { user: landlord, profile: landlordProfile, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<AggregatedRequest | null>(null);
-  const [aggregatedRequests, setAggregatedRequests] = useState<AggregatedRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [landlordProfile, setLandlordProfile] = useState<UserProfile | null>(null);
-  const [pendingOfflinePayments, setPendingOfflinePayments] = useState<Array<{
-    lease: LeaseAgreement;
-    tenant: UserProfile | null;
-    property: Property | null;
-  }>>([]);
 
-  React.useEffect(() => {
-    if (!landlord || !firestore) {
-      if (!isUserLoading) setIsLoading(false);
-      return;
-    }
+  // Live sources: accepting/declining updates these lists automatically.
+  const requestsQuery = useMemoFirebase(
+    () => (landlord ? query(collection(firestore, 'rentalApplications'), where('landlordId', '==', landlord.uid)) : null),
+    [landlord, firestore],
+  );
+  const offlineLeasesQuery = useMemoFirebase(
+    () =>
+      landlord
+        ? query(
+            collection(firestore, 'leaseAgreements'),
+            where('landlordId', '==', landlord.uid),
+            where('paymentMethod', '==', 'offline'),
+            where('paymentConfirmed', '==', false),
+          )
+        : null,
+    [landlord, firestore],
+  );
+  const { data: requests, isLoading: areRequestsLoading } = useCollection<RentalApplication>(requestsQuery);
+  const { data: offlineLeases } = useCollection<LeaseAgreement>(offlineLeasesQuery);
 
-    const fetchLandlordProfile = async () => {
-      try {
-        const userDocRef = doc(firestore, 'users', landlord.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          setLandlordProfile({ id: userDocSnap.id, ...userDocSnap.data() } as UserProfile);
-        }
-      } catch (error) {
-        console.error("Error fetching landlord profile:", error);
-      }
-    };
+  const { data: aggregatedRequests = [], isLoading: isAggregating } = useAsyncResult(
+    requests,
+    async (items): Promise<AggregatedRequest[]> => {
+      const [people, properties] = await Promise.all([
+        fetchDocsByIds<UserProfile>(firestore, 'users', items.map((r) => r.tenantId)),
+        fetchDocsByIds<Property>(firestore, 'properties', items.map((r) => r.propertyId)),
+      ]);
+      return items
+        .map((request) => ({
+          request,
+          applicant: people.get(request.tenantId) ?? null,
+          property: properties.get(request.propertyId) ?? null,
+        }))
+        .sort((x, y) => new Date(y.request.applicationDate).getTime() - new Date(x.request.applicationDate).getTime());
+    },
+    { keepPrevious: true },
+  );
 
-    fetchLandlordProfile();
-
-    const fetchRequests = async () => {
-      setIsLoading(true);
-      const requestsQuery = query(collection(firestore, 'rentalApplications'), where('landlordId', '==', landlord.uid));
-      const requestsSnapshot = await getDocs(requestsQuery);
-      const allRequests: RentalApplication[] = requestsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as RentalApplication));
-
-      if (allRequests.length === 0) {
-        setAggregatedRequests([]);
-        setIsLoading(false);
-        return;
-      }
-
-      const userIds = [...new Set(allRequests.map(req => req.tenantId))].filter(Boolean);
-      const propertyIds = [...new Set(allRequests.map(req => req.propertyId))].filter(Boolean);
-
-      const usersMap = new Map<string, UserProfile>();
-      const propertiesMap = new Map<string, Property>();
-
-      if (userIds.length > 0) {
-        const userChunks = chunkArray(userIds, 30);
-        for (const chunk of userChunks) {
-          const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-          const userSnapshots = await getDocs(usersQuery);
-          userSnapshots.forEach((doc) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile));
-        }
-      }
-
-      if (propertyIds.length > 0) {
-        const propertyChunks = chunkArray(propertyIds, 30);
-        for (const chunk of propertyChunks) {
-          const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
-          const propertySnapshots = await getDocs(propertiesQuery);
-          propertySnapshots.forEach((doc) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
-        }
-      }
-
-      const finalRequests: AggregatedRequest[] = allRequests.map(request => ({
-        request,
-        applicant: usersMap.get(request.tenantId) || null,
-        property: propertiesMap.get(request.propertyId) || null,
-      }));
-
-      setAggregatedRequests(finalRequests.sort((a, b) => new Date(b.request.applicationDate).getTime() - new Date(a.request.applicationDate).getTime()));
-      setIsLoading(false);
-    };
-
-    fetchRequests();
-
-    const fetchOfflinePayments = async () => {
-      const leasesQuery = query(
-        collection(firestore, 'leaseAgreements'),
-        where('landlordId', '==', landlord.uid),
-        where('paymentMethod', '==', 'offline'),
-        where('paymentConfirmed', '==', false)
-      );
-
-      const leasesSnapshot = await getDocs(leasesQuery);
-      const leases: LeaseAgreement[] = leasesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as LeaseAgreement));
-
-      if (leases.length === 0) {
-        setPendingOfflinePayments([]);
-        return;
-      }
-
-      const tenantIds = [...new Set(leases.map(l => l.tenantId))].filter(Boolean);
-      const propertyIds = [...new Set(leases.map(l => l.propertyId))].filter(Boolean);
-
-      const tenantsMap = new Map<string, UserProfile>();
-      const propertiesMap = new Map<string, Property>();
-
-      if (tenantIds.length > 0) {
-        const tenantChunks = chunkArray(tenantIds, 30);
-        for (const chunk of tenantChunks) {
-          const tenantsQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-          const tenantSnapshots = await getDocs(tenantsQuery);
-          tenantSnapshots.forEach((doc) => tenantsMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile));
-        }
-      }
-
-      if (propertyIds.length > 0) {
-        const propertyChunks = chunkArray(propertyIds, 30);
-        for (const chunk of propertyChunks) {
-          const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
-          const propertySnapshots = await getDocs(propertiesQuery);
-          propertySnapshots.forEach((doc) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
-        }
-      }
-
-      const payments = leases.map(lease => ({
+  const { data: pendingOfflinePayments = [] } = useAsyncResult(
+    offlineLeases,
+    async (leases) => {
+      const [people, properties] = await Promise.all([
+        fetchDocsByIds<UserProfile>(firestore, 'users', leases.map((l) => l.tenantId)),
+        fetchDocsByIds<Property>(firestore, 'properties', leases.map((l) => l.propertyId)),
+      ]);
+      return leases.map((lease) => ({
         lease,
-        tenant: tenantsMap.get(lease.tenantId) || null,
-        property: propertiesMap.get(lease.propertyId) || null,
+        tenant: people.get(lease.tenantId) ?? null,
+        property: properties.get(lease.propertyId) ?? null,
       }));
+    },
+    { keepPrevious: true },
+  );
 
-      setPendingOfflinePayments(payments);
-    };
-
-    fetchOfflinePayments();
-  }, [landlord, firestore, isUserLoading]);
+  const isLoading = isUserLoading || areRequestsLoading || isAggregating;
 
   const pendingRequests = aggregatedRequests.filter(req => req.request.status === 'pending');
 
@@ -192,12 +113,6 @@ export default function RentalRequestsPage() {
         link: `/student/requests`
       });
     }
-
-    setAggregatedRequests(prev => prev.map(ar =>
-      ar.request.id === requestId
-        ? { ...ar, request: { ...ar.request, status: 'declined' } }
-        : ar
-    ));
     toast({ title: "Inquiry Declined", description: "The applicant has been notified of your decision." });
   };
 
@@ -239,12 +154,6 @@ export default function RentalRequestsPage() {
         propertyName: property.title,
         link: `/student/leases/${leaseDocRef.id}`
       });
-
-      setAggregatedRequests(prev => prev.map(ar =>
-        ar.request.id === request.id
-          ? { ...ar, request: { ...ar.request, status: 'approved' } }
-          : ar
-      ));
       toast({ title: "Request accepted", description: "A lease has been created and the tenant notified." });
     }
   };
@@ -290,12 +199,10 @@ export default function RentalRequestsPage() {
         propertyTitle: propertyTitle,
         link: `/student/tenancy`
       });
-
-      setPendingOfflinePayments(prev => prev.filter(p => p.lease.id !== leaseId));
-      toast({ title: "Revenue Confirmed", description: "Offline payment authenticated successfully." });
+      toast({ title: "Payment confirmed", description: "The offline payment has been confirmed." });
     } catch (error) {
       console.error('Error approving offline payment:', error);
-      toast({ variant: "destructive", title: "Authentication Error", description: "Failed to confirm offline revenue." });
+      toast({ variant: "destructive", title: "Could not confirm payment", description: "Please try again." });
     }
   };
 
@@ -314,8 +221,6 @@ export default function RentalRequestsPage() {
         propertyTitle: propertyTitle,
         link: `/student/leases/${leaseId}`
       });
-
-      setPendingOfflinePayments(prev => prev.filter(p => p.lease.id !== leaseId));
       toast({ title: "Payment Rejected", description: "The tenant has been asked to choose another payment method." });
     } catch (error) {
       console.error('Error rejecting offline payment:', error);

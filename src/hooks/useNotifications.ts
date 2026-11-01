@@ -14,43 +14,40 @@ import { useFirestore } from '@/firebase/provider';
 import { Notification } from '@/types/notification';
 
 const NOTIFICATION_LIMIT = 50;
+const EMPTY: Notification[] = [];
 
 export function useNotifications(userId: string | null) {
     const firestore = useFirestore();
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [loading, setLoading] = useState(true);
+    // Results are keyed by the user they belong to so switching accounts
+    // never shows stale notifications, and loading is derived.
+    const [result, setResult] = useState<{ userId: string; items: Notification[] } | null>(null);
 
     useEffect(() => {
-        if (!userId || !firestore) {
-            setNotifications([]);
-            setLoading(false);
-            return;
-        }
+        if (!userId || !firestore) return;
 
-        const notificationsRef = collection(firestore, 'notifications');
         const q = query(
-            notificationsRef,
+            collection(firestore, 'notifications'),
             where('userId', '==', userId),
             orderBy('createdAt', 'desc'),
             // Firestore rules require list queries on notifications to be bounded.
             limit(NOTIFICATION_LIMIT)
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const newNotifications = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as Notification[];
-
-            setNotifications(newNotifications);
-            setLoading(false);
-        }, (error) => {
-            console.error("[useNotifications] Error fetching notifications:", error);
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
+        return onSnapshot(
+            q,
+            (snapshot) => {
+                const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Notification[];
+                setResult({ userId, items });
+            },
+            (error) => {
+                console.error("[useNotifications] Error fetching notifications:", error);
+                setResult({ userId, items: [] });
+            },
+        );
     }, [userId, firestore]);
+
+    const notifications = userId && result?.userId === userId ? result.items : EMPTY;
+    const loading = !!userId && result?.userId !== userId;
 
     const markAsRead = async (notificationId: string) => {
         if (!firestore) return;

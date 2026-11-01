@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import PropertyCard from "@/components/properties/property-card";
 import SearchFilters from "@/components/properties/search-filters";
 import type { Property, UserProfile } from "@/types";
@@ -141,7 +141,6 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
     lat: number;
     lng: number;
   } | null>(null);
-  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [schoolsInArea, setSchoolsInArea] = useState<string[] | null>(null);
   const [hasAppliedDefaults, setHasAppliedDefaults] = useState(false);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
@@ -162,20 +161,20 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
     return [...new Set(props.map((p) => p.location.state))];
   }, [allProperties, filters.country]);
 
-  useEffect(() => {
-    if (userProfile && !hasAppliedDefaults) {
-      setFilters((prev) => ({
-        ...prev,
-        country: userProfile.country || prev.country,
-        state: userProfile.state || prev.state,
-        school: userProfile.school || prev.school,
-      }));
-      setHasAppliedDefaults(true);
-    }
-  }, [userProfile, hasAppliedDefaults]);
+  // Pre-fill filters from the student's profile once it is available
+  // (state adjusted during render rather than in an effect).
+  if (userProfile && !hasAppliedDefaults) {
+    setHasAppliedDefaults(true);
+    setFilters((prev) => ({
+      ...prev,
+      country: userProfile.country || prev.country,
+      state: userProfile.state || prev.state,
+      school: userProfile.school || prev.school,
+    }));
+  }
 
-  useEffect(() => {
-    if (!allProperties) return;
+  const filteredProperties = useMemo(() => {
+    if (!allProperties) return [];
     let properties = allProperties;
 
     // Filter by availability first (already done in the query, but good for safety)
@@ -294,7 +293,7 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
       }
     });
 
-    setFilteredProperties(properties);
+    return properties;
   }, [
     filters,
     currentLocation,

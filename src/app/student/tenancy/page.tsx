@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import type { LeaseAgreement, Property } from '@/types';
 import { Building } from 'lucide-react';
 import PropertyCard from '@/components/properties/property-card';
@@ -13,22 +13,14 @@ import React from 'react';
 import Loading from '@/app/loading';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from "@/components/dashboard";
+import { useAsyncResult } from "@/hooks/use-async-result";
+import { fetchDocsByIds } from "@/lib/firestore-batch";
 
-// Helper function to split an array into chunks
-function chunkArray<T>(array: T[], size: number): T[][] {
-    const chunks: T[][] = [];
-    for (let i = 0; i < array.length; i += size) {
-        chunks.push(array.slice(i, i + size));
-    }
-    return chunks;
-}
 
 
 export default function TenancyDashboardPage() {
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
-    const [properties, setProperties] = React.useState<Property[]>([]);
-    const [isLoading, setIsLoading] = React.useState(true);
 
     const leasesQuery = useMemoFirebase(() => {
         if (!user) return null;
@@ -41,43 +33,11 @@ export default function TenancyDashboardPage() {
 
     const { data: leases, isLoading: areLeasesLoading } = useCollection<LeaseAgreement>(leasesQuery);
 
-    React.useEffect(() => {
-        if (areLeasesLoading) return;
-        if (!leases || !firestore) {
-            setIsLoading(false);
-            return;
-        };
-
-        const fetchProperties = async () => {
-            if (leases.length === 0) {
-                setProperties([]);
-                setIsLoading(false);
-                return;
-            }
-
-            const propertyIds = leases.map(lease => lease.propertyId);
-
-            if (propertyIds.length === 0) {
-                setProperties([]);
-                setIsLoading(false);
-                return;
-            }
-
-            const propertyChunks = chunkArray(propertyIds, 30);
-            const fetchedProperties: Property[] = [];
-            for (const chunk of propertyChunks) {
-                const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
-                const propertySnapshots = await getDocs(propertiesQuery);
-                propertySnapshots.forEach((doc) => {
-                    fetchedProperties.push(doc.data() as Property);
-                });
-            }
-
-            setProperties(fetchedProperties);
-            setIsLoading(false);
-        }
-        fetchProperties();
-    }, [leases, areLeasesLoading, firestore]);
+    const { data: properties = [], isLoading: arePropertiesLoading } = useAsyncResult(leases, async (items) => {
+        const byId = await fetchDocsByIds<Property>(firestore, 'properties', items.map((lease) => lease.propertyId));
+        return [...byId.values()];
+    }, { keepPrevious: true });
+    const isLoading = areLeasesLoading || arePropertiesLoading;
 
 
     if (isUserLoading || isLoading) {

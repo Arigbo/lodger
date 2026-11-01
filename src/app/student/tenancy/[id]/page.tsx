@@ -11,7 +11,7 @@ import TenancySkeleton from "@/components/leases/tenancy-skeleton";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
 import { doc, collection, query, where, updateDoc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useEffectEvent, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Property, UserProfile as User, Transaction, LeaseAgreement } from "@/types";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -48,19 +48,6 @@ export default function TenancyDetailPage() {
     const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leaseQuery);
     const lease = leases?.[0];
 
-    const [tenancyState, setTenancyState] = useState<{
-        showPayButton: boolean;
-        paymentAmount: number;
-        leaseEndDate: Date;
-        leaseStartDate: Date;
-        isLeaseActive: boolean;
-        isLeaseExpired: boolean;
-        isRentDue: boolean;
-        isAwaitingActivation: boolean;
-        rentStatusText: string;
-        rentDueDateText: string;
-        hasPendingPayments: boolean;
-    } | null>(null);
     const { toast } = useToast();
 
     const handlePaymentSuccess = async (details: { months: number, method: string, amount: number }) => {
@@ -187,14 +174,17 @@ export default function TenancyDetailPage() {
         }
     };
 
-    // Auto-cleanup logic
+    // Auto-close the tenancy once the termination grace period has passed.
+    const autoCloseTenancy = useEffectEvent(() => {
+        handleConfirmCompensation();
+    });
     useEffect(() => {
-        if (lease?.status === 'terminating' && lease.terminationGracePeriodEnd) {
-            if (isPast(new Date(lease.terminationGracePeriodEnd))) {
-                handleConfirmCompensation();
-            }
+        if (lease?.status === 'terminating' && lease.terminationGracePeriodEnd && isPast(new Date(lease.terminationGracePeriodEnd))) {
+            // Scheduled (and cancelled on cleanup) so it runs once, even under StrictMode.
+            const timer = setTimeout(autoCloseTenancy, 0);
+            return () => clearTimeout(timer);
         }
-    }, [lease]);
+    }, [lease?.status, lease?.terminationGracePeriodEnd]);
 
     const handleMessageLandlord = () => {
         if (landlord) {
@@ -202,8 +192,9 @@ export default function TenancyDetailPage() {
         }
     };
 
-    useEffect(() => {
-        if (areTransactionsLoading || isLeaseLoading || !property) return;
+    // Rent schedule and payment state, derived from the lease and transactions.
+    const tenancyState = useMemo(() => {
+        if (areTransactionsLoading || isLeaseLoading || !property) return null;
 
         const tenantTransactions = transactions || [];
         const leaseStartDate = property?.leaseStartDate ? new Date(property.leaseStartDate) : (toDate(lease?.createdAt) ?? new Date());
@@ -233,7 +224,7 @@ export default function TenancyDetailPage() {
 
         const hasAnyPending = hasPendingTransaction || isOfflineActivationPending;
 
-        setTenancyState({
+        return {
             isLeaseActive,
             isLeaseExpired,
             isRentDue,
@@ -244,8 +235,8 @@ export default function TenancyDetailPage() {
             leaseStartDate,
             paymentAmount: property.price,
             hasPendingPayments: hasAnyPending,
-            showPayButton: (isLeaseActive || (lease?.status === 'pending' && lease?.tenantSigned)) && !hasAnyPending
-        });
+            showPayButton: (isLeaseActive || (lease?.status === 'pending' && lease?.tenantSigned)) && !hasAnyPending,
+        };
     }, [transactions, areTransactionsLoading, lease, isLeaseLoading, property]);
 
     const isLoading = isUserLoading || isPropertyLoading || isLandlordLoading || !tenancyState;

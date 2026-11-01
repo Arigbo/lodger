@@ -29,7 +29,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
-import React, { useEffect, useState } from 'react';
+import React from "react";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -70,16 +70,6 @@ export default function TenantDetailPage() {
     );
     const { data: tenantTransactions, isLoading: areTransactionsLoading } = useCollection<Transaction>(transactionsQuery);
     const { toast } = useToast();
-
-    const [rentStatus, setRentStatus] = useState<{
-        status: 'Paid' | 'Due' | 'Inactive';
-        text: string;
-        isLeaseActive: boolean;
-        isLeaseEndingSoon: boolean;
-        leaseEndDate: Date | null;
-        leaseDaysRemaining: number;
-        calculatedRefund: number;
-    } | null>(null);
 
     const handleEndTenancy = async () => {
         if (!lease || !property || !tenant || !rentStatus) return;
@@ -150,10 +140,22 @@ export default function TenantDetailPage() {
         }
     };
 
-    useEffect(() => {
+    type RentStatus = {
+        status: 'Paid' | 'Due' | 'Inactive';
+        text: string;
+        isLeaseActive: boolean;
+        isLeaseEndingSoon: boolean;
+        leaseEndDate: Date | null;
+        leaseDaysRemaining: number;
+        calculatedRefund: number;
+    };
+
+    // Rent status and pro-rated refund, derived from the lease and payments
+    // (cheap to compute, so it is simply recalculated on render).
+    const getRentStatus = (): RentStatus | null => {
         if (!lease || !property || !tenantTransactions) {
-            if (!areLeasesLoading && !isPropertyLoading) {
-                setRentStatus({
+            if (areLeasesLoading || isPropertyLoading) return null;
+            return {
                     status: 'Inactive',
                     text: 'No active lease',
                     isLeaseActive: false,
@@ -161,10 +163,8 @@ export default function TenantDetailPage() {
                     leaseEndDate: null,
                     leaseDaysRemaining: 0,
                     calculatedRefund: 0,
-                });
-            }
-            return;
-        };
+                };
+        }
 
         const today = new Date();
         const leaseStartDate = new Date(lease.startDate);
@@ -216,17 +216,17 @@ export default function TenantDetailPage() {
             }
         }
 
-        setRentStatus({
+        return {
             status,
             text,
             isLeaseActive,
             isLeaseEndingSoon,
             leaseEndDate,
             leaseDaysRemaining,
-            calculatedRefund
-        });
-
-    }, [lease, property, tenantTransactions, areLeasesLoading, isPropertyLoading]);
+            calculatedRefund,
+        };
+    };
+    const rentStatus = getRentStatus();
 
     const isLoading = isUserLoading || isTenantLoading || areLeasesLoading || isPropertyLoading || areTransactionsLoading || !rentStatus;
 

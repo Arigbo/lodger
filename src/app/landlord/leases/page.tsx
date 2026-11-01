@@ -16,9 +16,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatPrice } from '@/lib/utils';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import Loading from '@/app/loading';
 import { PageHeader } from "@/components/dashboard";
+import { useAsyncResult } from "@/hooks/use-async-result";
+import { fetchDocsByIds } from "@/lib/firestore-batch";
 
 type AggregatedLease = {
   lease: LeaseAgreement;
@@ -26,22 +28,11 @@ type AggregatedLease = {
   property: Property | null;
 };
 
-// Helper function to split an array into chunks
-function chunkArray<T>(array: T[], size: number): T[][] {
-  if (array.length === 0) return [];
-  const chunks: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-  return chunks;
-}
 
 
 export default function LandlordLeasesPage() {
   const { user: landlord, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const [aggregatedLeases, setAggregatedLeases] = React.useState<AggregatedLease[]>([]);
-  const [isAggregating, setIsAggregating] = React.useState(true);
 
   const leasesQuery = useMemoFirebase(() => {
     if (!landlord) return null;
@@ -50,58 +41,21 @@ export default function LandlordLeasesPage() {
 
   const { data: landlordLeases, isLoading: areLeasesLoading } = useCollection<LeaseAgreement>(leasesQuery);
 
-  React.useEffect(() => {
-    if (areLeasesLoading) return;
-    if (!landlordLeases || !firestore) {
-      setAggregatedLeases([]);
-      setIsAggregating(false);
-      return;
-    }
-
-    const aggregateData = async () => {
-      setIsAggregating(true);
-      if (landlordLeases.length === 0) {
-        setAggregatedLeases([]);
-        setIsAggregating(false);
-        return;
-      }
-
-      const tenantIds = [...new Set(landlordLeases.map(l => l.tenantId))].filter(Boolean);
-      const propertyIds = [...new Set(landlordLeases.map(l => l.propertyId))].filter(Boolean);
-
-      const usersMap = new Map<string, User>();
-      const propertiesMap = new Map<string, Property>();
-
-      if (tenantIds.length > 0) {
-        const userChunks = chunkArray(tenantIds, 30);
-        for (const chunk of userChunks) {
-          const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-          const userSnapshots = await getDocs(usersQuery);
-          userSnapshots.forEach((doc) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-        }
-      }
-
-      if (propertyIds.length > 0) {
-        const propertyChunks = chunkArray(propertyIds, 30);
-        for (const chunk of propertyChunks) {
-          const propertyPromises = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
-          const propertySnapshots = await getDocs(propertyPromises);
-          propertySnapshots.forEach((doc) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
-        }
-      }
-
-      const finalData = landlordLeases.map(lease => ({
-        lease,
-        tenant: usersMap.get(lease.tenantId) || null,
-        property: propertiesMap.get(lease.propertyId) || null,
-      }));
-
-      setAggregatedLeases(finalData.sort((a, b) => new Date(b.lease.startDate).getTime() - new Date(a.lease.startDate).getTime()));
-      setIsAggregating(false);
-    };
-
-    aggregateData();
-  }, [landlordLeases, areLeasesLoading, firestore]);
+  const { data: aggregatedLeases = [], isLoading: isAggregating } = useAsyncResult(
+    landlordLeases,
+    async (leases): Promise<AggregatedLease[]> => {
+      const [tenants, properties] = await Promise.all([
+        fetchDocsByIds<User>(firestore, 'users', leases.map((l) => l.tenantId)),
+        fetchDocsByIds<Property>(firestore, 'properties', leases.map((l) => l.propertyId)),
+      ]);
+      return leases
+        .map((lease) => ({
+          lease,
+          tenant: tenants.get(lease.tenantId) ?? null,
+          property: properties.get(lease.propertyId) ?? null,
+        }))
+        .sort((x, y) => new Date(y.lease.startDate).getTime() - new Date(x.lease.startDate).getTime());
+    }, { keepPrevious: true });
 
   const getStatusVariant = (status: LeaseAgreement['status']) => {
     switch (status) {

@@ -99,16 +99,13 @@ export default function LandlordPropertyDetailPage() {
   const router = useRouter();
 
   const searchParams = useSearchParams();
-  const [showShareModal, setShowShareModal] = useState(false);
+  // Freshly created listings land here with ?new=true to prompt sharing.
+  const [showShareModal, setShowShareModal] = useState(() => searchParams.get("new") === "true");
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (searchParams.get("new") === "true") {
-      setShowShareModal(true);
-      // Remove query param without reload
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, "", newUrl);
-    }
+    // Drop ?new=true so a refresh doesn't reopen the share dialog.
+    if (searchParams.get("new") === "true") window.history.replaceState({}, "", window.location.pathname);
   }, [searchParams]);
 
   const propertyRef = useMemoFirebase(

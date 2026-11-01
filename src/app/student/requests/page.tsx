@@ -20,7 +20,7 @@ import type { RentalApplication, UserProfile as User, Property } from '@/types';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import Loading from '@/app/loading';
 import { cn } from '@/lib/utils';
 import {
@@ -45,6 +45,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { PageHeader } from "@/components/dashboard";
+import { useAsyncResult } from "@/hooks/use-async-result";
+import { fetchDocsByIds } from "@/lib/firestore-batch";
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -52,22 +54,11 @@ type AggregatedRequest = {
   property: Property | null;
 };
 
-// Helper function to split an array into chunks
-function chunkArray<T>(array: T[], size: number): T[][] {
-  if (array.length === 0) return [];
-  const chunks: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-  return chunks;
-}
 
 
 export default function StudentRequestsPage() {
   const { user: student, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const [aggregatedRequests, setAggregatedRequests] = React.useState<AggregatedRequest[]>([]);
-  const [isAggregating, setIsAggregating] = React.useState(true);
 
   const requestsQuery = useMemoFirebase(() => {
     if (!student) return null;
@@ -76,58 +67,21 @@ export default function StudentRequestsPage() {
 
   const { data: studentRequests, isLoading: areRequestsLoading } = useCollection<RentalApplication>(requestsQuery);
 
-  React.useEffect(() => {
-    if (areRequestsLoading) return;
-    if (!studentRequests || !firestore) {
-      setAggregatedRequests([]);
-      setIsAggregating(false);
-      return;
-    }
-
-    const aggregateData = async () => {
-      setIsAggregating(true);
-      if (studentRequests.length === 0) {
-        setAggregatedRequests([]);
-        setIsAggregating(false);
-        return;
-      }
-
-      const landlordIds = [...new Set(studentRequests.map(r => r.landlordId))].filter(Boolean);
-      const propertyIds = [...new Set(studentRequests.map(r => r.propertyId))].filter(Boolean);
-
-      const usersMap = new Map<string, User>();
-      const propertiesMap = new Map<string, Property>();
-
-      if (landlordIds.length > 0) {
-        const userChunks = chunkArray(landlordIds, 30);
-        for (const chunk of userChunks) {
-          const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-          const userSnapshots = await getDocs(usersQuery);
-          userSnapshots.forEach((doc) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-        }
-      }
-
-      if (propertyIds.length > 0) {
-        const propertyChunks = chunkArray(propertyIds, 30);
-        for (const chunk of propertyChunks) {
-          const propertyPromises = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
-          const propertySnapshots = await getDocs(propertyPromises);
-          propertySnapshots.forEach((doc) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
-        }
-      }
-
-      const finalData = studentRequests.map(request => ({
-        request,
-        landlord: usersMap.get(request.landlordId) || null,
-        property: propertiesMap.get(request.propertyId) || null,
-      }));
-
-      setAggregatedRequests(finalData.sort((a, b) => new Date(b.request.applicationDate).getTime() - new Date(a.request.applicationDate).getTime()));
-      setIsAggregating(false);
-    };
-
-    aggregateData();
-  }, [studentRequests, areRequestsLoading, firestore]);
+  const { data: aggregatedRequests = [], isLoading: isAggregating } = useAsyncResult(
+    studentRequests,
+    async (items): Promise<AggregatedRequest[]> => {
+      const [people, properties] = await Promise.all([
+        fetchDocsByIds<User>(firestore, 'users', items.map((x) => x.landlordId)),
+        fetchDocsByIds<Property>(firestore, 'properties', items.map((x) => x.propertyId)),
+      ]);
+      return items
+        .map((request) => ({
+          request,
+          landlord: people.get(request.landlordId) ?? null,
+          property: properties.get(request.propertyId) ?? null,
+        }))
+        .sort((x, y) => new Date(y.request.applicationDate).getTime() - new Date(x.request.applicationDate).getTime());
+    }, { keepPrevious: true });
 
   const [requestToDelete, setRequestToDelete] = React.useState<string | null>(null);
   const [requestToEdit, setRequestToEdit] = React.useState<RentalApplication | null>(null);

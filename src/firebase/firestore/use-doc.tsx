@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { isMemoizedFirebaseObject } from '@/firebase/provider';
 
 /** Utility type to add an 'id' field to a given type T. */
 type WithId<T> = T & { id: string };
@@ -42,65 +43,46 @@ export interface UseDocResult<T> {
 export function useDoc<T = DocumentData>(
   memoizedDocRef: DocumentReference<DocumentData> | null | undefined,
 ): UseDocResult<T> {
-  type StateDataType = WithId<T> | null;
-
-  const [data, setData] = useState<StateDataType>(null);
-  // Initialize isLoading based on whether we have a ref to fetch. 
-  // If we have a ref, we start loading immediately.
-  const [isLoading, setIsLoading] = useState<boolean>(!!memoizedDocRef);
-  const [error, setError] = useState<FirestoreError | Error | null>(null);
+  // See useCollection: results are keyed by the ref they belong to.
+  const [result, setResult] = useState<{
+    source: unknown;
+    token: number;
+    data: WithId<T> | null;
+    error: FirestoreError | Error | null;
+  } | null>(null);
   const [refetchKey, setRefetchKey] = useState(0);
 
   const refetch = useCallback(() => {
-    setRefetchKey(prev => prev + 1);
+    setRefetchKey((prev) => prev + 1);
   }, []);
 
   useEffect(() => {
-    if (!memoizedDocRef) {
-      setData(null);
-      setIsLoading(false);
-      setError(null);
-      return;
-    }
+    if (!memoizedDocRef) return;
+    const source = memoizedDocRef;
 
-    setIsLoading(true);
-    setError(null);
-
-    const unsubscribe = onSnapshot(
-      memoizedDocRef,
+    return onSnapshot(
+      source,
       (snapshot: DocumentSnapshot<DocumentData>) => {
-        
-        if (snapshot.exists()) {
-          setData({ ...(snapshot.data() as T), id: snapshot.id });
-        } else {
-          setData(null);
-        }
-        setError(null);
-        setIsLoading(false);
+        const data = snapshot.exists() ? { ...(snapshot.data() as T), id: snapshot.id } : null;
+        setResult({ source, token: refetchKey, data, error: null });
       },
       () => {
-        const contextualError = new FirestorePermissionError({
-          operation: 'get',
-          path: memoizedDocRef.path,
-        })
-
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
-
+        const contextualError = new FirestorePermissionError({ operation: 'get', path: source.path });
+        setResult({ source, token: refetchKey, data: null, error: contextualError });
         errorEmitter.emit('permission-error', contextualError);
-      }
+      },
     );
+  }, [memoizedDocRef, refetchKey]);
 
-    return () => unsubscribe();
-  }, [memoizedDocRef, refetchKey]); // Re-run if the memoizedDocRef or refetchKey changes.
-
-  if (memoizedDocRef && !(memoizedDocRef as DocumentReference<DocumentData> & { __memo?: boolean }).__memo) {
+  if (memoizedDocRef && !isMemoizedFirebaseObject(memoizedDocRef)) {
     throw new Error('useDoc reference was not properly memoized using useMemoFirebase. This can cause infinite loops and unnecessary Firestore reads.');
   }
 
-  return { data, isLoading, error, refetch };
+  const current = memoizedDocRef && result?.source === memoizedDocRef ? result : null;
+  return {
+    data: current?.data ?? null,
+    error: current?.error ?? null,
+    isLoading: !!memoizedDocRef && (!current || current.token !== refetchKey),
+    refetch,
+  };
 }
-
-    
-

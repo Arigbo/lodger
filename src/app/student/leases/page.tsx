@@ -13,9 +13,11 @@ import { FileText, Signature } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import Loading from '@/app/loading';
 import { PageHeader } from "@/components/dashboard";
+import { useAsyncResult } from "@/hooks/use-async-result";
+import { fetchDocsByIds } from "@/lib/firestore-batch";
 
 
 type AggregatedLease = {
@@ -24,21 +26,11 @@ type AggregatedLease = {
   property: Property | null;
 };
 
-// Helper function to split an array into chunks
-function chunkArray<T>(array: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-  return chunks;
-}
 
 
 export default function StudentLeasesPage() {
   const { user: student, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const [aggregatedLeases, setAggregatedLeases] = React.useState<AggregatedLease[]>([]);
-  const [isAggregating, setIsAggregating] = React.useState(true);
 
   const leasesQuery = useMemoFirebase(() => {
     if (!student) return null;
@@ -47,58 +39,21 @@ export default function StudentLeasesPage() {
 
   const { data: studentLeases, isLoading: areLeasesLoading } = useCollection<LeaseAgreement>(leasesQuery);
 
-  React.useEffect(() => {
-    if (areLeasesLoading) return;
-    if (!studentLeases || !firestore) {
-      setAggregatedLeases([]);
-      setIsAggregating(false);
-      return;
-    };
-
-    const aggregateData = async () => {
-      setIsAggregating(true);
-      if (studentLeases.length === 0) {
-        setAggregatedLeases([]);
-        setIsAggregating(false);
-        return;
-      }
-
-      const landlordIds = [...new Set(studentLeases.map(l => l.landlordId))].filter(Boolean);
-      const propertyIds = [...new Set(studentLeases.map(l => l.propertyId))].filter(Boolean);
-
-      const usersMap = new Map<string, User>();
-      const propertiesMap = new Map<string, Property>();
-
-      if (landlordIds.length > 0) {
-        const userChunks = chunkArray(landlordIds, 30);
-        for (const chunk of userChunks) {
-          const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-          const usersSnapshot = await getDocs(usersQuery);
-          usersSnapshot.forEach((doc) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-        }
-      }
-
-      if (propertyIds.length > 0) {
-        const propertyChunks = chunkArray(propertyIds, 30);
-        for (const chunk of propertyChunks) {
-          const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
-          const propertiesSnapshot = await getDocs(propertiesQuery);
-          propertiesSnapshot.forEach((doc) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
-        }
-      }
-
-      const finalData = studentLeases.map(lease => ({
-        lease,
-        landlord: usersMap.get(lease.landlordId) || null,
-        property: propertiesMap.get(lease.propertyId) || null,
-      }));
-
-      setAggregatedLeases(finalData.sort((a, b) => new Date(b.lease.startDate).getTime() - new Date(a.lease.startDate).getTime()));
-      setIsAggregating(false);
-    };
-
-    aggregateData();
-  }, [studentLeases, areLeasesLoading, firestore]);
+  const { data: aggregatedLeases = [], isLoading: isAggregating } = useAsyncResult(
+    studentLeases,
+    async (items): Promise<AggregatedLease[]> => {
+      const [people, properties] = await Promise.all([
+        fetchDocsByIds<User>(firestore, 'users', items.map((x) => x.landlordId)),
+        fetchDocsByIds<Property>(firestore, 'properties', items.map((x) => x.propertyId)),
+      ]);
+      return items
+        .map((lease) => ({
+          lease,
+          landlord: people.get(lease.landlordId) ?? null,
+          property: properties.get(lease.propertyId) ?? null,
+        }))
+        .sort((x, y) => new Date(y.lease.startDate).getTime() - new Date(x.lease.startDate).getTime());
+    }, { keepPrevious: true });
 
 
   const getStatusVariant = (status: LeaseAgreement['status']) => {

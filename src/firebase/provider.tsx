@@ -84,11 +84,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   });
 
   useEffect(() => {
-    if (!auth) {
-      setUserAuthState({ ...SIGNED_OUT, userError: new Error("Auth service not provided.") });
-      return;
-    }
-
     let unsubscribeProfile: (() => void) | undefined;
 
     const unsubscribeAuth = onAuthStateChanged(
@@ -207,17 +202,23 @@ export const useFirebaseApp = (): FirebaseApp => {
   return firebaseApp;
 };
 
-type MemoFirebase<T> = T & { __memo?: boolean };
+/** Firestore refs/queries created through useMemoFirebase (checked by useDoc/useCollection). */
+const memoizedFirebaseObjects = new WeakSet<object>();
 
-export function useMemoFirebase<T>(
-  factory: () => T,
-  deps: DependencyList,
-): T | MemoFirebase<T> {
+export function isMemoizedFirebaseObject(value: unknown): boolean {
+  return typeof value === "object" && value !== null && memoizedFirebaseObjects.has(value);
+}
+
+/**
+ * useMemo for Firestore refs and queries. useDoc/useCollection subscribe by
+ * identity, so an un-memoised query would resubscribe on every render; they
+ * throw if given a ref that did not come from this hook.
+ */
+export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T {
+  // A generic memo wrapper must forward caller-provided deps.
+  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/use-memo
   const memoized = useMemo(factory, deps);
-
-  if (typeof memoized !== "object" || memoized === null) return memoized;
-  (memoized as MemoFirebase<T>).__memo = true;
-
+  if (typeof memoized === "object" && memoized !== null) memoizedFirebaseObjects.add(memoized);
   return memoized;
 }
 

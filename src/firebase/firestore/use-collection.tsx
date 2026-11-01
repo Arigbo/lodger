@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { isMemoizedFirebaseObject } from '@/firebase/provider';
 
 /** Utility type to add an 'id' field to a given type T. */
 export type WithId<T> = T & { id: string };
@@ -54,72 +55,54 @@ export interface InternalQuery extends Query<DocumentData> {
  * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
  */
 export function useCollection<T = DocumentData>(
-    memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & {__memo?: boolean})  | null | undefined,
+  memoizedTargetRefOrQuery: CollectionReference<DocumentData> | Query<DocumentData> | null | undefined,
 ): UseCollectionResult<T> {
-  type ResultItemType = WithId<T>;
-  type StateDataType = ResultItemType[] | null;
-
-  const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<FirestoreError | Error | null>(null);
+  // The latest result is stored together with the query it belongs to, so
+  // switching queries never shows another query's data and loading state is
+  // derived rather than set synchronously inside the effect.
+  const [result, setResult] = useState<{
+    source: unknown;
+    token: number;
+    data: WithId<T>[] | null;
+    error: FirestoreError | Error | null;
+  } | null>(null);
   const [refetchKey, setRefetchKey] = useState(0);
 
   const refetch = useCallback(() => {
-    setRefetchKey(prev => prev + 1);
+    setRefetchKey((prev) => prev + 1);
   }, []);
 
   useEffect(() => {
-    if (!memoizedTargetRefOrQuery) {
-      setData(null);
-      setIsLoading(false);
-      setError(null);
-      return;
-    }
+    if (!memoizedTargetRefOrQuery) return;
+    const source = memoizedTargetRefOrQuery;
 
-    setIsLoading(true);
-    setError(null);
-
-    // Directly use memoizedTargetRefOrQuery as it's assumed to be the final query
-    const unsubscribe = onSnapshot(
-      memoizedTargetRefOrQuery,
+    return onSnapshot(
+      source,
       (snapshot: QuerySnapshot<DocumentData>) => {
-        const results: ResultItemType[] = [];
-        for (const doc of snapshot.docs) {
-          results.push({ ...(doc.data() as T), id: doc.id });
-        }
-        setData(results);
-        setError(null);
-        setIsLoading(false);
+        const data = snapshot.docs.map((doc) => ({ ...(doc.data() as T), id: doc.id }));
+        setResult({ source, token: refetchKey, data, error: null });
       },
       () => {
-        // This logic extracts the path from either a ref or a query
-        const path: string =
-          memoizedTargetRefOrQuery.type === 'collection'
-            ? (memoizedTargetRefOrQuery as CollectionReference).path
-            : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.toString();
-
-        const contextualError = new FirestorePermissionError({
-          operation: 'list',
-          path,
-        });
-
-        setError(contextualError);
-        setData(null);
-        setIsLoading(false);
-
-        // trigger global error propagation
+        const path =
+          source.type === 'collection'
+            ? (source as CollectionReference).path
+            : (source as unknown as InternalQuery)._query.path.toString();
+        const contextualError = new FirestorePermissionError({ operation: 'list', path });
+        setResult({ source, token: refetchKey, data: null, error: contextualError });
         errorEmitter.emit('permission-error', contextualError);
-      }
+      },
     );
+  }, [memoizedTargetRefOrQuery, refetchKey]);
 
-    return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery, refetchKey]); // Re-run if the target query/reference or refetchKey changes.
-
-  if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
+  if (memoizedTargetRefOrQuery && !isMemoizedFirebaseObject(memoizedTargetRefOrQuery)) {
     throw new Error('useCollection query was not properly memoized using useMemoFirebase. This can cause infinite loops and unnecessary Firestore reads.');
   }
 
-  return { data, isLoading, error, refetch };
+  const current = memoizedTargetRefOrQuery && result?.source === memoizedTargetRefOrQuery ? result : null;
+  return {
+    data: current?.data ?? null,
+    error: current?.error ?? null,
+    isLoading: !!memoizedTargetRefOrQuery && (!current || current.token !== refetchKey),
+    refetch,
+  };
 }
-
-

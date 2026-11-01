@@ -46,7 +46,7 @@ function ResetPasswordForm({ oobCode }: { oobCode: string }) {
   const { toast } = useToast();
   const [status, setStatus] = useState<
     "verifying" | "ready" | "success" | "invalid"
-  >("verifying");
+  >(oobCode ? "verifying" : "invalid");
   const [email, setEmail] = useState("");
 
   const form = useForm<ResetFormValues>({
@@ -55,10 +55,7 @@ function ResetPasswordForm({ oobCode }: { oobCode: string }) {
   });
 
   useEffect(() => {
-    if (!auth || !oobCode) {
-      setStatus("invalid");
-      return;
-    }
+    if (!oobCode) return;
 
     verifyPasswordResetCode(auth, oobCode)
       .then((userEmail) => {

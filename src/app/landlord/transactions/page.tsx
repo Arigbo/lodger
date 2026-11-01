@@ -30,37 +30,27 @@ import Link from 'next/link';
 import { DateRange } from 'react-day-picker';
 import { addDays, format } from "date-fns";
 import { Calendar } from '@/components/ui/calendar';
-import { useUser, useFirestore } from '@/firebase';
-import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 import Loading from '@/app/loading';
 import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 import { downloadCsv, toCsv } from "@/lib/csv";
+import { useAsyncResult } from "@/hooks/use-async-result";
+import { fetchDocsByIds } from "@/lib/firestore-batch";
 
 
 type AggregatedTransaction = {
   transaction: Transaction;
-  tenant: User;
-  property: Property;
+  tenant: User | null;
+  property: Property | null;
 }
 
-// Helper function to split an array into chunks
-function chunkArray<T>(array: T[], size: number): T[][] {
-  if (!array || array.length === 0) return [];
-  const chunks: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-  return chunks;
-}
 
 
 export default function TransactionsPage() {
   const { user: landlord, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const [aggregatedTransactions, setAggregatedTransactions] = React.useState<AggregatedTransaction[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
 
-  const [filteredTransactions, setFilteredTransactions] = React.useState<AggregatedTransaction[]>([]);
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: addDays(new Date(), -30),
     to: new Date(),
@@ -68,83 +58,42 @@ export default function TransactionsPage() {
   const [type, setType] = React.useState('all');
   const [status, setStatus] = React.useState('all');
 
-  const fetchTransactions = async () => {
-    if (!landlord || !firestore) return;
-    setIsLoading(true);
+  const transactionsQuery = useMemoFirebase(
+    () => (landlord ? query(collection(firestore, 'transactions'), where('landlordId', '==', landlord.uid)) : null),
+    [landlord, firestore],
+  );
+  const { data: transactions, isLoading: areTransactionsLoading } = useCollection<Transaction>(transactionsQuery);
 
-    try {
-      const transactionsQuery = query(collection(firestore, 'transactions'), where('landlordId', '==', landlord.uid));
-      const transactionsSnapshot = await getDocs(transactionsQuery);
-      const allTransactions: Transaction[] = transactionsSnapshot.docs.map((doc_ref) => ({ id: doc_ref.id, ...doc_ref.data() })) as Transaction[];
-
-      if (allTransactions.length === 0) {
-        setAggregatedTransactions([]);
-        setIsLoading(false);
-        return;
-      }
-
-      const tenantIds = [...new Set(allTransactions.map(t => t.tenantId))];
-      const propertyIds = [...new Set(allTransactions.map(t => t.propertyId))];
-
-      const usersMap = new Map<string, User>();
-      const propertiesMap = new Map<string, Property>();
-
-      if (tenantIds.length > 0) {
-        const userChunks = chunkArray(tenantIds, 30);
-        for (const chunk of userChunks) {
-          const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-          const usersSnapshot = await getDocs(usersQuery);
-          usersSnapshot.forEach((doc_ref) => usersMap.set(doc_ref.id, { id: doc_ref.id, ...doc_ref.data() } as User));
-        }
-      }
-
-      if (propertyIds.length > 0) {
-        const propertyChunks = chunkArray(propertyIds, 30);
-        for (const chunk of propertyChunks) {
-          const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
-          const propertiesSnapshot = await getDocs(propertiesQuery);
-          propertiesSnapshot.forEach((doc_ref) => propertiesMap.set(doc_ref.id, { id: doc_ref.id, ...doc_ref.data() } as Property));
-        }
-      }
-
-      const aggregatedData = allTransactions.map(t => ({
-        transaction: t,
-        tenant: usersMap.get(t.tenantId)!,
-        property: propertiesMap.get(t.propertyId)!
+  const { data: aggregatedTransactions = [], isLoading: isAggregating } = useAsyncResult(
+    transactions,
+    async (items): Promise<AggregatedTransaction[]> => {
+      const [tenants, properties] = await Promise.all([
+        fetchDocsByIds<User>(firestore, 'users', items.map((t) => t.tenantId)),
+        fetchDocsByIds<Property>(firestore, 'properties', items.map((t) => t.propertyId)),
+      ]);
+      return items.map((transaction) => ({
+        transaction,
+        tenant: tenants.get(transaction.tenantId) ?? null,
+        property: properties.get(transaction.propertyId) ?? null,
       }));
+    },
+    { keepPrevious: true },
+  );
+  const isLoading = areTransactionsLoading || isAggregating;
 
-      setAggregatedTransactions(aggregatedData);
-    } catch (error) {
-      console.error("Error fetching transactions:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  React.useEffect(() => {
-    fetchTransactions();
-  }, [landlord, firestore]);
-
-  React.useEffect(() => {
-    let result = [...aggregatedTransactions];
-
-    if (date?.from) {
-      result = result.filter(n => {
-        const d = new Date(n.transaction.date);
-        return d >= date.from! && (!date.to || d <= date.to);
-      });
-    }
-
-    if (type !== 'all') {
-      result = result.filter(n => n.transaction.type === type);
-    }
-
-    if (status !== 'all') {
-      result = result.filter(n => n.transaction.status === status);
-    }
-
-    setFilteredTransactions(result.sort((a, b) => new Date(b.transaction.date).getTime() - new Date(a.transaction.date).getTime()));
-  }, [aggregatedTransactions, date, type, status]);
+  const filteredTransactions = React.useMemo(
+    () =>
+      aggregatedTransactions
+        .filter(({ transaction: t }) => {
+          const d = new Date(t.date);
+          if (date?.from && (d < date.from || (date.to && d > date.to))) return false;
+          if (type !== 'all' && t.type !== type) return false;
+          if (status !== 'all' && t.status !== status) return false;
+          return true;
+        })
+        .sort((a, b) => new Date(b.transaction.date).getTime() - new Date(a.transaction.date).getTime()),
+    [aggregatedTransactions, date, type, status],
+  );
 
   const totalRevenue = filteredTransactions
     .filter(t => t.transaction.status === 'Completed')

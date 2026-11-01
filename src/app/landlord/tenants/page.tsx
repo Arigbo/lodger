@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect } from 'react';
 import {
   Card,
 } from '@/components/ui/card';
@@ -18,11 +17,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { UserProfile as User, Property } from '@/types';
 import { MoreHorizontal, Users, Mail, User as UserIcon, Building, ShieldCheck, MapPin, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { useUser, useFirestore } from '@/firebase';
-import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import Loading from '@/app/loading';
 import { PageHeader } from "@/components/dashboard";
+import { useAsyncResult } from "@/hooks/use-async-result";
+import { fetchDocsByIds } from "@/lib/firestore-batch";
 
 type TenantWithProperty = {
   tenant: User;
@@ -30,62 +31,28 @@ type TenantWithProperty = {
 };
 
 // Helper function to split an array into chunks for 'in' queries.
-function chunkArray<T>(array: T[], size: number): T[][] {
-  if (array.length === 0) return [];
-  const chunks: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-  return chunks;
-}
 
 export default function TenantsPage() {
   const { user: landlord, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const [tenantsWithProperties, setTenantsWithProperties] = useState<TenantWithProperty[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (!landlord || !firestore) return;
+  const propertiesQuery = useMemoFirebase(
+    () => (landlord ? query(collection(firestore, 'properties'), where('landlordId', '==', landlord.uid)) : null),
+    [landlord, firestore],
+  );
+  const { data: landlordProperties, isLoading: arePropertiesLoading } = useCollection<Property>(propertiesQuery);
 
-    const fetchTenants = async () => {
-      setIsLoading(true);
-      const propertiesQuery = query(
-        collection(firestore, 'properties'),
-        where('landlordId', '==', landlord.uid)
-      );
-      const propertiesSnapshot = await getDocs(propertiesQuery);
-      const landlordProperties: Property[] = propertiesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Property));
-
-      const occupiedProperties = landlordProperties.filter(p => p.currentTenantId);
-      const tenantIds = [...new Set(occupiedProperties.map(p => p.currentTenantId!))];
-
-      if (tenantIds.length === 0) {
-        setTenantsWithProperties([]);
-        setIsLoading(false);
-        return;
-      }
-
-      const usersMap = new Map<string, User>();
-      const userChunks = chunkArray(tenantIds, 30);
-      await Promise.all(userChunks.map(async chunk => {
-        const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-        const usersSnapshot = await getDocs(usersQuery);
-        usersSnapshot.forEach((doc) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-      }));
-
-      const combinedData = occupiedProperties.map(property => {
-        const tenant = usersMap.get(property.currentTenantId!);
-        if (!tenant) return null;
-        return { tenant, property };
-      }).filter((item): item is TenantWithProperty => item !== null);
-
-      setTenantsWithProperties(combinedData);
-      setIsLoading(false);
-    };
-
-    fetchTenants();
-  }, [landlord, firestore]);
+  const { data: tenantsWithProperties = [], isLoading: areTenantsLoading } = useAsyncResult(
+    landlordProperties,
+    async (props): Promise<TenantWithProperty[]> => {
+      const occupied = props.filter((p) => p.currentTenantId);
+      const tenants = await fetchDocsByIds<User>(firestore, 'users', occupied.map((p) => p.currentTenantId));
+      return occupied.flatMap((property) => {
+        const tenant = tenants.get(property.currentTenantId!);
+        return tenant ? [{ tenant, property }] : [];
+      });
+    }, { keepPrevious: true });
+  const isLoading = arePropertiesLoading || areTenantsLoading;
 
   if (isLoading || isUserLoading) {
     return <Loading />;

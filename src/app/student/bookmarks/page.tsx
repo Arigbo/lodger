@@ -26,10 +26,11 @@ export default function BookmarksPage() {
 
     const [searchQuery, setSearchQuery] = useState('');
 
+    const bookmarkedIds = userProfile?.bookmarkedPropertyIds;
     const bookmarkedProperties = useMemo(() => {
-        if (!allProperties || !userProfile?.bookmarkedPropertyIds) return [];
-        return allProperties.filter(p => userProfile.bookmarkedPropertyIds?.includes(p.id));
-    }, [allProperties, userProfile?.bookmarkedPropertyIds]);
+        if (!allProperties || !bookmarkedIds) return [];
+        return allProperties.filter(p => bookmarkedIds.includes(p.id));
+    }, [allProperties, bookmarkedIds]);
 
     const filteredProperties = useMemo(() => {
         if (!searchQuery) return bookmarkedProperties;

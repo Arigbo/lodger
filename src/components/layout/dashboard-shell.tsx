@@ -39,8 +39,13 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
     }
   }, [isUserLoading, user, profile, role, router, pathname]);
 
-  // Close the mobile drawer whenever the route changes.
-  useEffect(() => setMobileNavOpen(false), [pathname]);
+  // Close the mobile drawer whenever the route changes (adjusting state
+  // during render, as recommended over an effect).
+  const [navPathname, setNavPathname] = useState(pathname);
+  if (navPathname !== pathname) {
+    setNavPathname(pathname);
+    setMobileNavOpen(false);
+  }
 
   if (isUserLoading || !isAuthorized) return <LogoLoader />;
 

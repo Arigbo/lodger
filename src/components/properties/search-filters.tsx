@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { amenities as allAmenities } from "@/types";
 import { MapPin, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -66,10 +66,13 @@ export default function SearchFilters({
   const [filters, setFilters] = useState<FilterState>(initialFilters || {});
   const [price, setPrice] = useState(initialFilters?.price || 3000);
 
-  useEffect(() => {
-    if (initialFilters) {
-      setFilters(initialFilters);
-      setPrice(
+  // Re-sync local state when the parent passes new filters (adjusted during
+  // render rather than in an effect).
+  const [syncedFrom, setSyncedFrom] = useState({ initialFilters, userCurrency });
+  if (initialFilters && (syncedFrom.initialFilters !== initialFilters || syncedFrom.userCurrency !== userCurrency)) {
+    setSyncedFrom({ initialFilters, userCurrency });
+    setFilters(initialFilters);
+    setPrice(
         initialFilters.price ||
           (userCurrency === "NGN"
             ? 1000000
@@ -77,10 +80,9 @@ export default function SearchFilters({
               ? 10000
               : 3000),
       );
-    }
-  }, [initialFilters, userCurrency]);
+  }
 
-  const handleInputChange = (field: keyof FilterState, value: any) => {
+  const handleInputChange = <K extends keyof FilterState>(field: K, value: FilterState[K]) => {
     const newFilters = { ...filters, [field]: value };
     // If a manual location filter is changed, turn off `useCurrentLocation`
     if (["country", "state", "city", "school"].includes(field)) {

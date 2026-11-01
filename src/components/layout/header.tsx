@@ -50,7 +50,12 @@ export default function Header({ variant = "marketing", onToggleNav }: HeaderPro
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => setMobileMenuOpen(false), [pathname]);
+  // Close the mobile menu on navigation (state adjusted during render).
+  const [menuPathname, setMenuPathname] = useState(pathname);
+  if (menuPathname !== pathname) {
+    setMenuPathname(pathname);
+    setMobileMenuOpen(false);
+  }
 
   const handleLogout = async () => {
     await signOut(auth);

@@ -165,7 +165,7 @@ export default function MessagesPage() {
                 setLocalSelectedConversationId(convoId);
             }
         }
-    }, [selectedConversationId, conversations, localSelectedConversationId, router, pathname]);
+    }, [selectedConversationId, conversations, localSelectedConversationId, searchParams]);
 
     // Mark messages as read when conversation is opened
     useEffect(() => {

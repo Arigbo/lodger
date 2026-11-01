@@ -110,9 +110,11 @@ export default function EditPropertyPage() {
         amenities: property.amenities || [],
         rules: property.rules?.join(", ") || "",
       } as EditFormValues);
-      setPreviousCurrency(property.currency || "USD");
     }
   }, [property, form]);
+
+  // Remember the saved currency once the property has loaded (adjusted during render).
+  if (property && previousCurrency === null) setPreviousCurrency(property.currency || "USD");
 
   const handleCurrencyChange = (newCurrency: string) => {
     const currentCurrency = form.getValues("currency");

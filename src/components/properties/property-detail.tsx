@@ -166,11 +166,7 @@ export default function PropertyDetail({
     [cityProperties, id],
   );
 
-  const isBookmarked = React.useMemo(() => {
-    if (!userProfile || !property) return false;
-    const bookmarkedIds = userProfile.bookmarkedPropertyIds || [];
-    return bookmarkedIds.includes(property.id);
-  }, [userProfile?.bookmarkedPropertyIds, property?.id]);
+  const isBookmarked = !!property && !!userProfile?.bookmarkedPropertyIds?.includes(property.id);
 
   if (!property && isPropertyLoading) {
     return (

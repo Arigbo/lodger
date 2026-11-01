@@ -15,98 +15,57 @@ import { Badge } from '@/components/ui/badge';
 import type { MaintenanceRequest, UserProfile as User, Property } from '@/types';
 import { MoreHorizontal, Wrench, Clock, AlertCircle, CheckCircle2, XCircle, Building, User as UserIcon, Calendar, ArrowRight, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
-import { useUser, useFirestore } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { collection, query, where, getDocs, documentId, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, doc, updateDoc } from 'firebase/firestore';
 import Loading from '@/app/loading';
 import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
+import { useAsyncResult } from "@/hooks/use-async-result";
+import { fetchDocsByIds } from "@/lib/firestore-batch";
 
 type AggregatedRequest = MaintenanceRequest & {
   tenantName: string;
   propertyName: string;
 };
 
-// Helper function to split an array into chunks
-function chunkArray<T>(array: T[], size: number): T[][] {
-  if (!array || array.length === 0) return [];
-  const chunks: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-  return chunks;
-}
 
 export default function MaintenancePage() {
   const { user: landlord, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const [requests, setRequests] = React.useState<AggregatedRequest[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const requestsQuery = useMemoFirebase(
+    () => (landlord ? query(collection(firestore, 'maintenanceRequests'), where('landlordId', '==', landlord.uid)) : null),
+    [landlord, firestore],
+  );
+  const { data: rawRequests, isLoading: areRequestsLoading } = useCollection<MaintenanceRequest>(requestsQuery);
 
-  const fetchMaintenanceRequests = async () => {
-    if (!landlord || !firestore) return;
-    setIsLoading(true);
-
-    const requestsQuery = query(collection(firestore, 'maintenanceRequests'), where('landlordId', '==', landlord.uid));
-    const requestsSnapshot = await getDocs(requestsQuery);
-    const landlordRequests: MaintenanceRequest[] = requestsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as MaintenanceRequest));
-
-    if (landlordRequests.length === 0) {
-      setRequests([]);
-      setIsLoading(false);
-      return;
-    }
-
-    const tenantIds = [...new Set(landlordRequests.map(r => r.tenantId))];
-    const propertyIds = [...new Set(landlordRequests.map(r => r.propertyId))];
-
-    const usersMap = new Map<string, User>();
-    const propertiesMap = new Map<string, Property>();
-
-    if (tenantIds.length > 0) {
-      const userChunks = chunkArray(tenantIds, 30);
-      for (const chunk of userChunks) {
-        const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
-        const usersSnapshot = await getDocs(usersQuery);
-        usersSnapshot.forEach((doc) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
-      }
-    }
-
-    if (propertyIds.length > 0) {
-      const propertyChunks = chunkArray(propertyIds, 30);
-      for (const chunk of propertyChunks) {
-        const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
-        const propertiesSnapshot = await getDocs(propertiesQuery);
-        propertiesSnapshot.forEach((doc) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
-      }
-    }
-
-    const aggregatedData = landlordRequests.map(request => ({
-      ...request,
-      tenantName: usersMap.get(request.tenantId)?.name || 'Unknown Tenant',
-      propertyName: propertiesMap.get(request.propertyId)?.title || 'Unknown Property',
-    }));
-
-    setRequests(aggregatedData.sort((a, b) => new Date(b.requestDate).getTime() - new Date(a.requestDate).getTime()));
-    setIsLoading(false);
-  };
-
-  React.useEffect(() => {
-    fetchMaintenanceRequests();
-  }, [landlord, firestore]);
+  const { data: requests = [], isLoading: isAggregating } = useAsyncResult(
+    rawRequests,
+    async (items): Promise<AggregatedRequest[]> => {
+      const [tenants, properties] = await Promise.all([
+        fetchDocsByIds<User>(firestore, 'users', items.map((r) => r.tenantId)),
+        fetchDocsByIds<Property>(firestore, 'properties', items.map((r) => r.propertyId)),
+      ]);
+      return items
+        .map((request) => ({
+          ...request,
+          tenantName: tenants.get(request.tenantId)?.name || 'Unknown tenant',
+          propertyName: properties.get(request.propertyId)?.title || 'Unknown property',
+        }))
+        .sort((x, y) => new Date(y.requestDate).getTime() - new Date(x.requestDate).getTime());
+    },
+    { keepPrevious: true },
+  );
+  const isLoading = areRequestsLoading || isAggregating;
 
   const handleUpdateStatus = async (requestId: string, newStatus: MaintenanceRequest['status']) => {
     try {
       const requestRef = doc(firestore, 'maintenanceRequests', requestId);
       await updateDoc(requestRef, { status: newStatus });
 
-      setRequests(prev => prev.map(req =>
-        req.id === requestId ? { ...req, status: newStatus } : req
-      ));
-
       toast({
-        title: "Status Synchronized",
-        description: `Request has been transitioned to ${newStatus}.`,
+        title: "Status updated",
+        description: `Request marked as ${newStatus.toLowerCase()}.`,
       });
     } catch (error) {
       console.error("Error updating status:", error);
