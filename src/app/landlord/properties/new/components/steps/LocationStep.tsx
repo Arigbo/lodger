@@ -234,6 +234,7 @@ export const LocationStep = ({ form }: LocationStepProps) => {
                     step="any"
                     placeholder="6.5244"
                     {...field}
+                    value={field.value ?? ""}
                     onChange={(e) =>
                       field.onChange(
                         e.target.value === "" ? "" : parseFloat(e.target.value),
@@ -260,6 +261,7 @@ export const LocationStep = ({ form }: LocationStepProps) => {
                     step="any"
                     placeholder="3.3792"
                     {...field}
+                    value={field.value ?? ""}
                     onChange={(e) =>
                       field.onChange(
                         e.target.value === "" ? "" : parseFloat(e.target.value),

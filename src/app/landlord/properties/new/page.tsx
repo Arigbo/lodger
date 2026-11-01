@@ -88,6 +88,9 @@ export default function AddPropertyPage() {
             rules: '',
             leaseTemplate: '',
             currency: 'USD',
+            // Empty strings (not undefined) keep the coordinate inputs controlled.
+            lat: '',
+            lng: '',
         },
     });
 
