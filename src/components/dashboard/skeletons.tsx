@@ -86,7 +86,7 @@ function CardGridSkeletons({ count = 6 }: { count?: number }) {
 
 function DetailSkeleton() {
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
         <Skeleton className="aspect-[16/8] w-full rounded-2xl" />
         <div className="space-y-3 rounded-2xl border bg-card p-6">
@@ -120,7 +120,7 @@ export function PageSkeleton({ variant = "list", className }: { variant?: PageSk
         <div className="space-y-8">
           <Skeleton className="h-28 w-full rounded-2xl" />
           <StatSkeletons />
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
               <RowSkeletons rows={4} />
             </div>

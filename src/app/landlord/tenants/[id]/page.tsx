@@ -272,7 +272,7 @@ export default function TenantDetailPage() {
                 </div>
             )}
 
-            <div className="grid items-start gap-6 lg:grid-cols-3">
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
                 <div className="space-y-6 lg:col-span-2">
                     {property && rentStatus ? (
                         <div className="grid gap-4 sm:grid-cols-3">

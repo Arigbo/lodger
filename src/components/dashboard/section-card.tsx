@@ -6,11 +6,16 @@ import { cn } from "@/lib/utils";
 type SectionCardProps = {
   title: ReactNode;
   description?: ReactNode;
-  action?: { href: string; label: string };
+  /** A "see all" style link, or any element (e.g. a button). */
+  action?: { href: string; label: string } | ReactNode;
   children: ReactNode;
   className?: string;
   bodyClassName?: string;
 };
+
+function isLinkAction(action: unknown): action is { href: string; label: string } {
+  return typeof action === "object" && action !== null && "href" in action && "label" in action && !("$$typeof" in action);
+}
 
 /** Titled panel used to group content on dashboard pages. */
 export function SectionCard({ title, description, action, children, className, bodyClassName }: SectionCardProps) {
@@ -21,7 +26,7 @@ export function SectionCard({ title, description, action, children, className, b
           <h2 className="font-semibold text-foreground">{title}</h2>
           {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
         </div>
-        {action && (
+        {isLinkAction(action) ? (
           <Link
             href={action.href}
             className="group inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline"
@@ -29,6 +34,8 @@ export function SectionCard({ title, description, action, children, className, b
             {action.label}
             <ArrowRight aria-hidden className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
           </Link>
+        ) : (
+          action && <div className="shrink-0">{action}</div>
         )}
       </header>
       <div className={bodyClassName}>{children}</div>

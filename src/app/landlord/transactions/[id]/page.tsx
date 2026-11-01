@@ -102,7 +102,7 @@ export default function TransactionDetailPage() {
         }
       />
 
-      <div className="grid items-start gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <section className="overflow-hidden rounded-2xl border bg-card shadow-sm lg:col-span-2">
           <div className="flex flex-col gap-4 border-b bg-muted/30 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div>

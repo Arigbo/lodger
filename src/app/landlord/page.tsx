@@ -168,7 +168,7 @@ export default function LandlordHomePage() {
         <StatCard label="Open repairs" value={repairs?.length ?? 0} icon={Wrench} tone="warning" href="/landlord/maintenance" hint="Reported by tenants" />
       </StatGrid>
 
-      <div className="grid items-start gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <SectionCard
           className="lg:col-span-2"
           title="Action inbox"

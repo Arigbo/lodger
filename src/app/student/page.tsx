@@ -169,7 +169,7 @@ export default function StudentHomePage() {
         </section>
       )}
 
-      <div className="grid items-start gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <SectionCard
           className="lg:col-span-2"
           title="Your requests"

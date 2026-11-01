@@ -1,648 +1,485 @@
-
 'use client';
 
-import { notFound, useParams, useRouter } from "next/navigation";
-import { formatPrice, cn } from "@/lib/utils";
-import { add } from "date-fns/add";
-import { format, isPast } from "date-fns";
+import { useEffect, useEffectEvent, useState } from 'react';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { add, differenceInCalendarDays, format, formatDistanceToNow, isPast } from 'date-fns';
+import {
+  AlertTriangle,
+  CalendarClock,
+  CreditCard,
+  FileText,
+  Home,
+  Hourglass,
+  Mail,
+  MessageSquare,
+  PenLine,
+  Receipt,
+  Wallet,
+  Wrench,
+} from 'lucide-react';
+import { collection, doc, query, updateDoc, where } from 'firebase/firestore';
+import { EmptyState, PageHeader, PageSkeleton, SectionCard, StatCard, StatGrid, StatusBadge } from '@/components/dashboard';
+import { ReportIssueDialog } from '@/components/maintenance/report-issue-dialog';
 import PaymentDialog from '@/components/payments/payment-dialog';
-import { ScrollArea } from "@/components/ui/scroll-area";
-import TenancySkeleton from "@/components/leases/tenancy-skeleton";
-import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase";
-import { doc, collection, query, where, updateDoc } from "firebase/firestore";
-import { Badge } from "@/components/ui/badge";
-import { useState, useEffect, useEffectEvent, useMemo } from "react";
-import { useToast } from "@/hooks/use-toast";
-import type { Property, UserProfile as User, Transaction, LeaseAgreement } from "@/types";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { AlertTriangle, FileText, User as UserIcon, MessageSquare, Clock, DollarSign, Signature } from "lucide-react";
-import { toDate } from "@/lib/dates";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { sendNotification } from '@/lib/notifications';
+import { formatPrice } from '@/lib/utils';
+import type { LeaseAgreement, MaintenanceRequest, Property, Transaction, UserProfile } from '@/types';
 
+type PaymentDetails = { months: number; method: string; amount: number };
+
+const RENT_TYPES = new Set(['Rent', 'Lease Activation']);
+const isAwaiting = (t: Transaction) => t.status === 'Pending' || t.status === 'Pending Verification';
+
+/** The lease that matters most for this home: current, then pending, then the latest. */
+function pickLease(leases: LeaseAgreement[] | null) {
+  if (!leases?.length) return undefined;
+  const rank = { active: 0, terminating: 0, pending: 1, expired: 2 } as const;
+  return [...leases].sort((a, b) => rank[a.status] - rank[b.status] || b.startDate.localeCompare(a.startDate))[0];
+}
 
 export default function TenancyDetailPage() {
-    const params = useParams();
-    const id = Array.isArray(params.id) ? params.id[0] : params.id;
-    const { user, isUserLoading } = useUser();
-    const firestore = useFirestore();
-    const router = useRouter();
+  const { id } = useParams<{ id: string }>();
+  const { user, profile, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [isVacateOpen, setIsVacateOpen] = useState(false);
 
-    const propertyRef = useMemoFirebase(() => id ? doc(firestore, 'properties', id) : null, [firestore, id]);
-    const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
+  const propertyRef = useMemoFirebase(() => (id ? doc(firestore, 'properties', id) : null), [firestore, id]);
+  const { data: property, isLoading: isPropertyLoading } = useDoc<Property>(propertyRef);
+  const landlordRef = useMemoFirebase(
+    () => (property ? doc(firestore, 'users', property.landlordId) : null),
+    [firestore, property?.landlordId],
+  );
+  const { data: landlord } = useDoc<UserProfile>(landlordRef);
 
-    const landlordRef = useMemoFirebase(() => property ? doc(firestore, 'users', property.landlordId) : null, [firestore, property]);
-    const { data: landlord, isLoading: isLandlordLoading } = useDoc<User>(landlordRef);
+  const mine = (name: string) =>
+    user && id ? query(collection(firestore, name), where('tenantId', '==', user.uid), where('propertyId', '==', id)) : null;
+  const leaseQuery = useMemoFirebase(() => mine('leaseAgreements'), [firestore, user, id]);
+  const txQuery = useMemoFirebase(() => mine('transactions'), [firestore, user, id]);
+  const repairsQuery = useMemoFirebase(() => mine('maintenanceRequests'), [firestore, user, id]);
+  const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leaseQuery);
+  const { data: transactions } = useCollection<Transaction>(txQuery);
+  const { data: repairs } = useCollection<MaintenanceRequest>(repairsQuery);
+  const lease = pickLease(leases);
 
-    const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-    const [isVacateDialogOpen, setIsVacateDialogOpen] = useState(false);
-
-    const transactionsQuery = useMemoFirebase(() => (user && id) ? query(collection(firestore, 'transactions'), where('tenantId', '==', user.uid), where('propertyId', '==', id)) : null, [firestore, user, id]);
-    const { data: transactions, isLoading: areTransactionsLoading } = useCollection<Transaction>(transactionsQuery);
-
-    const leaseQuery = useMemoFirebase(() => (user && id) ? query(collection(firestore, 'leaseAgreements'), where('propertyId', '==', id), where('tenantId', '==', user.uid)) : null, [firestore, user, id]);
-    const { data: leases, isLoading: isLeaseLoading } = useCollection<LeaseAgreement>(leaseQuery);
-    const lease = leases?.[0];
-
-    const { toast } = useToast();
-
-    const handlePaymentSuccess = async (details: { months: number, method: string, amount: number }) => {
-        if (!lease || !property || !user) return;
-
-        try {
-            // If it's a Stripe payment, we might want to record it here if the dialog didn't
-            // But based on the current architecture, the dialog handles the record creation for offline.
-            // For Stripe, we'll assume the dialog also handles record creation or we do it here.
-            // Let's ensure consistency.
-
-            // Only execute activation logic if the lease is currently pending
-            if (lease.status === 'pending') {
-                const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
-                const isOffline = details.method === 'Offline';
-
-                if (isOffline) {
-                    // For offline, we don't activate yet, just record the selection
-                    await updateDoc(leaseRef, {
-                        paymentMethod: 'offline',
-                        paymentConfirmed: false,
-                        offlinePaymentAmount: details.amount,
-                        offlinePaymentMonths: details.months
-                    });
-
-                    // Send notification for offline verification
-                    const { sendNotification } = await import('@/lib/notifications');
-                    await sendNotification({
-                        toUserId: lease.landlordId,
-                        type: 'OFFLINE_PAYMENT_PENDING',
-                        firestore: firestore,
-                        propertyName: property.title,
-                        link: `/landlord/requests`
-                    });
-
-                    toast({
-                        title: "Offline Payment Recorded",
-                        description: "Waiting for landlord to confirm payment receipt. Your lease will be activated once verified."
-                    });
-                } else {
-                    // 1. Activate Lease (Stripe)
-                    await updateDoc(leaseRef, {
-                        status: 'active',
-                        paymentMethod: 'stripe',
-                        paymentConfirmed: true
-                    });
-
-                    // 2. Update Property to Occupied
-                    const propertyRef = doc(firestore, 'properties', property.id);
-                    await updateDoc(propertyRef, {
-                        status: 'occupied',
-                        currentTenantId: user.uid,
-                        leaseStartDate: new Date().toISOString(),
-                    });
-
-                    // 3. Notify Landlord
-                    const { sendNotification } = await import('@/lib/notifications');
-                    await sendNotification({
-                        toUserId: lease.landlordId,
-                        type: 'LEASE_SIGNED',
-                        firestore: firestore,
-                        propertyName: property.title,
-                        link: `/landlord/leases/${lease.id}`,
-                        customMessage: `${user.displayName || 'Tenant'} has signed the lease and paid the first month's rent.`
-                    });
-
-                    toast({
-                        title: "Tenancy Activated",
-                        description: "Your lease is now active and your payment has been confirmed."
-                    });
-                }
-            } else {
-                // Regular rent payment for an active lease
-                toast({
-                    title: "Payment Received",
-                    description: `Your payment of ${formatPrice(details.amount, property.currency)} for ${details.months} month(s) has been recorded.`
-                });
-            }
-
-            setIsPaymentDialogOpen(false);
-            // We'll use window.location.reload() for a hard refresh to ensure all Firestore listeners update
-            setTimeout(() => window.location.reload(), 1500);
-        } catch (error) {
-            console.error("Error finalizing payment flow:", error);
-            toast({
-                variant: 'destructive',
-                title: "Error",
-                description: "Transaction completed, but failed to update status. Please contact support."
-            });
+  const handlePaymentSuccess = async (details: PaymentDetails) => {
+    if (!lease || !property || !user) return;
+    try {
+      if (lease.status === 'pending') {
+        const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
+        if (details.method === 'Offline') {
+          await updateDoc(leaseRef, {
+            paymentMethod: 'offline',
+            paymentConfirmed: false,
+            offlinePaymentAmount: details.amount,
+            offlinePaymentMonths: details.months,
+          });
+          await sendNotification({
+            toUserId: lease.landlordId,
+            type: 'OFFLINE_PAYMENT_PENDING',
+            firestore,
+            propertyName: property.title,
+            link: '/landlord/requests',
+          });
+          toast({ title: 'Bank transfer recorded', description: 'Your tenancy starts once your landlord confirms it.' });
+        } else {
+          await updateDoc(leaseRef, { status: 'active', paymentMethod: 'stripe', paymentConfirmed: true });
+          await updateDoc(doc(firestore, 'properties', property.id), {
+            status: 'occupied',
+            currentTenantId: user.uid,
+            leaseStartDate: new Date().toISOString(),
+          });
+          await sendNotification({
+            toUserId: lease.landlordId,
+            type: 'LEASE_SIGNED',
+            firestore,
+            propertyName: property.title,
+            link: `/landlord/leases/${lease.id}`,
+            customMessage: `${profile?.name || 'Your tenant'} signed the lease and paid the first month's rent.`,
+          });
+          toast({ title: 'Tenancy active', description: 'Your payment is confirmed. Welcome home!' });
         }
-    };
-
-    const handleConfirmCompensation = async () => {
-        if (!lease || !property || !user) return;
-        try {
-            // Update lease to expired (Immediate Termination)
-            const leaseRef = doc(firestore, 'leaseAgreements', lease.id);
-            await updateDoc(leaseRef, {
-                status: 'expired',
-                endDate: new Date().toISOString()
-            });
-
-            // Clean up property - mark as available and remove tenant
-            const propertyRef = doc(firestore, 'properties', property.id);
-            await updateDoc(propertyRef, {
-                status: 'available',
-                currentTenantId: null,
-                leaseStartDate: null
-            });
-
-            toast({
-                title: "Tenancy Terminated",
-                description: "You have confirmed receipt of compensation and acknowledged the vacation period. The tenancy is now closed.",
-            });
-            setIsVacateDialogOpen(false);
-            router.push('/student/tenancy');
-        } catch (error) {
-            console.error("Error confirming compensation:", error);
-            toast({
-                title: "Error",
-                description: "Failed to finalize tenancy. Please try again.",
-                variant: "destructive",
-            });
-        }
-    };
-
-    // Auto-close the tenancy once the termination grace period has passed.
-    const autoCloseTenancy = useEffectEvent(() => {
-        handleConfirmCompensation();
-    });
-    useEffect(() => {
-        if (lease?.status === 'terminating' && lease.terminationGracePeriodEnd && isPast(new Date(lease.terminationGracePeriodEnd))) {
-            // Scheduled (and cancelled on cleanup) so it runs once, even under StrictMode.
-            const timer = setTimeout(autoCloseTenancy, 0);
-            return () => clearTimeout(timer);
-        }
-    }, [lease?.status, lease?.terminationGracePeriodEnd]);
-
-    const handleMessageLandlord = () => {
-        if (landlord) {
-            router.push(`/student/messages?contact=${landlord.id}`);
-        }
-    };
-
-    // Rent schedule and payment state, derived from the lease and transactions.
-    const tenancyState = useMemo(() => {
-        if (areTransactionsLoading || isLeaseLoading || !property) return null;
-
-        const tenantTransactions = transactions || [];
-        const leaseStartDate = property?.leaseStartDate ? new Date(property.leaseStartDate) : (toDate(lease?.createdAt) ?? new Date());
-        const leaseEndDate = add(leaseStartDate, { years: 1 });
-
-        // Calculate total months paid from completed rent transactions
-        const rentTransactions = tenantTransactions
-            .filter(t => (t.type === 'Rent' || t.type === 'Lease Activation') && t.status === 'Completed');
-
-        const totalMonthsPaid = rentTransactions.reduce((acc, t) => acc + (t.months || 1), 0);
-        const nextRentDueDate = add(leaseStartDate, { months: totalMonthsPaid });
-
-        const isLeaseActive = lease?.status === 'active';
-        const isRentDue = isPast(nextRentDueDate);
-        const isLeaseExpired = lease?.status === 'expired' || isPast(leaseEndDate);
-
-        // Check for ANY pending payment transaction
-        const hasPendingTransaction = tenantTransactions.some(t =>
-            (t.type === 'Rent' || t.type === 'Lease Activation') &&
-            (t.status === 'Pending' || t.status === 'Pending Verification')
-        );
-
-        // An offline payment is pending if it's selected on the lease record but not confirmed
-        const isOfflineActivationPending = lease?.status === 'pending' && lease?.paymentMethod === 'offline' && !lease?.paymentConfirmed;
-
-        const isAwaitingActivation = lease?.status === 'pending' && lease?.tenantSigned && !lease?.paymentMethod;
-
-        const hasAnyPending = hasPendingTransaction || isOfflineActivationPending;
-
-        return {
-            isLeaseActive,
-            isLeaseExpired,
-            isRentDue,
-            isAwaitingActivation,
-            rentDueDateText: format(nextRentDueDate, 'MMMM do, yyyy'),
-            rentStatusText: isRentDue ? 'Rent is currently overdue' : 'Next rent payment scheduled',
-            leaseEndDate,
-            leaseStartDate,
-            paymentAmount: property.price,
-            hasPendingPayments: hasAnyPending,
-            showPayButton: (isLeaseActive || (lease?.status === 'pending' && lease?.tenantSigned)) && !hasAnyPending,
-        };
-    }, [transactions, areTransactionsLoading, lease, isLeaseLoading, property]);
-
-    const isLoading = isUserLoading || isPropertyLoading || isLandlordLoading || !tenancyState;
-
-    if (isLoading) {
-        return <TenancySkeleton />;
+      } else {
+        toast({
+          title: details.method === 'Offline' ? 'Bank transfer recorded' : 'Payment received',
+          description:
+            details.method === 'Offline'
+              ? 'Your landlord will confirm it shortly.'
+              : `${formatPrice(details.amount, property.currency)} for ${details.months} month${details.months === 1 ? '' : 's'}.`,
+        });
+      }
+      setIsPaymentOpen(false);
+    } catch (error) {
+      console.error('Error finalising payment:', error);
+      toast({
+        variant: 'destructive',
+        title: "Payment went through, but we couldn't update your tenancy",
+        description: 'Please contact support so we can fix it.',
+      });
     }
+  };
 
-    // Allow access if:
-    // User is the tenant on this specific lease (regardless of current property status)
-    const isTenant = user?.uid === lease?.tenantId;
-
-    if (!property || !isTenant) {
-        if (!isLoading) notFound();
-        return null;
+  const closeTenancy = async () => {
+    if (!lease || !property) return;
+    try {
+      await updateDoc(doc(firestore, 'leaseAgreements', lease.id), { status: 'expired', endDate: new Date().toISOString() });
+      await updateDoc(doc(firestore, 'properties', property.id), { status: 'available', currentTenantId: null, leaseStartDate: null });
+      toast({ title: 'Tenancy closed', description: 'Thanks for confirming. Please hand back the keys within 48 hours.' });
+      setIsVacateOpen(false);
+      router.push('/student');
+    } catch (error) {
+      console.error('Error closing tenancy:', error);
+      toast({ variant: 'destructive', title: 'Could not close the tenancy', description: 'Please try again.' });
     }
+  };
 
+  // Close the tenancy automatically once the termination grace period has passed.
+  const autoClose = useEffectEvent(() => void closeTenancy());
+  useEffect(() => {
+    if (lease?.status === 'terminating' && lease.terminationGracePeriodEnd && isPast(new Date(lease.terminationGracePeriodEnd))) {
+      const timer = setTimeout(autoClose, 0); // cancelled on cleanup, so it runs once under StrictMode
+      return () => clearTimeout(timer);
+    }
+  }, [lease?.status, lease?.terminationGracePeriodEnd]);
 
+  if (isUserLoading || isPropertyLoading || isLeaseLoading) return <PageSkeleton variant="overview" />;
 
+  if (!property || !lease || !user) {
     return (
-        <div className="max-w-full overflow-x-hidden space-y-8 md:space-y-8 px-4 md:px-0 animate-in fade-in duration-700">
-            {/* Header Section */}
-            <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-primary/5 p-4 sm:p-6 md:p-8 max-w-full">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-8 max-w-full">
-                    <div className="space-y-3 md:space-y-4 min-w-0 flex-1">
-                        <div className="flex items-center gap-3">
-                            <Badge className="bg-primary text-primary-foreground font-semibold px-4 py-1.5 rounded-full border-none tracking-wider uppercase text-xs shadow-lg">
-                                Active Tenancy
-                            </Badge>
-                        </div>
-                        <h1 className="font-headline text-xl sm:text-2xl md:text-4xl lg:text-3xl font-bold tracking-tight text-foreground leading-tight break-words overflow-wrap-anywhere">
-                            {property.title}
-                        </h1>
-                        <p className="text-xs sm:text-sm md:text-base lg:text-lg font-medium text-muted-foreground/80 leading-relaxed break-words overflow-wrap-anywhere">
-                            {property.location.address}, {property.location.city}
-                        </p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto max-w-full">
-                        {tenancyState?.hasPendingPayments ? (
-                            <div className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-amber-500/10 text-amber-600 rounded-xl sm:rounded-2xl font-semibold text-xs sm:text-xs md:text-xs uppercase tracking-wider border border-amber-500/20">
-                                <Clock className="h-3 w-3" /> <span className="whitespace-nowrap">Pending</span>
-                            </div>
-                        ) : tenancyState?.showPayButton && (
-                            <Button onClick={() => setIsPaymentDialogOpen(true)} size="lg" className="w-full sm:w-auto h-11 sm:h-12 md:h-14 rounded-xl sm:rounded-2xl px-4 sm:px-6 md:px-6 font-semibold text-xs sm:text-xs md:text-xs uppercase tracking-wider shadow-sm transition-all hover:-translate-y-1">
-                                <DollarSign className="mr-1 sm:mr-2 h-3 w-3" /> <span className="whitespace-nowrap">Pay</span>
-                            </Button>
-                        )}
-                        <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 md:h-14 rounded-xl sm:rounded-2xl px-4 sm:px-6 md:px-6 font-semibold text-xs sm:text-xs md:text-xs uppercase tracking-wider border" onClick={handleMessageLandlord}>
-                            <MessageSquare className="mr-1 sm:mr-2 h-3 w-3" /> <span className="whitespace-nowrap">Contact</span>
-                        </Button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Critical Action Alerts */}
-            <div className="space-y-4 md:space-y-6 max-w-full">
-                {lease?.status === 'pending' && !lease.tenantSigned && (
-                    <Card className="overflow-hidden border-none bg-amber-500/10 shadow-sm backdrop-blur-md text-amber-900 animate-in slide-in-from-top duration-500">
-                        <CardHeader className="flex flex-row items-center gap-6 p-8">
-                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-card shadow-sm">
-                                <Signature className="h-8 w-8 text-amber-600" />
-                            </div>
-                            <div className="space-y-2">
-                                <CardTitle className="text-2xl font-bold tracking-tight text-amber-900">Lease Signature Required</CardTitle>
-                                <CardDescription className="text-lg font-medium text-amber-700/80 leading-relaxed">
-                                    Your lease agreement for <span className="font-bold">{property.title}</span> is ready. Review and sign to activate your full tenancy.
-                                </CardDescription>
-                                <Button size="lg" className="mt-4 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl font-bold px-8" asChild>
-                                    <Link href={`/student/leases/${lease.id}`}>Review & Sign Now</Link>
-                                </Button>
-                            </div>
-                        </CardHeader>
-                    </Card>
-                )}
-
-                {lease?.status === 'terminating' && (
-                    <Card className="overflow-hidden border-none bg-destructive/10 shadow-sm backdrop-blur-md text-destructive animate-in slide-in-from-top duration-500">
-                        <CardHeader className="flex flex-row items-center gap-6 p-8">
-                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-card shadow-sm">
-                                <AlertTriangle className="h-8 w-8 text-destructive" />
-                            </div>
-                            <div className="space-y-2 flex-1">
-                                <CardTitle className="text-2xl font-bold tracking-tight">Tenancy Ending Soon</CardTitle>
-                                <CardDescription className="text-lg font-medium text-destructive/80 leading-relaxed">
-                                    A termination process has been initiated. You are entitled to a pro-rated refund of <span className="font-bold">{formatPrice(lease.calculatedRefund || 0, property.currency)}</span>.
-                                </CardDescription>
-                                <Dialog open={isVacateDialogOpen} onOpenChange={setIsVacateDialogOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button
-                                            size="lg"
-                                            className="mt-4 bg-destructive hover:bg-destructive/90 text-white rounded-2xl font-bold px-8"
-                                        >
-                                            Confirm Refund Received & Vacate
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-md rounded-3xl border-none shadow-sm p-8">
-                                        <DialogHeader className="space-y-4">
-                                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive mx-auto">
-                                                <AlertTriangle className="h-8 w-8" />
-                                            </div>
-                                            <div className="space-y-2 text-center">
-                                                <DialogTitle className="text-2xl font-bold tracking-tight">Confirm Vacation</DialogTitle>
-                                                <DialogDescription className="text-base font-medium text-muted-foreground leading-relaxed">
-                                                    You are confirming that you have received your pro-rated refund.
-                                                    <br /><br />
-                                                    <span className="text-foreground font-bold">Important:</span> You are required to vacate the property within <span className="text-destructive font-bold">48 hours</span> of this confirmation.
-                                                </DialogDescription>
-                                            </div>
-                                        </DialogHeader>
-                                        <DialogFooter className="mt-8 flex-col sm:flex-row gap-3">
-                                            <DialogClose asChild>
-                                                <Button variant="ghost" className="rounded-xl font-bold">Cancel</Button>
-                                            </DialogClose>
-                                            <Button
-                                                className="bg-destructive hover:bg-destructive/90 text-white rounded-xl font-bold px-8"
-                                                onClick={handleConfirmCompensation}
-                                            >
-                                                Acknowledge & Terminate
-                                            </Button>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
-                            </div>
-                        </CardHeader>
-                    </Card>
-                )}
-            </div>
-
-            <Tabs defaultValue="payments" className="w-full max-w-full space-y-6 md:space-y-10">
-                <div className="w-full max-w-full overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-                    <TabsList className="flex h-12 sm:h-14 md:h-16 w-full md:w-max md:min-w-[700px] gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl md:rounded-3xl bg-muted/30 p-1.5 sm:p-2 backdrop-blur-md mx-auto">
-                        <TabsTrigger value="payments" className="flex-1 px-2 sm:px-3 md:px-8 rounded-lg sm:rounded-xl md:rounded-2xl text-xs sm:text-xs md:text-sm font-bold tracking-tight transition-all data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:text-primary whitespace-nowrap">
-                            Pay
-                        </TabsTrigger>
-                        <TabsTrigger value="lease" className="flex-1 px-2 sm:px-3 md:px-8 rounded-lg sm:rounded-xl md:rounded-2xl text-xs sm:text-xs md:text-sm font-bold tracking-tight transition-all data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:text-primary whitespace-nowrap">
-                            Lease
-                        </TabsTrigger>
-                        <TabsTrigger value="contact" className="flex-1 px-2 sm:px-3 md:px-8 rounded-lg sm:rounded-xl md:rounded-2xl text-xs sm:text-xs md:text-sm font-bold tracking-tight transition-all data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:text-primary whitespace-nowrap">
-                            Info
-                        </TabsTrigger>
-                    </TabsList>
-                </div>
-
-                <TabsContent value="payments" className="space-y-6 md:space-y-10">
-                    {/* Payment Cards Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-                        <Card className="group relative overflow-hidden border-none bg-card p-4 sm:p-6 md:p-8 shadow-sm transition-all hover:shadow-md">
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                            <div className="relative space-y-4">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-primary/60">Next Payment Due</p>
-                                <h3 className={cn(
-                                    "text-2xl sm:text-3xl font-bold tracking-tight break-words",
-                                    tenancyState?.isRentDue && tenancyState.isLeaseActive ? "text-destructive" : "text-primary"
-                                )}>
-                                    {tenancyState?.rentDueDateText || "N/A"}
-                                </h3>
-                                <p className="text-sm sm:text-base md:text-lg font-bold text-muted-foreground/80">{tenancyState?.rentStatusText || "N/A"}</p>
-                            </div>
-                        </Card>
-
-                        <Card className="group relative overflow-hidden border-none bg-card p-4 sm:p-6 md:p-8 shadow-sm transition-all hover:shadow-md">
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                            <div className="relative space-y-4">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-primary/60">Lease Overview</p>
-                                <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words">
-                                    {tenancyState?.leaseEndDate ? format(tenancyState.leaseEndDate, 'MMMM do, yyyy') : "N/A"}
-                                </h3>
-                                <p className="text-sm sm:text-base md:text-lg font-bold text-muted-foreground/80">Scheduled end of tenancy</p>
-                            </div>
-                        </Card>
-                    </div>
-
-                    <Card className="overflow-hidden border-none bg-card shadow-sm">
-                        <CardHeader className="p-4 sm:p-6 md:p-8 pb-4">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div>
-                                    <CardTitle className="text-2xl font-bold tracking-tight">Financial History</CardTitle>
-                                    <CardDescription className="text-base font-medium">Detailed log of all your rental payments and deposits.</CardDescription>
-                                </div>
-                                <Button variant="outline" className="w-full sm:w-auto rounded-2xl font-bold border-muted/50 hover:bg-muted/10 h-12">
-                                    Export PDF
-                                </Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            {/* Desktop Table View */}
-                            <div className="hidden md:block overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow className="bg-muted/30 border-none">
-                                            <TableHead className="px-4 lg:px-8 font-bold text-foreground">Date</TableHead>
-                                            <TableHead className="font-bold text-foreground">Type</TableHead>
-                                            <TableHead className="text-right font-bold text-foreground">Amount</TableHead>
-                                            <TableHead className="text-center font-bold text-foreground px-4 lg:px-8">Status</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {transactions && transactions.length > 0 ? transactions.map((t) => (
-                                            <TableRow key={t.id} className="border-muted/10 hover:bg-muted/5 transition-colors">
-                                                <TableCell className="px-4 lg:px-8 font-bold text-muted-foreground/80">{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
-                                                <TableCell className="font-bold">{t.type}</TableCell>
-                                                <TableCell className="text-right font-bold text-foreground">{formatPrice(t.amount, t.currency)}</TableCell>
-                                                <TableCell className="text-center px-4 lg:px-8">
-                                                    <Badge className={cn(
-                                                        "rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-wider border-none",
-                                                        t.status === 'Completed' ? "bg-green-500/10 text-green-600"
-                                                            : t.status === 'Pending' ? "bg-amber-500/10 text-amber-600"
-                                                                : "bg-destructive/10 text-destructive"
-                                                    )}>
-                                                        {t.status}
-                                                    </Badge>
-                                                </TableCell>
-                                            </TableRow>
-                                        )) : (
-                                            <TableRow>
-                                                <TableCell colSpan={4} className="text-center py-20 text-muted-foreground font-medium">No transactions found.</TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </div>
-
-                            {/* Mobile Card View */}
-                            <div className="md:hidden divide-y divide-muted/10">
-                                {transactions && transactions.length > 0 ? transactions.map((t) => (
-                                    <div key={t.id} className="p-4 hover:bg-muted/5 transition-colors">
-                                        <div className="flex items-start justify-between mb-3">
-                                            <div>
-                                                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Date</p>
-                                                <p className="font-bold text-sm">{format(new Date(t.date), 'MMM dd, yyyy')}</p>
-                                            </div>
-                                            <Badge className={cn(
-                                                "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider border-none",
-                                                t.status === 'Completed' ? "bg-green-500/10 text-green-600"
-                                                    : t.status === 'Pending' ? "bg-amber-500/10 text-amber-600"
-                                                        : "bg-destructive/10 text-destructive"
-                                            )}>
-                                                {t.status}
-                                            </Badge>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Type</p>
-                                                <p className="font-bold text-sm">{t.type}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Amount</p>
-                                                <p className="font-bold text-sm text-foreground">{formatPrice(t.amount, t.currency)}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )) : (
-                                    <div className="text-center py-20 text-muted-foreground font-medium">No transactions found.</div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="lease" className="space-y-10">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <Card className="lg:col-span-2 overflow-hidden border-none bg-card shadow-sm">
-                            <CardHeader className="p-8 border-b border-muted/20 bg-muted/5 relative overflow-hidden">
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
-                                <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                    <div className="space-y-1">
-                                        <CardTitle className="text-2xl font-bold tracking-tight">Lease Agreement</CardTitle>
-                                        <CardDescription className="font-medium">Legally binding terms of your tenancy.</CardDescription>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Badge className="bg-green-500/10 text-green-600 border-none font-bold">
-                                            Authenticated
-                                        </Badge>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-0 bg-[#fdfdfd]">
-                                <ScrollArea className="h-[600px] w-full p-8 font-serif leading-relaxed text-lg">
-                                    <div className="prose prose-lg max-w-none prose-slate whitespace-pre-wrap selection:bg-primary/20">
-                                        {lease?.leaseText}
-                                    </div>
-                                </ScrollArea>
-                            </CardContent>
-                            <div className="p-8 border-t border-muted/20 bg-muted/5 flex items-center justify-between">
-                                <p className="text-sm font-medium text-muted-foreground">
-                                    Last updated: {(() => {
-                                        const d = toDate(lease?.createdAt);
-                                        return d ? format(d, 'PPP') : 'N/A';
-                                    })()}
-                                </p>
-                                <Button variant="outline" className="rounded-2xl font-bold">Download Signed Copy (PDF)</Button>
-                            </div>
-                        </Card>
-
-                        <div className="space-y-10">
-                            <Card className="overflow-hidden border-none bg-card shadow-sm">
-                                <CardHeader className="p-8">
-                                    <CardTitle className="text-xl font-bold tracking-tight">Signatories</CardTitle>
-                                </CardHeader>
-                                <CardContent className="px-8 pb-8 space-y-6">
-                                    <div className="flex items-center gap-4">
-                                        <div className={cn("flex h-12 w-12 items-center justify-center rounded-2xl", lease?.tenantSigned ? "bg-green-500/10 text-green-600" : "bg-muted/50 text-muted-foreground")}>
-                                            <Signature className="h-6 w-6" />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold">Tenant (You)</p>
-                                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{lease?.tenantSigned ? "Signed & Verified" : "Pending Signature"}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <div className={cn("flex h-12 w-12 items-center justify-center rounded-2xl", lease?.landlordSigned ? "bg-green-500/10 text-green-600" : "bg-muted/50 text-muted-foreground")}>
-                                            <Signature className="h-6 w-6" />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold">Landlord</p>
-                                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{lease?.landlordSigned ? "Signed & Verified" : "Pending Signature"}</p>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="overflow-hidden border-none bg-primary/5 shadow-sm">
-                                <CardContent className="p-8 text-center space-y-6">
-                                    <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-3xl bg-card shadow-sm">
-                                        <FileText className="h-8 w-8 text-primary" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <h4 className="font-bold text-xl tracking-tight">Need a Change?</h4>
-                                        <p className="text-sm font-medium text-muted-foreground/80 leading-relaxed">
-                                            &quot;If you need to discuss lease terms or request an amendment, please contact your landlord directly.&quot;
-                                        </p>
-                                    </div>
-                                    <Button variant="outline" className="w-full h-12 rounded-2xl font-bold border-primary/20 text-primary hover:bg-primary/5 transition-all" onClick={handleMessageLandlord}>
-                                        Message Landlord
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
-                </TabsContent>
-
-                <TabsContent value="contact">
-                    {landlord && (
-                        <Card className="overflow-hidden border-none bg-card shadow-sm max-w-4xl mx-auto">
-                            <div className="relative h-48 bg-primary overflow-hidden">
-                                <div className="absolute inset-0 bg-gradient-to-br from-black/40 to-transparent" />
-                                <div className="absolute -bottom-12 left-12">
-                                    <Avatar className="h-32 w-32 border-8 border-white shadow-sm">
-                                        <AvatarImage src={landlord.profileImageUrl} className="object-cover" />
-                                        <AvatarFallback className="bg-muted">
-                                            <UserIcon className="h-12 w-12 text-muted-foreground" />
-                                        </AvatarFallback>
-                                    </Avatar>
-                                </div>
-                            </div>
-                            <CardContent className="pt-20 px-6 sm:px-12 pb-12">
-                                <div className="space-y-8">
-                                    <div className="space-y-2">
-                                        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">{landlord.name}</h2>
-                                        <div className="text-lg sm:text-xl font-medium text-muted-foreground flex flex-wrap items-center gap-2">
-                                            <Badge variant="secondary" className="rounded-full px-4 py-1 font-bold">Property Landlord</Badge>
-                                            Verified Account
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                        <div className="space-y-4">
-                                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contact Email</p>
-                                            <p className="text-lg font-bold text-foreground">{landlord.email}</p>
-                                        </div>
-                                        <div className="space-y-4">
-                                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Communication Policy</p>
-                                            <p className="text-lg font-bold text-foreground">Standard 24h Response</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-8 border-t border-muted/20">
-                                        <Button size="lg" onClick={handleMessageLandlord} className="w-full sm:w-auto h-16 rounded-2xl px-6 font-bold text-xl shadow-sm transition-all hover:-translate-y-1">
-                                            <MessageSquare className="mr-3 h-6 w-6" /> Send Message
-                                        </Button>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-                </TabsContent>
-            </Tabs>
-
-            {
-                tenancyState && user && lease && (
-                    <PaymentDialog
-                        isOpen={isPaymentDialogOpen}
-                        onClose={() => setIsPaymentDialogOpen(false)}
-                        onPaymentSuccess={handlePaymentSuccess}
-                        amount={tenancyState.paymentAmount || property.price}
-                        tenantName={user.displayName || user.email || ''}
-                        tenantId={user.uid}
-                        landlordId={property.landlordId}
-                        propertyId={property.id}
-                        currency={property.currency}
-                        destinationAccountId={landlord?.stripeAccountId}
-                        metadata={{ type: lease.status === 'pending' ? 'Lease Activation' : 'Rent', leaseId: lease.id }}
-                    />
-                )
-            }
-        </div >
+      <EmptyState
+        className="mx-auto mt-10 max-w-xl"
+        icon={Home}
+        title="We couldn't find this tenancy"
+        description="It may have ended, or it belongs to a different account."
+        action={
+          <Button asChild variant="outline" className="rounded-xl">
+            <Link href="/student">Back to home</Link>
+          </Button>
+        }
+      />
     );
+  }
+
+  // Rent schedule, derived from the lease and completed rent payments.
+  const rentPayments = (transactions ?? []).filter((t) => RENT_TYPES.has(t.type));
+  const monthsPaid = rentPayments.filter((t) => t.status === 'Completed').reduce((sum, t) => sum + (t.months || t.monthsPaid || 1), 0);
+  const totalPaid = rentPayments.filter((t) => t.status === 'Completed').reduce((sum, t) => sum + (t.amount || 0), 0);
+  const start = new Date(lease.startDate || property.leaseStartDate || lease.endDate);
+  const end = lease.endDate ? new Date(lease.endDate) : add(start, { years: 1 });
+  const nextDue = add(start, { months: monthsPaid });
+  const daysToDue = differenceInCalendarDays(nextDue, new Date());
+  const daysLeft = Math.max(0, differenceInCalendarDays(end, new Date()));
+
+  const isCurrent = lease.status === 'active' || lease.status === 'terminating';
+  const offlineActivationPending = lease.status === 'pending' && lease.paymentMethod === 'offline' && !lease.paymentConfirmed;
+  const paymentAwaiting = rentPayments.some(isAwaiting) || offlineActivationPending;
+  const canPay = (lease.status === 'active' || (lease.status === 'pending' && lease.tenantSigned)) && !paymentAwaiting;
+  const overdue = lease.status === 'active' && daysToDue < 0;
+  const sortedPayments = [...(transactions ?? [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const sortedRepairs = [...(repairs ?? [])].sort((a, b) => b.requestDate.localeCompare(a.requestDate));
+  const openRepairs = sortedRepairs.filter((r) => r.status === 'Pending' || r.status === 'In Progress').length;
+
+  const reportButton = landlord && isCurrent && (
+    <ReportIssueDialog
+      propertyId={property.id}
+      propertyTitle={property.title}
+      landlordId={property.landlordId}
+      tenantId={user.uid}
+      tenantName={profile?.name || 'Your tenant'}
+    />
+  );
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        back={{ href: '/student', label: 'Home' }}
+        eyebrow={isCurrent ? 'Your home' : 'Upcoming home'}
+        title={property.title}
+        description={[property.location?.address, property.location?.city].filter(Boolean).join(', ')}
+        actions={
+          <>
+            {landlord && (
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link href={`/student/messages?conversationId=${landlord.id}`}>
+                  <MessageSquare className="mr-1.5 h-4 w-4" /> Message landlord
+                </Link>
+              </Button>
+            )}
+            {canPay && (
+              <Button className="rounded-xl" onClick={() => setIsPaymentOpen(true)}>
+                <CreditCard className="mr-1.5 h-4 w-4" /> {lease.status === 'pending' ? 'Pay first rent' : 'Pay rent'}
+              </Button>
+            )}
+          </>
+        }
+      />
+
+      {/* What needs attention */}
+      {lease.status === 'pending' && !lease.tenantSigned && (
+        <Banner tone="primary" icon={PenLine} title="Sign your lease to secure this home">
+          <p>Your request was accepted. Review the agreement and sign it, then pay the first rent.</p>
+          <Button asChild size="sm" className="mt-3 rounded-lg">
+            <Link href={`/student/leases/${lease.id}`}>Review lease</Link>
+          </Button>
+        </Banner>
+      )}
+      {paymentAwaiting && (
+        <Banner tone="warning" icon={Hourglass} title="Payment waiting for confirmation">
+          <p>Your landlord needs to confirm your bank transfer. We&apos;ll notify you as soon as they do.</p>
+        </Banner>
+      )}
+      {overdue && !paymentAwaiting && (
+        <Banner tone="danger" icon={AlertTriangle} title={`Rent was due ${formatDistanceToNow(nextDue, { addSuffix: true })}`}>
+          <p>Pay now to stay up to date, or message your landlord if you need more time.</p>
+          <Button size="sm" className="mt-3 rounded-lg" onClick={() => setIsPaymentOpen(true)}>
+            Pay {formatPrice(property.price, property.currency)}
+          </Button>
+        </Banner>
+      )}
+      {lease.status === 'terminating' && (
+        <Banner tone="danger" icon={AlertTriangle} title="Your tenancy is ending">
+          <p>
+            Your landlord has ended the tenancy. You&apos;re due a pro-rated refund of{' '}
+            <strong>{formatPrice(lease.calculatedRefund || 0, property.currency)}</strong>
+            {lease.terminationGracePeriodEnd && <> and must move out by {format(new Date(lease.terminationGracePeriodEnd), 'd MMMM yyyy')}</>}.
+          </p>
+          <Button size="sm" variant="destructive" className="mt-3 rounded-lg" onClick={() => setIsVacateOpen(true)}>
+            I&apos;ve received my refund
+          </Button>
+        </Banner>
+      )}
+
+      <StatGrid>
+        <StatCard
+          label="Next rent"
+          value={isCurrent ? format(nextDue, 'd MMM') : '—'}
+          icon={CalendarClock}
+          tone={overdue ? 'danger' : daysToDue <= 7 ? 'warning' : 'default'}
+          hint={
+            !isCurrent
+              ? 'Starts when your tenancy is active'
+              : overdue
+                ? 'Overdue'
+                : daysToDue === 0
+                  ? 'Due today'
+                  : `In ${daysToDue} day${daysToDue === 1 ? '' : 's'}`
+          }
+        />
+        <StatCard label="Monthly rent" value={formatPrice(property.price, property.currency)} icon={Wallet} />
+        <StatCard label="Lease ends" value={format(end, 'd MMM yyyy')} icon={Home} hint={isCurrent ? `${daysLeft} days left` : undefined} />
+        <StatCard label="Paid so far" value={formatPrice(totalPaid, property.currency)} icon={Receipt} tone="success" hint={`${monthsPaid} month${monthsPaid === 1 ? '' : 's'} of rent`} />
+      </StatGrid>
+
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <SectionCard title="Payments" description={sortedPayments.length ? `${sortedPayments.length} payment${sortedPayments.length === 1 ? '' : 's'}` : undefined}>
+            {sortedPayments.length ? (
+              <ul className="divide-y">
+                {sortedPayments.map((t) => (
+                  <li key={t.id} className="flex items-center gap-4 px-5 py-3.5">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                      <Receipt aria-hidden className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {t.type === 'Lease Activation' ? 'First payment' : t.type}
+                        {(t.months ?? 1) > 1 && <span className="text-muted-foreground"> · {t.months} months</span>}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {t.date ? format(new Date(t.date), 'd MMM yyyy') : '—'} · {t.paymentMethod ?? t.method ?? 'Card'}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold tabular-nums">{formatPrice(t.amount, t.currency)}</span>
+                    <StatusBadge status={t.status} className="hidden sm:inline-flex" />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState
+                className="m-5 border-none bg-transparent py-10"
+                icon={Receipt}
+                title="No payments yet"
+                description="Your rent payments and receipts will appear here."
+              />
+            )}
+          </SectionCard>
+
+          <SectionCard
+            title="Repairs"
+            description={openRepairs ? `${openRepairs} open` : 'Report anything that needs fixing'}
+            action={sortedRepairs.length ? reportButton : undefined}
+          >
+            {sortedRepairs.length ? (
+              <ul className="divide-y">
+                {sortedRepairs.map((r) => (
+                  <li key={r.id} className="flex items-start gap-4 px-5 py-3.5">
+                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                      <Wrench aria-hidden className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{r.title}</p>
+                      <p className="line-clamp-2 text-xs text-muted-foreground">{r.description}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {r.category} · {r.priority === 'High' ? 'Urgent' : `${r.priority} priority`} · reported{' '}
+                        {formatDistanceToNow(new Date(r.requestDate), { addSuffix: true })}
+                      </p>
+                    </div>
+                    <StatusBadge status={r.status} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState
+                className="m-5 border-none bg-transparent py-10"
+                icon={Wrench}
+                title="No repairs reported"
+                description={isCurrent ? 'Something broken? Let your landlord know and track the fix here.' : 'You can report repairs once you move in.'}
+                action={reportButton || undefined}
+              />
+            )}
+          </SectionCard>
+        </div>
+
+        <aside className="space-y-6">
+          <SectionCard title="Landlord" bodyClassName="p-5">
+            {landlord ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-11 w-11">
+                    <AvatarImage src={landlord.profileImageUrl} alt="" />
+                    <AvatarFallback>{landlord.name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{landlord.name}</p>
+                    <a href={`mailto:${landlord.email}`} className="flex items-center gap-1 truncate text-xs text-muted-foreground hover:underline">
+                      <Mail aria-hidden className="h-3 w-3" /> {landlord.email}
+                    </a>
+                  </div>
+                </div>
+                <Button asChild variant="outline" size="sm" className="w-full rounded-lg">
+                  <Link href={`/student/messages?conversationId=${landlord.id}`}>
+                    <MessageSquare className="mr-1.5 h-3.5 w-3.5" /> Send a message
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Landlord details unavailable.</p>
+            )}
+          </SectionCard>
+
+          <SectionCard title="Lease" action={{ href: `/student/leases/${lease.id}`, label: 'Open' }} bodyClassName="p-5">
+            <dl className="space-y-2.5 text-sm">
+              <div className="flex items-center justify-between">
+                <dt className="text-muted-foreground">Status</dt>
+                <dd>
+                  <StatusBadge status={lease.status} />
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Starts</dt>
+                <dd className="font-medium">{format(start, 'd MMM yyyy')}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Ends</dt>
+                <dd className="font-medium">{format(end, 'd MMM yyyy')}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Signed</dt>
+                <dd className="font-medium">
+                  {lease.tenantSigned && lease.landlordSigned ? 'Both parties' : lease.tenantSigned ? 'You' : lease.landlordSigned ? 'Landlord' : 'Not yet'}
+                </dd>
+              </div>
+            </dl>
+            <Button asChild variant="outline" size="sm" className="mt-4 w-full rounded-lg">
+              <Link href={`/student/leases/${lease.id}`}>
+                <FileText className="mr-1.5 h-3.5 w-3.5" /> View agreement
+              </Link>
+            </Button>
+          </SectionCard>
+        </aside>
+      </div>
+
+      <AlertDialog open={isVacateOpen} onOpenChange={setIsVacateOpen}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm you&apos;ve received your refund?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This closes your tenancy. You&apos;ll need to move out and hand back the keys within <strong>48 hours</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-lg">Not yet</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                void closeTenancy();
+              }}
+            >
+              Confirm and close tenancy
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <PaymentDialog
+        isOpen={isPaymentOpen}
+        onClose={() => setIsPaymentOpen(false)}
+        onPaymentSuccess={handlePaymentSuccess}
+        amount={property.price}
+        tenantName={profile?.name || user.displayName || user.email || ''}
+        tenantId={user.uid}
+        landlordId={property.landlordId}
+        propertyId={property.id}
+        currency={property.currency}
+        destinationAccountId={landlord?.stripeAccountId}
+        metadata={{ type: lease.status === 'pending' ? 'Lease Activation' : 'Rent', leaseId: lease.id }}
+      />
+    </div>
+  );
+}
+
+const BANNER_TONES = {
+  primary: 'border-primary/30 bg-primary/5 [&_h2]:text-foreground [&_svg.banner-icon]:text-primary',
+  warning: 'border-amber-200 bg-amber-50/70 text-amber-900 [&_svg.banner-icon]:text-amber-600',
+  danger: 'border-red-200 bg-red-50/70 text-red-900 [&_svg.banner-icon]:text-red-600',
+} as const;
+
+function Banner({
+  tone,
+  icon: Icon,
+  title,
+  children,
+}: {
+  tone: keyof typeof BANNER_TONES;
+  icon: typeof Home;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={`flex gap-3 rounded-2xl border p-5 ${BANNER_TONES[tone]}`}>
+      <Icon aria-hidden className="banner-icon mt-0.5 h-5 w-5 shrink-0" />
+      <div className="text-sm">
+        <h2 className="mb-1 font-semibold">{title}</h2>
+        {children}
+      </div>
+    </section>
+  );
 }
