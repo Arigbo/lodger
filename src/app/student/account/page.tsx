@@ -63,7 +63,8 @@ import { uploadProfileImage } from "@/firebase/storage";
 import { SchoolCombobox } from "@/components/shared/school-combobox";
 import { Combobox } from "@/components/ui/combobox";
 import { getCurrencyByCountry } from "@/lib/currencies";
-import { getErrorMessage, getErrorCode } from "@/lib/errors";
+import { getErrorCode } from "@/lib/errors";
+import { describeUploadError } from "@/lib/errors";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -187,14 +188,7 @@ export default function AccountPage() {
       }
     } catch (error) {
       console.error("Error uploading image: ", error);
-      const errorMsg =
-        getErrorMessage(error) ||
-        "Could not upload image. Please check that the file is a valid image and try again.";
-      toast({
-        variant: "destructive",
-        title: "Upload Failed",
-        description: errorMsg,
-      });
+      toast({ variant: "destructive", ...describeUploadError(error) });
       setPreviewImage(null);
     } finally {
       setIsUploading(false);

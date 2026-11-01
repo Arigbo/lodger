@@ -64,6 +64,7 @@ import {
 } from "@/components/ui/select";
 import { authHeaders } from "@/lib/api-client";
 import { getErrorMessage, getErrorCode } from "@/lib/errors";
+import { describeUploadError } from "@/lib/errors";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -339,14 +340,7 @@ export default function AccountPage() {
       });
     } catch (error) {
       console.error("Error uploading image: ", error);
-      const errorMsg =
-        getErrorMessage(error) ||
-        "Could not upload your new profile picture. Please check that the file is a valid image and try again.";
-      toast({
-        variant: "destructive",
-        title: "Upload Failed",
-        description: errorMsg,
-      });
+      toast({ variant: "destructive", ...describeUploadError(error) });
       setPreviewImage(null); // Revert on failure
     } finally {
       setIsUploading(false);

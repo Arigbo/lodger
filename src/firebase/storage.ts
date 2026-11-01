@@ -2,12 +2,10 @@
 
 import {
   FirebaseStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL,
 } from "firebase/storage";
 import { authHeaders } from "@/lib/api-client";
-import { getErrorMessage } from "@/lib/errors";
+import { describeUploadError } from "@/lib/errors";
+import { uploadMedia } from "@/lib/media/upload-media";
 
 /**
  * Type definition for image moderation analysis results
@@ -71,141 +69,65 @@ export async function moderateImage(
 }
 
 /**
- * Moderates and uploads an image to Firebase Storage
- * @param storage The Firebase Storage instance
- * @param path The storage path for the image
- * @param file The image file to upload
- * @param options Optional configuration
- * @returns Result object with download URL or error
+ * Optionally checks an image with the moderation API, then uploads it via the
+ * configured media provider. If the check is unavailable (not configured,
+ * rate limited, offline) the image is uploaded anyway: moderation is a
+ * safeguard, not a gate that should block landlords from editing listings.
  */
 export async function moderateAndUpload(
-  storage: FirebaseStorage,
+  _storage: FirebaseStorage | null,
   path: string,
   file: File,
   options?: {
     allowIrrelevant?: boolean; // Allow upload even if context is IRRELEVANT
-    skipModeration?: boolean; // Skip moderation entirely (not recommended)
+    skipModeration?: boolean;
   }
 ): Promise<ModerationUploadResult> {
-  try {
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      return {
-        success: false,
-        error: "Invalid file type. Please upload an image file.",
-      };
+  if (!file.type.startsWith("image/")) {
+    return { success: false, error: "Please choose an image file (JPG, PNG or WebP)." };
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    return { success: false, error: "That photo is over 10 MB. Please choose a smaller one." };
+  }
+
+  let analysis: ModerationAnalysis | undefined;
+  if (!options?.skipModeration) {
+    try {
+      analysis = await moderateImage(file);
+    } catch {
+      analysis = undefined; // check unavailable: continue without it
     }
+  }
 
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      return {
-        success: false,
-        error: "File is too large. Maximum size is 5MB.",
-      };
-    }
-
-    // Skip moderation if explicitly requested (not recommended for production)
-    if (options?.skipModeration) {
-      const storageRef = ref(storage, path);
-      const metadata = {
-        contentType: file.type,
-        cacheControl: 'public, max-age=3600'
-      };
-      const snapshot = await uploadBytes(storageRef, file, metadata);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      return { success: true, downloadURL };
-    }
-
-    // Moderate the image
-    const analysis = await moderateImage(file);
-
-    // Block UNSAFE images
-    if (analysis.safety === "UNSAFE") {
-      return {
-        success: false,
-        blocked: true,
-        analysis,
-        error: analysis.reason || "Image contains inappropriate content and cannot be uploaded.",
-      };
-    }
-
-    // Optionally block IRRELEVANT images
-    if (analysis.context === "IRRELEVANT" && !options?.allowIrrelevant) {
-      return {
-        success: false,
-        blocked: false,
-        analysis,
-        error: analysis.reason || "Image may not be relevant to property listings.",
-      };
-    }
-
-    // Upload the image
-    const storageRef = ref(storage, path);
-    const metadata = {
-      contentType: file.type,
-      cacheControl: 'public, max-age=3600',
-      customMetadata: {
-        moderationSafety: analysis.safety,
-        moderationContext: analysis.context,
-      }
-    };
-
-    const snapshot = await uploadBytes(storageRef, file, metadata);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-
-    return {
-      success: true,
-      downloadURL,
-      analysis,
-    };
-  } catch (error) {
-    console.error("Moderation and upload error:", error);
+  if (analysis?.safety === "UNSAFE") {
     return {
       success: false,
-      error: getErrorMessage(error) || "Upload failed. Please try again.",
+      blocked: true,
+      analysis,
+      error: analysis.reason || "This image looks inappropriate for a listing.",
     };
+  }
+  if (analysis?.context === "IRRELEVANT" && !options?.allowIrrelevant) {
+    return { success: false, blocked: false, analysis, error: analysis.reason || "This image doesn't look like part of a home." };
+  }
+
+  try {
+    const downloadURL = await uploadMedia(file, path);
+    return { success: true, downloadURL, analysis };
+  } catch (error) {
+    console.error("Upload failed:", error);
+    return { success: false, error: describeUploadError(error).description };
   }
 }
 
-/**
- * Uploads a profile image for a user and returns the download URL.
- * @param storage The Firebase Storage instance.
- * @param userId The ID of the user.
- * @param file The image file to upload.
- * @returns A promise that resolves with the public download URL of the uploaded image.
- */
-export async function uploadProfileImage(
-  storage: FirebaseStorage,
-  userId: string,
-  file: File
-): Promise<string> {
-  try {
-    // Validate file before upload
-    if (!file.type.startsWith("image/")) {
-      throw new Error("Invalid file type. Please upload an image file.");
-    }
-
-    if (file.size > 5 * 1024 * 1024) { // Increased limit to 5MB based on typical user behavior
-      throw new Error("File is too large. Maximum size is 5MB.");
-    }
-
-    // Use a fixed filename but include metadata to ensure correct MIME type
-    const storageRef = ref(storage, `users/${userId}/profile-picture`);
-
-    const metadata = {
-      contentType: file.type,
-      cacheControl: 'public, max-age=3600'
-    };
-
-    // Upload the file
-    const snapshot = await uploadBytes(storageRef, file, metadata);
-
-    // Get the download URL
-    const downloadURL = await getDownloadURL(snapshot.ref);
-
-    return downloadURL;
-  } catch (error) {
-    console.error("Profile image upload error:", error);
-    throw new Error(`Upload failed: ${getErrorMessage(error, "Unknown error")}`);
+/** Uploads (and replaces) a user's profile picture; returns its public URL. */
+export async function uploadProfileImage(_storage: FirebaseStorage | null, userId: string, file: File): Promise<string> {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Please choose an image file (JPG, PNG or WebP).");
   }
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error("That photo is over 10 MB. Please choose a smaller one.");
+  }
+  // Fixed path: a new picture replaces the old one instead of using more storage.
+  return uploadMedia(file, `users/${userId}/profile-picture`);
 }

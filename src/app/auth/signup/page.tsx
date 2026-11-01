@@ -38,15 +38,15 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { useAuth, useFirebaseApp, useFirestore } from "@/firebase/provider";
+import { useAuth, useFirestore } from "@/firebase/provider";
 import { useToast } from "@/hooks/use-toast";
 import { initiateEmailSignUp } from "@/firebase";
 import { countries } from "@/data/countries";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
 import { SchoolCombobox } from "@/components/shared/school-combobox";
 import { sendNotification } from "@/lib/notifications";
 import { getErrorMessage, getErrorCode } from "@/lib/errors";
+import { uploadProfileImage } from "@/firebase/storage";
 
 const formSchema = z
   .object({
@@ -145,7 +145,6 @@ export default function SignupPage() {
   const router = useRouter();
   const auth = useAuth();
   const firestore = useFirestore(); // Get Firestore instance
-  const firebaseApp = useFirebaseApp();
   const { toast } = useToast();
   const [states, setStates] = useState<{ name: string }[]>([]);
 
@@ -314,13 +313,7 @@ export default function SignupPage() {
       let profileImageUrl = null;
       if (profileImage) {
         try {
-          const storage = getStorage(firebaseApp);
-          const imageRef = ref(storage, `users/${uid}/profile-picture`);
-          await uploadBytes(imageRef, profileImage, {
-            contentType: profileImage.type,
-            cacheControl: "public, max-age=3600",
-          });
-          profileImageUrl = await getDownloadURL(imageRef);
+          profileImageUrl = await uploadProfileImage(null, uid, profileImage);
         } catch (uploadError) {
           console.error("Error uploading profile image:", uploadError);
           // Continue with registration even if image upload fails

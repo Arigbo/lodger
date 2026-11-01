@@ -11,3 +11,28 @@ export function getErrorCode(error: unknown): string | undefined {
   if (error && typeof error === 'object' && 'code' in error && typeof error.code === 'string') return error.code;
   return undefined;
 }
+
+/**
+ * User-facing explanation for Firebase Storage upload failures.
+ * Falls back to a generic message for anything unrecognised.
+ */
+export function describeUploadError(error: unknown): { title: string; description: string } {
+  switch (getErrorCode(error)) {
+    case 'storage/quota-exceeded':
+      return {
+        title: 'Photo storage is unavailable',
+        description:
+          "This project's Firebase Storage quota is used up or not enabled on its current plan. Your listing wasn't saved — please contact support.",
+      };
+    case 'storage/unauthorized':
+    case 'storage/unauthenticated':
+      return { title: "Upload wasn't allowed", description: 'Please sign in again and retry. Files must be under 5 MB.' };
+    case 'storage/retry-limit-exceeded':
+    case 'storage/server-file-wrong-size':
+      return { title: 'Upload timed out', description: 'Check your connection and try again.' };
+    case 'storage/canceled':
+      return { title: 'Upload cancelled', description: 'The upload was stopped before it finished.' };
+    default:
+      return { title: 'Upload failed', description: getErrorMessage(error, 'Something went wrong while uploading. Please try again.') };
+  }
+}

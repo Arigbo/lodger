@@ -7,6 +7,7 @@
     "dev:emulators": "node scripts/dev-emulators.mjs",
     "emulators": "firebase emulators:start --only auth,firestore,storage --project demo-lodger",
     "seed": "node scripts/seed-emulator.mjs",
+    "reset:firebase": "node scripts/reset-firebase.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

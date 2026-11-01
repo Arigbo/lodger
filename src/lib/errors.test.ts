@@ -13,3 +13,14 @@ describe('error helpers', () => {
     expect(getErrorCode(new Error('x'))).toBeUndefined();
   });
 });
+
+import { describeUploadError } from './errors';
+
+describe('describeUploadError', () => {
+  it('explains quota errors', () => {
+    expect(describeUploadError({ code: 'storage/quota-exceeded' }).title).toBe('Photo storage is unavailable');
+  });
+  it('falls back to the error message', () => {
+    expect(describeUploadError(new Error('boom')).description).toBe('boom');
+  });
+});

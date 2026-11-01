@@ -8,6 +8,7 @@ export const OPTIMIZED_IMAGE_HOSTS = [
   'firebasestorage.googleapis.com',
   'storage.googleapis.com',
   'lh3.googleusercontent.com', // Google account avatars
+  'res.cloudinary.com', // when NEXT_PUBLIC_MEDIA_PROVIDER=cloudinary
   'images.unsplash.com',
   'placehold.co',
   'picsum.photos',

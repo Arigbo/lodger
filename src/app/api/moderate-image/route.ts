@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 const MAX_BYTES = 8 * 1024 * 1024;
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic']);
 /** Remote images may only be fetched from our own storage bucket (prevents SSRF). */
-const ALLOWED_IMAGE_HOSTS = new Set(['firebasestorage.googleapis.com', 'storage.googleapis.com']);
+const ALLOWED_IMAGE_HOSTS = new Set(['firebasestorage.googleapis.com', 'storage.googleapis.com', 'res.cloudinary.com']);
 const CACHE_TTL = 60 * 60 * 1000;
 const cache = new Map<string, { result: Analysis; timestamp: number }>();
 

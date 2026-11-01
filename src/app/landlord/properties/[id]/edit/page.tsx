@@ -14,10 +14,6 @@ import {
 } from "firebase/firestore";
 import {
   getStorage,
-  ref,
-  deleteObject,
-  uploadBytes,
-  getDownloadURL,
 } from "firebase/storage";
 import { Building, RefreshCw, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -57,6 +53,8 @@ import { SpecificationSection } from "@/app/landlord/properties/[id]/edit/sectio
 import { MediaSection } from "@/app/landlord/properties/[id]/edit/sections/MediaSection";
 import { AmenitiesSection } from "@/app/landlord/properties/[id]/edit/sections/AmenitiesSection";
 import { RulesSection } from "@/app/landlord/properties/[id]/edit/sections/RulesSection";
+import { deleteMedia, uploadMedia } from "@/lib/media/upload-media";
+import { describeUploadError } from "@/lib/errors";
 
 export default function EditPropertyPage() {
   const params = useParams();
@@ -195,10 +193,9 @@ export default function EditPropertyPage() {
   }
 
   async function handleRemoveImage(imageUrl: string) {
-    if (!property || !propertyRef || !window.confirm("Are you sure?")) return;
+    if (!property || !propertyRef || !window.confirm("Remove this from the listing?")) return;
     try {
-      const storage = getStorage(firebaseApp);
-      await deleteObject(ref(storage, imageUrl));
+      void deleteMedia(imageUrl);
       const updatedImages = property.images.filter((url) => url !== imageUrl);
       await updateDoc(propertyRef, { images: updatedImages });
       toast({ title: "Image Removed" });
@@ -212,29 +209,22 @@ export default function EditPropertyPage() {
     if (!files || !property || !propertyRef) return;
     setIsUploading(true);
     try {
-      const storage = getStorage(firebaseApp);
-      const storageRef = ref(
-        storage,
-        `properties/${property.landlordId}/${Date.now()}_${files[0].name}`,
-      );
-      const snapshot = await uploadBytes(storageRef, files[0]);
-      const downloadURL = await getDownloadURL(snapshot.ref);
+      const downloadURL = await uploadMedia(files[0], `properties/${property.landlordId}/${property.id}/video-${Date.now()}`, { raw: true });
       const updatedVideos = [...(property.videos || []), downloadURL];
       await updateDoc(propertyRef, { videos: updatedVideos });
       toast({ title: "Video Uploaded" });
       refetch();
     } catch (error) {
-      toast({ variant: "destructive", title: "Upload Failed" });
+      toast({ variant: "destructive", ...describeUploadError(error) });
     } finally {
       setIsUploading(false);
     }
   }
 
   async function handleRemoveVideo(videoUrl: string) {
-    if (!property || !propertyRef || !window.confirm("Are you sure?")) return;
+    if (!property || !propertyRef || !window.confirm("Remove this from the listing?")) return;
     try {
-      const storage = getStorage(firebaseApp);
-      await deleteObject(ref(storage, videoUrl));
+      void deleteMedia(videoUrl);
       const updatedVideos = (property.videos || []).filter(
         (url) => url !== videoUrl,
       );

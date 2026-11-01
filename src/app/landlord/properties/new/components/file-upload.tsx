@@ -15,6 +15,7 @@ import {
     RefreshCw
 } from 'lucide-react';
 import { authHeaders } from "@/lib/api-client";
+import { compressImage } from "@/lib/media/compress-image";
 import type { FileField } from "../types";
 import type { LucideIcon } from "lucide-react";
 
@@ -24,34 +25,15 @@ interface FileUploadProps {
     description: string;
     icon: LucideIcon;
     onAnalysisChange?: (analysis: { safety: string, context: string, reason?: string } | null) => void;
+    /** Already-uploaded photo (e.g. from a saved draft), shown until replaced. */
+    existingUrl?: string;
+    onRemoveExisting?: () => void;
 }
 
-export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisChange }: FileUploadProps) => {
+export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisChange, existingUrl, onRemoveExisting }: FileUploadProps) => {
     const [isScanning, setIsScanning] = useState(false);
     const [analysis, setAnalysis] = useState<{ safety: string, context: string, reason?: string } | null>(null);
     const { toast } = useToast();
-
-    const stripMetadata = async (file: File): Promise<Blob> => {
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                if (ctx) {
-                    ctx.drawImage(img, 0, 0);
-                    canvas.toBlob((blob) => {
-                        resolve(blob || file);
-                    }, 'image/jpeg', 0.95);
-                } else {
-                    resolve(file);
-                }
-            };
-            img.onerror = () => resolve(file);
-            img.src = URL.createObjectURL(file);
-        });
-    };
 
     const handleFileChange = async (files: FileList | null) => {
         if (!files || files.length === 0) {
@@ -67,8 +49,9 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
 
         try {
             const originalFile = files[0];
-            const cleanBlob = await stripMetadata(originalFile);
-            const cleanFile = new File([cleanBlob], originalFile.name, { type: 'image/jpeg' });
+            // Resize + re-encode in the browser: removes EXIF/GPS data and
+            // shrinks phone photos to a few hundred KB before anything is stored.
+            const cleanFile = await compressImage(originalFile);
 
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(cleanFile);
@@ -95,37 +78,25 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
                         if (data.safety === 'UNSAFE') {
                             toast({
                                 variant: "destructive",
-                                title: "Security Alert",
-                                description: data.reason || "Content flagged for safety violations.",
+                                title: "Photo not allowed",
+                                description: data.reason || "This image looks inappropriate for a listing. Please choose another.",
                             });
                             field.onChange(null);
                             setAnalysis(null);
                             onAnalysisChange?.(null);
                         } else if (data.context === 'IRRELEVANT') {
                             toast({
-                                title: "Context Conflict",
-                                description: data.reason || "Image appears unrelated to real estate.",
-                            });
-                        } else {
-                            toast({
-                                title: "Verified",
-                                description: "Image successfully moderated.",
+                                title: "Is this the right photo?",
+                                description: data.reason || "It doesn't look like part of a home. You can keep it or choose another.",
                             });
                         }
                     } else if (response.status === 429) {
-                        toast({
-                            title: "AI Bypassed",
-                            description: "Limit reached. Image accepted without AI verification.",
-                        });
-                    } else {
-                        throw new Error('Moderation failed');
+                        toast({ title: "Photo added", description: "Automatic photo check is busy right now — we'll accept this one." });
                     }
-                } catch (error) {
-                    console.error("Moderation error:", error);
-                    toast({
-                        title: "AI Offline",
-                        description: "Proceeding without safety scan.",
-                    });
+                    // Any other status (check not configured, signed out, service error)
+                    // means the optional check is unavailable: keep the photo, no alarm.
+                } catch {
+                    // Network failure reaching the check: keep the photo.
                 }
                 setIsScanning(false);
             };
@@ -134,8 +105,8 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
             console.error("Processing error", error);
             toast({
                 variant: "destructive",
-                title: "Processing Failed",
-                description: "Critical image error.",
+                title: "Couldn't read this image",
+                description: "Try a JPG or PNG photo under 5 MB.",
             });
             setIsScanning(false);
             field.onChange(null);
@@ -166,9 +137,9 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
                             )}
                         >
                             {analysis.safety === 'SAFE' && analysis.context === 'RELEVANT' ? (
-                                <><ShieldCheck className="h-2.5 w-2.5" /> Verified</>
+                                <><ShieldCheck className="h-2.5 w-2.5" /> Looks good</>
                             ) : (
-                                <><AlertCircle className="h-2.5 w-2.5" /> Issue</>
+                                <><AlertCircle className="h-2.5 w-2.5" /> Check photo</>
                             )}
                         </motion.div>
                     )}
@@ -206,8 +177,8 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
                                         </div>
                                     </div>
                                     <div className="text-center space-y-2">
-                                        <p className="text-xs font-semibold uppercase tracking-wider text-primary animate-pulse">Deep Scanning</p>
-                                        <p className="text-xs font-bold text-muted-foreground/40 uppercase tracking-wider">AI Security Check in progress</p>
+                                        <p className="text-sm font-semibold text-primary">Preparing photo…</p>
+                                        <p className="text-xs text-muted-foreground">Optimising and checking it&apos;s a good fit</p>
                                     </div>
                                 </motion.div>
                             ) : field.value?.[0] ? (
@@ -254,8 +225,31 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
                                                 className="text-xs font-semibold text-orange-600 uppercase tracking-tight mt-3 flex items-center justify-center gap-1.5 bg-orange-50 px-3 py-1 rounded-full border border-orange-100"
                                             >
                                                 <AlertCircle className="h-2.5 w-2.5" />
-                                                {analysis.reason || "Context mismatch detected"}
+                                                {analysis.reason || "This may not be a photo of the home"}
                                             </motion.p>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            ) : existingUrl ? (
+                                <motion.div
+                                    key="existing"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="w-full h-full flex flex-col items-center justify-center p-8 space-y-4"
+                                >
+                                    <div className="relative shadow-sm rounded-2xl overflow-hidden aspect-video w-full max-w-[200px]">
+                                        <img src={existingUrl} alt={`${label} (saved)`} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="flex items-center justify-center gap-4 text-xs font-semibold">
+                                        <span className="text-emerald-600">Saved in draft</span>
+                                        <label htmlFor={field.name} className="flex items-center gap-1.5 cursor-pointer text-muted-foreground hover:text-primary transition-colors">
+                                            <RefreshCw className="h-3 w-3" /> Replace
+                                            <input id={field.name} type="file" className="sr-only" accept="image/*" onChange={(e) => handleFileChange(e.target.files)} />
+                                        </label>
+                                        {onRemoveExisting && (
+                                            <button type="button" onClick={onRemoveExisting} className="text-muted-foreground hover:text-destructive">
+                                                Remove
+                                            </button>
                                         )}
                                     </div>
                                 </motion.div>
@@ -279,7 +273,7 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
                                             </span>
                                             <input id={field.name} type="file" className="sr-only" accept="image/*" onChange={(e) => handleFileChange(e.target.files)} />
                                         </label>
-                                        <p className="text-xs font-bold text-muted-foreground/40 uppercase tracking-wider">High-Res PNG, JPG • 5MB Limit</p>
+                                        <p className="text-xs text-muted-foreground">JPG, PNG or WebP · we&apos;ll optimise it for you</p>
                                     </div>
                                 </motion.div>
                             )}

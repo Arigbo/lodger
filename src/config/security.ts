@@ -34,6 +34,7 @@ const directives: Record<string, string[]> = {
     "'self'",
     'https://*.googleapis.com', // Firestore, Auth, Storage, Installations
     'https://api.stripe.com',
+    'https://api.cloudinary.com', // signed media uploads (optional provider)
     'https://maps.googleapis.com',
     ...(isDev ? ['ws:', 'wss:', 'http://127.0.0.1:9099', 'http://127.0.0.1:8080', 'http://127.0.0.1:9199'] : []),
   ],
