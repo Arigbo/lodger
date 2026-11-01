@@ -3,20 +3,15 @@
 
 import { useParams } from 'next/navigation';
 import type { UserProfile as User, Property, Transaction, LeaseAgreement } from '@/types';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Phone, Mail, AlertTriangle, Coins, Pencil, User as UserIcon } from 'lucide-react';
+import { AlertTriangle, Building2, CalendarClock, GraduationCap, Mail, MessageSquare, Phone, User as UserIcon, Wallet } from 'lucide-react';
+import { EmptyState, PageHeader, SectionCard, StatCard, StatusBadge } from '@/components/dashboard';
 import Link from 'next/link';
 import { format, differenceInDays, isPast, addMonths } from "date-fns";
-import { cn, formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/lib/utils';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -28,7 +23,6 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from '@/components/ui/badge';
 import React from "react";
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, where } from 'firebase/firestore';
@@ -53,7 +47,7 @@ export default function TenantDetailPage() {
             collection(firestore, 'leaseAgreements'),
             where('tenantId', '==', id),
             where('landlordId', '==', currentUser.uid),
-            where('status', '==', 'active')
+            where('status', 'in', ['active', 'terminating'])
         );
     }, [id, currentUser, firestore]);
     const { data: leases, isLoading: areLeasesLoading } = useCollection<LeaseAgreement>(leaseQuery);
@@ -101,7 +95,7 @@ export default function TenantDetailPage() {
                 });
 
                 toast({
-                    title: "Termination Initiated",
+                    title: "Tenancy ending",
                     description: `The tenant has been notified. A 3-day grace period has started for the refund of ${formatPrice(rentStatus.calculatedRefund, property.currency)}.`,
                 });
             } else {
@@ -126,7 +120,7 @@ export default function TenantDetailPage() {
                 });
 
                 toast({
-                    title: "Termination Initiated",
+                    title: "Tenancy ending",
                     description: "The tenant has been notified. Tenancy will be finalized once tenant confirms.",
                 });
             }
@@ -227,154 +221,178 @@ export default function TenantDetailPage() {
         };
     };
     const rentStatus = getRentStatus();
-
     const isLoading = isUserLoading || isTenantLoading || areLeasesLoading || isPropertyLoading || areTransactionsLoading || !rentStatus;
 
-    if (isLoading) {
-        return <PageSkeleton variant="detail" />;
-    }
+    if (isLoading) return <PageSkeleton variant="detail" />;
 
-    if (!isTenantLoading && !tenant) {
+    if (!tenant) {
         return (
-            <div className="flex flex-col items-center justify-center text-center py-20">
-                <div className="rounded-full bg-secondary p-4">
-                    <UserIcon className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <h1 className="mt-6 text-2xl font-bold">Tenant Not Found</h1>
-                <p className="mt-2 text-muted-foreground">The user you are looking for does not exist or their profile could not be loaded.</p>
-                <Button asChild className="mt-6">
-                    <Link href="/landlord/tenants">Back to All Tenants</Link>
-                </Button>
-            </div>
+            <EmptyState
+                icon={UserIcon}
+                title="Tenant not found"
+                description="Their profile could not be loaded."
+                action={
+                    <Button asChild variant="outline" className="rounded-xl">
+                        <Link href="/landlord/tenants">All tenants</Link>
+                    </Button>
+                }
+            />
         );
     }
 
+    const payments = [...(tenantTransactions ?? [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const isEnding = lease?.status === 'terminating';
 
     return (
-        <div className="space-y-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-3xl font-bold">Tenant Details</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center gap-6">
-                        <Avatar className="h-24 w-24">
-                            <AvatarImage src={tenant?.profileImageUrl} alt={tenant?.name} />
-                            <AvatarFallback>
-                                <UserIcon className="h-12 w-12 text-muted-foreground" />
-                            </AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <h2 className="text-2xl font-bold">{tenant?.name}</h2>
-                            <p className="text-muted-foreground">{tenant?.role}</p>
+        <div className="space-y-6">
+            <PageHeader
+                back={{ href: '/landlord/tenants', label: 'Tenants' }}
+                title={tenant.name}
+                description={property ? `Renting ${property.title}` : 'No active tenancy with you'}
+                actions={
+                    <Button asChild variant="outline" className="rounded-xl">
+                        <Link href={`/landlord/messages?conversationId=${tenant.id}`}>
+                            <MessageSquare className="mr-1.5 h-4 w-4" /> Message
+                        </Link>
+                    </Button>
+                }
+            />
+
+            {isEnding && lease && (
+                <div role="status" className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                    <AlertTriangle aria-hidden className="mt-0.5 h-5 w-5 shrink-0" />
+                    <p>
+                        <span className="font-semibold">This tenancy is ending.</span>{' '}
+                        {lease.calculatedRefund
+                            ? `Refund owed: ${formatPrice(lease.calculatedRefund, property?.currency)}. `
+                            : ''}
+                        The tenant has been asked to confirm
+                        {lease.terminationGracePeriodEnd ? ` by ${format(new Date(lease.terminationGracePeriodEnd), 'd MMM yyyy')}` : ''}.
+                    </p>
+                </div>
+            )}
+
+            <div className="grid items-start gap-6 lg:grid-cols-3">
+                <div className="space-y-6 lg:col-span-2">
+                    {property && rentStatus ? (
+                        <div className="grid gap-4 sm:grid-cols-3">
+                            <StatCard
+                                label="Rent"
+                                value={rentStatus.status === 'Due' ? 'Overdue' : rentStatus.status === 'Paid' ? 'Paid up' : 'Inactive'}
+                                icon={Wallet}
+                                tone={rentStatus.status === 'Due' ? 'danger' : 'success'}
+                                hint={rentStatus.text}
+                            />
+                            <StatCard label="Monthly rent" value={formatPrice(property.price, property.currency)} icon={Building2} hint={property.title} />
+                            <StatCard
+                                label="Lease ends"
+                                value={rentStatus.leaseEndDate ? format(rentStatus.leaseEndDate, 'd MMM yyyy') : '—'}
+                                icon={CalendarClock}
+                                tone={rentStatus.isLeaseEndingSoon ? 'warning' : 'default'}
+                                hint={rentStatus.isLeaseEndingSoon ? `${rentStatus.leaseDaysRemaining} days left` : undefined}
+                            />
                         </div>
-                    </div>
-                    <Separator className="my-6" />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center gap-3">
-                            <Mail className="h-5 w-5 text-muted-foreground" />
-                            <a href={`mailto:${tenant?.email}`} className="text-primary hover:underline">{tenant?.email}</a>
-                        </div>
-                        {tenant?.phone && (
-                            <div className="flex items-center gap-3">
-                                <Phone className="h-5 w-5 text-muted-foreground" />
-                                <span>{tenant?.phone}</span>
-                            </div>
+                    ) : (
+                        <EmptyState icon={Building2} title="No active tenancy" description="This person isn't currently renting one of your properties." />
+                    )}
+
+                    <SectionCard title="Payment history" description={`${payments.length} payment${payments.length === 1 ? '' : 's'} from this tenant`}>
+                        {payments.length ? (
+                            <ul className="divide-y">
+                                {payments.map((t) => (
+                                    <li key={t.id}>
+                                        <Link href={`/landlord/transactions/${t.id}`} className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-accent/40">
+                                            <span className="min-w-0 flex-1">
+                                                <span className="block text-sm font-medium">{t.type === 'Lease Activation' ? 'First payment' : t.type}</span>
+                                                <span className="block text-xs text-muted-foreground">{format(new Date(t.date), 'd MMM yyyy')}</span>
+                                            </span>
+                                            <span className="text-sm font-semibold">{formatPrice(t.amount, t.currency)}</span>
+                                            <StatusBadge status={t.status} />
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="px-5 py-8 text-center text-sm text-muted-foreground">No payments recorded yet.</p>
                         )}
-                    </div>
-                </CardContent>
-            </Card>
+                    </SectionCard>
+                </div>
 
-            {property && rentStatus ? (
-                <>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Tenancy Overview</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <div className="rounded-lg border bg-secondary/50 p-4">
-                                    <p className="text-sm font-medium text-muted-foreground">Rented Property</p>
-                                    <Link href={`/landlord/properties/${property.id}`} className="text-lg font-bold text-primary hover:underline">{property.title}</Link>
-                                </div>
-                                <div className="rounded-lg border bg-secondary/50 p-4">
-                                    <p className="text-sm font-medium text-muted-foreground">Rent Status</p>
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant={rentStatus.status === 'Due' ? 'destructive' : rentStatus.status === 'Paid' ? 'secondary' : 'outline'}>{rentStatus.status}</Badge>
-                                        <p className="text-sm">
-                                            {rentStatus.text}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className={cn("rounded-lg border p-4 col-span-full", rentStatus.isLeaseEndingSoon ? "border-amber-500/50 bg-amber-50" : "bg-secondary/50")}>
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-muted-foreground">Lease End Date</p>
-                                            <p className={cn("text-xl font-bold", rentStatus.isLeaseEndingSoon && "text-amber-600")}>{rentStatus.leaseEndDate && format(rentStatus.leaseEndDate, 'MMMM do, yyyy')}</p>
-                                            {rentStatus.isLeaseEndingSoon && <p className="text-xs text-amber-500 mt-1">{rentStatus.leaseDaysRemaining} days remaining</p>}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {rentStatus.isLeaseEndingSoon && <AlertTriangle className="h-5 w-5 text-amber-500" />}
-                                            <Button variant="outline" disabled><Pencil className="mr-2 h-4 w-4" /> Edit Lease</Button>
-                                        </div>
-                                    </div>
-                                </div>
+                <div className="space-y-6">
+                    <SectionCard title="Contact" bodyClassName="space-y-4 p-5">
+                        <div className="flex items-center gap-3">
+                            <Avatar className="h-12 w-12">
+                                <AvatarImage src={tenant.profileImageUrl} alt="" className="object-cover" />
+                                <AvatarFallback className="bg-primary/10 font-semibold text-primary">{tenant.name?.[0]}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                                <p className="truncate font-semibold">{tenant.name}</p>
+                                {tenant.school && (
+                                    <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                                        <GraduationCap aria-hidden className="h-3.5 w-3.5" /> {tenant.school}
+                                    </p>
+                                )}
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                        <ul className="space-y-2 text-sm">
+                            <li className="flex items-center gap-2">
+                                <Mail aria-hidden className="h-4 w-4 text-muted-foreground" />
+                                <a href={`mailto:${tenant.email}`} className="truncate hover:underline">{tenant.email}</a>
+                            </li>
+                            {tenant.phone && (
+                                <li className="flex items-center gap-2">
+                                    <Phone aria-hidden className="h-4 w-4 text-muted-foreground" />
+                                    <a href={`tel:${tenant.phone}`} className="hover:underline">{tenant.phone}</a>
+                                </li>
+                            )}
+                        </ul>
+                    </SectionCard>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Landlord Actions</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex flex-col gap-2 sm:flex-row">
-                            <Button variant="outline" asChild>
-                                <Link href={`/landlord/messages?conversationId=${tenant?.id}`}>
-                                    <Mail className="mr-2 h-4 w-4" /> Message Tenant
-                                </Link>
-                            </Button>
+                    {lease && (
+                        <SectionCard title="Lease" action={{ href: `/landlord/leases/${lease.id}`, label: 'Open' }} bodyClassName="space-y-2 p-5 text-sm">
+                            <p className="flex justify-between"><span className="text-muted-foreground">Status</span> <StatusBadge status={lease.status} /></p>
+                            <p className="flex justify-between"><span className="text-muted-foreground">Started</span> {format(new Date(lease.startDate), 'd MMM yyyy')}</p>
+                            <p className="flex justify-between"><span className="text-muted-foreground">Ends</span> {format(new Date(lease.endDate), 'd MMM yyyy')}</p>
+                        </SectionCard>
+                    )}
+
+                    {property && rentStatus?.isLeaseActive && !isEnding && (
+                        <section className="rounded-2xl border border-destructive/30 bg-card p-5">
+                            <h2 className="font-semibold text-destructive">End tenancy</h2>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Ends the lease early. The tenant is notified and asked to confirm.
+                            </p>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" disabled={!rentStatus.isLeaseActive || lease?.status === 'terminating'}>
-                                        {lease?.status === 'terminating' ? 'Termination Pending' : 'End Tenancy'}
+                                    <Button variant="outline" className="mt-4 w-full rounded-lg border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive">
+                                        End tenancy…
                                     </Button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent>
+                                <AlertDialogContent className="rounded-2xl">
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>End Tenancy for {tenant?.name}?</AlertDialogTitle>
+                                        <AlertDialogTitle>End {tenant.name}&apos;s tenancy?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            Ending the tenancy will terminate the lease before its official end date. This action can have legal implications. You will be charged a compassion fee calculated based on the remaining lease term.
+                                            {rentStatus.status === 'Paid'
+                                                ? 'Rent is paid ahead, so you owe a pro-rated refund for the unused period. The tenant has 3 days to confirm they received it.'
+                                                : 'Rent is overdue, so no refund is owed. The tenant will be asked to confirm and vacate.'}
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
-                                    <Card className="my-4">
-                                        <CardHeader className="flex-row items-center justify-between">
-                                            <CardTitle>Compassion Fee</CardTitle>
-                                            <Coins className="h-6 w-6 text-muted-foreground" />
-                                        </CardHeader>
-                                        <CardContent>
-                                            <p className="text-3xl font-bold text-destructive">{formatPrice(rentStatus.calculatedRefund, property.currency)}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                Pro-rated based on days remaining in current paid period + any prepaid full months.
-                                            </p>
-                                        </CardContent>
-                                    </Card>
+                                    <div className="rounded-xl border bg-muted/40 p-4">
+                                        <p className="text-sm text-muted-foreground">Refund you&apos;ll owe</p>
+                                        <p className="text-2xl font-bold">{formatPrice(rentStatus.calculatedRefund, property.currency)}</p>
+                                    </div>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleEndTenancy} className="bg-destructive hover:bg-destructive/90">Confirm & End Tenancy</AlertDialogAction>
+                                        <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleEndTenancy} className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                            End tenancy
+                                        </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
-                        </CardContent>
-                    </Card>
-                </>
-            ) : (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>No Active Tenancy</CardTitle>
-                        <CardDescription>This user is not currently renting any of your properties.</CardDescription>
-                    </CardHeader>
-                </Card>
-            )}
+                        </section>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

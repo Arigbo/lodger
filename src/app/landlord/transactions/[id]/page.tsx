@@ -1,308 +1,203 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { useFirestore } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { Transaction, UserProfile as User, Property } from '@/types';
-import { sendNotification } from '@/lib/notifications';
-import { formatPrice, cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { ArrowLeft, Calendar, DollarSign, Building, Download, ExternalLink, ShieldCheck, CheckCircle, Loader2, XCircle } from 'lucide-react';
-import { updateDoc } from 'firebase/firestore';
-import { PageSkeleton } from "@/components/dashboard/skeletons";
+import { useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { format } from 'date-fns';
+import { Building2, Check, Mail, Printer, Receipt, X } from 'lucide-react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { EmptyState, PageHeader, PageSkeleton, SectionCard, StatusBadge } from '@/components/dashboard';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { sendNotification } from '@/lib/notifications';
+import { formatPrice } from '@/lib/utils';
+import type { Property, Transaction, UserProfile } from '@/types';
 
 export default function TransactionDetailPage() {
-    const params = useParams();
-    const router = useRouter();
-    const firestore = useFirestore();
-    const transactionId = params.id as string;
+  const { id } = useParams<{ id: string }>();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  const [pendingAction, setPendingAction] = useState<'confirm' | 'deny' | null>(null);
+  const [busy, setBusy] = useState(false);
 
-    const [transaction, setTransaction] = useState<Transaction | null>(null);
-    const [tenant, setTenant] = useState<User | null>(null);
-    const [property, setProperty] = useState<Property | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isConfirming, setIsConfirming] = useState(false);
-    const [isDenying, setIsDenying] = useState(false);
+  const txRef = useMemoFirebase(() => (id ? doc(firestore, 'transactions', id) : null), [firestore, id]);
+  const { data: tx, isLoading } = useDoc<Transaction>(txRef);
+  const tenantRef = useMemoFirebase(() => (tx?.tenantId ? doc(firestore, 'users', tx.tenantId) : null), [firestore, tx?.tenantId]);
+  const propertyRef = useMemoFirebase(() => (tx?.propertyId ? doc(firestore, 'properties', tx.propertyId) : null), [firestore, tx?.propertyId]);
+  const { data: tenant } = useDoc<UserProfile>(tenantRef);
+  const { data: property } = useDoc<Property>(propertyRef);
 
-    const handleConfirmPayment = async () => {
-        if (!transactionId || !firestore || !transaction) return;
-        setIsConfirming(true);
+  const resolve = async (action: 'confirm' | 'deny') => {
+    if (!txRef || !tx) return;
+    setBusy(true);
+    try {
+      await updateDoc(txRef, action === 'confirm' ? { status: 'Completed', date: tx.date || new Date().toISOString() } : { status: 'Failed' });
+      await sendNotification({
+        toUserId: tx.tenantId,
+        type: action === 'confirm' ? 'OFFLINE_PAYMENT_APPROVED' : 'OFFLINE_PAYMENT_REJECTED',
+        firestore,
+        propertyTitle: property?.title || 'your home',
+        link: '/student/tenancy',
+      });
+      toast({
+        title: action === 'confirm' ? 'Payment confirmed' : 'Payment marked as not received',
+        description: 'The tenant has been notified.',
+      });
+    } catch (error) {
+      console.error('Update payment failed:', error);
+      toast({ variant: 'destructive', title: 'Could not update payment', description: 'Please try again.' });
+    } finally {
+      setBusy(false);
+      setPendingAction(null);
+    }
+  };
 
-        try {
-            const transRef = doc(firestore, 'transactions', transactionId);
-            await updateDoc(transRef, {
-                status: 'Completed',
-                date: transaction.date || new Date().toISOString()
-            });
-
-            // Send Notification to Student
-            await sendNotification({
-                toUserId: transaction.tenantId,
-                type: 'OFFLINE_PAYMENT_APPROVED',
-                firestore: firestore,
-                propertyTitle: property?.title || 'Property',
-                link: `/student/leases` // Could link to specific lease if ID available
-            });
-
-            setTransaction(prev => prev ? {
-                ...prev,
-                status: 'Completed',
-                date: prev.date || new Date().toISOString()
-            } : null);
-
-            alert("Payment confirmed successfully!");
-        } catch (error) {
-            console.error("Error confirming payment:", error);
-            alert("Failed to confirm payment. Please try again.");
-        } finally {
-            setIsConfirming(false);
-        }
-    };
-
-    const handleDenyPayment = async () => {
-        if (!transactionId || !firestore || !transaction) return;
-        if (!confirm("Are you sure you want to deny this payment? This action cannot be undone.")) return;
-
-        setIsDenying(true);
-
-        try {
-            const transRef = doc(firestore, 'transactions', transactionId);
-            await updateDoc(transRef, {
-                status: 'Failed', // Or 'Rejected' depending on your enum
-            });
-
-            // Send Notification to Student
-            await sendNotification({
-                toUserId: transaction.tenantId,
-                type: 'OFFLINE_PAYMENT_REJECTED',
-                firestore: firestore,
-                propertyTitle: property?.title || 'Property',
-                link: `/student/leases`
-            });
-
-            setTransaction(prev => prev ? {
-                ...prev,
-                status: 'Failed'
-            } : null);
-
-            alert("Payment denied.");
-        } catch (error) {
-            console.error("Error denying payment:", error);
-            alert("Failed to deny payment.");
-        } finally {
-            setIsDenying(false);
-        }
-    };
-
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!transactionId || !firestore) return;
-            setIsLoading(true);
-
-            try {
-                const transDoc = await getDoc(doc(firestore, 'transactions', transactionId));
-                if (transDoc.exists()) {
-                    const transData = { id: transDoc.id, ...transDoc.data() } as Transaction;
-                    setTransaction(transData);
-
-                    // Fetch tenant
-                    const tenantDoc = await getDoc(doc(firestore, 'users', transData.tenantId));
-                    if (tenantDoc.exists()) {
-                        setTenant({ id: tenantDoc.id, ...tenantDoc.data() } as User);
-                    }
-
-                    // Fetch property
-                    const propertyDoc = await getDoc(doc(firestore, 'properties', transData.propertyId));
-                    if (propertyDoc.exists()) {
-                        setProperty({ id: propertyDoc.id, ...propertyDoc.data() } as Property);
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching transaction details:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [transactionId, firestore]);
-
-    if (isLoading) return <PageSkeleton variant="detail" />;
-    if (!transaction) return (
-        <div className="flex flex-col items-center justify-center py-20">
-            <h2 className="text-2xl font-bold tracking-tight">Transaction Not Found</h2>
-            <Button variant="ghost" className="mt-4" onClick={() => router.back()}>Back to Transactions</Button>
-        </div>
-    );
-
+  if (isLoading) return <PageSkeleton variant="detail" />;
+  if (!tx) {
     return (
-        <div className="space-y-8 pb-8 animate-in fade-in duration-700">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl hover:bg-card shadow-sm border border-transparent hover:border-muted-foreground/10 transition-all" onClick={() => router.back()}>
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Transaction details</h1>
-                    <p className="text-xs md:text-sm font-medium text-muted-foreground">Reference: {transaction.id}</p>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-8">
-                    <Card className="rounded-3xl border border-white/40 shadow-sm bg-card overflow-hidden">
-                        <div className="p-6 border-b border-muted/20 bg-muted/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                            <div className="space-y-1">
-                                <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider">Transaction Amount</p>
-                                <h2 className="text-3xl font-bold tracking-tight">{formatPrice(transaction.amount, transaction.currency)}</h2>
-                            </div>
-                            <Badge className={cn(
-                                "rounded-full px-6 py-2 text-xs font-semibold uppercase tracking-wider border-none h-fit",
-                                transaction.status === 'Completed' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" :
-                                    transaction.status === 'Pending' ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" :
-                                        "bg-red-500 text-white shadow-lg shadow-red-500/20"
-                            )}>
-                                {transaction.status}
-                            </Badge>
-                        </div>
-                        <CardContent className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-8">
-                                    <div className="flex items-start gap-4">
-                                        <div className="h-12 w-12 rounded-2xl bg-primary/5 flex items-center justify-center flex-shrink-0">
-                                            <Calendar className="h-6 w-6 text-primary" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Payment Date</p>
-                                            <p className="text-lg font-bold">{transaction.date ? format(new Date(transaction.date), 'MMMM dd, yyyy') : 'Processing'}</p>
-                                            <p className="text-xs text-muted-foreground font-medium">{transaction.date ? format(new Date(transaction.date), 'HH:mm:ss') : ''}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-start gap-4">
-                                        <div className="h-12 w-12 rounded-2xl bg-primary/5 flex items-center justify-center flex-shrink-0">
-                                            <DollarSign className="h-6 w-6 text-primary" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Transaction Type</p>
-                                            <p className="text-lg font-bold">{transaction.type}</p>
-                                            <p className="text-xs text-muted-foreground font-medium">Recorded via {transaction.paymentMethod || transaction.method || 'System'}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-8">
-                                    <div className="flex items-start gap-4">
-                                        <div className="h-12 w-12 rounded-2xl bg-primary/5 flex items-center justify-center flex-shrink-0">
-                                            <ShieldCheck className="h-6 w-6 text-primary" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Reference ID</p>
-                                            <p className="text-lg font-bold break-all">{transaction.paymentIntentId || transaction.paymentIntentId || transaction.id}</p>
-                                            <p className="text-xs text-muted-foreground font-medium">Stripe/Internal Mapping</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </CardContent>
-                    </Card>
-
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        {(transaction.status === 'Pending' || transaction.status === 'Pending Verification') &&
-                            (transaction.paymentMethod === 'Offline' || transaction.method === 'Offline') && (
-                                <div className="flex gap-4 flex-1">
-                                    <Button
-                                        onClick={handleDenyPayment}
-                                        disabled={isDenying || isConfirming}
-                                        variant="destructive"
-                                        className="h-11 rounded-2xl font-semibold text-xs uppercase tracking-wider gap-2 bg-red-500 hover:bg-red-600 shadow-lg px-8"
-                                    >
-                                        {isDenying ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
-                                        Deny
-                                    </Button>
-                                    <Button
-                                        onClick={handleConfirmPayment}
-                                        disabled={isConfirming || isDenying}
-                                        className="flex-1 h-14 rounded-2xl font-semibold text-xs uppercase tracking-wider gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg"
-                                    >
-                                        {isConfirming ? (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <CheckCircle className="h-4 w-4" />
-                                        )}
-                                        Confirm Payment
-                                    </Button>
-                                </div>
-                            )}
-                        <Button className="flex-1 h-14 rounded-2xl font-semibold text-xs uppercase tracking-wider gap-2">
-                            <Download className="h-4 w-4" /> Download Receipt
-                        </Button>
-                        <Button variant="outline" className="h-11 px-8 rounded-2xl border font-semibold text-xs uppercase tracking-wider gap-2">
-                            Print Data
-                        </Button>
-                    </div>
-                </div>
-
-                <div className="space-y-8">
-                    {/* Related Entities */}
-                    <Card className="rounded-3xl border border-white/40 shadow-sm bg-card overflow-hidden">
-                        <CardHeader className="p-8 border-b border-muted/20">
-                            <CardTitle className="text-sm font-bold uppercase tracking-wider">Parties Involved</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-8 space-y-8">
-                            <div className="flex items-center gap-4">
-                                <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
-                                    {tenant?.name?.[0] || 'U'}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-0.5">Tenant</p>
-                                    <p className="text-base font-bold truncate">{tenant?.name || 'Unknown User'}</p>
-                                    <p className="text-xs text-muted-foreground font-medium truncate">{tenant?.email}</p>
-                                </div>
-                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl" asChild>
-                                    <Link href={`/landlord/messages?conversationId=${tenant?.id}`}>
-                                        <ExternalLink className="h-4 w-4" />
-                                    </Link>
-                                </Button>
-                            </div>
-
-                            <Separator />
-
-                            <div className="flex items-center gap-4">
-                                <div className="h-14 w-14 rounded-2xl bg-muted/20 flex items-center justify-center text-muted-foreground">
-                                    <Building className="h-7 w-7" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-0.5">Property</p>
-                                    <p className="text-base font-bold truncate">{property?.title || 'Deleted Property'}</p>
-                                    <p className="text-xs text-muted-foreground font-medium truncate">{property?.location.address}</p>
-                                </div>
-                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl" asChild>
-                                    <Link href={`/landlord/properties/${property?.id}`}>
-                                        <ExternalLink className="h-4 w-4" />
-                                    </Link>
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="rounded-3xl border border-primary/10 bg-primary/[0.02] p-8 text-center space-y-4">
-                        <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-                            <ShieldCheck className="h-6 w-6 text-primary" />
-                        </div>
-                        <h4 className="font-bold uppercase tracking-tight">Record kept</h4>
-                        <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-                            This payment record is stored with your account and included in your exports.
-                        </p>
-                    </Card>
-                </div>
-            </div>
-        </div>
+      <EmptyState
+        icon={Receipt}
+        title="Payment not found"
+        action={
+          <Button asChild variant="outline" className="rounded-xl">
+            <Link href="/landlord/transactions">All transactions</Link>
+          </Button>
+        }
+      />
     );
+  }
+
+  const isPending = tx.status === 'Pending' || tx.status === 'Pending Verification';
+  const method = tx.paymentMethod ?? tx.method ?? '—';
+  const months = tx.months ?? tx.monthsPaid ?? 1;
+  const rows: [string, React.ReactNode][] = [
+    ['Date', tx.date ? format(new Date(tx.date), 'd MMMM yyyy, HH:mm') : '—'],
+    ['Type', tx.type === 'Lease Activation' ? 'First payment' : tx.type],
+    ['Covers', `${months} month${months === 1 ? '' : 's'}`],
+    ['Method', method],
+    ['Reference', <span key="ref" className="break-all font-mono text-xs">{tx.paymentIntentId || tx.id}</span>],
+  ];
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        back={{ href: '/landlord/transactions', label: 'Transactions' }}
+        title="Payment details"
+        actions={
+          <Button variant="outline" className="rounded-xl print:hidden" onClick={() => window.print()}>
+            <Printer className="mr-1.5 h-4 w-4" /> Print receipt
+          </Button>
+        }
+      />
+
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        <section className="overflow-hidden rounded-2xl border bg-card shadow-sm lg:col-span-2">
+          <div className="flex flex-col gap-4 border-b bg-muted/30 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Amount</p>
+              <p className="text-3xl font-bold tracking-tight">{formatPrice(tx.amount, tx.currency)}</p>
+            </div>
+            <StatusBadge status={tx.status} className="self-start text-sm sm:self-auto" />
+          </div>
+          <dl className="divide-y">
+            {rows.map(([label, value]) => (
+              <div key={label} className="grid grid-cols-3 gap-4 px-6 py-3.5 text-sm">
+                <dt className="text-muted-foreground">{label}</dt>
+                <dd className="col-span-2 font-medium">{value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          {isPending && (
+            <div className="flex flex-col gap-3 border-t bg-amber-50/60 p-6 sm:flex-row sm:items-center print:hidden">
+              <p className="flex-1 text-sm text-amber-900">
+                Confirm only once the money has arrived in your bank account.
+              </p>
+              <div className="flex gap-2">
+                <Button className="rounded-lg" disabled={busy} onClick={() => setPendingAction('confirm')}>
+                  <Check className="mr-1.5 h-4 w-4" /> Received
+                </Button>
+                <Button variant="outline" className="rounded-lg" disabled={busy} onClick={() => setPendingAction('deny')}>
+                  <X className="mr-1.5 h-4 w-4" /> Not received
+                </Button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <div className="space-y-6">
+          <SectionCard title="Tenant" bodyClassName="p-5">
+            {tenant ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={tenant.profileImageUrl} alt="" />
+                    <AvatarFallback>{tenant.name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{tenant.name}</p>
+                    <a href={`mailto:${tenant.email}`} className="flex items-center gap-1 truncate text-xs text-muted-foreground hover:underline">
+                      <Mail aria-hidden className="h-3 w-3" /> {tenant.email}
+                    </a>
+                  </div>
+                </div>
+                <Button asChild variant="outline" size="sm" className="w-full rounded-lg print:hidden">
+                  <Link href={`/landlord/tenants/${tenant.id}`}>View tenancy</Link>
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Tenant details unavailable.</p>
+            )}
+          </SectionCard>
+
+          <SectionCard title="Property" bodyClassName="p-5">
+            {property ? (
+              <Link href={`/landlord/properties/${property.id}`} className="flex items-start gap-3 hover:underline">
+                <Building2 aria-hidden className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                <span>
+                  <span className="block font-medium">{property.title}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {[property.location?.address, property.location?.city].filter(Boolean).join(', ')}
+                  </span>
+                </span>
+              </Link>
+            ) : (
+              <p className="text-sm text-muted-foreground">Property details unavailable.</p>
+            )}
+          </SectionCard>
+        </div>
+      </div>
+
+      <AlertDialog open={!!pendingAction} onOpenChange={(open) => !open && setPendingAction(null)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{pendingAction === 'confirm' ? 'Confirm this payment?' : 'Mark as not received?'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingAction === 'confirm'
+                ? `You're confirming ${formatPrice(tx.amount, tx.currency)} arrived in your account. The tenant will be notified.`
+                : 'The tenant will be told the payment was not received and asked to try again.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
+            <AlertDialogAction className="rounded-lg" onClick={() => pendingAction && void resolve(pendingAction)}>
+              {pendingAction === 'confirm' ? 'Yes, received' : 'Not received'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
 }

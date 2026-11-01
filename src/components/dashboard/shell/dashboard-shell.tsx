@@ -51,7 +51,7 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
 
       <AppSidebar role={role} collapsed={collapsed} onToggleCollapsed={() => setCollapsed(!collapsed)} />
 
-      <div className={cn("transition-[padding] duration-200", collapsed ? "md:pl-[76px]" : "md:pl-[260px]")}>
+      <div className={cn("transition-[padding] duration-200 print:pl-0", collapsed ? "md:pl-[76px]" : "md:pl-[260px]")}>
         <Topbar role={role} />
         <main id="main-content" className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 md:pb-12 lg:px-8 lg:pt-8">
           <SetupBanner role={role} />
@@ -96,7 +96,7 @@ function SetupBanner({ role }: { role: DashboardRole }) {
   if (!banner || pathname === banner.href) return null;
 
   return (
-    <div role="status" className="mb-6 flex items-center gap-3 rounded-2xl border bg-card p-3 pr-2 shadow-sm sm:p-4">
+    <div role="status" className="mb-6 flex items-center gap-3 rounded-2xl border bg-card p-3 pr-2 shadow-sm sm:p-4 print:hidden">
       <span className="hidden rounded-xl bg-primary/10 p-2 text-primary sm:block">
         <Sparkles aria-hidden className="h-5 w-5" />
       </span>

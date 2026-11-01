@@ -51,7 +51,7 @@ export function AppSidebar({ role, collapsed, onToggleCollapsed }: AppSidebarPro
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-40 hidden flex-col border-r bg-card transition-[width] duration-200 md:flex",
+        "fixed inset-y-0 left-0 z-40 hidden flex-col border-r bg-card transition-[width] duration-200 md:flex print:hidden",
         collapsed ? "w-[76px]" : "w-[260px]",
       )}
     >

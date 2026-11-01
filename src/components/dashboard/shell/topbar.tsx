@@ -20,7 +20,7 @@ export function Topbar({ role }: { role: DashboardRole }) {
   const action = primaryAction[role];
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/85 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/85 px-4 backdrop-blur-xl sm:px-6 lg:px-8 print:hidden">
       <Link href={`/${role}`} aria-label="Dashboard home" className="md:hidden">
         <LogoMark />
       </Link>

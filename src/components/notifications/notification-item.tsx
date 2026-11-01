@@ -27,10 +27,12 @@ function timeAgo(iso?: string) {
 export function NotificationItem({ notification, onMarkAsRead, isDropdown = false }: NotificationItemProps) {
   const { role } = useUser();
   const base = role === "landlord" ? "/landlord/notifications" : "/student/notifications";
+  // Go straight to what the notification is about; fall back to its detail view.
+  const href = notification.link && notification.link !== "#" ? notification.link : `${base}/${notification.id}`;
 
   const link = (
     <Link
-      href={`${base}/${notification.id}`}
+      href={href}
       onClick={() => !notification.read && onMarkAsRead(notification.id)}
       className={cn(
         "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/50 focus-visible:bg-accent/50 focus-visible:outline-none",
