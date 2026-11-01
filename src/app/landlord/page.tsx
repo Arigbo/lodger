@@ -6,6 +6,7 @@ import {
   BadgeCheck,
   Building2,
   CheckCircle2,
+  FilePen,
   Inbox,
   PenLine,
   Percent,
@@ -23,6 +24,7 @@ import { useAsyncResult } from "@/hooks/use-async-result";
 import { fetchDocsByIds } from "@/lib/firestore-batch";
 import { formatPrice } from "@/lib/utils";
 import type { LeaseAgreement, MaintenanceRequest, Property, RentalApplication, UserProfile } from "@/types";
+import type { PropertyDraft } from "@/lib/property-drafts";
 
 type InboxItem = {
   id: string;
@@ -55,6 +57,7 @@ export default function LandlordHomePage() {
   const { data: requests } = useLandlordCollection<RentalApplication>("rentalApplications", ["status", "==", "pending"]);
   const { data: leases } = useLandlordCollection<LeaseAgreement>("leaseAgreements", ["status", "==", "pending"]);
   const { data: repairs } = useLandlordCollection<MaintenanceRequest>("maintenanceRequests", ["status", "==", "Pending"]);
+  const { data: drafts } = useLandlordCollection<PropertyDraft>("propertyDrafts");
 
   const tenantIds = [...(requests ?? []).map((r) => r.tenantId), ...(leases ?? []).map((l) => l.tenantId)];
   const idsKey = [...new Set(tenantIds)].sort().join(",");
@@ -121,6 +124,17 @@ export default function LandlordHomePage() {
         cta: "Sign",
         priority: 1,
       })),
+    ...(drafts ?? []).map((d) => ({
+      id: `draft-${d.id}`,
+      icon: FilePen,
+      tone: "bg-amber-50 text-amber-700",
+      title: `Finish your listing “${d.title || "Untitled listing"}”`,
+      detail: "Draft · not visible to students yet",
+      when: typeof d.updatedAt === "string" ? d.updatedAt : undefined,
+      href: `/landlord/properties/new?draft=${d.id}`,
+      cta: "Continue",
+      priority: 3,
+    })),
   ].sort((a, b) => a.priority - b.priority);
 
   return (

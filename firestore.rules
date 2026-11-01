@@ -71,6 +71,14 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.landlordId == request.auth.uid;
     }
 
+    // Unpublished listings: private to the landlord who is writing them.
+    match /propertyDrafts/{draftId} {
+      allow read, delete: if signedIn() && resource.data.landlordId == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.landlordId == request.auth.uid;
+      allow update: if signedIn() && resource.data.landlordId == request.auth.uid
+        && request.resource.data.landlordId == request.auth.uid;
+    }
+
     match /rentalApplications/{applicationId} {
       function isApplicationParty() {
         return resource.data.tenantId == request.auth.uid ||

@@ -3,9 +3,15 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Bath, BedDouble, Building2, ExternalLink, MoreHorizontal, Pencil, Plus, Search, Trash2, User as UserIcon } from 'lucide-react';
+import { Bath, BedDouble, Building2, ExternalLink, FilePen, MoreHorizontal, Pencil, Plus, Search, Trash2, User as UserIcon } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { steps } from '@/app/landlord/properties/new/constants';
+import { Progress } from '@/components/ui/progress';
+import { toDate, toMillis } from '@/lib/dates';
+import { deleteMedia } from '@/lib/media/upload-media';
+import { draftProgress, type PropertyDraft } from '@/lib/property-drafts';
 import { collection, deleteDoc, doc, getDocs, query, where } from 'firebase/firestore';
-import { EmptyState, PageHeader, PageSkeleton, StatusBadge } from '@/components/dashboard';
+import { EmptyState, PageHeader, PageSkeleton, SectionCard, StatusBadge } from '@/components/dashboard';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,6 +59,24 @@ export default function LandlordPropertiesPage() {
     (items) => fetchDocsByIds<User>(firestore, 'users', items.map((p) => p.currentTenantId)),
     { keepPrevious: true },
   );
+
+  const draftsQuery = useMemoFirebase(
+    () => (user ? query(collection(firestore, 'propertyDrafts'), where('landlordId', '==', user.uid)) : null),
+    [user, firestore],
+  );
+  const { data: drafts } = useCollection<PropertyDraft>(draftsQuery);
+  const [draftToDelete, setDraftToDelete] = useState<PropertyDraft | null>(null);
+
+  const deleteDraft = async (draft: PropertyDraft) => {
+    try {
+      await deleteDoc(doc(firestore, 'propertyDrafts', draft.id));
+      Object.values(draft.media ?? {}).forEach((url) => url && void deleteMedia(url));
+      toast({ title: 'Draft deleted' });
+    } catch (error) {
+      console.error('Delete draft failed:', error);
+      toast({ variant: 'destructive', title: 'Could not delete draft', description: 'Please try again.' });
+    }
+  };
 
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -142,7 +166,51 @@ export default function LandlordPropertiesPage() {
         }
       />
 
-      {all.length === 0 ? (
+      {!!drafts?.length && (
+        <SectionCard title="Drafts" description="Unpublished listings — only you can see these.">
+          <ul className="divide-y">
+            {[...drafts]
+              .sort((a, b) => toMillis(b.updatedAt) - toMillis(a.updatedAt))
+              .map((draft) => {
+                const progress = draftProgress(draft, steps.length);
+                const updated = toDate(draft.updatedAt);
+                return (
+                  <li key={draft.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                        <FilePen aria-hidden className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium">{draft.title || 'Untitled listing'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Step {Math.min(draft.step, steps.length)} of {steps.length}
+                          {updated && ` · edited ${formatDistanceToNow(updated, { addSuffix: true })}`}
+                        </p>
+                        <Progress value={progress} className="mt-2 h-1 max-w-48" aria-label={`${progress}% complete`} />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button asChild size="sm" className="rounded-lg">
+                        <Link href={`/landlord/properties/new?draft=${draft.id}`}>Continue</Link>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="rounded-lg text-muted-foreground hover:text-destructive"
+                        onClick={() => setDraftToDelete(draft)}
+                        aria-label={`Delete draft ${draft.title}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+          </ul>
+        </SectionCard>
+      )}
+
+      {all.length === 0 && !!drafts?.length ? null : all.length === 0 ? (
         <EmptyState
           icon={Building2}
           title="List your first property"
@@ -280,6 +348,29 @@ export default function LandlordPropertiesPage() {
           )}
         </>
       )}
+
+      <AlertDialog open={!!draftToDelete} onOpenChange={(open) => !open && setDraftToDelete(null)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this draft?</AlertDialogTitle>
+            <AlertDialogDescription>
+              “{draftToDelete?.title || 'Untitled listing'}” and any photos uploaded for it will be removed. This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-lg">Keep draft</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (draftToDelete) void deleteDraft(draftToDelete);
+                setDraftToDelete(null);
+              }}
+            >
+              Delete draft
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!propertyToDelete} onOpenChange={(open) => !open && setPropertyToDelete(null)}>
         <AlertDialogContent className="rounded-2xl">

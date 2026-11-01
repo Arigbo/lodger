@@ -1,26 +1,34 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { formatDistanceToNow } from 'date-fns';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
-import { collection, doc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, deleteDoc, doc, setDoc } from 'firebase/firestore';
 
 // UI Components
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { 
-    Building, 
     ArrowLeft, 
     ArrowRight, 
     Loader2,
-    CheckCircle2
+    CheckCircle2,
+    FileQuestion,
+    Save,
 } from 'lucide-react';
+import { EmptyState, PageHeader, PageSkeleton } from '@/components/dashboard';
+import { Progress } from '@/components/ui/progress';
+import { describeUploadError, getErrorCode } from '@/lib/errors';
+import { toDate } from '@/lib/dates';
+import { uploadMedia } from '@/lib/media/upload-media';
+import { MEDIA_SLOTS, toDraftValues, type PropertyDraft, type SavedMedia } from '@/lib/property-drafts';
 
 // Hooks & Firebase
-import { useFirestore, useUser, useFirebaseApp, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { getCurrencyByCountry } from '@/lib/currencies';
@@ -42,18 +50,21 @@ import type { Property, UserProfile } from '@/types';
 import type { ImageAnalysisMap } from './types';
 import { authHeaders } from "@/lib/api-client";
 
-export default function AddPropertyPage() {
-    const [currentStep, setCurrentStep] = useState(1);
+function PropertyWizard({ draft }: { draft: PropertyDraft | null }) {
+    const [currentStep, setCurrentStep] = useState(draft?.step ?? 1);
+    const [draftId, setDraftId] = useState<string | null>(draft?.id ?? null);
+    const [savedMedia, setSavedMedia] = useState<SavedMedia>(draft?.media ?? {});
+    const [lastSavedAt, setLastSavedAt] = useState<Date | null>(draft ? toDate(draft.updatedAt) : null);
+    const [isSavingDraft, setIsSavingDraft] = useState(false);
     const totalSteps = steps.length;
     const router = useRouter();
     const firestore = useFirestore();
-    const firebaseApp = useFirebaseApp();
     const { user } = useUser();
     const { toast } = useToast();
     
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
-    const [hasPrefilled, setHasPrefilled] = useState(false);
+    const [hasPrefilled, setHasPrefilled] = useState(!!draft);
 
     const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile } = useDoc<UserProfile>(userDocRef);
@@ -91,6 +102,7 @@ export default function AddPropertyPage() {
             // Empty strings (not undefined) keep the coordinate inputs controlled.
             lat: '',
             lng: '',
+            ...(draft?.values ?? {}),
         },
     });
 
@@ -210,12 +222,71 @@ export default function AddPropertyPage() {
         }
     };
 
-    const uploadFile = async (file: File, path: string): Promise<string> => {
-        const storage = getStorage(firebaseApp);
-        const storageRef = ref(storage, path);
-        const snapshot = await uploadBytes(storageRef, file);
-        return await getDownloadURL(snapshot.ref);
+    /** Uploads any newly chosen photos/video and returns every slot's URL. */
+    const uploadPendingMedia = async (values: Partial<FormValues>, folder: string): Promise<SavedMedia> => {
+        const uploads = MEDIA_SLOTS.flatMap(({ field, key }) => {
+            const file = (values[field] as FileList | null | undefined)?.[0];
+            return file ? [{ key, promise: uploadMedia(file, `${folder}/${key}`, { raw: key === 'video' }) }] : [];
+        });
+        const urls = await Promise.all(uploads.map((u) => u.promise));
+        const media: SavedMedia = { ...savedMedia };
+        uploads.forEach((u, i) => (media[u.key] = urls[i]));
+        return media;
     };
+
+    const saveDraft = async () => {
+        if (!user) return;
+        setIsSavingDraft(true);
+        try {
+            const values = form.getValues();
+            const id = draftId ?? doc(collection(firestore, 'propertyDrafts')).id;
+            const media = await uploadPendingMedia(values, `properties/${user.uid}/${id}`);
+            const now = new Date().toISOString();
+            await setDoc(
+                doc(firestore, 'propertyDrafts', id),
+                {
+                    id,
+                    landlordId: user.uid,
+                    title: values.title?.trim() || 'Untitled listing',
+                    step: currentStep,
+                    values: toDraftValues(values),
+                    media,
+                    updatedAt: now,
+                    ...(draftId ? {} : { createdAt: now }),
+                },
+                { merge: true },
+            );
+            // Uploaded files now live in `media`; clear the file inputs so they
+            // aren't uploaded twice, and mark the form as clean.
+            MEDIA_SLOTS.forEach(({ field }) => form.setValue(field, null));
+            form.reset(form.getValues());
+            setSavedMedia(media);
+            setLastSavedAt(new Date());
+            if (!draftId) {
+                setDraftId(id);
+                window.history.replaceState(null, '', `/landlord/properties/new?draft=${id}`);
+            }
+            toast({ title: 'Draft saved', description: 'Find it any time under Properties → Drafts.' });
+        } catch (error) {
+            console.error('Save draft failed:', error);
+            const isStorage = getErrorCode(error)?.startsWith('storage/');
+            toast({
+                variant: 'destructive',
+                ...(isStorage ? describeUploadError(error) : { title: 'Could not save draft', description: 'Please try again.' }),
+            });
+        } finally {
+            setIsSavingDraft(false);
+        }
+    };
+
+    // Warn before leaving with unsaved changes.
+    const isDirty = form.formState.isDirty;
+    useEffect(() => {
+        if (!isDirty || isSubmitting) return;
+        const onBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
+        window.addEventListener('beforeunload', onBeforeUnload);
+        return () => window.removeEventListener('beforeunload', onBeforeUnload);
+    }, [isDirty, isSubmitting]);
 
     const onPreSubmit = (values: FormValues) => {
         handleFinalSubmit(values);
@@ -226,32 +297,11 @@ export default function AddPropertyPage() {
         setIsSubmitting(true);
 
         try {
-            const timestamp = Date.now();
-            const basePath = `properties/${user.uid}/${timestamp}`;
-            const images: string[] = [];
+            const propertyRef = doc(firestore, 'properties', draftId ?? doc(collection(firestore, 'properties')).id);
+            const media = await uploadPendingMedia(values, `properties/${user.uid}/${propertyRef.id}`);
+            const images = MEDIA_SLOTS.filter(({ key }) => key !== 'video').flatMap(({ key }) => (media[key] ? [media[key]!] : []));
+            const videoUrl = media.video ?? '';
 
-            // Parallel upload would be faster, but sequential is safer for toast feedback
-            const imageFields = [
-                { file: values.kitchenImage?.[0], name: 'kitchen' },
-                { file: values.livingRoomImage?.[0], name: 'livingRoom' },
-                { file: values.bedroomImage?.[0], name: 'bedroom' },
-                { file: values.bathroomImage?.[0], name: 'bathroom' },
-                { file: values.otherImage?.[0], name: 'other' },
-            ];
-
-            for (const item of imageFields) {
-                if (item.file) {
-                    const url = await uploadFile(item.file, `${basePath}/${item.name}`);
-                    images.push(url);
-                }
-            }
-
-            let videoUrl = '';
-            if (values.propertyVideo?.[0]) {
-                videoUrl = await uploadFile(values.propertyVideo[0], `${basePath}/video`);
-            }
-
-            const propertyRef = doc(collection(firestore, 'properties'));
             const propertyData: Property = {
                 id: propertyRef.id,
                 landlordId: user.uid,
@@ -281,117 +331,151 @@ export default function AddPropertyPage() {
                 area: 0,
             };
 
-            await import('firebase/firestore').then(({ setDoc }) => setDoc(propertyRef, propertyData));
+            await setDoc(propertyRef, propertyData);
+            if (draftId) await deleteDoc(doc(firestore, 'propertyDrafts', draftId)).catch(() => undefined);
+            form.reset(form.getValues()); // clean, so the leave-page warning doesn't fire
             
             toast({ title: "Property listed", description: "Your property is now live on Lodger." });
             router.push(`/landlord/properties/${propertyRef.id}?new=true`);
         } catch (error) {
-            console.error(error);
-            toast({ variant: "destructive", title: "Could not create property", description: "Something went wrong while saving your listing. Please try again." });
+            console.error('Publish failed:', error);
+            const isStorage = getErrorCode(error)?.startsWith('storage/');
+            toast({
+                variant: 'destructive',
+                ...(isStorage
+                    ? describeUploadError(error)
+                    : { title: 'Could not publish', description: 'Your work is still here — save it as a draft and try again.' }),
+            });
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    const savedLabel = isSavingDraft
+        ? 'Saving…'
+        : lastSavedAt
+            ? `Draft saved ${formatDistanceToNow(lastSavedAt, { addSuffix: true })}${isDirty ? ' · unsaved changes' : ''}`
+            : 'Not saved yet';
+
     return (
-        <div className="max-w-[1400px] mx-auto space-y-8 md:space-y-8 pb-8 min-h-screen">
-            {/* Premium Page Header */}
-            <header className="px-4 md:px-0 pt-8 md:pt-12">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b-2 border-foreground/5">
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-inner">
-                                <Building className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                            </div>
-                            <div>
-                                <p className="text-xs md:text-xs font-semibold uppercase tracking-wider text-primary">New listing</p>
-                                                            </div>
-                        </div>
-                        <h1 className="text-4xl sm:text-3xl md:text-3xl font-bold tracking-tight text-foreground leading-tight">
-                            Add a property
-                        </h1>
-                    </div>
+        <div className="space-y-6">
+            <PageHeader
+                back={{ href: '/landlord/properties', label: 'Properties' }}
+                title={draft ? 'Finish your listing' : 'Add a property'}
+                description={
+                    <span className="flex items-center gap-2">
+                        <span className={cn('h-2 w-2 rounded-full', lastSavedAt && !isDirty ? 'bg-emerald-500' : 'bg-amber-500')} aria-hidden />
+                        Step {currentStep} of {totalSteps} · {savedLabel}
+                    </span>
+                }
+                actions={
+                    <Button type="button" variant="outline" className="rounded-xl" onClick={saveDraft} disabled={isSavingDraft || isSubmitting}>
+                        {isSavingDraft ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
+                        Save draft
+                    </Button>
+                }
+            />
+            <Progress value={(currentStep / totalSteps) * 100} className="h-1.5" aria-label={`Step ${currentStep} of ${totalSteps}`} />
 
-                    <div className="flex items-center gap-4">
-                        <div className="hidden sm:block text-right">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Progress</p>
-                            <p className="text-2xl font-bold text-primary">{Math.round((currentStep / totalSteps) * 100)}%</p>
-                        </div>
-                        <div className="h-16 w-16 md:h-20 md:w-20 rounded-3xl bg-foreground text-white flex items-center justify-center shadow-sm">
-                            <p className="text-2xl md:text-3xl font-bold tracking-tight">0{currentStep}</p>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 md:gap-8 items-start px-4 md:px-0">
+            <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-4">
                 {/* Fixed Navigation Sidebar */}
-                <aside className="lg:sticky lg:top-12">
+                <aside className="hidden lg:sticky lg:top-24 lg:block">
                     <StepNavigation steps={steps} currentStep={currentStep} />
                 </aside>
 
                 {/* Form Content Area */}
                 <main className="lg:col-span-3">
                     <Form {...form}>
-                        <form className="space-y-8 md:space-y-20">
+                        <form className="space-y-8 rounded-2xl border bg-card p-5 shadow-sm sm:p-8">
                             <AnimatePresence mode="wait">
                                 <section key={currentStep}>
                                     {currentStep === 1 && <BasicInfoStep form={form} />}
                                     {currentStep === 2 && <LocationStep form={form} />}
                                     {currentStep === 3 && <AmenitiesStep form={form} />}
                                     {currentStep === 4 && <LeaseTemplateStep form={form} />}
-                                    {currentStep === 5 && <MediaUploadStep form={form} setImageAnalysis={setImageAnalysis} />}
+                                    {currentStep === 5 && (
+                                        <MediaUploadStep
+                                            form={form}
+                                            setImageAnalysis={setImageAnalysis}
+                                            savedMedia={savedMedia}
+                                            onRemoveSaved={(key) => setSavedMedia(({ [key]: _removed, ...rest }) => rest)}
+                                        />
+                                    )}
                                     {currentStep === 6 && <AIStep form={form} isGeneratingDescription={isGeneratingDescription} generateAIDescription={generateAIDescription} />}
                                     {currentStep === 7 && <ReviewStep form={form} imageAnalysis={imageAnalysis} onEditMedia={() => setCurrentStep(5)} />}
                                 </section>
                             </AnimatePresence>
 
-                            {/* Control Bar */}
-                            <footer className="flex items-center justify-between gap-6 pt-12 border-t border-foreground/5">
+                            <footer className="flex items-center justify-between gap-3 border-t pt-6">
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     onClick={prevStep}
                                     disabled={currentStep === 1 || isSubmitting}
-                                    className="h-11 md:h-20 px-8 md:px-6 rounded-full font-semibold text-xs md:text-sm uppercase tracking-wider transition-all hover:bg-foreground hover:text-white disabled:opacity-0"
+                                    className="rounded-xl disabled:invisible"
                                 >
-                                    <ArrowLeft className="h-4 w-4 md:h-5 md:w-5 mr-3" />
-                                    Back
+                                    <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
                                 </Button>
-
-                                <Button
-                                    type="button"
-                                    onClick={nextStep}
-                                    disabled={isSubmitting}
-                                    className={cn(
-                                        "h-11 md:h-24 px-6 md:px-20 rounded-3xl md:rounded-3xl font-bold text-base md:text-2xl tracking-tight transition-all duration-500 shadow-sm",
-                                        currentStep === totalSteps 
-                                            ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/20" 
-                                            : "bg-primary hover:bg-primary/90 text-white shadow-primary/20"
-                                    )}
-                                >
-                                    {isSubmitting ? (
-                                        <div className="flex items-center gap-4">
-                                            <Loader2 className="h-6 w-6 md:h-8 md:w-8 animate-spin" />
-                                            <span>Publishing…</span>
-                                        </div>
-                                    ) : currentStep === totalSteps ? (
-                                        <div className="flex items-center gap-4">
-                                            <span>List Property</span>
-                                            <CheckCircle2 className="h-6 w-6 md:h-8 md:w-8" />
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-4">
-                                            <span>Continue</span>
-                                            <ArrowRight className="h-6 w-6 md:h-8 md:w-8" />
-                                        </div>
-                                    )}
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={saveDraft}
+                                        disabled={isSavingDraft || isSubmitting}
+                                        className="rounded-xl sm:hidden"
+                                        aria-label="Save draft"
+                                    >
+                                        <Save className="h-4 w-4" />
+                                    </Button>
+                                    <Button type="button" onClick={nextStep} disabled={isSubmitting || isSavingDraft} className="min-w-36 rounded-xl">
+                                        {isSubmitting ? (
+                                            <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Publishing…</>
+                                        ) : currentStep === totalSteps ? (
+                                            <><CheckCircle2 className="mr-1.5 h-4 w-4" /> Publish listing</>
+                                        ) : (
+                                            <>Continue <ArrowRight className="ml-1.5 h-4 w-4" /></>
+                                        )}
+                                    </Button>
+                                </div>
                             </footer>
                         </form>
                     </Form>
                 </main>
             </div>
         </div>
+    );
+}
+
+/** Loads `?draft=<id>` (if any) before mounting the wizard with it. */
+function DraftLoader() {
+    const searchParams = useSearchParams();
+    const [draftId] = useState(() => searchParams.get('draft'));
+    const firestore = useFirestore();
+    const draftRef = useMemoFirebase(() => (draftId ? doc(firestore, 'propertyDrafts', draftId) : null), [draftId, firestore]);
+    const { data: draft, isLoading } = useDoc<PropertyDraft>(draftRef);
+
+    if (draftId && isLoading) return <PageSkeleton variant="form" />;
+    if (draftId && !draft) {
+        return (
+            <EmptyState
+                icon={FileQuestion}
+                title="This draft no longer exists"
+                description="It may have been published or deleted."
+                action={
+                    <Button asChild className="rounded-xl">
+                        <Link href="/landlord/properties">Back to properties</Link>
+                    </Button>
+                }
+            />
+        );
+    }
+    return <PropertyWizard key={draft?.id ?? 'new'} draft={draft ?? null} />;
+}
+
+export default function AddPropertyPage() {
+    return (
+        <Suspense fallback={<PageSkeleton variant="form" />}>
+            <DraftLoader />
+        </Suspense>
     );
 }

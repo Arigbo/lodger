@@ -24,6 +24,8 @@ The app runs with only the public Firebase web config (committed in `src/firebas
 | `npm run lint` / `lint:fix` | ESLint (flat config, `eslint.config.mjs`) |
 | `npm test` | Vitest unit tests (`src/**/*.test.ts`) |
 | `npm run deploy:rules` | Deploy Firestore/Storage rules and indexes |
+| `npm run emulators` · `npm run seed` · `npm run dev:emulators` | Run fully offline against Firebase emulators with demo accounts (`student@demo.lodger` / `landlord@demo.lodger`, password `password123`) |
+| `npm run reset:firebase -- --project <id>` | Preview, then (with `--yes`) wipe all Firestore data and Auth users in a project. Add `--storage` to also empty the bucket |
 
 ## Project structure
 
@@ -74,7 +76,18 @@ After changing `firestore.rules`, `storage.rules` or `firestore.indexes.json`, d
 
 Admin access is granted out-of-band: create a document at `admin_users/{uid}` in the Firebase console, or list the email in `ADMIN_EMAILS`. Clients can no longer create admin records or change their own `role`.
 
+## Resetting a Firebase project
+
+`scripts/reset-firebase.mjs` deletes **data** only (all Firestore collections and Firebase Auth users, plus Storage files with `--storage`). Rules, indexes and settings stay as they are. It needs Admin credentials (see `.env.example`). It only prints what it would delete until you pass `--yes`, and it then asks you to type the project ID.
+
+```bash
+npm run reset:firebase -- --project studio-2267792175-c3d0d          # preview
+npm run reset:firebase -- --project studio-2267792175-c3d0d --yes    # wipe Firestore + Auth
+```
+
 ## Further docs
+
+- [`docs/media-storage.md`](docs/media-storage.md): image compression, and Firebase Storage vs Cloudinary
 
 - [`docs/rate-limiting.md`](docs/rate-limiting.md): Upstash rate limit tiers
 - [`docs/product-blueprint.md`](docs/product-blueprint.md): original product brief
