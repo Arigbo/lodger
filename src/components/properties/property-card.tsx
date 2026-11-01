@@ -2,6 +2,7 @@
 'use client';
 
 import Image from "next/image";
+import { optimizedImageProps } from "@/config/images";
 import Link from "next/link";
 import type { Property } from "@/types";
 import { cn, formatPrice } from "@/lib/utils";
@@ -99,7 +100,7 @@ export default function PropertyCard({ property, as = 'link', className }: Prope
         <div className="relative h-64 w-full overflow-hidden">
           {image ? (
             <Image
-              src={image}
+              {...optimizedImageProps(image)}
               alt={property.title}
               fill
               className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"

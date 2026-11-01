@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { optimizedImageProps } from "@/config/images";
 import {
     Carousel,
     CarouselContent,
@@ -33,7 +34,7 @@ export function PropertyHeroCarousel({ images, title }: PropertyHeroCarouselProp
                                 className="relative w-full h-full"
                             >
                                 <Image
-                                    src={image}
+                                    {...optimizedImageProps(image)}
                                     alt={`${title} - ${index + 1}`}
                                     fill
                                     className="object-cover transform group-hover:scale-105 transition-transform duration-[3s]"

@@ -1,5 +1,8 @@
 'use client';
 
+import Image from "next/image";
+import { optimizedImageProps } from "@/config/images";
+
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { MoreHorizontal, Plus, Building, Search, ArrowUpDown, Trash2, Edit3, Eye, User as UserIcon, MapPin, ArrowRight } from 'lucide-react';
@@ -216,7 +219,7 @@ export default function LandlordPropertiesPage() {
                   <div className="relative aspect-[16/10] overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
                     {property.images?.[0] ? (
-                      <img src={property.images[0]} alt={property.title} className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                      <Image {...optimizedImageProps(property.images[0])} alt={property.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover transition-transform duration-1000 group-hover:scale-110" />
                     ) : (
                       <div className="h-full w-full bg-muted flex items-center justify-center">
                         <Building className="h-16 w-16 text-muted-foreground/20" />

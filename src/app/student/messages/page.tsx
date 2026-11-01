@@ -201,8 +201,7 @@ export default function MessagesPage() {
               name: "Lodger Moderation",
               email: "moderation@lodger.com",
               role: "admin",
-              profileImageUrl:
-                "https://cdn-icons-png.flaticon.com/512/10673/10673062.png", // Security/Moderation icon
+              profileImageUrl: "/favicon.svg",
             } as User;
           }
 
@@ -565,7 +564,6 @@ export default function MessagesPage() {
 
             <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-8 custom-scrollbar relative">
               {/* Texture Overlay */}
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed opacity-[0.03] pointer-events-none" />
 
               <div className="relative z-10 space-y-6 md:space-y-8">
                 {Object.entries(

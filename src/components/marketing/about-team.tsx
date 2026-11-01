@@ -161,6 +161,7 @@ export default function AboutTeam() {
                                         src={member.image}
                                         alt={member.name}
                                         fill
+                                        sizes="(max-width: 768px) 50vw, 25vw"
                                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -276,7 +277,7 @@ export default function AboutTeam() {
 
                                 <div className="flex items-center gap-4 pt-8 border-t border-border/50">
                                     <div className="relative h-12 w-12 rounded-xl overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-500">
-                                        <Image src={t.image} alt={t.name} fill className="object-cover" />
+                                        <Image src={t.image} alt={t.name} fill sizes="64px" className="object-cover" />
                                     </div>
                                     <div>
                                         <p className="font-bold text-sm text-foreground">{t.name}</p>

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { optimizedImageProps } from "@/config/images";
 import { Play, Maximize2, X, Video as VideoIcon, Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -88,9 +89,10 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
                     >
                         {media.type === 'image' ? (
                             <Image
-                                src={media.url}
+                                {...optimizedImageProps(media.url)}
                                 alt={`${title} - ${index}`}
                                 fill
+                                sizes="(max-width: 768px) 50vw, 25vw"
                                 className="object-cover transition-transform duration-500 group-hover:scale-110"
                             />
                         ) : (
@@ -141,9 +143,10 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
                         {selectedMedia?.type === 'image' ? (
                             <div className="relative w-full h-full aspect-[4/3] md:aspect-[16/9]">
                                 <Image
-                                    src={selectedMedia.url}
+                                    {...optimizedImageProps(selectedMedia.url)}
                                     alt={title}
                                     fill
+                                    sizes="100vw"
                                     className="object-contain"
                                 />
                             </div>

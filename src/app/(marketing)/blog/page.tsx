@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { optimizedImageProps } from "@/config/images";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Search, ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
@@ -88,9 +89,10 @@ export default async function BlogPage({
                                     <div className="relative aspect-[4/3] bg-muted overflow-hidden">
                                         {post.coverImage ? (
                                             <Image
-                                                src={post.coverImage}
+                                                {...optimizedImageProps(post.coverImage)}
                                                 alt={post.title}
                                                 fill
+                                                sizes="(max-width: 768px) 100vw, 33vw"
                                                 className="object-cover transition-transform duration-500 group-hover:scale-105"
                                             />
                                         ) : (

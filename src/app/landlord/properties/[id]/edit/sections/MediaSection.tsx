@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { UploadCloud, X, Loader2, ImageIcon, FileVideo } from "lucide-react";
 import Image from "next/image";
+import { optimizedImageProps } from "@/config/images";
 import { Property } from "@/types";
 
 interface MediaSectionProps {
@@ -40,9 +41,10 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
               className="relative group aspect-square rounded-[2rem] overflow-hidden border-2 border-foreground/5 shadow-inner"
             >
               <Image
-                src={url}
+                {...optimizedImageProps(url)}
                 alt="Property"
                 fill
+                sizes="(max-width: 768px) 50vw, 20vw"
                 className="object-cover transition-transform duration-700 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
