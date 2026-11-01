@@ -1,5 +1,8 @@
 'use client';
 
+import Image from "next/image";
+import { optimizedImageProps } from "@/config/images";
+
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { MoreHorizontal, Plus, Building, Search, ArrowUpDown, Trash2, Edit3, Eye, User as UserIcon, MapPin, ArrowRight } from 'lucide-react';
@@ -42,6 +45,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { PageHeader, StatCard, StatGrid, EmptyState } from "@/components/dashboard";
 
 type PropertyWithTenant = Property & { tenantName?: string };
 
@@ -114,16 +118,16 @@ export default function LandlordPropertiesPage() {
       await deleteDoc(doc(firestore, 'properties', propertyToDelete));
 
       toast({
-        title: "Asset Decommissioned",
-        description: "The property has been successfully removed from your active portfolio.",
+        title: "Property deleted",
+        description: "The property has been removed from your listings.",
       });
       setPropertyToDelete(null);
     } catch (error) {
       console.error("Error deleting property:", error);
       toast({
         variant: "destructive",
-        title: "Decommissioning Failed",
-        description: "Critical error encountered while removing asset. Please retry protocol.",
+        title: "Could not delete property",
+        description: "Something went wrong while deleting the property. Please try again.",
       });
     }
   };
@@ -152,46 +156,38 @@ export default function LandlordPropertiesPage() {
   }
 
   return (
-    <div className="space-y-12 pb-32 animate-in fade-in duration-1000">
-      {/* Elegant Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">Inventory Management</span>
-          </div>
-          <h1 className="font-headline text-4xl md:text-6xl font-black tracking-tighter text-foreground uppercase leading-[0.9]">
-            YOUR <br /> <span className="text-primary">PROPERTIES</span>
-          </h1>
-        </div>
-        <div className="flex flex-wrap gap-4">
-          <Button asChild size="lg" className="h-16 rounded-2xl px-12 font-black text-xs uppercase tracking-widest shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all bg-primary">
+    <div className="space-y-8 pb-8 animate-in fade-in duration-1000">
+      <PageHeader
+        title="Properties"
+        description="Manage your listings, availability and current tenants."
+        actions={
+          <Button asChild className="rounded-xl">
             <Link href="/landlord/properties/new">
-              <Plus className="mr-2 h-5 w-5" /> CREATE PROPERTY
+              <Plus className="mr-2 h-4 w-4" /> Add property
             </Link>
           </Button>
-        </div>
-      </div>
+        }
+      />
       {/* Premium Filter Architecture */}
-      <div className="flex flex-col md:flex-row gap-6 bg-white/50 backdrop-blur-xl p-8 rounded-[2.5rem] border-2 border-foreground/5 shadow-2xl sticky top-4 z-40">
+      <div className="flex flex-col md:flex-row gap-6 bg-white/50 backdrop-blur-xl p-8 rounded-3xl border border-foreground/5 shadow-sm sticky top-4 z-40">
         <div className="relative flex-1 group">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/40 transition-colors group-focus-within:text-primary" />
           <Input
-            placeholder="Search assets by title, tenant, or location..."
-            className="h-14 rounded-2xl pl-16 pr-6 bg-white border-2 border-transparent focus-visible:border-primary/20 focus-visible:ring-0 transition-all font-medium text-base shadow-inner"
+            placeholder="Search by title, tenant or location…"
+            className="h-14 rounded-2xl pl-16 pr-6 bg-card border border-transparent focus-visible:border-primary/20 focus-visible:ring-0 transition-all font-medium text-base shadow-inner"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 px-6 h-14 bg-white rounded-2xl border-2 border-transparent shadow-inner">
+          <div className="flex items-center gap-3 px-6 h-11 bg-card rounded-2xl border border-transparent shadow-inner">
             <ArrowUpDown className="h-4 w-4 text-primary" />
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Sort:</span>
+            <span className="text-xs font-semibold uppercase tracking-wider opacity-40">Sort:</span>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="border-none bg-transparent h-10 w-[140px] focus:ring-0 font-black text-[10px] uppercase tracking-tighter p-0">
+              <SelectTrigger className="border-none bg-transparent h-10 w-[140px] focus:ring-0 font-semibold text-xs uppercase tracking-tight p-0">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="rounded-2xl border-2 font-black text-[10px] uppercase">
+              <SelectContent className="rounded-2xl border font-semibold text-xs uppercase">
                 <SelectItem value="title-asc">Title: A-Z</SelectItem>
                 <SelectItem value="title-desc">Title: Z-A</SelectItem>
                 <SelectItem value="price-asc">Price: Lo-Hi</SelectItem>
@@ -206,38 +202,38 @@ export default function LandlordPropertiesPage() {
 
       {/* Asset Grid */}
       {displayedProperties && displayedProperties.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {displayedProperties.map((property) => {
             const isOccupied = property.status === 'occupied';
             return (
               <div key={property.id} className="group relative">
-                <div className="absolute inset-0 bg-muted/20 rounded-[3rem] rotate-1 transition-transform group-hover:rotate-0 -z-10" />
-                <Card className="rounded-[3rem] border-2 border-foreground/5 shadow-xl hover:shadow-3xl transition-all duration-500 bg-white overflow-hidden flex flex-col h-full">
+                <div className="absolute inset-0 bg-muted/20 rounded-3xl rotate-1 transition-transform group-hover:rotate-0 -z-10" />
+                <Card className="rounded-3xl border border-foreground/5 shadow-sm hover:shadow-md transition-all duration-500 bg-card overflow-hidden flex flex-col h-full">
                   <div className="relative aspect-[16/10] overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
                     {property.images?.[0] ? (
-                      <img src={property.images[0]} alt={property.title} className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                      <Image {...optimizedImageProps(property.images[0])} alt={property.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover transition-transform duration-1000 group-hover:scale-110" />
                     ) : (
                       <div className="h-full w-full bg-muted flex items-center justify-center">
                         <Building className="h-16 w-16 text-muted-foreground/20" />
                       </div>
                     )}
                     <div className="absolute top-6 left-6 z-20">
-                      <Badge variant={isOccupied ? 'secondary' : 'default'} className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-2xl backdrop-blur-md">
+                      <Badge variant={isOccupied ? 'secondary' : 'default'} className="px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider shadow-sm backdrop-blur-md">
                         {property.status}
                       </Badge>
                     </div>
                     <div className="absolute top-6 right-6 z-20">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white hover:text-foreground shadow-2xl transition-all">
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-card hover:text-foreground shadow-sm transition-all">
                             <MoreHorizontal className="h-5 w-5" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-2xl border-2 p-2 shadow-2xl">
+                        <DropdownMenuContent align="end" className="rounded-2xl border p-2 shadow-sm">
                           <DropdownMenuItem asChild className="rounded-xl cursor-pointer">
                             <Link href={`/landlord/properties/${property.id}/edit`} className="flex items-center gap-3 py-3">
-                              <Edit3 className="h-4 w-4" /> Edit Asset
+                              <Edit3 className="h-4 w-4" /> Edit property
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild className="rounded-xl cursor-pointer">
@@ -257,8 +253,8 @@ export default function LandlordPropertiesPage() {
                       </DropdownMenu>
                     </div>
                     <div className="absolute bottom-6 left-6 right-6 z-20">
-                      <h3 className="text-2xl font-black text-white uppercase tracking-tight truncate">{property.title}</h3>
-                      <div className="flex items-center gap-2 text-white/60 text-[10px] font-bold mt-1">
+                      <h3 className="text-2xl font-bold text-white tracking-tight truncate">{property.title}</h3>
+                      <div className="flex items-center gap-2 text-white/60 text-xs font-bold mt-1">
                         <MapPin className="h-3 w-3" />
                         <span className="truncate">{property.location.address}, {property.location.city}</span>
                       </div>
@@ -266,13 +262,13 @@ export default function LandlordPropertiesPage() {
                   </div>
                   <CardContent className="p-8 space-y-8 flex-grow">
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 rounded-2xl bg-muted/20 border-2 border-transparent hover:border-primary/10 transition-colors">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">MONTHLY RENT</p>
-                        <p className="text-lg font-black text-primary">{formatPrice(property.price, property.currency)}/mo</p>
+                      <div className="p-4 rounded-2xl bg-muted/20 border border-transparent hover:border-primary/10 transition-colors">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Monthly rent</p>
+                        <p className="text-lg font-bold text-primary">{formatPrice(property.price, property.currency)}/mo</p>
                       </div>
-                      <div className="p-4 rounded-2xl bg-muted/20 border-2 border-transparent hover:border-primary/10 transition-colors">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">TENANT</p>
-                        <p className="text-sm font-black truncate">{property.tenantName || 'VACANT'}</p>
+                      <div className="p-4 rounded-2xl bg-muted/20 border border-transparent hover:border-primary/10 transition-colors">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Tenant</p>
+                        <p className="text-sm font-bold truncate">{property.tenantName || 'VACANT'}</p>
                       </div>
                     </div>
 
@@ -281,7 +277,7 @@ export default function LandlordPropertiesPage() {
                         <UserIcon className="h-5 w-5 text-white/60" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[8px] font-black uppercase tracking-widest text-white/40">TENANT STATUS</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-white/40">Tenant status</p>
                         <p className="text-xs font-bold truncate">{property.tenantName ? `Active Lease: ${property.tenantName}` : 'Awaiting New Tenant'}</p>
                       </div>
                       <Link href={`/landlord/properties/${property.id}`}>
@@ -300,36 +296,36 @@ export default function LandlordPropertiesPage() {
         <div className="py-32 flex flex-col items-center justify-center text-center space-y-10 animate-in zoom-in duration-700">
           <div className="relative">
             <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-150 animate-pulse" />
-            <div className="relative h-40 w-40 flex items-center justify-center rounded-[3.5rem] bg-white shadow-2xl border-2 border-muted/5">
+            <div className="relative h-40 w-40 flex items-center justify-center rounded-3xl bg-card shadow-sm border border-muted/5">
               <Building className="h-20 w-20 text-muted-foreground/30 rotate-12" />
             </div>
           </div>
           <div className="space-y-4 max-w-sm mx-auto">
-            <h3 className="text-4xl font-black uppercase tracking-tighter">NO ASSETS FOUND</h3>
+            <h3 className="text-4xl font-bold tracking-tight">No properties yet</h3>
             <p className="text-xl text-muted-foreground font-medium leading-relaxed">
-              &quot;Your digital property portfolio is currently empty. Initiate your first asset protocol to begin.&quot;
+              Add your first property to start receiving requests from students.
             </p>
           </div>
-          <Button asChild className="h-16 rounded-3xl px-12 bg-primary text-white hover:scale-105 transition-all font-black text-xs uppercase tracking-widest shadow-2xl">
-            <Link href="/landlord/properties/new">LIST NEW PROPERTY</Link>
+          <Button asChild className="h-11 rounded-3xl px-6 bg-primary text-white hover:scale-105 transition-all font-semibold text-xs uppercase tracking-wider shadow-sm">
+            <Link href="/landlord/properties/new">Add a property</Link>
           </Button>
         </div>
       )}
 
       <AlertDialog open={!!propertyToDelete} onOpenChange={(open) => !open && setPropertyToDelete(null)}>
-        <AlertDialogContent className="rounded-[2.5rem] border-4 p-10 max-w-lg shadow-3xl">
+        <AlertDialogContent className="rounded-3xl border p-6 max-w-lg shadow-sm">
           <AlertDialogHeader className="space-y-4">
             <div className="h-16 w-16 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mx-auto mb-4">
               <Trash2 className="h-8 w-8" />
             </div>
-            <AlertDialogTitle className="text-3xl font-black uppercase tracking-tight text-center">DECOMMISSION ASSET?</AlertDialogTitle>
+            <AlertDialogTitle className="text-3xl font-bold tracking-tight text-center">Delete this property?</AlertDialogTitle>
             <AlertDialogDescription className="text-lg text-center font-medium">
-              This action is permanent and will remove all telemetry data associated with this holding. All pending applicants will be notified of the withdrawal.
+              This permanently removes the listing. Students with pending requests will be notified.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-4 mt-10">
-            <AlertDialogCancel className="h-14 rounded-2xl border-2 font-black text-xs uppercase tracking-widest flex-1">ABORT PROTOCOL</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteProperty} className="h-14 rounded-2xl bg-destructive hover:bg-destructive/90 transition-all font-black text-xs uppercase tracking-widest flex-1">CONFIRM DELETE</AlertDialogAction>
+            <AlertDialogCancel className="h-14 rounded-2xl border font-semibold text-xs uppercase tracking-wider flex-1">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteProperty} className="h-14 rounded-2xl bg-destructive hover:bg-destructive/90 transition-all font-semibold text-xs uppercase tracking-wider flex-1">Confirm delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -1,37 +1,19 @@
 import type { NextConfig } from 'next';
-
-/**
- * Baseline security headers applied to every route.
- * CSP is intentionally omitted: Stripe, Firebase and Leaflet tiles need a
- * carefully tuned policy — add one once all third-party origins are audited.
- */
-const securityHeaders = [
-  { key: 'X-Content-Type-Options', value: 'nosniff' },
-  { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self), payment=(self)' },
-  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-];
+import { OPTIMIZED_IMAGE_HOSTS } from './src/config/images';
+import { securityHeaders } from './src/config/security';
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
 
   images: {
-    // Images are served straight from Firebase Storage / external CDNs.
-    // Turn optimisation on once every image host is listed in remotePatterns.
-    unoptimized: true,
-    remotePatterns: [
-      { protocol: 'https', hostname: 'firebasestorage.googleapis.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'images.unsplash.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'placehold.co', pathname: '/**' },
-      { protocol: 'https', hostname: 'picsum.photos', pathname: '/**' },
-      { protocol: 'https', hostname: 'api.qrserver.com', pathname: '/**' },
-    ],
+    formats: ['image/avif', 'image/webp'],
+    // Hosts outside this list render unoptimised via optimizedImageProps().
+    remotePatterns: OPTIMIZED_IMAGE_HOSTS.map((hostname) => ({ protocol: 'https' as const, hostname, pathname: '/**' })),
   },
 
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }];
+    return [{ source: '/:path*', headers: securityHeaders() }];
   },
 
   async redirects() {

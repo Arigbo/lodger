@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { optimizedImageProps } from "@/config/images";
 import {
     Carousel,
     CarouselContent,
@@ -33,7 +34,7 @@ export function PropertyHeroCarousel({ images, title }: PropertyHeroCarouselProp
                                 className="relative w-full h-full"
                             >
                                 <Image
-                                    src={image}
+                                    {...optimizedImageProps(image)}
                                     alt={`${title} - ${index + 1}`}
                                     fill
                                     className="object-cover transform group-hover:scale-105 transition-transform duration-[3s]"
@@ -47,7 +48,7 @@ export function PropertyHeroCarousel({ images, title }: PropertyHeroCarouselProp
                 </CarouselContent>
 
                 <div className="absolute bottom-6 right-6 flex items-center gap-4 z-30">
-                    <div className="flex bg-black/40 backdrop-blur-2xl px-4 py-2 rounded-2xl border border-white/10 gap-4 text-white text-[10px] font-black uppercase tracking-widest shadow-2xl">
+                    <div className="flex bg-black/40 backdrop-blur-2xl px-4 py-2 rounded-2xl border border-white/10 gap-4 text-white text-xs font-semibold uppercase tracking-wider shadow-sm">
                         <span className="flex items-center gap-2">
                             <Camera className="h-3.5 w-3.5 text-primary" /> {images.length} Photos
                         </span>
@@ -56,10 +57,10 @@ export function PropertyHeroCarousel({ images, title }: PropertyHeroCarouselProp
 
                 {/* Navigation Controls */}
                 <div className="absolute top-1/2 -translate-y-1/2 left-6 transition-all duration-500 opacity-0 group-hover:opacity-100 hidden md:block z-40">
-                    <CarouselPrevious className="h-12 w-12 bg-white/10 hover:bg-primary text-white border-white/10 backdrop-blur-xl relative left-0 translate-x-0 shadow-2xl" />
+                    <CarouselPrevious className="h-12 w-12 bg-white/10 hover:bg-primary text-white border-white/10 backdrop-blur-xl relative left-0 translate-x-0 shadow-sm" />
                 </div>
                 <div className="absolute top-1/2 -translate-y-1/2 right-6 transition-all duration-500 opacity-0 group-hover:opacity-100 hidden md:block z-40">
-                    <CarouselNext className="h-12 w-12 bg-white/10 hover:bg-primary text-white border-white/10 backdrop-blur-xl relative right-0 translate-x-0 shadow-2xl" />
+                    <CarouselNext className="h-12 w-12 bg-white/10 hover:bg-primary text-white border-white/10 backdrop-blur-xl relative right-0 translate-x-0 shadow-sm" />
                 </div>
             </Carousel>
         </div>

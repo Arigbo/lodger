@@ -350,35 +350,34 @@ export default function EditPropertyPage() {
   return (
     <div className="min-h-screen bg-transparent p-0 lg:p-8 animate-in fade-in duration-1000">
       <div className="max-w-6xl mx-auto space-y-8">
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-foreground p-8 md:p-16 text-white shadow-2xl">
-          <div className="absolute top-0 right-0 p-12 opacity-10">
+        <div className="relative overflow-hidden rounded-3xl bg-foreground p-8 md:p-8 text-white shadow-sm">
+          <div className="absolute top-0 right-0 p-6 opacity-10">
             <Building className="h-32 w-32 md:h-48 md:w-48" />
           </div>
           <div className="relative space-y-6">
             <Link
               href={`/landlord/properties/${id}`}
-              className="inline-flex items-center gap-2 text-white/40 hover:text-primary transition-colors uppercase text-[10px] font-black tracking-widest"
+              className="inline-flex items-center gap-2 text-white/40 hover:text-primary transition-colors uppercase text-xs font-semibold tracking-wider"
             >
-              <ArrowLeft className="h-4 w-4" /> Back to Asset
+              <ArrowLeft className="h-4 w-4" /> Back to property
             </Link>
             <div>
-              <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tighter leading-[0.9] mb-4">
-                Edit <br />{" "}
-                <span className="text-primary italic">Property</span>
+              <h1 className="text-4xl md:text-3xl font-bold tracking-tight leading-tight mb-4">
+                Edit property
               </h1>
-              <p className="max-w-md text-sm md:text-base text-white/60 font-medium uppercase tracking-widest leading-relaxed">
+              <p className="max-w-md text-sm md:text-base text-white/60 font-medium uppercase tracking-wider leading-relaxed">
                 Update your property details below.
               </p>
             </div>
           </div>
         </div>
 
-        <Card className="border-2 border-foreground/5 rounded-[3rem] shadow-2xl overflow-hidden bg-white/50 backdrop-blur-xl">
-          <CardContent className="p-8 md:p-12">
+        <Card className="border border-foreground/5 rounded-3xl shadow-sm overflow-hidden bg-white/50 backdrop-blur-xl">
+          <CardContent className="p-8 md:p-8">
             {property.status === "occupied" && (
-              <Alert className="mb-10 rounded-2xl border-2 border-amber-500/20 bg-amber-500/5 p-6 md:p-8">
+              <Alert className="mb-10 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 md:p-8">
                 <AlertCircle className="h-6 w-6 text-amber-600" />
-                <AlertTitle className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-2">
+                <AlertTitle className="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-2">
                   Property Currently Occupied
                 </AlertTitle>
                 <AlertDescription className="text-xs font-medium text-amber-600/80 uppercase tracking-tight">
@@ -391,7 +390,7 @@ export default function EditPropertyPage() {
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-12 md:space-y-20"
+                className="space-y-8 md:space-y-20"
               >
                 <IdentitySection
                   form={form}
@@ -420,7 +419,7 @@ export default function EditPropertyPage() {
                     type="submit"
                     size="lg"
                     disabled={form.formState.isSubmitting}
-                    className="h-16 md:h-20 px-12 md:px-20 rounded-2xl md:rounded-[2rem] bg-foreground text-white hover:bg-primary transition-all duration-500 shadow-2xl text-[10px] md:text-xs font-black uppercase tracking-[0.3em] group"
+                    className="h-11 md:h-20 px-6 md:px-20 rounded-2xl md:rounded-3xl bg-foreground text-white hover:bg-primary transition-all duration-500 shadow-sm text-xs md:text-xs font-semibold uppercase tracking-wider group"
                   >
                     {form.formState.isSubmitting ? (
                       <>
@@ -442,12 +441,12 @@ export default function EditPropertyPage() {
               open={showCurrencyModal}
               onOpenChange={setShowCurrencyModal}
             >
-              <DialogContent className="rounded-[2rem] border-2 border-foreground/5 p-0 overflow-hidden sm:max-w-md">
+              <DialogContent className="rounded-3xl border border-foreground/5 p-0 overflow-hidden sm:max-w-md">
                 <div className="bg-primary/5 p-8 flex flex-col items-center justify-center text-center border-b">
                   <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6 text-primary">
                     <RefreshCw className="h-8 w-8" />
                   </div>
-                  <DialogTitle className="text-xl md:text-2xl font-black uppercase tracking-tight">
+                  <DialogTitle className="text-xl md:text-2xl font-bold tracking-tight">
                     Change Currency
                   </DialogTitle>
                   <DialogDescription className="text-xs font-medium mt-3">
@@ -461,14 +460,14 @@ export default function EditPropertyPage() {
                     type="button"
                     variant="outline"
                     onClick={() => confirmCurrencyConversion(false)}
-                    className="w-full h-14 rounded-xl border-2 font-black uppercase tracking-widest text-[10px]"
+                    className="w-full h-14 rounded-xl border font-semibold uppercase tracking-wider text-xs"
                   >
                     Keep price value
                   </Button>
                   <Button
                     type="button"
                     onClick={() => confirmCurrencyConversion(true)}
-                    className="w-full h-14 rounded-xl bg-foreground text-white hover:bg-primary transition-all font-black uppercase tracking-widest text-[10px]"
+                    className="w-full h-14 rounded-xl bg-foreground text-white hover:bg-primary transition-all font-semibold uppercase tracking-wider text-xs"
                   >
                     Convert price value
                   </Button>

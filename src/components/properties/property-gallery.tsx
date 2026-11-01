@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { optimizedImageProps } from "@/config/images";
 import { Play, Maximize2, X, Video as VideoIcon, Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -38,12 +39,12 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between mb-4">
-                <div className="flex bg-muted/30 p-1.5 rounded-2xl border border-white/10 backdrop-blur-xl shadow-2xl">
+                <div className="flex bg-muted/30 p-1.5 rounded-2xl border border-white/10 backdrop-blur-xl shadow-sm">
                     {videos.length > 0 && (
                         <button
                             onClick={() => setActiveTab('all')}
                             className={cn(
-                                "px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300",
+                                "px-5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-300",
                                 activeTab === 'all'
                                     ? "bg-primary text-white shadow-lg shadow-primary/25 ring-1 ring-white/20"
                                     : "text-muted-foreground hover:text-foreground hover:bg-white/5"
@@ -55,7 +56,7 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
                     <button
                         onClick={() => setActiveTab('photos')}
                         className={cn(
-                            "px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300",
+                            "px-5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-300",
                             activeTab === 'photos'
                                 ? "bg-primary text-white shadow-lg shadow-primary/25 ring-1 ring-white/20"
                                 : "text-muted-foreground hover:text-foreground hover:bg-white/5"
@@ -67,7 +68,7 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
                         <button
                             onClick={() => setActiveTab('videos')}
                             className={cn(
-                                "px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300",
+                                "px-5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-300",
                                 activeTab === 'videos'
                                     ? "bg-primary text-white shadow-lg shadow-primary/25 ring-1 ring-white/20"
                                     : "text-muted-foreground hover:text-foreground hover:bg-white/5"
@@ -88,9 +89,10 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
                     >
                         {media.type === 'image' ? (
                             <Image
-                                src={media.url}
+                                {...optimizedImageProps(media.url)}
                                 alt={`${title} - ${index}`}
                                 fill
+                                sizes="(max-width: 768px) 50vw, 25vw"
                                 className="object-cover transition-transform duration-500 group-hover:scale-110"
                             />
                         ) : (
@@ -108,14 +110,14 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
                                 </div>
                                 <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
                                     <VideoIcon className="h-3 w-3 text-white" />
-                                    <span className="text-[10px] font-black text-white uppercase tracking-widest">Video</span>
+                                    <span className="text-xs font-semibold text-white uppercase tracking-wider">Video</span>
                                 </div>
                             </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
                             <div className="flex items-center gap-2 text-white">
                                 <Maximize2 className="h-4 w-4" />
-                                <span className="text-[10px] font-black uppercase tracking-widest">View Fullscreen</span>
+                                <span className="text-xs font-semibold uppercase tracking-wider">View Fullscreen</span>
                             </div>
                         </div>
                     </div>
@@ -141,9 +143,10 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
                         {selectedMedia?.type === 'image' ? (
                             <div className="relative w-full h-full aspect-[4/3] md:aspect-[16/9]">
                                 <Image
-                                    src={selectedMedia.url}
+                                    {...optimizedImageProps(selectedMedia.url)}
                                     alt={title}
                                     fill
+                                    sizes="100vw"
                                     className="object-contain"
                                 />
                             </div>
@@ -160,9 +163,9 @@ export function PropertyGallery({ images, videos = [], title }: PropertyGalleryP
 
                         <div className="absolute bottom-4 left-4 right-4 md:bottom-8 md:left-8 md:right-8 flex items-center justify-between pointer-events-none">
                             <div className="bg-black/60 backdrop-blur-xl px-4 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl border border-white/10">
-                                <p className="text-white font-black uppercase tracking-widest text-[10px] md:text-sm truncate max-w-[150px] md:max-w-none">{title}</p>
+                                <p className="text-white font-semibold uppercase tracking-wider text-xs md:text-sm truncate max-w-[150px] md:max-w-none">{title}</p>
                                 <div className="flex items-center gap-2 md:gap-4 mt-1 md:mt-2">
-                                    <span className="flex items-center gap-1 md:gap-2 text-white/40 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">
+                                    <span className="flex items-center gap-1 md:gap-2 text-white/40 text-xs md:text-xs font-bold uppercase tracking-wider">
                                         {selectedMedia?.type === 'image' ? <Camera className="h-2 w-2 md:h-3 md:w-3" /> : <VideoIcon className="h-2 w-2 md:h-3 md:w-3" />}
                                         {selectedMedia?.type}
                                     </span>

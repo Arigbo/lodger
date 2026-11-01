@@ -28,7 +28,7 @@ export function ChatArea({ participant, student, studentProfile, messages, onSen
     return (
         <div className="flex-1 flex flex-col bg-[#fafafa] relative overflow-hidden">
             {/* Professional Chat Header */}
-            <div className="px-6 py-5 md:px-10 md:py-8 flex items-center justify-between border-b border-muted/10 bg-white/90 backdrop-blur-2xl z-20 shadow-sm">
+            <div className="px-6 py-5 md:px-6 md:py-8 flex items-center justify-between border-b border-muted/10 bg-white/90 backdrop-blur-2xl z-20 shadow-sm">
                 <div className="flex items-center gap-5">
                     <Button variant="ghost" size="icon" className="md:hidden rounded-2xl hover:bg-muted/10" asChild>
                         <Link href="/student/messages" scroll={false}>
@@ -36,25 +36,25 @@ export function ChatArea({ participant, student, studentProfile, messages, onSen
                         </Link>
                     </Button>
                     <div className="relative">
-                        <Avatar className="h-16 w-16 border-2 border-primary/10 shadow-xl">
+                        <Avatar className="h-16 w-16 border border-primary/10 shadow-sm">
                             <AvatarImage src={participant.profileImageUrl} className="object-cover" />
                             <AvatarFallback><UserIcon className="h-8 w-8" /></AvatarFallback>
                         </Avatar>
-                        <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-4 border-white bg-green-500" />
+                        <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full border border-white bg-green-500" />
                     </div>
                     <div>
                         <h3 className="font-extrabold text-lg uppercase tracking-tight">{participant.name}</h3>
                         <div className="flex items-center gap-2 mt-0.5">
                             <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">Connectivity Stable</p>
+                            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50">Connectivity Stable</p>
                         </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button variant="outline" size="icon" className="h-12 w-12 rounded-[1.2rem] border-2 hover:bg-muted/10">
+                    <Button variant="outline" size="icon" className="h-12 w-12 rounded-xl border hover:bg-muted/10">
                         <Phone className="h-5 w-5 opacity-60" />
                     </Button>
-                    <Button variant="outline" size="icon" className="h-12 w-12 rounded-[1.2rem] border-2 hover:bg-muted/10">
+                    <Button variant="outline" size="icon" className="h-12 w-12 rounded-xl border hover:bg-muted/10">
                         <Video className="h-5 w-5 opacity-60" />
                     </Button>
                 </div>

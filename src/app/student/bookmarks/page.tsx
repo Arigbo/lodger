@@ -11,6 +11,7 @@ import Loading from '@/app/loading';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { PageHeader } from "@/components/dashboard";
 
 
 export default function BookmarksPage() {
@@ -48,13 +49,7 @@ export default function BookmarksPage() {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-1000">
-            {/* Simple Header */}
-            <div className="flex flex-col gap-2">
-                <h1 className="font-headline text-3xl md:text-4xl font-black tracking-tight text-foreground uppercase px-1">
-                    Bookmarked <span className="text-primary">Places.</span>
-                </h1>
-                <div className="h-1 w-12 bg-primary rounded-full ml-1" />
-            </div>
+            <PageHeader title="Saved homes" description="Homes you've shortlisted. Tap the heart on any listing to save it." />
 
             {/* Refined Search Bar */}
             {bookmarkedProperties.length > 0 && (
@@ -63,8 +58,8 @@ export default function BookmarksPage() {
                         <Search className="h-5 w-5 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
                     </div>
                     <Input
-                        placeholder="Search your curation..."
-                        className="h-18 pl-14 pr-8 rounded-[1.5rem] border-2 border-muted/20 bg-white/50 backdrop-blur-xl shadow-2xl shadow-black/[0.02] text-lg font-medium ring-offset-background placeholder:text-muted-foreground/30 focus-visible:ring-4 focus-visible:ring-primary/5 transition-all text-center md:text-left"
+                        placeholder="Search saved homes…"
+                        className="h-18 pl-14 pr-8 rounded-2xl border border-muted/20 bg-white/50 backdrop-blur-xl shadow-sm text-lg font-medium ring-offset-background placeholder:text-muted-foreground/30 focus-visible:ring-4 focus-visible:ring-primary/5 transition-all text-center md:text-left"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -73,7 +68,7 @@ export default function BookmarksPage() {
 
             {/* Bookmarked Properties Grid */}
             {filteredProperties.length > 0 ? (
-                <div className="grid grid-cols-1 gap-12 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
                     {filteredProperties.map((property, idx) => (
                         <div
                             key={property.id}
@@ -85,24 +80,24 @@ export default function BookmarksPage() {
                     ))}
                 </div>
             ) : (
-                <div className="relative overflow-hidden rounded-[3.5rem] bg-white border-2 border-muted/10 shadow-3xl p-20 text-center space-y-10 animate-in zoom-in-95 duration-1000">
+                <div className="relative overflow-hidden rounded-3xl bg-card border border-muted/10 shadow-sm p-20 text-center space-y-10 animate-in zoom-in-95 duration-1000">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,#3b82f60a_0%,transparent_70%)]" />
                     <div className="relative z-10 max-w-md mx-auto space-y-8">
                         <div className="relative h-32 w-32 mx-auto">
                             <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150 animate-pulse" />
-                            <div className="relative flex h-full w-full items-center justify-center rounded-[2.5rem] bg-muted/20 border-2 border-white shadow-inner transform -rotate-6 group-hover:rotate-0 transition-transform duration-700">
+                            <div className="relative flex h-full w-full items-center justify-center rounded-3xl bg-muted/20 border border-white shadow-inner transform -rotate-6 group-hover:rotate-0 transition-transform duration-700">
                                 <Heart className="h-14 w-14 text-primary opacity-20" />
                             </div>
                         </div>
                         <div className="space-y-4">
-                            <h2 className="text-3xl font-black uppercase tracking-tight">Curate Your <span className="text-primary">Future</span></h2>
+                            <h2 className="text-3xl font-bold tracking-tight">Curate Your <span className="text-primary">Future</span></h2>
                             <p className="text-lg text-muted-foreground leading-relaxed">
                                 {bookmarkedProperties.length === 0
-                                    ? "Your personal gallery of premium dwellings is currently blank. Explore our collection and begin your curation."
-                                    : "Our collection doesn't match your current search criteria. Perhaps a different search?"}
+                                    ? "You haven't saved any homes yet. Tap the heart on a listing to add it here."
+                                    : "No saved homes match your search."}
                             </p>
                         </div>
-                        <Button size="lg" className="h-16 rounded-2xl px-12 font-black text-xs uppercase tracking-widest shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all" asChild>
+                        <Button size="lg" className="h-11 rounded-2xl px-6 font-semibold text-xs uppercase tracking-wider shadow-sm hover:scale-105 active:scale-95 transition-all" asChild>
                             <Link href="/student/properties">{bookmarkedProperties.length === 0 ? "START CURATION" : "CLEAR SEARCH"}</Link>
                         </Button>
                     </div>

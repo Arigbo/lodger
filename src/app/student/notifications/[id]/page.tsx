@@ -43,7 +43,7 @@ export default function NotificationDetailsPage() {
                 <ArrowLeft className="h-4 w-4 mr-2" /> Back
             </Button>
 
-            <div className="bg-white border-2 border-foreground/5 rounded-[2.5rem] shadow-xl overflow-hidden">
+            <div className="bg-card border border-foreground/5 rounded-3xl shadow-sm overflow-hidden">
                 <div className={cn(
                     "h-32 flex items-center justify-center",
                     notification.type === 'warning' || notification.type === 'error' ? "bg-amber-500/10" : "bg-primary/5"
@@ -54,13 +54,13 @@ export default function NotificationDetailsPage() {
                     )} />
                 </div>
 
-                <div className="p-8 md:p-12 space-y-8">
+                <div className="p-8 md:p-8 space-y-8">
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 text-muted-foreground text-sm font-medium">
                             <Clock className="h-4 w-4" />
                             {notification.createdAt ? format(new Date(notification.createdAt), 'PPP p') : 'Unknown Date'}
                         </div>
-                        <h1 className="text-3xl font-black uppercase tracking-tight leading-tight">
+                        <h1 className="text-3xl font-bold tracking-tight leading-tight">
                             {notification.title}
                         </h1>
                     </div>
@@ -71,7 +71,7 @@ export default function NotificationDetailsPage() {
 
                     {notification.link && notification.link !== '#' && (
                         <div className="pt-8 border-t border-muted/20">
-                            <Button size="lg" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest gap-2 shadow-lg hover:translate-y-[-2px] transition-all" asChild>
+                            <Button size="lg" className="w-full h-14 rounded-2xl font-bold uppercase tracking-wider gap-2 shadow-lg hover:translate-y-[-2px] transition-all" asChild>
                                 <Link href={notification.link}>
                                     Take Action <ExternalLink className="h-4 w-4" />
                                 </Link>

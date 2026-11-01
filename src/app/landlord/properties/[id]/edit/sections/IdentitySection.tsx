@@ -41,25 +41,25 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
         <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
           <Sparkles className="h-5 w-5 md:h-6 md:w-6" />
         </div>
-        <h3 className="font-headline text-xl md:text-3xl font-black uppercase tracking-tighter">
+        <h3 className="font-headline text-xl md:text-3xl font-bold tracking-tight">
           Basics
         </h3>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 md:gap-12">
+      <div className="grid grid-cols-1 gap-8 md:gap-8">
         <FormField
           control={form.control}
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
                 Property Name
               </FormLabel>
               <FormControl>
                 <Input
                   placeholder="e.g., NICE 2-BEDROOM APARTMENT"
                   {...field}
-                  className="h-16 md:h-20 rounded-2xl md:rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-lg md:text-2xl font-black uppercase tracking-tight"
+                  className="h-16 md:h-20 rounded-2xl md:rounded-3xl bg-muted/20 border border-transparent focus-visible:border-primary/20 text-lg md:text-2xl font-bold tracking-tight"
                 />
               </FormControl>
               <FormMessage />
@@ -71,14 +71,14 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
                 Description
               </FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="Write a short description of the property..."
                   {...field}
-                  className="min-h-[150px] md:min-h-[200px] rounded-2xl md:rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs md:text-sm font-medium p-4 md:p-6 italic"
+                  className="min-h-[150px] md:min-h-[200px] rounded-2xl md:rounded-3xl bg-muted/20 border border-transparent focus-visible:border-primary/20 text-xs md:text-sm font-medium p-4 md:p-6 italic"
                 />
               </FormControl>
               <FormMessage />
@@ -92,7 +92,7 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
             name="price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
                   Price per Month
                 </FormLabel>
                 <FormControl>
@@ -100,12 +100,12 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
                     type="number"
                     placeholder="1200"
                     {...field}
-                    className="h-16 md:h-20 rounded-2xl md:rounded-3xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xl md:text-3xl font-black text-primary"
+                    className="h-16 md:h-20 rounded-2xl md:rounded-3xl bg-muted/20 border border-transparent focus-visible:border-primary/20 text-xl md:text-3xl font-bold text-primary"
                   />
                 </FormControl>
                 <div className="mt-2 flex items-start gap-2 text-amber-600 bg-amber-500/10 p-4 rounded-xl border border-amber-500/10">
                   <AlertCircle className="h-4 w-4 shrink-0" />
-                  <p className="text-[9px] font-bold leading-tight uppercase tracking-tight">
+                  <p className="text-xs font-bold leading-tight uppercase tracking-tight">
                     Price changes apply to <strong>future</strong> tenants.
                     Active tenants won't see new prices until their lease ends.
                   </p>
@@ -120,7 +120,7 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
               name="currency"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                  <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
                     Currency
                   </FormLabel>
                   <Select
@@ -128,11 +128,11 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
                     value={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger className="h-16 md:h-20 rounded-2xl md:rounded-3xl bg-muted/20 border-2 border-transparent focus:ring-0 text-sm md:text-base font-black uppercase tracking-widest">
+                      <SelectTrigger className="h-16 md:h-20 rounded-2xl md:rounded-3xl bg-muted/20 border border-transparent focus:ring-0 text-sm md:text-base font-bold uppercase tracking-wider">
                         <SelectValue placeholder="Protocol" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="rounded-2xl border-2 font-black text-[10px] uppercase">
+                    <SelectContent className="rounded-2xl border font-semibold text-xs uppercase">
                       <SelectItem value="USD">USD ($)</SelectItem>
                       <SelectItem value="NGN">NGN (₦)</SelectItem>
                       <SelectItem value="GHS">GHS (₵)</SelectItem>
@@ -150,7 +150,7 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
               name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                  <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
                     Property Type
                   </FormLabel>
                   <Select
@@ -159,11 +159,11 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
                     value={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger className="h-16 md:h-20 rounded-2xl md:rounded-3xl bg-muted/20 border-2 border-transparent focus:ring-0 text-sm md:text-base font-black uppercase tracking-widest">
+                      <SelectTrigger className="h-16 md:h-20 rounded-2xl md:rounded-3xl bg-muted/20 border border-transparent focus:ring-0 text-sm md:text-base font-bold uppercase tracking-wider">
                         <SelectValue placeholder="Class" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="rounded-2xl border-2 font-black text-[10px] uppercase">
+                    <SelectContent className="rounded-2xl border font-semibold text-xs uppercase">
                       {PROPERTY_TYPES.map((type) => (
                         <SelectItem
                           key={type.value}
@@ -181,7 +181,7 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
                                   <Info className="h-3.5 w-3.5" />
                                 </div>
                               </TooltipTrigger>
-                              <TooltipContent className="max-w-[200px] font-bold text-[10px] uppercase tracking-widest text-primary p-4 rounded-xl border-2">
+                              <TooltipContent className="max-w-[200px] font-bold text-xs uppercase tracking-wider text-primary p-4 rounded-xl border">
                                 <p>{type.description}</p>
                               </TooltipContent>
                             </Tooltip>

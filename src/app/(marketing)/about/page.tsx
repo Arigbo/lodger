@@ -68,6 +68,7 @@ export default function AboutPage() {
                                     src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2070&auto=format&fit=crop"
                                     alt="Students studying together"
                                     fill
+                                    sizes="(max-width: 1024px) 100vw, 50vw"
                                     className="object-cover transition-transform duration-700 group-hover:scale-110"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
@@ -183,6 +184,7 @@ export default function AboutPage() {
                                     src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop"
                                     alt="Our team office"
                                     fill
+                                    sizes="(max-width: 1024px) 100vw, 50vw"
                                     className="object-cover opacity-80"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent" />

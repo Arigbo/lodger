@@ -136,33 +136,33 @@ export default function TransactionDetailPage() {
     if (isLoading) return <Loading />;
     if (!transaction) return (
         <div className="flex flex-col items-center justify-center py-20">
-            <h2 className="text-2xl font-black uppercase tracking-tight">Transaction Not Found</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Transaction Not Found</h2>
             <Button variant="ghost" className="mt-4" onClick={() => router.back()}>Back to Transactions</Button>
         </div>
     );
 
     return (
-        <div className="space-y-12 pb-32 animate-in fade-in duration-700">
+        <div className="space-y-8 pb-8 animate-in fade-in duration-700">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl hover:bg-white shadow-sm border border-transparent hover:border-muted-foreground/10 transition-all" onClick={() => router.back()}>
+                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl hover:bg-card shadow-sm border border-transparent hover:border-muted-foreground/10 transition-all" onClick={() => router.back()}>
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight">Transaction<span className="text-primary"> Details.</span></h1>
-                    <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Detailed financial record for ID: {transaction.id}</p>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Transaction details</h1>
+                    <p className="text-xs md:text-sm font-medium text-muted-foreground">Reference: {transaction.id}</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
-                    <Card className="rounded-[3rem] border-2 border-white/40 shadow-xl shadow-black/[0.02] bg-white overflow-hidden">
-                        <div className="p-10 border-b border-muted/20 bg-muted/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <Card className="rounded-3xl border border-white/40 shadow-sm bg-card overflow-hidden">
+                        <div className="p-6 border-b border-muted/20 bg-muted/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                             <div className="space-y-1">
-                                <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">Transaction Amount</p>
-                                <h2 className="text-5xl font-black tracking-tighter">{formatPrice(transaction.amount, transaction.currency)}</h2>
+                                <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider">Transaction Amount</p>
+                                <h2 className="text-3xl font-bold tracking-tight">{formatPrice(transaction.amount, transaction.currency)}</h2>
                             </div>
                             <Badge className={cn(
-                                "rounded-full px-6 py-2 text-xs font-black uppercase tracking-widest border-none h-fit",
+                                "rounded-full px-6 py-2 text-xs font-semibold uppercase tracking-wider border-none h-fit",
                                 transaction.status === 'Completed' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" :
                                     transaction.status === 'Pending' ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" :
                                         "bg-red-500 text-white shadow-lg shadow-red-500/20"
@@ -170,15 +170,15 @@ export default function TransactionDetailPage() {
                                 {transaction.status}
                             </Badge>
                         </div>
-                        <CardContent className="p-10">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <CardContent className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-8">
                                     <div className="flex items-start gap-4">
                                         <div className="h-12 w-12 rounded-2xl bg-primary/5 flex items-center justify-center flex-shrink-0">
                                             <Calendar className="h-6 w-6 text-primary" />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">Payment Date</p>
+                                            <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Payment Date</p>
                                             <p className="text-lg font-bold">{transaction.date ? format(new Date(transaction.date), 'MMMM dd, yyyy') : 'Processing'}</p>
                                             <p className="text-xs text-muted-foreground font-medium">{transaction.date ? format(new Date(transaction.date), 'HH:mm:ss') : ''}</p>
                                         </div>
@@ -189,7 +189,7 @@ export default function TransactionDetailPage() {
                                             <DollarSign className="h-6 w-6 text-primary" />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">Transaction Type</p>
+                                            <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Transaction Type</p>
                                             <p className="text-lg font-bold">{transaction.type}</p>
                                             <p className="text-xs text-muted-foreground font-medium">Recorded via {transaction.paymentMethod || transaction.method || 'System'}</p>
                                         </div>
@@ -202,7 +202,7 @@ export default function TransactionDetailPage() {
                                             <ShieldCheck className="h-6 w-6 text-primary" />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">Reference ID</p>
+                                            <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Reference ID</p>
                                             <p className="text-lg font-bold break-all">{transaction.paymentIntentId || (transaction as any).paymentIntentId || transaction.id}</p>
                                             <p className="text-xs text-muted-foreground font-medium">Stripe/Internal Mapping</p>
                                         </div>
@@ -210,18 +210,6 @@ export default function TransactionDetailPage() {
                                 </div>
                             </div>
 
-                            <Separator className="my-10" />
-
-                            <div className="space-y-6">
-                                <h3 className="text-sm font-black uppercase tracking-widest">Digital Audit Trail</h3>
-                                <div className="p-6 rounded-2xl bg-muted/5 border border-muted/10 font-mono text-xs space-y-2 opacity-60">
-                                    <p>LANDLORD_ID: {transaction.landlordId}</p>
-                                    <p>TENANT_ID: {transaction.tenantId}</p>
-                                    <p>PROPERTY_ID: {transaction.propertyId}</p>
-                                    <p>CURRENCY: {transaction.currency || 'USD'}</p>
-                                    <p>TIMESTAMP: {new Date().toISOString()}</p>
-                                </div>
-                            </div>
                         </CardContent>
                     </Card>
 
@@ -233,7 +221,7 @@ export default function TransactionDetailPage() {
                                         onClick={handleDenyPayment}
                                         disabled={isDenying || isConfirming}
                                         variant="destructive"
-                                        className="h-14 rounded-2xl font-black text-xs uppercase tracking-widest gap-2 bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20 px-8"
+                                        className="h-11 rounded-2xl font-semibold text-xs uppercase tracking-wider gap-2 bg-red-500 hover:bg-red-600 shadow-lg px-8"
                                     >
                                         {isDenying ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
                                         Deny
@@ -241,7 +229,7 @@ export default function TransactionDetailPage() {
                                     <Button
                                         onClick={handleConfirmPayment}
                                         disabled={isConfirming || isDenying}
-                                        className="flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20"
+                                        className="flex-1 h-14 rounded-2xl font-semibold text-xs uppercase tracking-wider gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg"
                                     >
                                         {isConfirming ? (
                                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -252,10 +240,10 @@ export default function TransactionDetailPage() {
                                     </Button>
                                 </div>
                             )}
-                        <Button className="flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest gap-2">
+                        <Button className="flex-1 h-14 rounded-2xl font-semibold text-xs uppercase tracking-wider gap-2">
                             <Download className="h-4 w-4" /> Download Receipt
                         </Button>
-                        <Button variant="outline" className="h-14 px-8 rounded-2xl border-2 font-black text-xs uppercase tracking-widest gap-2">
+                        <Button variant="outline" className="h-11 px-8 rounded-2xl border font-semibold text-xs uppercase tracking-wider gap-2">
                             Print Data
                         </Button>
                     </div>
@@ -263,18 +251,18 @@ export default function TransactionDetailPage() {
 
                 <div className="space-y-8">
                     {/* Related Entities */}
-                    <Card className="rounded-[2.5rem] border-2 border-white/40 shadow-xl shadow-black/[0.02] bg-white overflow-hidden">
+                    <Card className="rounded-3xl border border-white/40 shadow-sm bg-card overflow-hidden">
                         <CardHeader className="p-8 border-b border-muted/20">
-                            <CardTitle className="text-sm font-black uppercase tracking-widest">Parties Involved</CardTitle>
+                            <CardTitle className="text-sm font-bold uppercase tracking-wider">Parties Involved</CardTitle>
                         </CardHeader>
                         <CardContent className="p-8 space-y-8">
                             <div className="flex items-center gap-4">
-                                <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-xl uppercase">
+                                <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
                                     {tenant?.name?.[0] || 'U'}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-0.5">Tenant</p>
-                                    <p className="text-base font-black truncate">{tenant?.name || 'Unknown User'}</p>
+                                    <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-0.5">Tenant</p>
+                                    <p className="text-base font-bold truncate">{tenant?.name || 'Unknown User'}</p>
                                     <p className="text-xs text-muted-foreground font-medium truncate">{tenant?.email}</p>
                                 </div>
                                 <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl" asChild>
@@ -291,8 +279,8 @@ export default function TransactionDetailPage() {
                                     <Building className="h-7 w-7" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-0.5">Property</p>
-                                    <p className="text-base font-black truncate">{property?.title || 'Deleted Property'}</p>
+                                    <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-0.5">Property</p>
+                                    <p className="text-base font-bold truncate">{property?.title || 'Deleted Property'}</p>
                                     <p className="text-xs text-muted-foreground font-medium truncate">{property?.location.address}</p>
                                 </div>
                                 <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl" asChild>
@@ -304,13 +292,13 @@ export default function TransactionDetailPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className="rounded-[2.5rem] border-2 border-primary/10 bg-primary/[0.02] p-8 text-center space-y-4">
+                    <Card className="rounded-3xl border border-primary/10 bg-primary/[0.02] p-8 text-center space-y-4">
                         <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
                             <ShieldCheck className="h-6 w-6 text-primary" />
                         </div>
-                        <h4 className="font-black uppercase tracking-tight">Verified Archive</h4>
+                        <h4 className="font-bold uppercase tracking-tight">Record kept</h4>
                         <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-                            This transaction record is cryptographically signed and archived for legal audit compliance.
+                            This payment record is stored with your account and included in your exports.
                         </p>
                     </Card>
                 </div>

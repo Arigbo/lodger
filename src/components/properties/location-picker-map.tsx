@@ -16,8 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 
 // Fix for default marker icons in Leaflet
 const DefaultIcon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconUrl: "/leaflet/marker-icon.png",
+  shadowUrl: "/leaflet/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 });
@@ -119,7 +119,7 @@ export default function LocationPickerMap({
   };
 
   return (
-    <div className="w-full h-[300px] md:h-[400px] rounded-[2rem] overflow-hidden border-2 border-foreground/5 shadow-xl relative z-0">
+    <div className="w-full h-[300px] md:h-[400px] rounded-3xl overflow-hidden border border-foreground/5 shadow-sm relative z-0">
       <MapContainer
         center={position}
         zoom={zoom}
@@ -152,7 +152,7 @@ export default function LocationPickerMap({
           size="sm"
           onClick={handleGetCurrentLocation}
           disabled={isGettingLocation}
-          className="bg-white hover:bg-white/90 text-black font-black uppercase tracking-widest text-[10px] h-10 px-4 rounded-xl border-2 shadow-xl flex gap-2"
+          className="bg-card hover:bg-white/90 text-black font-semibold uppercase tracking-wider text-xs h-10 px-4 rounded-xl border shadow-sm flex gap-2"
         >
           {isGettingLocation ? (
             <Loader2 className="h-3 w-3 animate-spin" />
@@ -163,11 +163,11 @@ export default function LocationPickerMap({
         </Button>
       </div>
 
-      <div className="absolute bottom-4 left-4 z-[1000] bg-background/80 backdrop-blur-md px-4 py-2 rounded-xl border-2 border-primary/20 shadow-lg">
-        <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+      <div className="absolute bottom-4 left-4 z-[1000] bg-background/80 backdrop-blur-md px-4 py-2 rounded-xl border border-primary/20 shadow-lg">
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
           Map Interaction Active
         </p>
-        <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">
+        <p className="text-xs font-bold text-muted-foreground uppercase mt-1">
           Click or drag marker for precision
         </p>
       </div>

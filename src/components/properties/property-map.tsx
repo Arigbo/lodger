@@ -7,8 +7,8 @@ import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icons in Leaflet
 const DefaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconUrl: '/leaflet/marker-icon.png',
+  shadowUrl: '/leaflet/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 });
@@ -26,7 +26,7 @@ export default function PropertyMap({ lat, lng, title }: PropertyMapProps) {
   const position: [number, number] = [lat, lng];
 
   return (
-    <div className="w-full h-[400px] rounded-[2rem] overflow-hidden border-4 border-foreground/5 shadow-2xl relative z-0">
+    <div className="w-full h-[400px] rounded-3xl overflow-hidden border border-foreground/5 shadow-sm relative z-0">
       <MapContainer 
         center={position} 
         zoom={13} 

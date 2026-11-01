@@ -18,6 +18,7 @@ import Loading from '@/app/loading';
 import { sendNotification } from '@/lib/notifications';
 import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { PageHeader, StatCard, StatGrid, EmptyState } from "@/components/dashboard";
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -244,7 +245,7 @@ export default function RentalRequestsPage() {
           ? { ...ar, request: { ...ar.request, status: 'approved' } }
           : ar
       ));
-      toast({ title: "Authority Granted", description: "Lease protocol initiated and tenant notified." });
+      toast({ title: "Request accepted", description: "A lease has been created and the tenant notified." });
     }
   };
 
@@ -315,7 +316,7 @@ export default function RentalRequestsPage() {
       });
 
       setPendingOfflinePayments(prev => prev.filter(p => p.lease.id !== leaseId));
-      toast({ title: "Payment Rejected", description: "Tenant redirected to re-choose payment protocol." });
+      toast({ title: "Payment Rejected", description: "The tenant has been asked to choose another payment method." });
     } catch (error) {
       console.error('Error rejecting offline payment:', error);
     }
@@ -326,29 +327,16 @@ export default function RentalRequestsPage() {
   }
 
   return (
-    <div className="space-y-16 pb-32 animate-in fade-in duration-1000">
-      {/* Page Header & Stats Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 px-2">
-        <div className="space-y-4">
-          <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight uppercase">Requests<span className="text-primary text-xl ml-1">.</span></h1>
-          <p className="text-lg text-muted-foreground font-medium max-w-2xl leading-relaxed">
-            Manage your incoming applications and verify offline payment transactions in a centralized workflow.
-          </p>
-        </div>
+    <div className="space-y-8 pb-8 animate-in fade-in duration-1000">
+      <PageHeader
+        title="Rental requests"
+        description="Review applications from students and confirm offline payments."
+      />
 
-        <div className="flex flex-wrap gap-4">
-          <div className="bg-white px-6 md:px-8 py-4 md:py-5 rounded-2xl md:rounded-[2rem] border-2 border-muted/10 shadow-sm flex flex-col justify-center flex-1 md:min-w-[160px]">
-            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">Active Requests</p>
-            <p className="text-2xl md:text-3xl font-black tracking-tighter">{pendingRequests.length}</p>
-          </div>
-          {pendingOfflinePayments.length > 0 && (
-            <div className="bg-orange-600 text-white px-6 md:px-8 py-4 md:py-5 rounded-2xl md:rounded-[2rem] shadow-xl shadow-orange-600/20 flex flex-col justify-center flex-1 md:min-w-[160px] animate-in zoom-in duration-500">
-              <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-1">Payment Tasks</p>
-              <p className="text-2xl md:text-3xl font-black tracking-tighter">{pendingOfflinePayments.length}</p>
-            </div>
-          )}
-        </div>
-      </div>
+      <StatGrid className="lg:grid-cols-3">
+        <StatCard label="Pending applications" value={pendingRequests.length} icon={UserIcon} tone="warning" />
+        <StatCard label="Payments to confirm" value={pendingOfflinePayments.length} icon={UserIcon} tone="info" />
+      </StatGrid>
 
       {/* Application Stream */}
       <div className="space-y-10">
@@ -356,17 +344,17 @@ export default function RentalRequestsPage() {
           <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <UserIcon className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-3xl font-black uppercase tracking-tight">Active Applications</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Active Applications</h2>
         </div>
 
         {pendingRequests.length === 0 ? (
-          <Card className="rounded-[3.5rem] border-2 border-dashed border-foreground/10 bg-muted/5 p-24 text-center space-y-8">
-            <div className="h-32 w-32 rounded-[2.5rem] bg-white shadow-2xl flex items-center justify-center mx-auto relative group overflow-hidden">
+          <Card className="rounded-3xl border border-dashed border-foreground/10 bg-muted/5 p-24 text-center space-y-8">
+            <div className="h-32 w-32 rounded-3xl bg-card shadow-sm flex items-center justify-center mx-auto relative group overflow-hidden">
               <Bell className="h-14 w-14 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
-              <div className="absolute inset-0 bg-primary/5 rounded-[2.5rem]" />
+              <div className="absolute inset-0 bg-primary/5 rounded-3xl" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-2xl font-black uppercase tracking-tight">No Requests</h3>
+              <h3 className="text-2xl font-bold tracking-tight">No Requests</h3>
               <p className="text-lg text-muted-foreground max-w-sm mx-auto">
                 No incoming applications at the moment.
               </p>
@@ -378,14 +366,14 @@ export default function RentalRequestsPage() {
               const { request, applicant, property } = aggregatedRequest;
               if (!applicant || !property) return null;
               return (
-                <Card key={request.id} className="group overflow-hidden rounded-[3rem] border-2 border-foreground/5 bg-white hover:shadow-3xl transition-all duration-500 p-8 md:p-10">
-                  <div className="flex flex-col lg:flex-row gap-10">
+                <Card key={request.id} className="group overflow-hidden rounded-3xl border border-foreground/5 bg-card hover:shadow-md transition-all duration-500 p-8 md:p-8">
+                  <div className="flex flex-col lg:flex-row gap-6">
                     {/* Applicant Profile */}
                     <div className="flex items-center gap-6 lg:w-1/3 border-r-2 border-muted/5 pr-10">
                       <div className="relative">
-                        <Avatar className="h-24 w-24 rounded-[2rem] ring-4 ring-primary/5 ring-offset-4 ring-offset-white">
+                        <Avatar className="h-24 w-24 rounded-3xl ring-4 ring-primary/5 ring-offset-4 ring-offset-white">
                           <AvatarImage src={applicant?.profileImageUrl} className="object-cover" />
-                          <AvatarFallback className="bg-muted text-2xl font-black uppercase">
+                          <AvatarFallback className="bg-muted text-2xl font-bold">
                             {applicant?.name?.[0]}
                           </AvatarFallback>
                         </Avatar>
@@ -394,8 +382,8 @@ export default function RentalRequestsPage() {
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-primary">APPLICANT PROFILE</p>
-                        <h3 className="text-2xl font-black uppercase tracking-tight">{applicant?.name}</h3>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Applicant profile</p>
+                        <h3 className="text-2xl font-bold tracking-tight">{applicant?.name}</h3>
                         <p className="text-xs font-bold text-muted-foreground/60">{applicant?.email}</p>
                       </div>
                     </div>
@@ -404,8 +392,8 @@ export default function RentalRequestsPage() {
                     <div className="flex-1 space-y-6">
                       <div className="flex justify-between items-start">
                         <div className="space-y-2">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">PROPERTY</p>
-                          <Link href={`/landlord/properties/${property.id}`} className="group/link flex items-center gap-2 text-xl font-black uppercase tracking-tight hover:text-primary transition-colors">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Property</p>
+                          <Link href={`/landlord/properties/${property.id}`} className="group/link flex items-center gap-2 text-xl font-bold tracking-tight hover:text-primary transition-colors">
                             {property.title} <ExternalLink className="h-4 w-4 opacity-0 group-hover/link:opacity-100 transition-opacity" />
                           </Link>
                           <p className="text-xs font-medium text-muted-foreground leading-relaxed">
@@ -413,16 +401,16 @@ export default function RentalRequestsPage() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">SUBMITTED ON</p>
-                          <p className="text-sm font-black text-foreground">{new Date(request.applicationDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Submitted on</p>
+                          <p className="text-sm font-bold text-foreground">{new Date(request.applicationDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                         </div>
                       </div>
 
                       <div className="flex flex-wrap gap-4 pt-4 border-t-2 border-muted/5">
-                        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/20 text-[10px] font-black uppercase tracking-widest">
+                        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/20 text-xs font-semibold uppercase tracking-wider">
                           <Clock className="h-3 w-3 text-primary" /> Status: {request.status}
                         </div>
-                        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/20 text-[10px] font-black uppercase tracking-widest">
+                        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/20 text-xs font-semibold uppercase tracking-wider">
                           <Wallet className="h-3 w-3 text-primary" /> Monthly Rent: {formatPrice(property.price, property.currency)}
                         </div>
                       </div>
@@ -432,16 +420,16 @@ export default function RentalRequestsPage() {
                     <div className="lg:w-1/4 flex flex-col sm:flex-row lg:flex-col gap-4 justify-center items-stretch lg:border-l-2 lg:border-muted/5 lg:pl-10">
                       <Button
                         onClick={() => handleAcceptClick(aggregatedRequest)}
-                        className="h-16 flex-1 rounded-2xl bg-foreground text-white hover:bg-primary transition-all font-black text-[10px] md:text-xs uppercase tracking-widest gap-3 shadow-xl"
+                        className="h-16 flex-1 rounded-2xl bg-foreground text-white hover:bg-primary transition-all font-semibold text-xs md:text-xs uppercase tracking-wider gap-3 shadow-sm"
                       >
-                        <Check className="h-5 w-5" /> ACCEPT
+                        <Check className="h-5 w-5" /> Accept
                       </Button>
                       <Button
                         variant="outline"
                         onClick={() => handleDeclineClick(request.id)}
-                        className="h-16 flex-1 rounded-2xl border-2 hover:bg-destructive hover:text-white hover:border-destructive transition-all font-black text-[10px] md:text-xs uppercase tracking-widest gap-3"
+                        className="h-16 flex-1 rounded-2xl border hover:bg-destructive hover:text-white hover:border-destructive transition-all font-semibold text-xs md:text-xs uppercase tracking-wider gap-3"
                       >
-                        <X className="h-5 w-5" /> DECLINE
+                        <X className="h-5 w-5" /> Decline
                       </Button>
                     </div>
                   </div>
@@ -459,56 +447,56 @@ export default function RentalRequestsPage() {
             <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
               <Wallet className="h-5 w-5 text-orange-600" />
             </div>
-            <h2 className="text-3xl font-black uppercase tracking-tight">Offline Payment <span className="text-orange-600">Verification</span></h2>
+            <h2 className="text-3xl font-bold tracking-tight">Offline Payment <span className="text-orange-600">Verification</span></h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {pendingOfflinePayments.map(({ lease, tenant, property }) => {
               if (!tenant || !property) return null;
               return (
-                <Card key={lease.id} className="group relative overflow-hidden rounded-[3rem] border-2 border-orange-500/10 bg-white hover:shadow-2xl transition-all duration-500 p-8">
+                <Card key={lease.id} className="group relative overflow-hidden rounded-3xl border border-orange-500/10 bg-card hover:shadow-md transition-all duration-500 p-8">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 rounded-bl-[4rem] -mr-6 -mt-6" />
 
                   <div className="space-y-8 relative z-10">
                     <div className="flex items-center gap-4">
                       <Avatar className="h-16 w-16 rounded-2xl ring-2 ring-orange-500/10">
                         <AvatarImage src={tenant.profileImageUrl} className="object-cover" />
-                        <AvatarFallback className="bg-muted text-xl font-black uppercase">
+                        <AvatarFallback className="bg-muted text-xl font-bold">
                           {tenant.name?.[0]}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h4 className="text-xl font-black uppercase tracking-tight">{tenant.name}</h4>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">TENANT</p>
+                        <h4 className="text-xl font-bold tracking-tight">{tenant.name}</h4>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Tenant</p>
                       </div>
                     </div>
 
-                    <div className="p-6 rounded-2xl bg-orange-500/5 border-2 border-orange-500/5 space-y-4">
+                    <div className="p-6 rounded-2xl bg-orange-500/5 border border-orange-500/5 space-y-4">
                       <div className="flex justify-between items-center">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-orange-600/60">OFFLINE PAYMENT</p>
-                        <p className="text-2xl font-black text-orange-600">{formatPrice(lease.offlinePaymentAmount || property.price, property.currency)}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-orange-600/60">Offline payment</p>
+                        <p className="text-2xl font-bold text-orange-600">{formatPrice(lease.offlinePaymentAmount || property.price, property.currency)}</p>
                       </div>
                       <div className="flex justify-between items-center pt-4 border-t border-orange-500/10">
-                        <p className="text-xs font-bold text-muted-foreground/60">LEASE TERM</p>
-                        <p className="text-xs font-black uppercase">{lease.offlinePaymentMonths || 1} Month(s) Pre-Paid</p>
+                        <p className="text-xs font-bold text-muted-foreground/60">Lease term</p>
+                        <p className="text-xs font-semibold uppercase">{lease.offlinePaymentMonths || 1} Month(s) Pre-Paid</p>
                       </div>
                     </div>
 
                     <div className="space-y-4">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 text-center">Verify physical receipt of funds before proceeding</p>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40 text-center">Verify physical receipt of funds before proceeding</p>
                       <div className="grid grid-cols-2 gap-4">
                         <Button
                           onClick={() => handleApproveOfflinePayment(lease.id, tenant.id, property.id, property.title)}
-                          className="h-14 rounded-xl bg-orange-600 text-white hover:bg-orange-700 transition-all font-black text-[10px] uppercase tracking-widest gap-2 shadow-lg"
+                          className="h-14 rounded-xl bg-orange-600 text-white hover:bg-orange-700 transition-all font-semibold text-xs uppercase tracking-wider gap-2 shadow-lg"
                         >
-                          <Check className="h-4 w-4" /> VERIFY PAYMENT
+                          <Check className="h-4 w-4" /> Verify payment
                         </Button>
                         <Button
                           variant="outline"
                           onClick={() => handleRejectOfflinePayment(lease.id, tenant.id, property.title)}
-                          className="h-14 rounded-xl border-2 border-orange-500/20 hover:bg-orange-50 text-orange-600 transition-all font-black text-[10px] uppercase tracking-widest gap-2"
+                          className="h-14 rounded-xl border border-orange-500/20 hover:bg-orange-50 text-orange-600 transition-all font-semibold text-xs uppercase tracking-wider gap-2"
                         >
-                          <X className="h-4 w-4" /> REJECT
+                          <X className="h-4 w-4" /> Reject
                         </Button>
                       </div>
                     </div>

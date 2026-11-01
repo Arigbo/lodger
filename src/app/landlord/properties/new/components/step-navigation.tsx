@@ -32,11 +32,11 @@ export const StepNavigation = ({ steps, currentStep }: StepNavigationProps) => {
                                 opacity: isActive || isCompleted ? 1 : 0.4
                             }}
                             className={cn(
-                                "flex items-center gap-5 p-5 rounded-3xl transition-all duration-500 border-2 relative overflow-hidden",
+                                "flex items-center gap-5 p-5 rounded-3xl transition-all duration-500 border relative overflow-hidden",
                                 isActive 
-                                    ? "bg-foreground text-white border-foreground shadow-2xl shadow-black/10" 
+                                    ? "bg-foreground text-white border-foreground shadow-sm" 
                                     : isCompleted
-                                        ? "bg-white text-foreground border-foreground/5"
+                                        ? "bg-card text-foreground border-foreground/5"
                                         : "bg-white/50 text-muted-foreground border-transparent"
                             )}
                         >
@@ -49,15 +49,15 @@ export const StepNavigation = ({ steps, currentStep }: StepNavigationProps) => {
                             )}
 
                             <div className={cn(
-                                "h-9 w-9 rounded-xl flex items-center justify-center font-black text-xs transition-colors duration-500",
+                                "h-9 w-9 rounded-xl flex items-center justify-center font-semibold text-xs transition-colors duration-500",
                                 isActive ? "bg-primary text-white" : isCompleted ? "bg-emerald-500/10 text-emerald-600" : "bg-muted/20"
                             )}>
                                 {isCompleted ? <Check className="h-5 w-5" strokeWidth={3} /> : step.id}
                             </div>
                             
                             <div className="flex flex-col">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em]">Step 0{step.id}</p>
-                                <p className="text-xs font-black uppercase text-inherit opacity-80">{step.name}</p>
+                                <p className="text-xs font-semibold uppercase tracking-wider">Step 0{step.id}</p>
+                                <p className="text-xs font-semibold uppercase text-inherit opacity-80">{step.name}</p>
                             </div>
                         </motion.div>
                     );
@@ -68,12 +68,12 @@ export const StepNavigation = ({ steps, currentStep }: StepNavigationProps) => {
             <div className="block lg:hidden">
                 <div className="flex justify-between items-end mb-4">
                     <div className="space-y-1">
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Current Phase</p>
-                        <h3 className="text-xl font-black uppercase tracking-tighter text-foreground leading-none">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Current Phase</p>
+                        <h3 className="text-xl font-bold tracking-tight text-foreground leading-none">
                             {steps[currentStep - 1].name}
                         </h3>
                     </div>
-                    <p className="text-2xl font-black text-primary opacity-20">0{currentStep}</p>
+                    <p className="text-2xl font-bold text-primary opacity-20">0{currentStep}</p>
                 </div>
                 
                 <div className="h-2.5 w-full bg-muted/10 rounded-full overflow-hidden border border-foreground/[0.03]">

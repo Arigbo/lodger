@@ -56,7 +56,7 @@ export function initiateGoogleSignIn(
             name: user.displayName || 'Anonymous',
             email: user.email,
             role: userType,
-            profileImageUrl: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
+            profileImageUrl: user.photoURL || '',
           };
           // Temporarily store profile for the login page to handle
           sessionStorage.setItem('newUserProfile', JSON.stringify(newUserProfile));

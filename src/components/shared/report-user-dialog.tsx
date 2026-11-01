@@ -81,13 +81,13 @@ export function ReportUserDialog({ isOpen, onClose, reportedUserId, reportedUser
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[425px] w-[95vw] rounded-2xl border-2 border-destructive/20">
+            <DialogContent className="sm:max-w-[425px] w-[95vw] rounded-2xl border border-destructive/20">
                 <DialogHeader>
                     <div className="flex items-center gap-3 text-destructive mb-2">
                         <div className="p-2 bg-destructive/10 rounded-full">
                             <Flag className="h-5 w-5" />
                         </div>
-                        <DialogTitle className="text-xl font-black uppercase tracking-tight">Report User</DialogTitle>
+                        <DialogTitle className="text-xl font-bold tracking-tight">Report User</DialogTitle>
                     </div>
                     <DialogDescription>
                         You are reporting <span className="font-bold text-foreground">{reportedUserName}</span>. This action is serious and will be reviewed by our team.
@@ -96,7 +96,7 @@ export function ReportUserDialog({ isOpen, onClose, reportedUserId, reportedUser
 
                 <div className="grid gap-6 py-4">
                     <div className="space-y-2">
-                        <Label htmlFor="reason" className="text-xs font-black uppercase tracking-widest text-muted-foreground/80">Reason</Label>
+                        <Label htmlFor="reason" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Reason</Label>
                         <Select onValueChange={setReason} value={reason}>
                             <SelectTrigger id="reason" className="h-12 rounded-xl bg-muted/20 border-transparent focus:ring-0 font-medium">
                                 <SelectValue placeholder="Select a reason" />
@@ -112,7 +112,7 @@ export function ReportUserDialog({ isOpen, onClose, reportedUserId, reportedUser
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="description" className="text-xs font-black uppercase tracking-widest text-muted-foreground/80">Description</Label>
+                        <Label htmlFor="description" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Description</Label>
                         <Textarea
                             id="description"
                             placeholder="Please provide specific details..."
@@ -127,7 +127,7 @@ export function ReportUserDialog({ isOpen, onClose, reportedUserId, reportedUser
                     <Button variant="ghost" onClick={onClose} disabled={isSubmitting} className="rounded-xl font-bold">
                         Cancel
                     </Button>
-                    <Button onClick={handleSubmit} disabled={isSubmitting} variant="destructive" className="rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-destructive/20">
+                    <Button onClick={handleSubmit} disabled={isSubmitting} variant="destructive" className="rounded-xl font-bold uppercase tracking-wider shadow-lg">
                         {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...</> : 'Submit Report'}
                     </Button>
                 </DialogFooter>

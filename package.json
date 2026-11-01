@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:emulators": "node scripts/dev-emulators.mjs",
+    "emulators": "firebase emulators:start --only auth,firestore,storage --project demo-lodger",
+    "seed": "node scripts/seed-emulator.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

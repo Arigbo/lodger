@@ -1,61 +1,57 @@
 import Link from "next/link";
+import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useUser } from "@/firebase/provider";
+import type { Notification } from "@/types/notification";
 
 interface NotificationItemProps {
-    notification: any;
-    onMarkAsRead: (id: string) => void;
-    isDropdown?: boolean;
+  notification: Notification;
+  onMarkAsRead: (id: string) => void;
+  isDropdown?: boolean;
+}
+
+const dotColor: Record<Notification["type"], string> = {
+  info: "bg-sky-500",
+  success: "bg-emerald-500",
+  warning: "bg-amber-500",
+  error: "bg-red-500",
+};
+
+function timeAgo(iso?: string) {
+  if (!iso) return "Just now";
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? "" : formatDistanceToNow(date, { addSuffix: true });
 }
 
 export function NotificationItem({ notification, onMarkAsRead, isDropdown = false }: NotificationItemProps) {
-    const { role } = useUser();
-    const notificationPath = role === 'student' ? '/student/notifications' : '/landlord/notifications';
+  const { role } = useUser();
+  const base = role === "landlord" ? "/landlord/notifications" : "/student/notifications";
 
-    const content = (
-        <div className="flex w-full justify-between gap-2 mb-1">
-            <span className="font-bold text-xs text-primary/80 group-hover:text-primary transition-colors">{notification.title}</span>
-            <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">
-                {notification.createdAt ? new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
-            </span>
-        </div>
-    );
+  const link = (
+    <Link
+      href={`${base}/${notification.id}`}
+      onClick={() => !notification.read && onMarkAsRead(notification.id)}
+      className={cn(
+        "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/50 focus-visible:bg-accent/50 focus-visible:outline-none",
+        isDropdown && "rounded-xl",
+        !notification.read && "bg-primary/[0.04]",
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", notification.read ? "bg-muted-foreground/30" : dotColor[notification.type] ?? "bg-primary")}
+      />
+      <span className="min-w-0 flex-1">
+        <span className="flex items-baseline justify-between gap-2">
+          <span className={cn("truncate text-sm", notification.read ? "font-medium" : "font-semibold")}>{notification.title}</span>
+          <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(notification.createdAt)}</span>
+        </span>
+        <span className="mt-0.5 line-clamp-2 block text-sm text-muted-foreground">{notification.message}</span>
+      </span>
+      {!notification.read && <span className="sr-only">(unread)</span>}
+    </Link>
+  );
 
-    const message = (
-        <p className="text-xs line-clamp-2 text-muted-foreground/90 font-medium leading-relaxed">
-            {notification.message}
-        </p>
-    );
-
-    const containerClasses = cn(
-        "flex flex-col items-start p-3 m-1 rounded-2xl cursor-pointer transition-all hover:bg-primary/5 group border border-transparent",
-        !notification.read && "bg-primary/[0.03] border-primary/10 shadow-sm"
-    );
-
-    if (isDropdown) {
-        return (
-            <DropdownMenuItem asChild>
-                <Link
-                    href={`${notificationPath}/${notification.id}`}
-                    className={containerClasses}
-                    onClick={() => onMarkAsRead(notification.id)}
-                >
-                    {content}
-                    {message}
-                </Link>
-            </DropdownMenuItem>
-        );
-    }
-
-    return (
-        <Link
-            href={`${notificationPath}/${notification.id}`}
-            className={containerClasses}
-            onClick={() => onMarkAsRead(notification.id)}
-        >
-            {content}
-            {message}
-        </Link>
-    );
+  return isDropdown ? <DropdownMenuItem asChild className="p-0">{link}</DropdownMenuItem> : link;
 }

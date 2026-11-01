@@ -24,6 +24,8 @@ import { formatPrice, cn } from '@/lib/utils';
 
 import { useState } from 'react';
 import { authHeaders } from "@/lib/api-client";
+import { EmptyState } from "@/components/dashboard";
+import { FileX } from "lucide-react";
 
 export default function ViewStudentLeasePage() {
     const params = useParams();
@@ -55,38 +57,18 @@ export default function ViewStudentLeasePage() {
     }
 
     if (!lease || !currentUser || (currentUser.uid !== lease.tenantId)) {
-        console.warn("Lease not found or access denied", {
-            leaseId: id,
-            leaseExists: !!lease,
-            currentUserId: currentUser?.uid,
-            leaseTenantId: lease?.tenantId
-        });
-
-        // Debug UI to help user identify the issue
         return (
-            <div className="container mx-auto max-w-2xl py-20 px-4 text-center">
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-8">
-                    <h1 className="text-2xl font-bold text-destructive mb-4">Unable to Load Lease</h1>
-                    <p className="mb-6 text-muted-foreground">
-                        We couldn't display this lease. Here is the diagnostic info:
-                    </p>
-                    <div className="text-left bg-black/80 text-green-400 p-4 rounded-md font-mono text-xs overflow-auto mb-6">
-                        <p>Lease ID in URL: {id}</p>
-                        <p>Lease Document Found: {lease ? "YES" : "NO"}</p>
-                        <p>User Logged In: {currentUser ? "YES" : "NO"}</p>
-                        {currentUser && lease && (
-                            <>
-                                <p>Your User ID: {currentUser.uid}</p>
-                                <p>Lease Tenant ID: {lease.tenantId}</p>
-                                <p>Match: {currentUser.uid === lease.tenantId ? "YES" : "FAIL"}</p>
-                            </>
-                        )}
-                    </div>
-                    <Button asChild variant="outline">
-                        <Link href="/student">Return to Dashboard</Link>
+            <EmptyState
+                className="mx-auto mt-10 max-w-xl"
+                icon={FileX}
+                title="We couldn't open this lease"
+                description="It may have been removed, or it belongs to a different account."
+                action={
+                    <Button asChild variant="outline" className="rounded-xl">
+                        <Link href="/student/leases">Back to leases</Link>
                     </Button>
-                </div>
-            </div>
+                }
+            />
         );
     }
 
@@ -239,7 +221,7 @@ export default function ViewStudentLeasePage() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto space-y-12 pb-32 animate-in fade-in duration-700">
+        <div className="max-w-5xl mx-auto space-y-8 pb-8 animate-in fade-in duration-700">
             <style jsx global>{`
                 @media print {
                     @page { margin: 2cm; }
@@ -259,61 +241,61 @@ export default function ViewStudentLeasePage() {
             `}</style>
 
             {/* Premium Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b-4 border-foreground/5">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b border-foreground/5">
                 <div className="space-y-4">
                     <div className="flex items-center gap-3">
                         <div className={cn(
-                            "p-2 rounded-xl bg-white shadow-lg border-2",
+                            "p-2 rounded-xl bg-card shadow-lg border",
                             lease.status === 'active' ? "border-green-500/20" :
                                 lease.status === 'pending' ? "border-primary/20" : "border-muted/20"
                         )}>
                             {getStatusIcon(lease.status)}
                         </div>
-                        <Badge variant={getStatusVariant(lease.status)} className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                        <Badge variant={getStatusVariant(lease.status)} className="px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
                             {lease.status}
                         </Badge>
                     </div>
-                    <h1 className="font-headline text-3xl md:text-5xl font-black tracking-tight text-foreground uppercase">
-                        LEASE AGREEMENT
+                    <h1 className="font-headline text-3xl md:text-3xl font-bold tracking-tight text-foreground">
+                        Lease agreement
                     </h1>
                     <p className="text-lg text-muted-foreground font-medium">
-                        Lease Agreement for <Link href={`/student/properties/${property?.id}`} className="text-primary hover:underline">#{property?.title}</Link>
+                        For <Link href={`/student/properties/${property?.id}`} className="text-primary hover:underline">{property?.title}</Link>
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                    <Button variant="outline" className="h-14 rounded-2xl px-6 font-black text-xs uppercase tracking-widest gap-2 bg-white hover:bg-muted/50 transition-all border-2" onClick={handleDownloadLease}>
-                        <Download className="h-4 w-4" /> DOWNLOAD
+                    <Button variant="outline" className="h-11 rounded-2xl px-6 font-semibold text-xs uppercase tracking-wider gap-2 bg-card hover:bg-muted/50 transition-all border" onClick={handleDownloadLease}>
+                        <Download className="h-4 w-4" /> Download
                     </Button>
-                    <Button variant="outline" className="h-14 rounded-2xl px-6 font-black text-xs uppercase tracking-widest gap-2 bg-white hover:bg-muted/50 transition-all border-2" onClick={() => window.print()}>
-                        <Printer className="h-4 w-4" /> PRINT
+                    <Button variant="outline" className="h-11 rounded-2xl px-6 font-semibold text-xs uppercase tracking-wider gap-2 bg-card hover:bg-muted/50 transition-all border" onClick={() => window.print()}>
+                        <Printer className="h-4 w-4" /> Print
                     </Button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main Content: The Document */}
                 <div className="lg:col-span-2 space-y-10">
                     <div className="relative group">
                         {/* Decorative Background for "Paper" effect */}
-                        <div className="absolute inset-0 bg-muted/20 -rotate-1 rounded-[3rem] -z-10 transition-transform group-hover:rotate-0" />
-                        <div className="absolute inset-0 bg-primary/5 rotate-1 rounded-[3rem] -z-10 transition-transform group-hover:rotate-0" />
+                        <div className="absolute inset-0 bg-muted/20 -rotate-1 rounded-3xl -z-10 transition-transform group-hover:rotate-0" />
+                        <div className="absolute inset-0 bg-primary/5 rotate-1 rounded-3xl -z-10 transition-transform group-hover:rotate-0" />
 
-                        <div className="relative bg-white border-2 border-foreground/5 shadow-2xl rounded-[3rem] p-8 md:p-12 min-h-[600px] flex flex-col">
+                        <div className="relative bg-card border border-foreground/5 shadow-sm rounded-3xl p-8 md:p-8 min-h-[600px] flex flex-col">
                             <div className="flex justify-between items-start mb-12">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">AGREEMENT TYPE</p>
+                                    <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider">Agreement type</p>
                                     <p className="font-mono text-xs opacity-60">Fixed Term Residential Lease</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">DATE</p>
+                                    <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider">DATE</p>
                                     <p className="font-bold text-sm">{format(new Date(lease.startDate), 'MMMM dd, yyyy')}</p>
                                 </div>
                             </div>
 
                             <Separator className="mb-10 opacity-10" />
 
-                            <h2 className="text-xl font-black uppercase tracking-widest mb-8 text-center decoration-primary/20 underline underline-offset-8 decoration-4">
-                                LEASE TERMS & CONDITIONS
+                            <h2 className="text-xl font-bold tracking-wider mb-8 text-center decoration-primary/20 underline underline-offset-8 decoration-4">
+                                Lease terms & conditions
                             </h2>
 
                             <div id="lease-document" className="prose prose-sm md:prose-base max-w-none whitespace-pre-wrap leading-relaxed text-foreground/80 flex-grow">
@@ -323,19 +305,19 @@ export default function ViewStudentLeasePage() {
                             <Separator className="my-12 opacity-10" />
 
                             {/* Formal Signature Section */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-auto pt-8 border-t-2 border-dotted border-muted/30">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-auto pt-8 border-t-2 border-dotted border-muted/30">
                                 <div className="space-y-4">
-                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest">LANDLORD SIGNATURE</p>
-                                    <div className="h-24 bg-muted/10 rounded-3xl border-2 border-dashed border-muted/30 flex items-center justify-center relative overflow-hidden">
+                                    <p className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider">Landlord signature</p>
+                                    <div className="h-24 bg-muted/10 rounded-3xl border border-dashed border-muted/30 flex items-center justify-center relative overflow-hidden">
                                         {lease.landlordSigned ? (
                                             <div className="text-center animate-in zoom-in duration-500">
                                                 <p className="text-2xl text-primary font-bold opacity-80 -rotate-3">{landlord?.name}</p>
-                                                <Badge variant="secondary" className="mt-2 text-[9px] font-black uppercase tracking-tighter bg-green-500/10 text-green-600 border-none">VERIFIED SIGNATURE</Badge>
+                                                <Badge variant="secondary" className="mt-2 text-xs font-semibold uppercase tracking-tight bg-green-500/10 text-green-600 border-none">Verified signature</Badge>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center gap-1 opacity-20">
                                                 <Hourglass className="h-6 w-6" />
-                                                <p className="text-[8px] font-black uppercase tracking-widest">PENDING APPROVAL</p>
+                                                <p className="text-xs font-semibold uppercase tracking-wider">Pending approval</p>
                                             </div>
                                         )}
                                     </div>
@@ -343,17 +325,17 @@ export default function ViewStudentLeasePage() {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest">TENANT SIGNATURE</p>
-                                    <div className="h-24 bg-muted/10 rounded-3xl border-2 border-dashed border-muted/30 flex items-center justify-center relative overflow-hidden">
+                                    <p className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider">Tenant signature</p>
+                                    <div className="h-24 bg-muted/10 rounded-3xl border border-dashed border-muted/30 flex items-center justify-center relative overflow-hidden">
                                         {lease.tenantSigned ? (
                                             <div className="text-center animate-in zoom-in duration-500">
                                                 <p className="text-2xl text-primary font-bold opacity-80 -rotate-3">{tenant?.name}</p>
-                                                <Badge variant="secondary" className="mt-2 text-[9px] font-black uppercase tracking-tighter bg-green-500/10 text-green-600 border-none">VERIFIED SIGNATURE</Badge>
+                                                <Badge variant="secondary" className="mt-2 text-xs font-semibold uppercase tracking-tight bg-green-500/10 text-green-600 border-none">Verified signature</Badge>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center gap-1 opacity-20">
                                                 <Hourglass className="h-6 w-6" />
-                                                <p className="text-[8px] font-black uppercase tracking-widest">AWAITING EXECUTION</p>
+                                                <p className="text-xs font-semibold uppercase tracking-wider">Awaiting signature</p>
                                             </div>
                                         )}
                                     </div>
@@ -367,18 +349,18 @@ export default function ViewStudentLeasePage() {
                 {/* Sidebar: Metadata & Actions */}
                 <div className="space-y-10">
                     {/* Metadata Card */}
-                    <Card className="rounded-[2.5rem] border-2 border-foreground/5 shadow-xl bg-white overflow-hidden">
+                    <Card className="rounded-3xl border border-foreground/5 shadow-sm bg-card overflow-hidden">
                         <CardHeader className="bg-primary/5 border-b-2 border-primary/10">
-                            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                                <FileText className="h-4 w-4" /> LEASE DETAILS
+                            <CardTitle className="text-xs font-semibold uppercase tracking-wider flex items-center gap-2">
+                                <FileText className="h-4 w-4" /> Lease details
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-8 space-y-8">
                             <div className="space-y-6">
                                 <div className="flex justify-between items-center group">
                                     <div>
-                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">PROPERTY</p>
-                                        <p className="font-black text-sm uppercase group-hover:text-primary transition-colors truncate max-w-[150px]">{property?.title}</p>
+                                        <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Property</p>
+                                        <p className="font-bold text-sm uppercase group-hover:text-primary transition-colors truncate max-w-[150px]">{property?.title}</p>
                                     </div>
                                     <div className="h-10 w-10 rounded-xl bg-muted/20 flex items-center justify-center">
                                         <CheckCircle2 className="h-5 w-5 opacity-20" />
@@ -386,8 +368,8 @@ export default function ViewStudentLeasePage() {
                                 </div>
                                 <div className="flex justify-between items-center group">
                                     <div>
-                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">LEASE TERM</p>
-                                        <p className="font-black text-sm uppercase truncate max-w-[150px]">
+                                        <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Lease term</p>
+                                        <p className="font-bold text-sm uppercase truncate max-w-[150px]">
                                             {format(new Date(lease.startDate), 'MMM yy')} - {format(new Date(lease.endDate), 'MMM yy')}
                                         </p>
                                     </div>
@@ -397,8 +379,8 @@ export default function ViewStudentLeasePage() {
                                 </div>
                                 <div className="flex justify-between items-center group">
                                     <div>
-                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">MONTHLY RATE</p>
-                                        <p className="font-black text-2xl text-primary">{formatPrice(property?.price || 0, property?.currency)}</p>
+                                        <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Monthly rate</p>
+                                        <p className="font-bold text-2xl text-primary">{formatPrice(property?.price || 0, property?.currency)}</p>
                                     </div>
                                     <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center">
                                         <DollarSign className="h-5 w-5 text-green-600" />
@@ -411,26 +393,26 @@ export default function ViewStudentLeasePage() {
                     {/* Action Card: Sign/Pay */}
                     <div className="space-y-6">
                         {lease.status === 'pending' && !lease.tenantSigned ? (
-                            <div className="relative group overflow-hidden rounded-[2.5rem] bg-foreground text-white p-8 md:p-10 shadow-2xl space-y-8 animate-in slide-in-from-right duration-700">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[5rem] -mr-8 -mt-8 transition-all group-hover:scale-110" />
+                            <div className="relative group overflow-hidden rounded-3xl bg-foreground text-white p-8 md:p-8 shadow-sm space-y-8 animate-in slide-in-from-right duration-700">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-3xl -mr-8 -mt-8 transition-all group-hover:scale-110" />
                                 <div className="relative z-10 space-y-4">
-                                    <h3 className="text-2xl font-black uppercase tracking-tight">SIGN AGREEMENT</h3>
+                                    <h3 className="text-2xl font-bold tracking-tight">Sign agreement</h3>
                                     <p className="text-white/60 text-sm leading-relaxed">
                                         &quot;Your signature acknowledges full acceptance of the terms outlined in this agreement.&quot;
                                     </p>
-                                    <Button className="w-full h-16 rounded-2xl bg-white text-foreground hover:bg-white/90 font-black text-sm uppercase tracking-widest gap-3 shadow-2xl transition-all hover:scale-105 active:scale-95" onClick={handleSignLease}>
-                                        <Signature className="h-5 w-5" /> SIGN DIGITALLY
+                                    <Button className="w-full h-16 rounded-2xl bg-card text-foreground hover:bg-white/90 font-bold text-sm uppercase tracking-wider gap-3 shadow-sm transition-all hover:scale-105 active:scale-95" onClick={handleSignLease}>
+                                        <Signature className="h-5 w-5" /> Sign digitally
                                     </Button>
                                 </div>
                             </div>
                         ) : null}
 
                         {lease.tenantSigned && lease.status === 'pending' && !lease.paymentMethod && (
-                            <div className="relative group overflow-hidden rounded-[2.5rem] bg-green-600 text-white p-8 md:p-10 shadow-2xl space-y-8 animate-in slide-in-from-right duration-700">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[5rem] -mr-8 -mt-8 transition-all group-hover:scale-110" />
+                            <div className="relative group overflow-hidden rounded-3xl bg-green-600 text-white p-8 md:p-8 shadow-sm space-y-8 animate-in slide-in-from-right duration-700">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-3xl -mr-8 -mt-8 transition-all group-hover:scale-110" />
                                 <div className="relative z-10 space-y-6">
                                     <div className="space-y-2">
-                                        <h3 className="text-2xl font-black uppercase tracking-tight">INITIAL PAYMENT</h3>
+                                        <h3 className="text-2xl font-bold tracking-tight">Initial payment</h3>
                                         <p className="text-white/60 text-sm leading-relaxed">
                                             &quot;Finalize your status by securing the property through an initial payment.&quot;
                                         </p>
@@ -438,13 +420,13 @@ export default function ViewStudentLeasePage() {
 
                                     <div className="space-y-6">
                                         <div className="space-y-2">
-                                            <h3 className="text-xl font-black uppercase tracking-tight">Activate Tenancy</h3>
+                                            <h3 className="text-xl font-bold tracking-tight">Activate Tenancy</h3>
                                             <p className="text-white/60 text-sm leading-relaxed">
                                                 &quot;Complete your payment to activate the lease agreement and receive your move-in instructions.&quot;
                                             </p>
                                         </div>
 
-                                        <Button className="w-full h-16 rounded-2xl bg-white text-primary hover:bg-white/90 font-black text-lg gap-3 shadow-2xl transition-all hover:scale-[1.02]" onClick={() => setIsPaymentOpen(true)}>
+                                        <Button className="w-full h-16 rounded-2xl bg-card text-primary hover:bg-white/90 font-bold text-lg gap-3 shadow-sm transition-all hover:scale-[1.02]" onClick={() => setIsPaymentOpen(true)}>
                                             <DollarSign className="h-6 w-6" /> Pay
                                         </Button>
                                     </div>
@@ -453,15 +435,15 @@ export default function ViewStudentLeasePage() {
                         )}
 
                         {lease.paymentMethod === 'offline' && !lease.paymentConfirmed && (
-                            <div className="relative group overflow-hidden rounded-[2.5rem] bg-blue-600 text-white p-8 md:p-10 shadow-2xl space-y-8 animate-in slide-in-from-right duration-700">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[5rem] -mr-8 -mt-8 transition-all group-hover:scale-110" />
+                            <div className="relative group overflow-hidden rounded-3xl bg-blue-600 text-white p-8 md:p-8 shadow-sm space-y-8 animate-in slide-in-from-right duration-700">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-3xl -mr-8 -mt-8 transition-all group-hover:scale-110" />
                                 <div className="relative z-10 space-y-6 text-center">
                                     <div className="relative inline-block mx-auto">
                                         <div className="absolute inset-0 bg-white/20 blur-2xl rounded-full scale-150 animate-pulse" />
                                         <Hourglass className="h-14 w-14 text-white relative animate-bounce" />
                                     </div>
                                     <div className="space-y-2">
-                                        <h3 className="text-xl font-black uppercase tracking-tight">MANUAL VERIFICATION</h3>
+                                        <h3 className="text-xl font-bold tracking-tight">Manual verification</h3>
                                         <p className="text-white/60 text-sm leading-relaxed">
                                             &quot;We are verifying your payment. Your lease will be activated shortly.&quot;
                                         </p>
@@ -471,20 +453,20 @@ export default function ViewStudentLeasePage() {
                         )}
 
                         {lease.status === 'active' && (
-                            <div className="relative group overflow-hidden rounded-[2.5rem] bg-white border-2 border-foreground/5 p-8 md:p-10 shadow-lg space-y-8 animate-in slide-in-from-right duration-700">
+                            <div className="relative group overflow-hidden rounded-3xl bg-card border border-foreground/5 p-8 md:p-8 shadow-lg space-y-8 animate-in slide-in-from-right duration-700">
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                                        <h3 className="text-xl font-bold tracking-tight flex items-center gap-2">
                                             <DollarSign className="h-5 w-5 text-green-600" /> Pay Rent
                                         </h3>
                                         <p className="text-muted-foreground text-sm leading-relaxed">
                                             Manage your monthly rental payments securely.
                                         </p>
                                     </div>
-                                    <Button className="w-full h-16 rounded-2xl bg-foreground text-white hover:bg-foreground/90 font-black text-lg gap-3 shadow-xl transition-all hover:scale-[1.02]" onClick={() => setIsPaymentOpen(true)}>
+                                    <Button className="w-full h-16 rounded-2xl bg-foreground text-white hover:bg-foreground/90 font-bold text-lg gap-3 shadow-sm transition-all hover:scale-[1.02]" onClick={() => setIsPaymentOpen(true)}>
                                         Pay
                                     </Button>
-                                    <p className="text-[10px] text-center font-bold text-muted-foreground/40 uppercase tracking-widest">
+                                    <p className="text-xs text-center font-bold text-muted-foreground/40 uppercase tracking-wider">
                                         Next Due Date: {format(new Date(), 'MMM dd, yyyy')}
                                     </p>
                                 </div>
@@ -493,7 +475,7 @@ export default function ViewStudentLeasePage() {
                     </div>
 
                     <Link href="/student/leases" className="block text-center">
-                        <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.3em] hover:tracking-[0.4em] transition-all opacity-40 hover:opacity-100">
+                        <Button variant="ghost" className="font-semibold text-xs uppercase tracking-wider hover:tracking-wider transition-all opacity-40 hover:opacity-100">
                             ← BACK TO LEASES
                         </Button>
                     </Link>

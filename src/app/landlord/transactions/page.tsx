@@ -33,6 +33,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import Loading from '@/app/loading';
+import { PageHeader, StatCard, StatGrid, EmptyState } from "@/components/dashboard";
+import { downloadCsv, toCsv } from "@/lib/csv";
 
 
 type AggregatedTransaction = {
@@ -152,112 +154,88 @@ export default function TransactionsPage() {
     .filter(t => t.transaction.status === 'Pending')
     .reduce((sum, t) => sum + t.transaction.amount, 0);
 
+  const displayCurrency = filteredTransactions[0]?.transaction.currency || 'USD';
+
+  const exportTransactions = () => {
+    const rows = filteredTransactions.map(({ transaction: t, tenant, property }) => [
+      t.date, tenant?.name, property?.title, t.type, t.status, t.paymentMethod ?? t.method, t.amount, t.currency,
+    ]);
+    downloadCsv(
+      `lodger-transactions-${new Date().toISOString().slice(0, 10)}.csv`,
+      toCsv([['Date', 'Tenant', 'Property', 'Type', 'Status', 'Method', 'Amount', 'Currency'], ...rows]),
+    );
+  };
+
   if (isUserLoading || isLoading) return <Loading />;
 
   return (
-    <div className="space-y-16 pb-32 animate-in fade-in duration-1000">
-      {/* Cinematic Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b-4 border-foreground/5 px-2">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">Financial Intelligence</span>
-          </div>
-          <h1 className="font-headline text-4xl md:text-6xl font-black tracking-tighter text-foreground uppercase leading-[0.9]">
-            Financial <br /> <span className="text-primary">Ledger</span>
-          </h1>
-          <p className="text-lg text-muted-foreground font-medium mt-4">
-            Comprehensive history of your property revenue and logistics.
-          </p>
-          <div className="flex gap-4">
-            <Button variant="outline" className="h-16 px-8 rounded-2xl border-2 font-black text-xs uppercase tracking-widest gap-3 hover:bg-muted transition-all">
-              <Download className="h-4 w-4" /> EXPORT DATA
-            </Button>
-          </div>
-        </div>
+    <div className="space-y-8 pb-8 animate-in fade-in duration-1000">
+      <PageHeader
+        title="Transactions"
+        description="Rent and deposit payments across all of your properties."
+        actions={
+          <Button variant="outline" className="rounded-xl" onClick={exportTransactions} disabled={!filteredTransactions.length}>
+            <Download className="mr-2 h-4 w-4" /> Export CSV
+          </Button>
+        }
+      />
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <Card className="rounded-[3rem] border-2 border-foreground/5 bg-white p-10 shadow-xl">
-            <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] mb-4">Settled Funds</p>
-            <div className="flex items-end justify-between">
-              <h3 className="text-4xl font-black tracking-tighter">{formatPrice(totalRevenue)}</h3>
-              <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-emerald-600" />
-              </div>
-            </div>
-          </Card>
-          <Card className="rounded-[3rem] border-2 border-foreground/5 bg-white p-10 shadow-xl">
-            <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] mb-4">Pipeline Revenue</p>
-            <div className="flex items-end justify-between">
-              <h3 className="text-4xl font-black tracking-tighter">{formatPrice(pendingAmount)}</h3>
-              <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-                <Wallet className="h-6 w-6 text-amber-600" />
-              </div>
-            </div>
-          </Card>
-          <Card className="rounded-[3rem] border-2 border-foreground/5 bg-primary text-white p-10 shadow-xl shadow-primary/20">
-            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4">Active Tenure</p>
-            <div className="flex items-end justify-between">
-              <h3 className="text-4xl font-black tracking-tighter">{filteredTransactions.length}</h3>
-              <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-white" />
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
+      <StatGrid className="lg:grid-cols-3">
+        <StatCard label="Received" value={formatPrice(totalRevenue, displayCurrency)} icon={TrendingUp} tone="success" hint="Completed payments" />
+        <StatCard label="Pending" value={formatPrice(pendingAmount, displayCurrency)} icon={Wallet} tone="warning" hint="Awaiting confirmation" />
+        <StatCard label="Transactions" value={filteredTransactions.length} icon={DollarSign} hint="Matching current filters" className="col-span-2 lg:col-span-1" />
+      </StatGrid>
 
       {/* Filter Bar */}
       <div className="flex flex-col lg:flex-row gap-6 items-center justify-between px-2">
         <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="h-14 px-6 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest gap-3">
+              <Button variant="outline" className="h-11 px-6 rounded-xl border font-semibold text-xs uppercase tracking-wider gap-3">
                 <CalendarIcon className="h-4 w-4" />
                 {date?.from ? (
                   date.to ? `${format(date.from, "LLL dd")} - ${format(date.to, "LLL dd")}` : format(date.from, "LLL dd")
-                ) : <span>SELECT RANGE</span>}
+                ) : <span>Select range</span>}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 rounded-2xl border-2 shadow-3xl" align="start">
+            <PopoverContent className="w-auto p-0 rounded-2xl border shadow-sm" align="start">
               <Calendar mode="range" selected={date} onSelect={setDate} initialFocus />
             </PopoverContent>
           </Popover>
 
           <Select value={type} onValueChange={setType}>
-            <SelectTrigger className="h-14 w-[160px] rounded-xl border-2 font-black text-[10px] uppercase tracking-widest">
+            <SelectTrigger className="h-14 w-[160px] rounded-xl border font-semibold text-xs uppercase tracking-wider">
               <SelectValue placeholder="TYPE" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl border-2 p-1">
-              <SelectItem value="all" className="font-bold text-xs uppercase tracking-widest">ALL TYPES</SelectItem>
-              <SelectItem value="Rent" className="font-bold text-xs uppercase tracking-widest">RENT</SelectItem>
-              <SelectItem value="Deposit" className="font-bold text-xs uppercase tracking-widest">DEPOSIT</SelectItem>
+            <SelectContent className="rounded-xl border p-1">
+              <SelectItem value="all" className="font-bold text-xs uppercase tracking-wider">All types</SelectItem>
+              <SelectItem value="Rent" className="font-bold text-xs uppercase tracking-wider">RENT</SelectItem>
+              <SelectItem value="Deposit" className="font-bold text-xs uppercase tracking-wider">Deposit</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="h-14 w-[160px] rounded-xl border-2 font-black text-[10px] uppercase tracking-widest">
+            <SelectTrigger className="h-14 w-[160px] rounded-xl border font-semibold text-xs uppercase tracking-wider">
               <SelectValue placeholder="STATUS" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl border-2 p-1">
-              <SelectItem value="all" className="font-bold text-xs uppercase tracking-widest">ALL STATUS</SelectItem>
-              <SelectItem value="Completed" className="font-bold text-xs uppercase tracking-widest text-emerald-600">COMPLETED</SelectItem>
-              <SelectItem value="Pending" className="font-bold text-xs uppercase tracking-widest text-amber-600">PENDING</SelectItem>
-              <SelectItem value="Failed" className="font-bold text-xs uppercase tracking-widest text-red-600">FAILED</SelectItem>
+            <SelectContent className="rounded-xl border p-1">
+              <SelectItem value="all" className="font-bold text-xs uppercase tracking-wider">All status</SelectItem>
+              <SelectItem value="Completed" className="font-bold text-xs uppercase tracking-wider text-emerald-600">Completed</SelectItem>
+              <SelectItem value="Pending" className="font-bold text-xs uppercase tracking-wider text-amber-600">Pending</SelectItem>
+              <SelectItem value="Failed" className="font-bold text-xs uppercase tracking-wider text-red-600">Failed</SelectItem>
             </SelectContent>
           </Select>
 
           {(date || type !== 'all' || status !== 'all') && (
-            <Button variant="ghost" onClick={() => { setDate(undefined); setType('all'); setStatus('all'); }} className="h-14 px-6 font-black text-[10px] uppercase tracking-widest gap-2 hover:bg-muted">
-              <ClearIcon className="h-4 w-4" /> CLEAR FILTERS
+            <Button variant="ghost" onClick={() => { setDate(undefined); setType('all'); setStatus('all'); }} className="h-11 px-6 font-semibold text-xs uppercase tracking-wider gap-2 hover:bg-muted">
+              <ClearIcon className="h-4 w-4" /> Clear filters
             </Button>
           )}
         </div>
       </div>
 
       {/* Main Table Card */}
-      <Card className="rounded-[3.5rem] border-2 border-foreground/5 bg-white shadow-3xl overflow-hidden">
+      <Card className="rounded-3xl border border-foreground/5 bg-card shadow-sm overflow-hidden">
         <CardContent className="p-0">
           {filteredTransactions.length > 0 ? (
             <>
@@ -266,13 +244,13 @@ export default function TransactionsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/30 border-none">
-                      <TableHead className="px-8 font-black text-[10px] uppercase tracking-widest text-foreground h-16">Tenant</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-widest text-foreground h-16">Property</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-widest text-foreground h-16 text-center">Date</TableHead>
-                      <TableHead className="hidden sm:table-cell font-black text-[10px] uppercase tracking-widest text-foreground h-16 text-center">Type</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-widest text-foreground h-16 text-right">Amount</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-widest text-foreground h-16 text-center">Status</TableHead>
-                      <TableHead className="text-right px-8 font-black text-[10px] uppercase tracking-widest text-foreground h-16">Details</TableHead>
+                      <TableHead className="px-8 font-semibold text-xs uppercase tracking-wider text-foreground h-11">Tenant</TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wider text-foreground h-16">Property</TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wider text-foreground h-16 text-center">Date</TableHead>
+                      <TableHead className="hidden sm:table-cell font-semibold text-xs uppercase tracking-wider text-foreground h-16 text-center">Type</TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wider text-foreground h-16 text-right">Amount</TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wider text-foreground h-16 text-center">Status</TableHead>
+                      <TableHead className="text-right px-8 font-semibold text-xs uppercase tracking-wider text-foreground h-11">Details</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -280,12 +258,12 @@ export default function TransactionsPage() {
                       <TableRow key={t.transaction.id} className="border-muted/10 hover:bg-muted/5 transition-colors h-24">
                         <TableCell className="px-8">
                           <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black uppercase text-xs">
+                            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-semibold uppercase text-xs">
                               {t.tenant?.name?.[0] || 'U'}
                             </div>
                             <div>
-                              <p className="font-black text-sm uppercase tracking-tight">{t.tenant?.name || 'Anonymous'}</p>
-                              <p className="text-[10px] font-bold text-muted-foreground/60 tracking-widest lowercase">{t.tenant?.email}</p>
+                              <p className="font-bold text-sm uppercase tracking-tight">{t.tenant?.name || 'Anonymous'}</p>
+                              <p className="text-xs font-bold text-muted-foreground/60 tracking-wider lowercase">{t.tenant?.email}</p>
                             </div>
                           </div>
                         </TableCell>
@@ -297,19 +275,19 @@ export default function TransactionsPage() {
                         </TableCell>
                         <TableCell className="text-center">
                           <p className="text-sm font-bold">{format(new Date(t.transaction.date), 'MMM dd, yyyy')}</p>
-                          <p className="text-[10px] font-medium text-muted-foreground/60">{format(new Date(t.transaction.date), 'HH:mm')}</p>
+                          <p className="text-xs font-medium text-muted-foreground/60">{format(new Date(t.transaction.date), 'HH:mm')}</p>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell text-center">
-                          <Badge variant="outline" className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest border-muted/20">
+                          <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider border-muted/20">
                             {t.transaction.type}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <p className="text-sm font-black tracking-tight">{formatPrice(t.transaction.amount, t.transaction.currency)}</p>
+                          <p className="text-sm font-bold tracking-tight">{formatPrice(t.transaction.amount, t.transaction.currency)}</p>
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge className={cn(
-                            "rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-widest border-none",
+                            "rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wider border-none",
                             t.transaction.status === 'Completed' ? "bg-emerald-500 text-white" :
                               t.transaction.status === 'Pending' ? "bg-amber-500 text-white" :
                                 "bg-red-500 text-white"
@@ -340,16 +318,16 @@ export default function TransactionsPage() {
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black uppercase text-xs">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-semibold uppercase text-xs">
                           {t.tenant?.name?.[0] || 'U'}
                         </div>
                         <div>
-                          <p className="font-black text-xs uppercase tracking-tight">{t.tenant?.name || 'Anonymous'}</p>
-                          <p className="text-[10px] font-medium text-muted-foreground/60 truncate max-w-[120px]">{t.tenant?.email}</p>
+                          <p className="font-semibold text-xs uppercase tracking-tight">{t.tenant?.name || 'Anonymous'}</p>
+                          <p className="text-xs font-medium text-muted-foreground/60 truncate max-w-[120px]">{t.tenant?.email}</p>
                         </div>
                       </div>
                       <Badge className={cn(
-                        "rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border-none",
+                        "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider border-none",
                         t.transaction.status === 'Completed' ? "bg-emerald-500 text-white" :
                           t.transaction.status === 'Pending' ? "bg-amber-500 text-white" :
                             "bg-red-500 text-white"
@@ -360,17 +338,17 @@ export default function TransactionsPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest">Property</p>
+                        <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider">Property</p>
                         <p className="text-xs font-bold truncate">{t.property?.title || 'Unknown'}</p>
                       </div>
                       <div className="space-y-1 text-right">
-                        <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest">Amount</p>
-                        <p className="text-sm font-black tracking-tight">{formatPrice(t.transaction.amount, t.transaction.currency)}</p>
+                        <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider">Amount</p>
+                        <p className="text-sm font-bold tracking-tight">{formatPrice(t.transaction.amount, t.transaction.currency)}</p>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center pt-2">
-                      <p className="text-[10px] font-bold text-muted-foreground/60">
+                      <p className="text-xs font-bold text-muted-foreground/60">
                         {format(new Date(t.transaction.date), 'MMM dd, yyyy • HH:mm')}
                       </p>
                       <ChevronRight className="h-4 w-4 text-primary" />
@@ -383,13 +361,13 @@ export default function TransactionsPage() {
             <div className="flex flex-col items-center justify-center py-32 text-center px-10">
               <div className="relative mb-8">
                 <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150" />
-                <div className="relative flex h-24 w-24 items-center justify-center rounded-[2.5rem] bg-muted/30">
+                <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-muted/30">
                   <DollarSign className="h-10 w-10 text-primary opacity-20" />
                 </div>
               </div>
-              <h3 className="text-2xl font-black tracking-tight uppercase">No Activity Detected</h3>
+              <h3 className="text-2xl font-bold tracking-tight">No transactions found</h3>
               <p className="mx-auto mt-4 max-w-sm text-muted-foreground font-medium text-lg leading-relaxed">
-                You haven't recorded any logistics data for this period. Try clearing your filters.
+                There are no transactions for this period. Try clearing your filters.
               </p>
             </div>
           )}

@@ -68,12 +68,12 @@ function PropertySection({
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2 text-primary font-bold uppercase tracking-wider text-[10px] md:text-xs">
+        <div className="flex items-center gap-2 text-primary font-bold uppercase tracking-wider text-xs md:text-xs">
           <Icon className="h-3.5 w-3.5 md:h-4 w-4" />
           <span>{title}</span>
         </div>
         <div className="flex items-end justify-between gap-4">
-          <h2 className="text-xl md:text-3xl font-black tracking-tight leading-tight">
+          <h2 className="text-xl md:text-3xl font-bold tracking-tight leading-tight">
             {description || `Premium ${title}`}
           </h2>
         </div>
@@ -364,7 +364,7 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
       {
         id: "recommended",
         title: "Highly Recommended",
-        description: "Curated premium homes for you",
+        description: "Recommended for you",
         icon: Star,
         properties: highlyRecommended,
       },
@@ -378,7 +378,7 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
       {
         id: "budget",
         title: "Budget Friendly",
-        description: "Premium homes within your reach",
+        description: "Homes within your budget",
         icon: TrendingUp,
         properties: budgetFriendly,
       },
@@ -507,7 +507,7 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
   }
 
   return (
-    <div className="w-full py-8 space-y-12 animate-in fade-in duration-700 overflow-x-visible">
+    <div className="w-full py-8 space-y-8 animate-in fade-in duration-700 overflow-x-visible">
       {/* Simple Search & Filter Section */}
       <div className="space-y-6">
         <div className="flex flex-col gap-2">
@@ -522,7 +522,7 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
             <Input
               placeholder="Search by name, city, or university..."
-              className="h-14 pl-14 pr-6 rounded-2xl border-muted/20 bg-white shadow-sm text-lg font-medium placeholder:text-muted-foreground/40 focus-visible:ring-2 focus-visible:ring-primary/10 transition-all"
+              className="h-14 pl-14 pr-6 rounded-2xl border-muted/20 bg-card shadow-sm text-lg font-medium placeholder:text-muted-foreground/40 focus-visible:ring-2 focus-visible:ring-primary/10 transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -535,11 +535,11 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
                 <SheetTrigger asChild>
                   <Button
                     variant="outline"
-                    className="h-14 w-full rounded-2xl px-6 gap-3 border-muted/20 bg-white shadow-sm font-bold hover:bg-primary/5 hover:text-primary transition-all"
+                    className="h-14 w-full rounded-2xl px-6 gap-3 border-muted/20 bg-card shadow-sm font-bold hover:bg-primary/5 hover:text-primary transition-all"
                   >
                     <SlidersHorizontal className="h-5 w-5" />
                     Filters
-                    <Badge className="bg-primary/10 text-primary border-none font-black h-5 w-5 p-0 flex items-center justify-center">
+                    <Badge className="bg-primary/10 text-primary border-none font-bold h-5 w-5 p-0 flex items-center justify-center">
                       {
                         Object.keys(filters).filter(
                           (k) =>
@@ -589,11 +589,11 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="h-14 rounded-2xl px-6 gap-3 border-muted/20 bg-white shadow-sm font-bold hover:bg-primary/5 hover:text-primary transition-all"
+                    className="h-11 rounded-2xl px-6 gap-3 border-muted/20 bg-card shadow-sm font-bold hover:bg-primary/5 hover:text-primary transition-all"
                   >
                     <SlidersHorizontal className="h-5 w-5" />
                     Filters
-                    <Badge className="bg-primary/10 text-primary border-none font-black h-5 w-5 p-0 flex items-center justify-center">
+                    <Badge className="bg-primary/10 text-primary border-none font-bold h-5 w-5 p-0 flex items-center justify-center">
                       {
                         Object.keys(filters).filter(
                           (k) =>
@@ -605,7 +605,7 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
-                  className="w-[90vw] max-w-[500px] p-0 rounded-3xl overflow-hidden border-none shadow-2xl mt-2"
+                  className="w-[90vw] max-w-[500px] p-0 rounded-3xl overflow-hidden border-none shadow-sm mt-2"
                   align="end"
                 >
                   <div className="bg-muted/30 p-6 border-b flex items-center justify-between">
@@ -638,10 +638,10 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
             </div>
 
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="h-14 w-full lg:w-[220px] rounded-2xl border-muted/20 bg-white shadow-sm font-bold px-6 focus:ring-2 focus:ring-primary/10">
+              <SelectTrigger className="h-14 w-full lg:w-[220px] rounded-2xl border-muted/20 bg-card shadow-sm font-bold px-6 focus:ring-2 focus:ring-primary/10">
                 <SelectValue placeholder="Sort" />
               </SelectTrigger>
-              <SelectContent className="rounded-2xl border-none shadow-3xl p-2 mt-2">
+              <SelectContent className="rounded-2xl border-none shadow-sm p-2 mt-2">
                 <SelectItem
                   value="newest"
                   className="rounded-xl py-2.5 font-bold"
@@ -679,23 +679,22 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
       </div>
 
       {/* Main Content Area */}
-      <div className="space-y-16">
+      <div className="space-y-8">
         {!allProperties || allProperties.length === 0 ? (
           /* System Empty State (No properties listed yet) */
-          <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
+          <Card className="overflow-hidden border-none bg-card shadow-sm">
             <CardContent className="flex flex-col items-center justify-center py-32 text-center">
               <div className="relative mb-12">
                 <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150 animate-pulse" />
-                <div className="relative flex h-40 w-40 items-center justify-center rounded-[3rem] bg-muted/30">
+                <div className="relative flex h-40 w-40 items-center justify-center rounded-3xl bg-muted/30">
                   <HomeIcon className="h-20 w-20 text-primary opacity-20" />
                 </div>
               </div>
-              <h3 className="text-4xl font-black tracking-tight">
+              <h3 className="text-4xl font-bold tracking-tight">
                 Landlords are trying to give you the best
               </h3>
               <p className="mx-auto mt-6 max-w-sm text-xl font-medium text-muted-foreground/80 leading-relaxed">
-                Check back soon! We are currently synchronizing with premium
-                residences for the modern student.
+                Check back soon — new homes are listed every week.
               </p>
             </CardContent>
           </Card>
@@ -703,7 +702,7 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
           /* Search Results View */
           <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h2 className="text-xl md:text-2xl font-black tracking-tight">
+              <h2 className="text-xl md:text-2xl font-bold tracking-tight">
                 {filteredProperties.length} Homes Found
               </h2>
               {searchQuery && (
@@ -718,7 +717,7 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
             </div>
 
             {filteredProperties.length > 0 ? (
-              <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
                 {filteredProperties.map((property, idx) => (
                   <div
                     key={property.id}
@@ -730,15 +729,15 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
                 ))}
               </div>
             ) : (
-              <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
+              <Card className="overflow-hidden border-none bg-card shadow-sm">
                 <CardContent className="flex flex-col items-center justify-center py-32 text-center">
                   <div className="relative mb-12">
                     <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150 animate-pulse" />
-                    <div className="relative flex h-40 w-40 items-center justify-center rounded-[3rem] bg-muted/30">
+                    <div className="relative flex h-40 w-40 items-center justify-center rounded-3xl bg-muted/30">
                       <Search className="h-20 w-20 text-primary opacity-20" />
                     </div>
                   </div>
-                  <h3 className="text-4xl font-black tracking-tight">
+                  <h3 className="text-4xl font-bold tracking-tight">
                     No homes match your search
                   </h3>
                   <p className="mx-auto mt-6 max-w-sm text-xl font-medium text-muted-foreground/80 leading-relaxed">
@@ -748,7 +747,7 @@ export default function PropertyBrowser({ initialProperties, initialQuery = "" }
                   <Button
                     size="lg"
                     variant="outline"
-                    className="mt-12 rounded-2xl px-12 h-14 font-black text-lg border-primary/20 hover:bg-primary/5"
+                    className="mt-12 rounded-2xl px-6 h-11 font-bold text-lg border-primary/20 hover:bg-primary/5"
                     onClick={resetFilters}
                   >
                     Reset All Filters

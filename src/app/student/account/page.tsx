@@ -297,13 +297,13 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-700">
+    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-700">
       {/* Header Section */}
-      <div className="relative overflow-hidden rounded-[3rem] bg-muted/30 p-10 md:p-14 border-2 border-white/40 shadow-xl shadow-black/[0.02]">
+      <div className="relative overflow-hidden rounded-3xl bg-muted/30 p-6 md:p-14 border border-white/40 shadow-sm">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
           <div className="relative group">
-            <Avatar className="h-32 w-32 md:h-40 md:w-40 border-8 border-white shadow-2xl transition-transform duration-500 group-hover:scale-105">
+            <Avatar className="h-32 w-32 md:h-40 md:w-40 border-8 border-white shadow-sm transition-transform duration-500 group-hover:scale-105">
               <AvatarImage
                 src={previewImage || userProfile.profileImageUrl}
                 className="object-cover"
@@ -315,15 +315,15 @@ export default function AccountPage() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white shadow-xl hover:scale-110 active:scale-95 transition-all"
+              className="absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white shadow-sm hover:scale-110 active:scale-95 transition-all"
             >
               <Upload className="h-5 w-5" />
             </button>
           </div>
 
           <div className="space-y-4 text-center md:text-left">
-            <h1 className="font-headline text-2xl md:text-5xl font-black tracking-tight text-foreground uppercase">
-              Account <span className="text-primary">Settings</span>
+            <h1 className="font-headline text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              Account settings
             </h1>
             <p className="max-w-md text-lg font-medium text-muted-foreground/80 leading-relaxed">
               Personalize your profile and manage your account settings.
@@ -333,16 +333,16 @@ export default function AccountPage() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full space-y-10">
-        <TabsList className="h-16 w-full max-w-md grid grid-cols-2 p-1 bg-muted/30 rounded-3xl border-2 border-white/40 shadow-inner">
+        <TabsList className="h-16 w-full max-w-md grid grid-cols-2 p-1 bg-muted/30 rounded-3xl border border-white/40 shadow-inner">
           <TabsTrigger
             value="profile"
-            className="rounded-[1.25rem] font-black text-sm uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-lg transition-all"
+            className="rounded-2xl font-bold text-sm uppercase tracking-wider data-[state=active]:bg-card data-[state=active]:shadow-lg transition-all"
           >
             Profile
           </TabsTrigger>
           <TabsTrigger
             value="settings"
-            className="rounded-[1.25rem] font-black text-sm uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-lg transition-all"
+            className="rounded-2xl font-bold text-sm uppercase tracking-wider data-[state=active]:bg-card data-[state=active]:shadow-lg transition-all"
           >
             Security
           </TabsTrigger>
@@ -352,34 +352,34 @@ export default function AccountPage() {
           value="profile"
           className="space-y-10 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500"
         >
-          <Card className="border-none bg-white shadow-xl shadow-black/[0.02] rounded-[2.5rem] overflow-hidden">
-            <CardHeader className="p-10 border-b border-muted/20">
-              <CardTitle className="text-2xl font-black">
+          <Card className="border-none bg-card shadow-sm rounded-3xl overflow-hidden">
+            <CardHeader className="p-6 border-b border-muted/20">
+              <CardTitle className="text-2xl font-bold">
                 Profile Info
               </CardTitle>
               <CardDescription className="text-lg font-medium text-muted-foreground/60">
                 Landlords use this to verify who you are.
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-10">
+            <CardContent className="p-6">
               <Form {...profileForm}>
                 <form
                   onSubmit={profileForm.handleSubmit(onProfileSubmit)}
                   className="space-y-10"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-8">
                     <FormField
                       control={profileForm.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                          <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                             Full Name
                           </FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Enter your full name"
-                              className="h-14 rounded-2xl border-2 bg-muted/10 focus:bg-white focus:ring-4 focus:ring-primary/10 font-bold"
+                              className="h-14 rounded-2xl border bg-muted/10 focus:bg-card focus:ring-4 focus:ring-primary/10 font-bold"
                               {...field}
                             />
                           </FormControl>
@@ -392,13 +392,13 @@ export default function AccountPage() {
                       name="phone"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                          <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                             Phone Number
                           </FormLabel>
                           <FormControl>
                             <Input
                               placeholder="(555) 000-0000"
-                              className="h-14 rounded-2xl border-2 bg-muted/10 focus:bg-white focus:ring-4 focus:ring-primary/10 font-bold"
+                              className="h-14 rounded-2xl border bg-muted/10 focus:bg-card focus:ring-4 focus:ring-primary/10 font-bold"
                               {...field}
                             />
                           </FormControl>
@@ -411,12 +411,12 @@ export default function AccountPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                          <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                             Email Address
                           </FormLabel>
                           <FormControl>
                             <Input
-                              className="h-14 rounded-2xl border-2 bg-muted/10 opacity-60 font-bold"
+                              className="h-14 rounded-2xl border bg-muted/10 opacity-60 font-bold"
                               {...field}
                               disabled
                             />
@@ -433,7 +433,7 @@ export default function AccountPage() {
                       name="school"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                          <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                             Institution
                           </FormLabel>
                           <FormControl>
@@ -450,13 +450,13 @@ export default function AccountPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-8">
                     <FormField
                       control={profileForm.control}
                       name="country"
                       render={({ field }) => (
                         <FormItem className="flex flex-col space-y-3">
-                          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                          <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                             Country
                           </FormLabel>
                           <Combobox
@@ -488,7 +488,7 @@ export default function AccountPage() {
                       name="state"
                       render={({ field }) => (
                         <FormItem className="flex flex-col space-y-3">
-                          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                          <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                             State/Province
                           </FormLabel>
                           <Combobox
@@ -517,7 +517,7 @@ export default function AccountPage() {
                       name="currency"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                          <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                             Currency Preference
                           </FormLabel>
                           <Select
@@ -525,11 +525,11 @@ export default function AccountPage() {
                             value={field.value || "USD"}
                           >
                             <FormControl>
-                              <SelectTrigger className="h-14 rounded-2xl border-2 bg-muted/10 font-bold">
+                              <SelectTrigger className="h-14 rounded-2xl border bg-muted/10 font-bold">
                                 <SelectValue placeholder="USD" />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent className="rounded-2xl border-none shadow-3xl p-2">
+                            <SelectContent className="rounded-2xl border-none shadow-sm p-2">
                               <SelectItem
                                 value="USD"
                                 className="rounded-xl py-3 font-bold"
@@ -578,7 +578,7 @@ export default function AccountPage() {
                     <Button
                       type="submit"
                       size="lg"
-                      className="h-16 px-12 rounded-[1.25rem] font-black text-lg shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 transition-all"
+                      className="h-11 px-6 rounded-2xl font-bold text-lg shadow-sm hover:-translate-y-1 transition-all"
                     >
                       Save Changes
                     </Button>
@@ -593,18 +593,18 @@ export default function AccountPage() {
           value="settings"
           className="space-y-10 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500"
         >
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-10">
-              <Card className="border-none bg-white shadow-xl shadow-black/[0.02] rounded-[2.5rem]">
-                <CardHeader className="p-10">
-                  <CardTitle className="text-2xl font-black">
+              <Card className="border-none bg-card shadow-sm rounded-3xl">
+                <CardHeader className="p-6">
+                  <CardTitle className="text-2xl font-bold">
                     Security
                   </CardTitle>
                   <CardDescription className="text-lg font-medium text-muted-foreground/60">
                     Update your password here.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-10 pt-0">
+                <CardContent className="p-6 pt-0">
                   <Form {...passwordForm}>
                     <form
                       onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
@@ -615,14 +615,14 @@ export default function AccountPage() {
                         name="currentPassword"
                         render={({ field }) => (
                           <FormItem className="space-y-3">
-                            <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                            <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                               Current Password
                             </FormLabel>
                             <FormControl>
                               <Input
                                 type="password"
                                 placeholder="••••••••"
-                                className="h-14 rounded-2xl border-2 bg-muted/10 font-bold"
+                                className="h-14 rounded-2xl border bg-muted/10 font-bold"
                                 {...field}
                               />
                             </FormControl>
@@ -636,14 +636,14 @@ export default function AccountPage() {
                           name="newPassword"
                           render={({ field }) => (
                             <FormItem className="space-y-3">
-                              <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                              <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                                 New Password
                               </FormLabel>
                               <FormControl>
                                 <Input
                                   type="password"
                                   placeholder="••••••••"
-                                  className="h-14 rounded-2xl border-2 bg-muted/10 font-bold"
+                                  className="h-14 rounded-2xl border bg-muted/10 font-bold"
                                   {...field}
                                 />
                               </FormControl>
@@ -656,14 +656,14 @@ export default function AccountPage() {
                           name="confirmPassword"
                           render={({ field }) => (
                             <FormItem className="space-y-3">
-                              <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                              <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                                 Confirm New Password
                               </FormLabel>
                               <FormControl>
                                 <Input
                                   type="password"
                                   placeholder="••••••••"
-                                  className="h-14 rounded-2xl border-2 bg-muted/10 font-bold"
+                                  className="h-14 rounded-2xl border bg-muted/10 font-bold"
                                   {...field}
                                 />
                               </FormControl>
@@ -674,7 +674,7 @@ export default function AccountPage() {
                       </div>
                       <Button
                         type="submit"
-                        className="h-14 rounded-2xl px-10 font-bold border-2"
+                        className="h-11 rounded-2xl px-6 font-bold border"
                       >
                         Update Password
                       </Button>
@@ -683,19 +683,19 @@ export default function AccountPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-none bg-white shadow-xl shadow-black/[0.02] rounded-[2.5rem]">
-                <CardHeader className="p-10">
-                  <CardTitle className="text-2xl font-black">
+              <Card className="border-none bg-card shadow-sm rounded-3xl">
+                <CardHeader className="p-6">
+                  <CardTitle className="text-2xl font-bold">
                     Notifications
                   </CardTitle>
                   <CardDescription className="text-lg font-medium text-muted-foreground/60">
                     Control how we contact you.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-10 pt-0 space-y-6">
-                  <div className="flex items-center justify-between p-6 rounded-[1.5rem] bg-muted/10 border-2">
+                <CardContent className="p-6 pt-0 space-y-6">
+                  <div className="flex items-center justify-between p-6 rounded-2xl bg-muted/10 border">
                     <div className="space-y-1">
-                      <h4 className="font-black text-lg">Alerts</h4>
+                      <h4 className="font-bold text-lg">Alerts</h4>
                       <p className="text-sm font-medium text-muted-foreground/60">
                         Stay updated on your requests and messages.
                       </p>
@@ -705,9 +705,9 @@ export default function AccountPage() {
                       className="data-[state=checked]:bg-primary"
                     />
                   </div>
-                  <div className="flex items-center justify-between p-6 rounded-[1.5rem] bg-muted/10 border-2">
+                  <div className="flex items-center justify-between p-6 rounded-2xl bg-muted/10 border">
                     <div className="space-y-1">
-                      <h4 className="font-black text-lg">Emails</h4>
+                      <h4 className="font-bold text-lg">Emails</h4>
                       <p className="text-sm font-medium text-muted-foreground/60">
                         Get news about new features.
                       </p>
@@ -719,13 +719,13 @@ export default function AccountPage() {
             </div>
 
             <div className="space-y-10">
-              <Card className="border-2 border-primary/20 bg-primary/5 rounded-[2.5rem] overflow-hidden">
-                <CardContent className="p-10 text-center space-y-6">
-                  <div className="h-16 w-16 mx-auto bg-white rounded-3xl shadow-xl flex items-center justify-center">
+              <Card className="border border-primary/20 bg-primary/5 rounded-3xl overflow-hidden">
+                <CardContent className="p-6 text-center space-y-6">
+                  <div className="h-16 w-16 mx-auto bg-card rounded-3xl shadow-sm flex items-center justify-center">
                     <UserIcon className="h-8 w-8 text-primary" />
                   </div>
                   <div className="space-y-2">
-                    <h4 className="font-black text-xl">Privacy Control</h4>
+                    <h4 className="font-bold text-xl">Privacy Control</h4>
                     <p className="text-sm font-medium text-muted-foreground/80 leading-relaxed">
                       Your data is safe and secure. Check our privacy policy to
                       see how we protect you.
@@ -734,13 +734,13 @@ export default function AccountPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-destructive/20 bg-destructive/5 rounded-[2.5rem] overflow-hidden">
-                <CardHeader className="p-10 pb-4">
-                  <CardTitle className="text-destructive font-black">
+              <Card className="border border-destructive/20 bg-destructive/5 rounded-3xl overflow-hidden">
+                <CardHeader className="p-6 pb-4">
+                  <CardTitle className="text-destructive font-bold">
                     Danger Zone
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-10 pt-0 space-y-6">
+                <CardContent className="p-6 pt-0 space-y-6">
                   <p className="text-sm font-medium text-muted-foreground/80 leading-relaxed">
                     Once you delete your account, you can't get it back.
                   </p>
@@ -748,14 +748,14 @@ export default function AccountPage() {
                     <AlertDialogTrigger asChild>
                       <Button
                         variant="destructive"
-                        className="w-full h-14 rounded-2xl font-bold shadow-lg shadow-destructive/10"
+                        className="w-full h-14 rounded-2xl font-bold shadow-lg"
                       >
                         Delete Account
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent className="rounded-[2.5rem] p-10 border-none shadow-3xl">
+                    <AlertDialogContent className="rounded-3xl p-6 border-none shadow-sm">
                       <AlertDialogHeader className="space-y-4">
-                        <AlertDialogTitle className="text-3xl font-black">
+                        <AlertDialogTitle className="text-3xl font-bold">
                           Are you sure?
                         </AlertDialogTitle>
                         <AlertDialogDescription className="text-lg font-medium leading-relaxed">
@@ -764,7 +764,7 @@ export default function AccountPage() {
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter className="pt-8 gap-4">
-                        <AlertDialogCancel className="h-14 rounded-2xl font-bold border-2">
+                        <AlertDialogCancel className="h-14 rounded-2xl font-bold border">
                           I changed my mind
                         </AlertDialogCancel>
                         <AlertDialogAction className="h-14 rounded-2xl font-bold bg-destructive hover:bg-destructive/90 text-white">

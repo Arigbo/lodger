@@ -29,14 +29,14 @@ export const LeaseTemplateStep = ({ form }: LeaseTemplateStepProps) => {
         <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="space-y-8 md:space-y-12"
+            className="space-y-8 md:space-y-8"
         >
             <div className="space-y-2">
-                <h2 className="text-xl md:text-3xl font-black uppercase tracking-tighter text-foreground">
-                    Legal & <span className="text-primary">Governance</span>
+                <h2 className="text-xl md:text-3xl font-bold tracking-tight text-foreground">
+                    Lease template
                 </h2>
-                <p className="text-[10px] md:text-xs font-bold text-muted-foreground/60 uppercase tracking-widest leading-relaxed">
-                    Formalize your agreement with a comprehensive lease framework.
+                <p className="text-xs md:text-xs font-bold text-muted-foreground/60 uppercase tracking-wider leading-relaxed">
+                    The lease students will review and sign when you accept their request.
                 </p>
             </div>
 
@@ -46,13 +46,13 @@ export const LeaseTemplateStep = ({ form }: LeaseTemplateStepProps) => {
                 render={({ field }) => (
                     <FormItem className="space-y-6">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Lease Agreement Template</FormLabel>
+                            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Lease Agreement Template</FormLabel>
                             <Button 
                                 type="button" 
                                 variant="outline" 
                                 size="sm" 
                                 onClick={handleGenerateTemplate}
-                                className="h-10 px-6 rounded-full border-primary/20 hover:border-primary text-primary font-black text-[10px] uppercase tracking-widest bg-primary/5 hover:bg-primary/10 transition-all group"
+                                className="h-10 px-6 rounded-full border-primary/20 hover:border-primary text-primary font-semibold text-xs uppercase tracking-wider bg-primary/5 hover:bg-primary/10 transition-all group"
                             >
                                 <Wand2 className="h-3.5 w-3.5 mr-2 group-hover:rotate-12 transition-transform" />
                                 Generate from Property Data
@@ -60,11 +60,11 @@ export const LeaseTemplateStep = ({ form }: LeaseTemplateStepProps) => {
                         </div>
                         <FormControl>
                             <div className="relative group/editor">
-                                <div className="absolute inset-0 bg-foreground opacity-[0.01] rounded-[2.5rem] pointer-events-none group-hover/editor:opacity-[0.02] transition-opacity" />
+                                <div className="absolute inset-0 bg-foreground opacity-[0.01] rounded-3xl pointer-events-none group-hover/editor:opacity-[0.02] transition-opacity" />
                                 <Textarea 
                                     {...field} 
                                     placeholder="Paste your lease agreement here or use the generator above..." 
-                                    className="min-h-[450px] rounded-[2.5rem] bg-transparent border-2 border-foreground/5 focus-visible:border-primary/20 font-mono text-[11px] md:text-xs p-8 md:p-12 leading-loose resize-none shadow-inner" 
+                                    className="min-h-[450px] rounded-3xl bg-transparent border border-foreground/5 focus-visible:border-primary/20 font-mono text-xs md:text-xs p-8 md:p-8 leading-loose resize-none shadow-inner" 
                                 />
                                 
                                 {/* Aesthetic Corner Detail */}
@@ -73,7 +73,7 @@ export const LeaseTemplateStep = ({ form }: LeaseTemplateStepProps) => {
                                 </div>
                             </div>
                         </FormControl>
-                        <FormDescription className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em] text-center">
+                        <FormDescription className="text-xs font-bold text-muted-foreground/40 uppercase tracking-wider text-center">
                             Variables in <span className="text-primary">{"{{DOUBLE_BRACES}}"}</span> will be replaced during lease generation.
                         </FormDescription>
                         <FormMessage />

@@ -58,14 +58,14 @@ export default function LeaseGenerationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl w-full h-[90vh] flex flex-col p-0 overflow-hidden border-2 shadow-2xl rounded-[2rem]">
+      <DialogContent className="sm:max-w-4xl w-full h-[90vh] flex flex-col p-0 overflow-hidden border shadow-sm rounded-3xl">
         <div className="p-8 pb-4 bg-muted/30 border-b">
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">LEASE PROTOCOL</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary">Lease</p>
             </div>
-            <DialogTitle className="text-3xl font-black uppercase tracking-tight">Review & Sign <span className="text-primary">Agreement</span></DialogTitle>
+            <DialogTitle className="text-3xl font-bold tracking-tight">Review & Sign <span className="text-primary">Agreement</span></DialogTitle>
             <DialogDescription className="text-base">
               Digital signature required to finalize the lease.
             </DialogDescription>
@@ -73,12 +73,12 @@ export default function LeaseGenerationDialog({
         </div>
 
         <div className="flex-1 overflow-hidden bg-muted/10 p-4 md:p-8">
-          <ScrollArea className="h-full rounded-2xl border-2 border-foreground/5 bg-white shadow-inner p-8 md:p-12">
+          <ScrollArea className="h-full rounded-2xl border border-foreground/5 bg-card shadow-inner p-8 md:p-8">
             <div className="max-w-2xl mx-auto space-y-8">
               <div className="flex justify-between items-start border-b-2 border-muted pb-8 mb-8">
                 <FileText className="h-12 w-12 text-primary/20" />
                 <div className="text-right space-y-1">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">LEASE ID</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Lease ID</p>
                   <p className="text-xs font-mono font-bold">LGR-PROT-{property.id.slice(0, 8).toUpperCase()}</p>
                 </div>
               </div>
@@ -87,9 +87,9 @@ export default function LeaseGenerationDialog({
                 {finalLeaseText}
               </div>
 
-              <div className="pt-12 mt-12 border-t-2 border-muted grid grid-cols-2 gap-12">
+              <div className="pt-12 mt-12 border-t-2 border-muted grid grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Landlord Signature</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Landlord Signature</p>
                   <div className="h-20 border-b-2 border-dashed border-muted flex items-end pb-2 relative">
                     {isSigned && (
                       <div className="absolute inset-0 flex items-center justify-center animate-in zoom-in-95 duration-500">
@@ -99,30 +99,30 @@ export default function LeaseGenerationDialog({
                       </div>
                     )}
                   </div>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase">{landlord.name}</p>
+                  <p className="text-xs font-bold text-muted-foreground uppercase">{landlord.name}</p>
                 </div>
                 <div className="space-y-4">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Tenant Signature</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Tenant Signature</p>
                   <div className="h-20 border-b-2 border-dashed border-muted" />
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase">{tenant.name}</p>
+                  <p className="text-xs font-bold text-muted-foreground uppercase">{tenant.name}</p>
                 </div>
               </div>
             </div>
           </ScrollArea>
         </div>
 
-        <div className="p-8 bg-white border-t space-y-6">
+        <div className="p-8 bg-card border-t space-y-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className='flex items-center gap-4 group'>
               <div className={`h-12 w-12 rounded-xl flex items-center justify-center transition-all duration-500 ${isSigned ? 'bg-green-500/10 text-green-600' : 'bg-primary/5 text-primary'}`}>
                 {isSigned ? <ShieldCheck className="h-6 w-6" /> : <Signature className="h-6 w-6" />}
               </div>
               <div className="space-y-1">
-                <h4 className="text-xs font-black uppercase tracking-widest">Digital Auth Status</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-wider">Digital Auth Status</h4>
                 {isSigned ? (
-                  <p className="text-[10px] font-bold text-green-600 flex items-center gap-2">✓ CRYPTOGRAPHICALLY SIGNED BY LANDLORD</p>
+                  <p className="text-xs font-bold text-green-600 flex items-center gap-2">✓ CRYPTOGRAPHICALLY SIGNED BY LANDLORD</p>
                 ) : (
-                  <p className="text-[10px] font-bold text-muted-foreground">Awaiting landlord signature...</p>
+                  <p className="text-xs font-bold text-muted-foreground">Awaiting landlord signature...</p>
                 )}
               </div>
             </div>
@@ -132,22 +132,22 @@ export default function LeaseGenerationDialog({
                 variant="outline"
                 onClick={handleSign}
                 disabled={isSigned}
-                className="flex-1 md:flex-none h-14 px-8 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest gap-2 hover:bg-primary/5 transition-all"
+                className="flex-1 md:flex-none h-11 px-8 rounded-xl border font-semibold text-xs uppercase tracking-wider gap-2 hover:bg-primary/5 transition-all"
               >
-                <Signature className="h-4 w-4" /> SIGN AS LANDLORD
+                <Signature className="h-4 w-4" /> Sign as landlord
               </Button>
               <Button
                 onClick={handleSend}
                 disabled={!isSigned}
-                className="flex-1 md:flex-none h-14 px-10 rounded-xl bg-foreground text-white hover:bg-primary transition-all font-black text-[10px] uppercase tracking-widest gap-2 shadow-xl disabled:opacity-30"
+                className="flex-1 md:flex-none h-11 px-6 rounded-xl bg-foreground text-white hover:bg-primary transition-all font-semibold text-xs uppercase tracking-wider gap-2 shadow-sm disabled:opacity-30"
               >
-                <Send className="h-4 w-4" /> FINALIZE & SEND
+                <Send className="h-4 w-4" /> Finalize & send
               </Button>
             </div>
           </div>
 
           <div className="text-center">
-            <button onClick={onClose} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
+            <button onClick={onClose} className="text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
           </div>
         </div>
       </DialogContent>

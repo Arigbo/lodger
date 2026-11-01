@@ -54,3 +54,7 @@ typecheck_error.txt
 
 # workspace config
 *.code-workspace
+
+# firebase emulators
+ui-debug.log
+firebase-export-*

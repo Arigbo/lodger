@@ -77,7 +77,7 @@ import dynamic from "next/dynamic";
 const PropertyMap = dynamic(() => import("@/components/properties/property-map"), {
   ssr: false,
   loading: () => (
-    <div className="h-[400px] w-full rounded-[2rem] bg-muted animate-pulse" />
+    <div className="h-[400px] w-full rounded-3xl bg-muted animate-pulse" />
   ),
 });
 
@@ -180,7 +180,7 @@ export default function PropertyDetail({
   if (!property && isPropertyLoading) {
     return (
       <div className="container mx-auto max-w-7xl space-y-6 px-4 py-10 lg:px-8" aria-busy="true">
-        <div className="aspect-[16/7] w-full animate-pulse rounded-[2rem] bg-muted" />
+        <div className="aspect-[16/7] w-full animate-pulse rounded-3xl bg-muted" />
         <div className="h-10 w-2/3 animate-pulse rounded-xl bg-muted" />
         <div className="h-5 w-1/3 animate-pulse rounded bg-muted" />
       </div>
@@ -334,27 +334,27 @@ export default function PropertyDetail({
       </div>
 
       <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          <div className="lg:col-span-2 space-y-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
             <div className="space-y-6">
               <div className="flex items-center gap-3">
                 <Badge
                   variant="secondary"
-                  className="bg-primary/10 text-primary border-none px-4 py-1 text-xs font-bold uppercase tracking-widest"
+                  className="bg-primary/10 text-primary border-none px-4 py-1 text-xs font-bold uppercase tracking-wider"
                 >
                   {property.type}
                 </Badge>
                 {property.status === "occupied" && (
                   <Badge
                     variant="destructive"
-                    className="px-4 py-1 text-xs font-bold uppercase tracking-widest"
+                    className="px-4 py-1 text-xs font-bold uppercase tracking-wider"
                   >
                     Occupied
                   </Badge>
                 )}
               </div>
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight text-foreground leading-[1.1] flex-1 uppercase">
+                <h1 className="font-headline text-4xl md:text-3xl font-bold tracking-tight text-foreground leading-[1.1] flex-1">
                   {property.title}
                 </h1>
                 <div className="flex items-center gap-3 shrink-0 md:mt-2">
@@ -362,10 +362,10 @@ export default function PropertyDetail({
                     variant="outline"
                     size="icon"
                     className={cn(
-                      "h-14 w-14 rounded-2xl border-2 transition-all hover:scale-105",
+                      "h-14 w-14 rounded-2xl border transition-all hover:scale-105",
                       isBookmarked
                         ? "bg-red-50 border-red-100 text-red-500 hover:bg-red-100"
-                        : "bg-white hover:border-primary/20",
+                        : "bg-card hover:border-primary/20",
                     )}
                     onClick={toggleBookmark}
                   >
@@ -376,7 +376,7 @@ export default function PropertyDetail({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-14 w-14 rounded-2xl border-2 bg-white hover:border-primary/20 transition-all hover:scale-105"
+                    className="h-14 w-14 rounded-2xl border bg-card hover:border-primary/20 transition-all hover:scale-105"
                     onClick={() => setIsShareModalOpen(true)}
                   >
                     <Share2 className="h-6 w-6" />
@@ -412,21 +412,21 @@ export default function PropertyDetail({
               <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
                 <BedDouble className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
                 <p className="text-xl font-bold">{property.bedrooms}</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Bedrooms
                 </p>
               </div>
               <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
                 <Bath className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
                 <p className="text-xl font-bold">{property.bathrooms}</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Bathrooms
                 </p>
               </div>
               <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
                 <Ruler className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
                 <p className="text-xl font-bold">{property.area}</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Square Feet
                 </p>
               </div>
@@ -435,7 +435,7 @@ export default function PropertyDetail({
                 <p className="text-xl font-bold whitespace-nowrap">
                   {property.type}
                 </p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Property Type
                 </p>
               </div>
@@ -450,13 +450,13 @@ export default function PropertyDetail({
                   <h3 className="text-2xl font-bold tracking-tight uppercase">
                     Location
                   </h3>
-                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-muted-foreground/40 tracking-widest">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase text-muted-foreground/40 tracking-wider">
                     <MapPin className="h-3 w-3 text-primary" />
                     {Number(property.location?.lat || 0).toFixed(4)},{" "}
                     {Number(property.location?.lng || 0).toFixed(4)}
                   </div>
                 </div>
-                <div className="rounded-[2.5rem] overflow-hidden border-2 border-foreground/[0.02] shadow-2xl">
+                <div className="rounded-3xl overflow-hidden border border-foreground/[0.02] shadow-sm">
                   <PropertyMap
                     lat={Number(property.location?.lat || 0)}
                     lng={Number(property.location?.lng || 0)}
@@ -538,7 +538,7 @@ export default function PropertyDetail({
                 </div>
               </TabsContent>
               <TabsContent value="rules" className="mt-0">
-                <div className="bg-muted/20 p-8 rounded-[2rem] border-2 border-dashed border-border">
+                <div className="bg-muted/20 p-8 rounded-3xl border border-dashed border-border">
                   <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {Array.isArray(property.rules) ? (
                       property.rules.map((rule) => (
@@ -579,7 +579,7 @@ export default function PropertyDetail({
                         className="p-6 rounded-3xl border bg-card/50 backdrop-blur-sm space-y-4"
                       >
                         <div className="flex items-center gap-4">
-                          <Avatar className="h-12 w-12 border-2 border-background shadow-lg">
+                          <Avatar className="h-12 w-12 border border-background shadow-lg">
                             <AvatarImage
                               src={review.tenantImageUrl}
                               className="object-cover"
@@ -635,12 +635,12 @@ export default function PropertyDetail({
 
           <div className="space-y-6">
             <div className="sticky top-12 space-y-6">
-              <Card className="border-none bg-background shadow-[0_0_50px_-12px_rgba(0,0,0,0.12)] rounded-[2.5rem] overflow-hidden">
+              <Card className="border-none bg-background shadow-[0_0_50px_-12px_rgba(0,0,0,0.12)] rounded-3xl overflow-hidden">
                 <CardHeader className="bg-[#0A0A0A] text-white p-8">
                   <div className="flex items-center justify-between mb-2">
                     <Badge
                       variant="secondary"
-                      className="bg-white/10 text-white border-white/20 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest"
+                      className="bg-white/10 text-white border-white/20 px-3 py-0.5 text-xs font-bold uppercase tracking-wider"
                     >
                       Pricing
                     </Badge>
@@ -672,7 +672,7 @@ export default function PropertyDetail({
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button
-                          className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/20"
+                          className="w-full h-14 rounded-2xl text-lg font-bold shadow-sm"
                           disabled={property.status === "occupied"}
                         >
                           Request to Rent
@@ -706,7 +706,7 @@ export default function PropertyDetail({
                           <DialogClose asChild>
                             <Button
                               variant="outline"
-                              className="h-12 rounded-xl flex-1 border-2"
+                              className="h-12 rounded-xl flex-1 border"
                             >
                               Cancel
                             </Button>
@@ -722,14 +722,14 @@ export default function PropertyDetail({
                     </Dialog>
                     <Button
                       variant="outline"
-                      className="w-full h-14 rounded-2xl text-lg font-bold border-2 hover:bg-muted/50"
+                      className="w-full h-14 rounded-2xl text-lg font-bold border hover:bg-muted/50"
                       onClick={handleMessageLandlord}
                     >
                       <MessageSquare className="mr-3 h-5 w-5" /> Message Host
                     </Button>
                   </div>
                   <div className="space-y-4 pt-4 border-t border-border/50">
-                    <div className="flex items-center justify-between text-sm font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <div className="flex items-center justify-between text-sm font-bold uppercase tracking-wider text-muted-foreground/60">
                       <span>Landlord Stats</span>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -751,9 +751,9 @@ export default function PropertyDetail({
               </Card>
 
               {landlord && (
-                <Card className="border-none bg-muted/30 rounded-[2rem] p-6 hover:bg-muted/40 transition-colors group">
+                <Card className="border-none bg-muted/30 rounded-3xl p-6 hover:bg-muted/40 transition-colors group">
                   <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16 shadow-xl border-2 border-background group-hover:scale-105 transition-transform">
+                    <Avatar className="h-16 w-16 shadow-sm border border-background group-hover:scale-105 transition-transform">
                       <AvatarImage
                         src={landlord.profileImageUrl}
                         className="object-cover"
@@ -763,7 +763,7 @@ export default function PropertyDetail({
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-1">
+                      <p className="text-xs font-bold uppercase tracking-wider text-primary mb-1">
                         Meet Your Host
                       </p>
                       <h4 className="text-xl font-headline font-bold">
@@ -908,7 +908,7 @@ function ReviewButton({
           Leave a Review
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md rounded-[2.5rem]">
+      <DialogContent className="sm:max-w-md rounded-3xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold uppercase">
             Rate your stay
@@ -932,7 +932,7 @@ function ReviewButton({
             ))}
           </div>
           <div className="space-y-2">
-            <Label className="font-bold uppercase tracking-wider text-[10px] text-muted-foreground pl-1">
+            <Label className="font-bold uppercase tracking-wider text-xs text-muted-foreground pl-1">
               Your experience
             </Label>
             <Textarea

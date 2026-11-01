@@ -198,9 +198,9 @@ export default function AddPropertyPage() {
             if (!response.ok) throw new Error('Generation failed');
             const { description } = await response.json();
             form.setValue('description', description);
-            toast({ title: "AI Narrative Complete", description: "Property description has been optimized." });
+            toast({ title: "Draft ready", description: "Review and personalise the description before publishing." });
         } catch (error) {
-            toast({ variant: "destructive", title: "AI Error", description: "Failed to generate description automatically." });
+            toast({ variant: "destructive", title: "Could not draft a description", description: "Please write one manually or try again." });
         } finally {
             setIsGeneratingDescription(false);
         }
@@ -279,18 +279,18 @@ export default function AddPropertyPage() {
 
             await import('firebase/firestore').then(({ setDoc }) => setDoc(propertyRef, propertyData));
             
-            toast({ title: "Asset Deployed", description: "Property successfully listed in the marketplace." });
+            toast({ title: "Property listed", description: "Your property is now live on Lodger." });
             router.push(`/landlord/properties/${propertyRef.id}?new=true`);
         } catch (error) {
             console.error(error);
-            toast({ variant: "destructive", title: "Deployment Failed", description: "Critical error during property creation." });
+            toast({ variant: "destructive", title: "Could not create property", description: "Something went wrong while saving your listing. Please try again." });
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="max-w-[1400px] mx-auto space-y-8 md:space-y-16 pb-32 min-h-screen">
+        <div className="max-w-[1400px] mx-auto space-y-8 md:space-y-8 pb-8 min-h-screen">
             {/* Premium Page Header */}
             <header className="px-4 md:px-0 pt-8 md:pt-12">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b-2 border-foreground/5">
@@ -300,28 +300,27 @@ export default function AddPropertyPage() {
                                 <Building className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                             </div>
                             <div>
-                                <p className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.4em] text-primary">Portfolio Expansion</p>
-                                <p className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest">Global Marketplace Tier</p>
-                            </div>
+                                <p className="text-xs md:text-xs font-semibold uppercase tracking-wider text-primary">New listing</p>
+                                                            </div>
                         </div>
-                        <h1 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tighter text-foreground uppercase leading-[0.85]">
-                            New <span className="text-primary">Property</span>
+                        <h1 className="text-4xl sm:text-3xl md:text-3xl font-bold tracking-tight text-foreground leading-tight">
+                            Add a property
                         </h1>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <div className="hidden sm:block text-right">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Completeness</p>
-                            <p className="text-2xl font-black text-primary">{Math.round((currentStep / totalSteps) * 100)}%</p>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Progress</p>
+                            <p className="text-2xl font-bold text-primary">{Math.round((currentStep / totalSteps) * 100)}%</p>
                         </div>
-                        <div className="h-16 w-16 md:h-20 md:w-20 rounded-[2rem] bg-foreground text-white flex items-center justify-center shadow-2xl">
-                            <p className="text-2xl md:text-3xl font-black tracking-tighter">0{currentStep}</p>
+                        <div className="h-16 w-16 md:h-20 md:w-20 rounded-3xl bg-foreground text-white flex items-center justify-center shadow-sm">
+                            <p className="text-2xl md:text-3xl font-bold tracking-tight">0{currentStep}</p>
                         </div>
                     </div>
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 md:gap-16 items-start px-4 md:px-0">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 md:gap-8 items-start px-4 md:px-0">
                 {/* Fixed Navigation Sidebar */}
                 <aside className="lg:sticky lg:top-12">
                     <StepNavigation steps={steps} currentStep={currentStep} />
@@ -330,7 +329,7 @@ export default function AddPropertyPage() {
                 {/* Form Content Area */}
                 <main className="lg:col-span-3">
                     <Form {...form}>
-                        <form className="space-y-12 md:space-y-20">
+                        <form className="space-y-8 md:space-y-20">
                             <AnimatePresence mode="wait">
                                 <section key={currentStep}>
                                     {currentStep === 1 && <BasicInfoStep form={form} />}
@@ -350,7 +349,7 @@ export default function AddPropertyPage() {
                                     variant="ghost"
                                     onClick={prevStep}
                                     disabled={currentStep === 1 || isSubmitting}
-                                    className="h-14 md:h-20 px-8 md:px-12 rounded-full font-black text-xs md:text-sm uppercase tracking-[0.2em] transition-all hover:bg-foreground hover:text-white disabled:opacity-0"
+                                    className="h-11 md:h-20 px-8 md:px-6 rounded-full font-semibold text-xs md:text-sm uppercase tracking-wider transition-all hover:bg-foreground hover:text-white disabled:opacity-0"
                                 >
                                     <ArrowLeft className="h-4 w-4 md:h-5 md:w-5 mr-3" />
                                     Back
@@ -361,7 +360,7 @@ export default function AddPropertyPage() {
                                     onClick={nextStep}
                                     disabled={isSubmitting}
                                     className={cn(
-                                        "h-16 md:h-24 px-12 md:px-20 rounded-[2rem] md:rounded-[3rem] font-black text-base md:text-2xl uppercase tracking-tighter transition-all duration-500 shadow-2xl",
+                                        "h-11 md:h-24 px-6 md:px-20 rounded-3xl md:rounded-3xl font-bold text-base md:text-2xl tracking-tight transition-all duration-500 shadow-sm",
                                         currentStep === totalSteps 
                                             ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/20" 
                                             : "bg-primary hover:bg-primary/90 text-white shadow-primary/20"
@@ -370,7 +369,7 @@ export default function AddPropertyPage() {
                                     {isSubmitting ? (
                                         <div className="flex items-center gap-4">
                                             <Loader2 className="h-6 w-6 md:h-8 md:w-8 animate-spin" />
-                                            <span>Deploying...</span>
+                                            <span>Publishing…</span>
                                         </div>
                                     ) : currentStep === totalSteps ? (
                                         <div className="flex items-center gap-4">
