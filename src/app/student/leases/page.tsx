@@ -74,7 +74,7 @@ export default function StudentLeasesPage() {
         for (const chunk of userChunks) {
           const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
           const usersSnapshot = await getDocs(usersQuery);
-          usersSnapshot.forEach((doc: any) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+          usersSnapshot.forEach((doc) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
         }
       }
 
@@ -83,7 +83,7 @@ export default function StudentLeasesPage() {
         for (const chunk of propertyChunks) {
           const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
           const propertiesSnapshot = await getDocs(propertiesQuery);
-          propertiesSnapshot.forEach((doc: any) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+          propertiesSnapshot.forEach((doc) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
         }
       }
 

@@ -27,7 +27,7 @@ export function initializeFirebase() {
     } catch (e) {
       // Silence the "no-options" warning during production build as it's expected behavior
       // when running on a platform that doesn't provide automatic config (like local build)
-      const isNoOptionsError = (e as any)?.code === 'app/no-options';
+      const isNoOptionsError = (e as { code?: string } | null)?.code === 'app/no-options';
       if (process.env.NODE_ENV === "production" && !isNoOptionsError) {
         console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
       }

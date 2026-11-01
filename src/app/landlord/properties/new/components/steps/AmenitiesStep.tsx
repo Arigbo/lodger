@@ -16,9 +16,10 @@ import { motion, AnimatePresence } from "framer-motion";
 
 
 import { AMENITY_ICONS, DEFAULT_ICON } from "@/lib/amenity-icons";
+import type { PropertyForm } from "../../types";
 
 interface AmenitiesStepProps {
-  form: any;
+  form: PropertyForm;
 }
 
 export const AmenitiesStep = ({ form }: AmenitiesStepProps) => {

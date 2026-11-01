@@ -82,7 +82,7 @@ function ResetPasswordForm({ oobCode }: { oobCode: string }) {
         description: "Your password has been updated. You can now sign in.",
       });
       setTimeout(() => router.push("/auth/login"), 3000);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Password confirm error:", error);
       toast({
         variant: "destructive",

@@ -9,7 +9,7 @@ import { MoreHorizontal, Plus, Building, Search, ArrowUpDown, Trash2, Edit3, Eye
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, doc, getDoc, getDocs, deleteDoc } from 'firebase/firestore';
-import type { Property, UserProfile as User } from '@/types';
+import type { Property, RentalApplication, UserProfile as User } from '@/types';
 import Loading from '@/app/loading';
 import { useToast } from '@/hooks/use-toast';
 import { sendNotification } from '@/lib/notifications';
@@ -45,7 +45,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { PageHeader, StatCard, StatGrid, EmptyState } from "@/components/dashboard";
+import { PageHeader } from "@/components/dashboard";
 
 type PropertyWithTenant = Property & { tenantName?: string };
 
@@ -102,7 +102,7 @@ export default function LandlordPropertiesPage() {
       const requestsSnap = await getDocs(requestsQuery);
 
       const notificationPromises = requestsSnap.docs.map(doc => {
-        const request = doc.data() as any;
+        const request = doc.data() as RentalApplication;
         return sendNotification({
           toUserId: request.tenantId,
           type: 'NEW_MESSAGE',

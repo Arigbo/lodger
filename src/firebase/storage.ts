@@ -7,6 +7,7 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 import { authHeaders } from "@/lib/api-client";
+import { getErrorMessage } from "@/lib/errors";
 
 /**
  * Type definition for image moderation analysis results
@@ -157,11 +158,11 @@ export async function moderateAndUpload(
       downloadURL,
       analysis,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Moderation and upload error:", error);
     return {
       success: false,
-      error: error.message || "Upload failed. Please try again.",
+      error: getErrorMessage(error) || "Upload failed. Please try again.",
     };
   }
 }
@@ -203,13 +204,8 @@ export async function uploadProfileImage(
     const downloadURL = await getDownloadURL(snapshot.ref);
 
     return downloadURL;
-  } catch (error: any) {
-    console.error("Profile image upload error:", {
-      code: error.code,
-      message: error.message,
-      serverResponse: error.serverResponse,
-      fullError: error,
-    });
-    throw new Error(`Upload failed: ${error.message || "Unknown error"}`);
+  } catch (error) {
+    console.error("Profile image upload error:", error);
+    throw new Error(`Upload failed: ${getErrorMessage(error, "Unknown error")}`);
   }
 }

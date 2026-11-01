@@ -1,4 +1,5 @@
 import { UserProfile } from "@/types/user";
+import type { Timestamp } from "firebase/firestore";
 
 export type Conversation = {
     id: string; // Corresponds to the participant's user ID
@@ -13,7 +14,8 @@ export type Message = {
     senderId: string;
     recipientId: string;
     text: string;
-    timestamp: any;
+    /** Server timestamp; null until the write is acknowledged. */
+    timestamp: Timestamp | null;
     read: boolean;
     participantIds: string[];
 };

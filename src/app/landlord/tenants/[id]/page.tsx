@@ -182,7 +182,7 @@ export default function TenantDetailPage() {
 
         if (isLeaseActive) {
             if (lastRentPayment) {
-                const monthsPaid = (lastRentPayment as any).months || 1;
+                const monthsPaid = lastRentPayment.months || lastRentPayment.monthsPaid || 1;
                 nextRentDueDate = addMonths(new Date(lastRentPayment.date), monthsPaid);
             } else {
                 nextRentDueDate = leaseStartDate;

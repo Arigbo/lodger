@@ -24,7 +24,6 @@ import { MapPin, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { countries } from "@/data/countries";
 import { PROPERTY_TYPES } from "@/types/property-types";
-import { useToast } from "@/hooks/use-toast";
 import { Combobox } from "@/components/ui/combobox";
 import { SchoolCombobox } from "@/components/shared/school-combobox";
 import { cn, formatPrice } from "@/lib/utils";
@@ -64,7 +63,6 @@ export default function SearchFilters({
   userCurrency = "USD",
   className,
 }: SearchFiltersProps) {
-  const { toast } = useToast();
   const [filters, setFilters] = useState<FilterState>(initialFilters || {});
   const [price, setPrice] = useState(initialFilters?.price || 3000);
 

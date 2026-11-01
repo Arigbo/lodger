@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
         description:
           "If an account exists with this email, you will receive a reset link shortly.",
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Password reset error:", error);
       toast({
         variant: "destructive",

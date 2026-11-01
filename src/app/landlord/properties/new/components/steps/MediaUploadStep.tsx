@@ -6,14 +6,14 @@ import { motion } from 'framer-motion';
 import { Utensils, Sofa, Bath, BedDouble, ImageIcon, Video } from 'lucide-react';
 import { FileUpload } from '@/app/landlord/properties/new/components/file-upload';
 import { VideoUpload } from '@/app/landlord/properties/new/components/video-upload';
+import type { PropertyForm, SetImageAnalysis } from "../../types";
 
 interface MediaUploadStepProps {
-    form: any;
-    imageAnalysis: any;
-    setImageAnalysis: (val: any) => void;
+    form: PropertyForm;
+    setImageAnalysis: SetImageAnalysis;
 }
 
-export const MediaUploadStep = ({ form, imageAnalysis, setImageAnalysis }: MediaUploadStepProps) => {
+export const MediaUploadStep = ({ form, setImageAnalysis }: MediaUploadStepProps) => {
     return (
         <motion.div 
             initial={{ opacity: 0, x: 20 }}
@@ -37,9 +37,9 @@ export const MediaUploadStep = ({ form, imageAnalysis, setImageAnalysis }: Media
                     field={{
                         name: 'kitchenImage',
                         value: form.watch('kitchenImage'),
-                        onChange: (val: any) => form.setValue('kitchenImage', val)
+                        onChange: (val: FileList | null) => form.setValue('kitchenImage', val)
                     }}
-                    onAnalysisChange={(analysis) => setImageAnalysis((prev: any) => ({ ...prev, kitchen: analysis }))}
+                    onAnalysisChange={(analysis) => setImageAnalysis((prev) => ({ ...prev, kitchen: analysis }))}
                 />
                 <FileUpload
                     icon={Sofa}
@@ -48,9 +48,9 @@ export const MediaUploadStep = ({ form, imageAnalysis, setImageAnalysis }: Media
                     field={{
                         name: 'livingRoomImage',
                         value: form.watch('livingRoomImage'),
-                        onChange: (val: any) => form.setValue('livingRoomImage', val)
+                        onChange: (val: FileList | null) => form.setValue('livingRoomImage', val)
                     }}
-                    onAnalysisChange={(analysis) => setImageAnalysis((prev: any) => ({ ...prev, livingRoom: analysis }))}
+                    onAnalysisChange={(analysis) => setImageAnalysis((prev) => ({ ...prev, livingRoom: analysis }))}
                 />
                 <FileUpload
                     icon={BedDouble}
@@ -59,9 +59,9 @@ export const MediaUploadStep = ({ form, imageAnalysis, setImageAnalysis }: Media
                     field={{
                         name: 'bedroomImage',
                         value: form.watch('bedroomImage'),
-                        onChange: (val: any) => form.setValue('bedroomImage', val)
+                        onChange: (val: FileList | null) => form.setValue('bedroomImage', val)
                     }}
-                    onAnalysisChange={(analysis) => setImageAnalysis((prev: any) => ({ ...prev, bedroom: analysis }))}
+                    onAnalysisChange={(analysis) => setImageAnalysis((prev) => ({ ...prev, bedroom: analysis }))}
                 />
                 <FileUpload
                     icon={Bath}
@@ -70,9 +70,9 @@ export const MediaUploadStep = ({ form, imageAnalysis, setImageAnalysis }: Media
                     field={{
                         name: 'bathroomImage',
                         value: form.watch('bathroomImage'),
-                        onChange: (val: any) => form.setValue('bathroomImage', val)
+                        onChange: (val: FileList | null) => form.setValue('bathroomImage', val)
                     }}
-                    onAnalysisChange={(analysis) => setImageAnalysis((prev: any) => ({ ...prev, bathroom: analysis }))}
+                    onAnalysisChange={(analysis) => setImageAnalysis((prev) => ({ ...prev, bathroom: analysis }))}
                 />
                 <FileUpload
                     icon={ImageIcon}
@@ -81,9 +81,9 @@ export const MediaUploadStep = ({ form, imageAnalysis, setImageAnalysis }: Media
                     field={{
                         name: 'otherImage',
                         value: form.watch('otherImage'),
-                        onChange: (val: any) => form.setValue('otherImage', val)
+                        onChange: (val: FileList | null) => form.setValue('otherImage', val)
                     }}
-                    onAnalysisChange={(analysis) => setImageAnalysis((prev: any) => ({ ...prev, other: analysis }))}
+                    onAnalysisChange={(analysis) => setImageAnalysis((prev) => ({ ...prev, other: analysis }))}
                 />
                 <VideoUpload
                     icon={Video}
@@ -92,7 +92,7 @@ export const MediaUploadStep = ({ form, imageAnalysis, setImageAnalysis }: Media
                     field={{
                         name: 'propertyVideo',
                         value: form.watch('propertyVideo'),
-                        onChange: (val: any) => form.setValue('propertyVideo', val)
+                        onChange: (val: FileList | null) => form.setValue('propertyVideo', val)
                     }}
                 />
             </div>

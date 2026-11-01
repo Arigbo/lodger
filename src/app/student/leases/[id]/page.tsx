@@ -50,7 +50,6 @@ export default function ViewStudentLeasePage() {
     const isLoading = isUserLoading || isLeaseLoading || isLandlordLoading || isTenantLoading || isPropertyLoading;
 
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-    const [monthsToPay, setMonthsToPay] = useState(1);
 
     if (isLoading) {
         return <Loading />;

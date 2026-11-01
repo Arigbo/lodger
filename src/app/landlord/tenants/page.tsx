@@ -22,7 +22,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import Loading from '@/app/loading';
-import { PageHeader, StatCard, StatGrid, EmptyState } from "@/components/dashboard";
+import { PageHeader } from "@/components/dashboard";
 
 type TenantWithProperty = {
   tenant: User;
@@ -55,7 +55,7 @@ export default function TenantsPage() {
         where('landlordId', '==', landlord.uid)
       );
       const propertiesSnapshot = await getDocs(propertiesQuery);
-      const landlordProperties: Property[] = propertiesSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as Property));
+      const landlordProperties: Property[] = propertiesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Property));
 
       const occupiedProperties = landlordProperties.filter(p => p.currentTenantId);
       const tenantIds = [...new Set(occupiedProperties.map(p => p.currentTenantId!))];
@@ -71,7 +71,7 @@ export default function TenantsPage() {
       await Promise.all(userChunks.map(async chunk => {
         const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
         const usersSnapshot = await getDocs(usersQuery);
-        usersSnapshot.forEach((doc: any) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+        usersSnapshot.forEach((doc) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
       }));
 
       const combinedData = occupiedProperties.map(property => {

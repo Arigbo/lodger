@@ -73,6 +73,7 @@ import { PropertyGallery } from "@/components/properties/property-gallery";
 import { PropertyHeroCarousel } from "@/components/properties/property-hero-carousel";
 import { SharePropertyModal } from "@/components/properties/share-property-modal";
 import dynamic from "next/dynamic";
+import type { Firestore } from "firebase/firestore";
 
 const PropertyMap = dynamic(() => import("@/components/properties/property-map"), {
   ssr: false,
@@ -95,7 +96,7 @@ export default function PropertyDetail({
   const pathname = usePathname();
   const browseHref = pathname.startsWith("/student") ? "/student/properties" : "/properties";
   const { toast } = useToast();
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const router = useRouter();
 
   const [requestMessage, setRequestMessage] = useState("");
@@ -115,7 +116,7 @@ export default function PropertyDetail({
     () => (property ? doc(firestore, "users", property.landlordId) : null),
     [firestore, property],
   );
-  const { data: landlord, isLoading: isLandlordLoading } =
+  const { data: landlord } =
     useDoc<UserProfile>(landlordRef);
 
   const reviewsQuery = useMemoFirebase(
@@ -128,14 +129,14 @@ export default function PropertyDetail({
         : null,
     [firestore, id],
   );
-  const { data: reviews, isLoading: areReviewsLoading } =
+  const { data: reviews } =
     useCollection<PropertyReview>(reviewsQuery);
 
   const userProfileRef = useMemoFirebase(
     () => (user ? doc(firestore, "users", user.uid) : null),
     [firestore, user],
   );
-  const { data: userProfile, isLoading: isUserProfileLoading } =
+  const { data: userProfile } =
     useDoc<UserProfile>(userProfileRef);
 
 
@@ -170,12 +171,6 @@ export default function PropertyDetail({
     const bookmarkedIds = userProfile.bookmarkedPropertyIds || [];
     return bookmarkedIds.includes(property.id);
   }, [userProfile?.bookmarkedPropertyIds, property?.id]);
-
-  const isLoading =
-    isLandlordLoading ||
-    areReviewsLoading ||
-    isUserLoading ||
-    isUserProfileLoading;
 
   if (!property && isPropertyLoading) {
     return (
@@ -279,7 +274,7 @@ export default function PropertyDetail({
         description: "Your rental request has been sent to the landlord.",
       });
       router.push(`/student/messages?conversationId=${landlord.id}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error sending rental request:", error);
       toast({
         variant: "destructive",
@@ -849,7 +844,7 @@ function ReviewButton({
 }: {
   propertyId: string;
   userId?: string;
-  firestore: any;
+  firestore: Firestore;
   userProfile?: UserProfile | null;
 }) {
   const [isTenant, setIsTenant] = useState(false);

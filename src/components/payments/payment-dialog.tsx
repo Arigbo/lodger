@@ -24,6 +24,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import StripeCheckoutForm from '@/components/payments/stripe-checkout-form';
 import { authHeaders } from "@/lib/api-client";
+import { getErrorMessage } from "@/lib/errors";
 
 // Loaded lazily, and only when card payments are configured.
 const STRIPE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
@@ -41,7 +42,7 @@ interface PaymentDialogProps {
   propertyId: string;
   currency?: string;
   destinationAccountId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | undefined>;
 }
 
 export default function PaymentDialog({
@@ -137,12 +138,12 @@ export default function PaymentDialog({
       } else {
         throw new Error(data.message || data.error || 'Failed to initialize payment');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Stripe Init Error:", error);
       toast({
         variant: 'destructive',
         title: "Payment Error",
-        description: error.message || "Failed to initialize card payment."
+        description: getErrorMessage(error) || "Failed to initialize card payment."
       });
     } finally {
       setIsProcessing(false);

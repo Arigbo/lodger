@@ -18,7 +18,7 @@ import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import Loading from '@/app/loading';
-import { PageHeader, StatCard, StatGrid, EmptyState } from "@/components/dashboard";
+import { PageHeader } from "@/components/dashboard";
 
 type AggregatedLease = {
   lease: LeaseAgreement;
@@ -77,7 +77,7 @@ export default function LandlordLeasesPage() {
         for (const chunk of userChunks) {
           const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
           const userSnapshots = await getDocs(usersQuery);
-          userSnapshots.forEach((doc: any) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+          userSnapshots.forEach((doc) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
         }
       }
 
@@ -86,7 +86,7 @@ export default function LandlordLeasesPage() {
         for (const chunk of propertyChunks) {
           const propertyPromises = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
           const propertySnapshots = await getDocs(propertyPromises);
-          propertySnapshots.forEach((doc: any) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+          propertySnapshots.forEach((doc) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
         }
       }
 

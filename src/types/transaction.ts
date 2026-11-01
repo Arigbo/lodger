@@ -12,6 +12,7 @@ export type Transaction = {
     paymentIntentId?: string;
     months?: number;
     // Backward compatibility
+    /** Legacy field name used by older offline-payment records. */
     method?: string;
     monthsPaid?: number;
 };

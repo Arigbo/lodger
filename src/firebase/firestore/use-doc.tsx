@@ -39,7 +39,7 @@ export interface UseDocResult<T> {
  * The Firestore DocumentReference. Waits if null/undefined.
  * @returns {UseDocResult<T>} Object with data, isLoading, error, and refetch function.
  */
-export function useDoc<T = any>(
+export function useDoc<T = DocumentData>(
   memoizedDocRef: DocumentReference<DocumentData> | null | undefined,
 ): UseDocResult<T> {
   type StateDataType = WithId<T> | null;
@@ -78,7 +78,7 @@ export function useDoc<T = any>(
         setError(null);
         setIsLoading(false);
       },
-      (error: FirestoreError) => {
+      () => {
         const contextualError = new FirestorePermissionError({
           operation: 'get',
           path: memoizedDocRef.path,
@@ -95,7 +95,7 @@ export function useDoc<T = any>(
     return () => unsubscribe();
   }, [memoizedDocRef, refetchKey]); // Re-run if the memoizedDocRef or refetchKey changes.
 
-  if(memoizedDocRef && !(memoizedDocRef as any).__memo) {
+  if (memoizedDocRef && !(memoizedDocRef as DocumentReference<DocumentData> & { __memo?: boolean }).__memo) {
     throw new Error('useDoc reference was not properly memoized using useMemoFirebase. This can cause infinite loops and unnecessary Firestore reads.');
   }
 

@@ -98,9 +98,6 @@ export default function LandlordPropertyDetailPage() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  const [api, setApi] = React.useState<any>();
-  const [current, setCurrent] = React.useState(0);
-  const [count, setCount] = React.useState(0);
   const searchParams = useSearchParams();
   const [showShareModal, setShowShareModal] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -138,7 +135,7 @@ export default function LandlordPropertyDetailPage() {
         : null,
     [firestore, property],
   );
-  const { data: tenant, isLoading: isTenantLoading } =
+  const { data: tenant } =
     useDoc<UserProfile>(tenantRef);
 
   const reviewsQuery = useMemoFirebase(
@@ -157,26 +154,15 @@ export default function LandlordPropertyDetailPage() {
   const [aggregatedRequests, setAggregatedRequests] = useState<
     AggregatedRequest[]
   >([]);
-  const [areRequestsLoading, setAreRequestsLoading] = useState(true);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] =
     useState<AggregatedRequest | null>(null);
 
   useEffect(() => {
-    if (!api) return;
-    setCount(api.scrollSnapList().length);
-    setCurrent(api.selectedScrollSnap() + 1);
-    api.on("select", () => {
-      setCurrent(api.selectedScrollSnap() + 1);
-    });
-  }, [api]);
-
-  useEffect(() => {
     if (!id || !firestore || !user) return;
 
     const fetchRequestsAndApplicants = async () => {
-      setAreRequestsLoading(true);
       const requestsQuery = query(
         collection(firestore, "rentalApplications"),
         where("propertyId", "==", id),
@@ -184,12 +170,11 @@ export default function LandlordPropertyDetailPage() {
       );
       const requestsSnapshot = await getDocs(requestsQuery);
       const rentalRequests: RentalApplication[] = requestsSnapshot.docs.map(
-        (d: any) => ({ ...d.data(), id: d.id }) as RentalApplication,
+        (d) => ({ ...d.data(), id: d.id }) as RentalApplication,
       );
 
       if (rentalRequests.length === 0) {
         setAggregatedRequests([]);
-        setAreRequestsLoading(false);
         return;
       }
 
@@ -206,7 +191,7 @@ export default function LandlordPropertyDetailPage() {
             where(documentId(), "in", chunk),
           );
           const usersSnapshot = await getDocs(usersQuery);
-          usersSnapshot.forEach((doc: any) =>
+          usersSnapshot.forEach((doc) =>
             usersMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile),
           );
         }
@@ -220,7 +205,6 @@ export default function LandlordPropertyDetailPage() {
       }));
 
       setAggregatedRequests(finalRequests);
-      setAreRequestsLoading(false);
     };
 
     fetchRequestsAndApplicants();

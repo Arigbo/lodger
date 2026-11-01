@@ -46,6 +46,7 @@ import {
   TrendingUp,
   Star,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 function PropertySection({
   title,
@@ -57,7 +58,7 @@ function PropertySection({
   title: string;
   description?: string;
   properties: Property[];
-  icon: any;
+  icon: LucideIcon;
   delay?: number;
 }) {
   if (properties.length === 0) return null;
@@ -82,7 +83,7 @@ function PropertySection({
       {/* Horizontal Scroll Carousel */}
       <div className="relative -mx-4 sm:-mx-6 lg:-mx-8">
         <div className="flex gap-4 md:gap-6 overflow-x-auto pb-8 pt-2 px-4 sm:px-6 lg:px-8 no-scrollbar scroll-smooth snap-x snap-mandatory">
-          {properties.map((property, idx) => (
+          {properties.map((property) => (
             <div
               key={property.id}
               className="min-w-[85vw] sm:min-w-[380px] lg:min-w-[420px] snap-start"

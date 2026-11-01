@@ -12,9 +12,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Loader2, Zap } from 'lucide-react';
+import type { PropertyForm } from "../../types";
 
 interface AIStepProps {
-    form: any;
+    form: PropertyForm;
     isGeneratingDescription: boolean;
     generateAIDescription: () => void;
 }

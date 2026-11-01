@@ -19,7 +19,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { collection, query, where, getDocs, documentId, doc, updateDoc } from 'firebase/firestore';
 import Loading from '@/app/loading';
-import { PageHeader, StatCard, StatGrid, EmptyState } from "@/components/dashboard";
+import { PageHeader, StatCard, StatGrid } from "@/components/dashboard";
 
 type AggregatedRequest = MaintenanceRequest & {
   tenantName: string;
@@ -49,7 +49,7 @@ export default function MaintenancePage() {
 
     const requestsQuery = query(collection(firestore, 'maintenanceRequests'), where('landlordId', '==', landlord.uid));
     const requestsSnapshot = await getDocs(requestsQuery);
-    const landlordRequests: MaintenanceRequest[] = requestsSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as MaintenanceRequest));
+    const landlordRequests: MaintenanceRequest[] = requestsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as MaintenanceRequest));
 
     if (landlordRequests.length === 0) {
       setRequests([]);
@@ -68,7 +68,7 @@ export default function MaintenancePage() {
       for (const chunk of userChunks) {
         const usersQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
         const usersSnapshot = await getDocs(usersQuery);
-        usersSnapshot.forEach((doc: any) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
+        usersSnapshot.forEach((doc) => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as User));
       }
     }
 
@@ -77,7 +77,7 @@ export default function MaintenancePage() {
       for (const chunk of propertyChunks) {
         const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
         const propertiesSnapshot = await getDocs(propertiesQuery);
-        propertiesSnapshot.forEach((doc: any) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
+        propertiesSnapshot.forEach((doc) => propertiesMap.set(doc.id, { id: doc.id, ...doc.data() } as Property));
       }
     }
 

@@ -12,12 +12,14 @@ import {
     Loader2
 } from 'lucide-react';
 import { MAX_VIDEO_SIZE } from '@/app/landlord/properties/new/constants';
+import type { FileField } from "../types";
+import type { LucideIcon } from "lucide-react";
 
 interface VideoUploadProps {
-    field: any;
+    field: FileField;
     label: string;
     description: string;
-    icon: any;
+    icon: LucideIcon;
 }
 
 export const VideoUpload = ({ field, label, description, icon: Icon }: VideoUploadProps) => {
@@ -57,6 +59,7 @@ export const VideoUpload = ({ field, label, description, icon: Icon }: VideoUplo
             <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 flex items-center gap-2 mb-3">
                 <Icon className="h-3.5 w-3.5 text-primary/60" /> 
                 {label}
+                <span className="sr-only">{description}</span>
             </FormLabel>
             <FormControl>
                 <div className="relative group/video rounded-3xl p-1 bg-foreground/[0.02] hover:bg-foreground/[0.04] transition-all duration-500">

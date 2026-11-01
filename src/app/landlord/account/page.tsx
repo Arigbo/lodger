@@ -42,7 +42,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { doc, setDoc } from "firebase/firestore";
 import type { UserProfile } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -63,6 +63,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { authHeaders } from "@/lib/api-client";
+import { getErrorMessage, getErrorCode } from "@/lib/errors";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -100,7 +101,6 @@ export default function AccountPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [refetchKey, setRefetchKey] = useState(0);
   const [stripeAccountStatus, setStripeAccountStatus] = useState<{
     status: "incomplete" | "pending" | "active" | "checking" | "error";
     message: string;
@@ -109,14 +109,10 @@ export default function AccountPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const refetchProfile = useCallback(() => {
-    setRefetchKey((prev) => prev + 1);
-  }, []);
-
   const userDocRef = useMemoFirebase(() => {
     if (!user) return null;
     return doc(firestore, "users", user.uid);
-  }, [user, firestore, refetchKey]);
+  }, [user, firestore]);
 
   const { data: userProfile, isLoading: isProfileLoading } =
     useDoc<UserProfile>(userDocRef);
@@ -229,15 +225,15 @@ export default function AccountPage() {
           status: data.status,
           message: data.message,
         });
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error checking Stripe status (FULL):", error);
 
         let errorMessage = "Failed to verify account status";
-        if (error instanceof TypeError && error.message === "Failed to fetch") {
+        if (error instanceof TypeError && getErrorMessage(error) === "Failed to fetch") {
           errorMessage =
             "Network error: Could not reach server. Check your connection.";
-        } else if (error.message) {
-          errorMessage = error.message;
+        } else if (getErrorMessage(error)) {
+          errorMessage = getErrorMessage(error);
         }
 
         setStripeAccountStatus({
@@ -264,12 +260,12 @@ export default function AccountPage() {
       } else {
         throw new Error(data.error || "Failed to get onboarding link");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Stripe Connect Error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: getErrorMessage(error),
       });
     }
   };
@@ -288,12 +284,12 @@ export default function AccountPage() {
       } else {
         throw new Error(data.error || "Failed to get dashboard link");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Stripe Dashboard Error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: getErrorMessage(error),
       });
     }
   };
@@ -341,10 +337,10 @@ export default function AccountPage() {
         title: "Profile Picture Updated",
         description: "Your new profile picture has been saved.",
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error uploading image: ", error);
       const errorMsg =
-        error.message ||
+        getErrorMessage(error) ||
         "Could not upload your new profile picture. Please check that the file is a valid image and try again.";
       toast({
         variant: "destructive",
@@ -402,13 +398,13 @@ export default function AccountPage() {
           "Your security credentials have been successfully refreshed.",
       });
       passwordForm.reset();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Password update error:", error);
       let message =
         "Could not update password. Please check your current password.";
-      if (error.code === "auth/wrong-password") {
+      if (getErrorCode(error) === "auth/wrong-password") {
         message = "The current password you entered is incorrect.";
-      } else if (error.code === "auth/weak-password") {
+      } else if (getErrorCode(error) === "auth/weak-password") {
         message = "The new password is too weak.";
       }
       toast({

@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import type { UserProfile } from '@/types';
+import { getErrorMessage, getErrorCode } from "@/lib/errors";
 
 const loginSchema = z.object({
     email: z.string().email("Please enter a valid email address."),
@@ -40,7 +41,7 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
 
     const { isSubmitting } = form.formState;
 
-    const handleSuccessfulLogin = async (userId: string, isNewUser: boolean = false) => {
+    const handleSuccessfulLogin = async (userId: string) => {
         if (!firestore) return;
 
         const userDocRef = doc(firestore, 'users', userId);
@@ -59,7 +60,7 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
 
                     // Non-blocking write with error handling
                     setDoc(userDocRef, userData)
-                        .catch((serverError: unknown) => {
+                        .catch(() => {
                             const permissionError = new FirestorePermissionError({
                                 path: userDocRef.path,
                                 operation: 'create',
@@ -124,11 +125,11 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
         }
         try {
             const userCredential = await initiateEmailSignIn(auth, values.email, values.password);
-            await handleSuccessfulLogin(userCredential.user.uid, true);
-        } catch (error: any) {
+            await handleSuccessfulLogin(userCredential.user.uid);
+        } catch (error) {
             console.error("Sign-in error:", error);
             let errorMessage = "An unknown error occurred. Please try again.";
-            switch (error.code) {
+            switch (getErrorCode(error)) {
                 case 'auth/invalid-email':
                     errorMessage = "Please enter a valid email address.";
                     break;
@@ -141,7 +142,7 @@ function LoginForm({ userType }: { userType: 'student' | 'landlord' }) {
                     errorMessage = "Invalid email or password. Please try again.";
                     break;
                 default:
-                    errorMessage = error.message;
+                    errorMessage = getErrorMessage(error);
                     break;
             }
             toast({

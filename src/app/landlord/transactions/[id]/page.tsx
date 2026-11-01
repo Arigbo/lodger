@@ -203,7 +203,7 @@ export default function TransactionDetailPage() {
                                         </div>
                                         <div>
                                             <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Reference ID</p>
-                                            <p className="text-lg font-bold break-all">{transaction.paymentIntentId || (transaction as any).paymentIntentId || transaction.id}</p>
+                                            <p className="text-lg font-bold break-all">{transaction.paymentIntentId || transaction.paymentIntentId || transaction.id}</p>
                                             <p className="text-xs text-muted-foreground font-medium">Stripe/Internal Mapping</p>
                                         </div>
                                     </div>
@@ -215,7 +215,7 @@ export default function TransactionDetailPage() {
 
                     <div className="flex flex-col sm:flex-row gap-4">
                         {(transaction.status === 'Pending' || transaction.status === 'Pending Verification') &&
-                            (transaction.paymentMethod === 'Offline' || (transaction as any).method === 'Offline') && (
+                            (transaction.paymentMethod === 'Offline' || transaction.method === 'Offline') && (
                                 <div className="flex gap-4 flex-1">
                                     <Button
                                         onClick={handleDenyPayment}

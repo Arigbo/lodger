@@ -1,3 +1,4 @@
+import type { Timestamp } from "firebase/firestore";
 export type LeaseAgreement = {
     id: string;
     propertyId: string;
@@ -15,8 +16,9 @@ export type LeaseAgreement = {
     landlordApprovedOfflinePayment?: boolean;
     offlinePaymentAmount?: number;
     offlinePaymentMonths?: number;
-    createdAt?: any; // Firestore timestamp
-    expiresAt?: any; // Firestore timestamp (3 days from creation)
+    createdAt?: Timestamp | string;
+    /** When an unsigned lease offer lapses (3 days after creation). */
+    expiresAt?: Timestamp | string;
     terminationGracePeriodEnd?: string; // ISO string
     calculatedRefund?: number;
 };

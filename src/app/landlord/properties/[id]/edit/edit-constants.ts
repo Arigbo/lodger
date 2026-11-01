@@ -1,9 +1,10 @@
-export const DEFAULT_EDIT_VALUES = {
+import type { EditFormValues } from "./edit-schemas";
+export const DEFAULT_EDIT_VALUES: EditFormValues = {
   title: '',
   description: '',
   price: 0,
   currency: 'USD',
-  type: 'Flat' as any,
+  type: 'Flat',
   address: '',
   country: '',
   city: '',

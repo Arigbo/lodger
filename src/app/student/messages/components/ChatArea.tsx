@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react';
 import { MessageItem } from '@/app/student/messages/components/MessageItem';
 import { MessageInput } from '@/app/student/messages/components/MessageInput';
 import type { UserProfile as User, Message } from '@/types';
+import { toMillis } from "@/lib/dates";
 
 interface ChatAreaProps {
     participant: User;
@@ -65,11 +66,10 @@ export function ChatArea({ participant, student, studentProfile, messages, onSen
                 <div className="space-y-8">
                     {messages.map((msg, idx) => {
                         const isMine = msg.senderId === student.uid;
-                        const showDate = idx === 0 || (
-                            msg.timestamp &&
-                            messages[idx - 1].timestamp &&
-                            msg.timestamp.toMillis() - messages[idx - 1].timestamp.toMillis() > 3600000
-                        );
+                        const previous = messages[idx - 1]?.timestamp;
+                        const showDate =
+                            idx === 0 ||
+                            (!!msg.timestamp && !!previous && toMillis(msg.timestamp) - toMillis(previous) > 3_600_000);
 
                         return (
                             <MessageItem

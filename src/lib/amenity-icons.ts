@@ -13,10 +13,11 @@ import {
   WashingMachine, 
   Trees, 
   Flame, 
-  Waves
+  Waves,
+  type LucideIcon,
 } from 'lucide-react';
 
-export const AMENITY_ICONS: Record<string, any> = {
+export const AMENITY_ICONS: Record<string, LucideIcon> = {
   // Property.ts values
   "Furnished": Sofa,
   "Wi-Fi": Wifi,

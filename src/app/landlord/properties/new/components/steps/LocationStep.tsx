@@ -1,6 +1,5 @@
 "use client";
 
-import { useToast } from "@/hooks/use-toast";
 import {
   FormField,
   FormItem,
@@ -22,6 +21,7 @@ import { countries } from "@/data/countries";
 import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import dynamic from "next/dynamic";
+import type { PropertyForm } from "../../types";
 
 const LocationPickerMap = dynamic(
   () => import("@/components/properties/location-picker-map"),
@@ -34,11 +34,10 @@ const LocationPickerMap = dynamic(
 );
 
 interface LocationStepProps {
-  form: any;
+  form: PropertyForm;
 }
 
 export const LocationStep = ({ form }: LocationStepProps) => {
-  const { toast } = useToast();
 
   const lat = form.watch("lat");
   const lng = form.watch("lng");
@@ -202,8 +201,8 @@ export const LocationStep = ({ form }: LocationStepProps) => {
 
       <div className="space-y-6">
         <LocationPickerMap
-          lat={lat}
-          lng={lng}
+          lat={Number(lat) || 0}
+          lng={Number(lng) || 0}
           onChange={(newLat, newLng) => {
             form.setValue("lat", newLat);
             form.setValue("lng", newLng);

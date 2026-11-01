@@ -68,7 +68,7 @@ export default function TenancyDashboardPage() {
             for (const chunk of propertyChunks) {
                 const propertiesQuery = query(collection(firestore, 'properties'), where(documentId(), 'in', chunk));
                 const propertySnapshots = await getDocs(propertiesQuery);
-                propertySnapshots.forEach((doc: any) => {
+                propertySnapshots.forEach((doc) => {
                     fetchedProperties.push(doc.data() as Property);
                 });
             }

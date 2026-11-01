@@ -8,6 +8,7 @@ import {
   CollectionReference,
   DocumentReference,
   SetOptions,
+  type DocumentData,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -17,7 +18,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
  * Does NOT await the write operation internally.
  */
 export function setDocumentNonBlocking(docRef: DocumentReference, data: unknown, options: SetOptions) {
-  setDoc(docRef, data as any, options).catch((error: unknown) => {
+  setDoc(docRef, data as DocumentData, options).catch(() => {
     errorEmitter.emit(
       'permission-error',
       new FirestorePermissionError({
@@ -37,8 +38,8 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: unknown,
  * Returns the Promise for the new doc ref, but typically not awaited by caller.
  */
 export function addDocumentNonBlocking(colRef: CollectionReference, data: unknown) {
-  const promise = addDoc(colRef, data as any)
-    .catch((error: unknown) => {
+  const promise = addDoc(colRef, data as DocumentData)
+    .catch(() => {
       errorEmitter.emit(
         'permission-error',
         new FirestorePermissionError({
@@ -57,8 +58,8 @@ export function addDocumentNonBlocking(colRef: CollectionReference, data: unknow
  * Does NOT await the write operation internally.
  */
 export function updateDocumentNonBlocking(docRef: DocumentReference, data: unknown) {
-  updateDoc(docRef, data as any)
-    .catch((error: unknown) => {
+  updateDoc(docRef, data as DocumentData)
+    .catch(() => {
       errorEmitter.emit(
         'permission-error',
         new FirestorePermissionError({
@@ -77,7 +78,7 @@ export function updateDocumentNonBlocking(docRef: DocumentReference, data: unkno
  */
 export function deleteDocumentNonBlocking(docRef: DocumentReference) {
   deleteDoc(docRef)
-    .catch((error: unknown) => {
+    .catch(() => {
       errorEmitter.emit(
         'permission-error',
         new FirestorePermissionError({

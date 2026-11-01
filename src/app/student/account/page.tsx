@@ -63,6 +63,7 @@ import { uploadProfileImage } from "@/firebase/storage";
 import { SchoolCombobox } from "@/components/shared/school-combobox";
 import { Combobox } from "@/components/ui/combobox";
 import { getCurrencyByCountry } from "@/lib/currencies";
+import { getErrorMessage, getErrorCode } from "@/lib/errors";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -184,10 +185,10 @@ export default function AccountPage() {
           description: "Your profile picture has been updated.",
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error uploading image: ", error);
       const errorMsg =
-        error.message ||
+        getErrorMessage(error) ||
         "Could not upload image. Please check that the file is a valid image and try again.";
       toast({
         variant: "destructive",
@@ -222,14 +223,14 @@ export default function AccountPage() {
           description: "Your profile has been successfully updated.",
         });
       })
-      .catch((error: any) => {
+      .catch((error: unknown) => {
         console.error("Profile update error:", error);
 
         // Check if it's a permission error (usually has a code or specific structure)
         // For now, we'll emit the permission error for the global handler,
         // but also show a toast if it's likely a data/validation error.
 
-        if (error.code === "permission-denied") {
+        if (getErrorCode(error) === "permission-denied") {
           const permissionError = new FirestorePermissionError({
             path: userDocRef.path,
             operation: "update",
@@ -271,13 +272,13 @@ export default function AccountPage() {
         description: "Your password has been changed successfully.",
       });
       passwordForm.reset();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Password update error:", error);
       let message =
         "Failed to update password. Please check your current password.";
-      if (error.code === "auth/wrong-password") {
+      if (getErrorCode(error) === "auth/wrong-password") {
         message = "Incorrect current password.";
-      } else if (error.code === "auth/weak-password") {
+      } else if (getErrorCode(error) === "auth/weak-password") {
         message = "New password is too weak.";
       }
       toast({
