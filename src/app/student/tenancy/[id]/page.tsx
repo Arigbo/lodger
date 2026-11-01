@@ -265,18 +265,18 @@ export default function TenancyDetailPage() {
 
 
     return (
-        <div className="max-w-full overflow-x-hidden space-y-8 md:space-y-12 px-4 md:px-0 animate-in fade-in duration-700">
+        <div className="max-w-full overflow-x-hidden space-y-8 md:space-y-8 px-4 md:px-0 animate-in fade-in duration-700">
             {/* Header Section */}
-            <div className="relative overflow-hidden rounded-2xl md:rounded-[2.5rem] bg-primary/5 p-4 sm:p-6 md:p-12 max-w-full">
+            <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-primary/5 p-4 sm:p-6 md:p-8 max-w-full">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-8 max-w-full">
                     <div className="space-y-3 md:space-y-4 min-w-0 flex-1">
                         <div className="flex items-center gap-3">
-                            <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-full border-none tracking-widest uppercase text-[10px] shadow-lg shadow-primary/20">
+                            <Badge className="bg-primary text-primary-foreground font-semibold px-4 py-1.5 rounded-full border-none tracking-wider uppercase text-xs shadow-lg">
                                 Active Tenancy
                             </Badge>
                         </div>
-                        <h1 className="font-headline text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black tracking-tight text-foreground leading-tight uppercase break-words overflow-wrap-anywhere">
+                        <h1 className="font-headline text-xl sm:text-2xl md:text-4xl lg:text-3xl font-bold tracking-tight text-foreground leading-tight break-words overflow-wrap-anywhere">
                             {property.title}
                         </h1>
                         <p className="text-xs sm:text-sm md:text-base lg:text-lg font-medium text-muted-foreground/80 leading-relaxed break-words overflow-wrap-anywhere">
@@ -285,15 +285,15 @@ export default function TenancyDetailPage() {
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto max-w-full">
                         {tenancyState?.hasPendingPayments ? (
-                            <div className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-amber-500/10 text-amber-600 rounded-xl sm:rounded-2xl font-black text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest border border-amber-500/20">
+                            <div className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-amber-500/10 text-amber-600 rounded-xl sm:rounded-2xl font-semibold text-xs sm:text-xs md:text-xs uppercase tracking-wider border border-amber-500/20">
                                 <Clock className="h-3 w-3" /> <span className="whitespace-nowrap">Pending</span>
                             </div>
                         ) : tenancyState?.showPayButton && (
-                            <Button onClick={() => setIsPaymentDialogOpen(true)} size="lg" className="w-full sm:w-auto h-11 sm:h-12 md:h-14 rounded-xl sm:rounded-2xl px-4 sm:px-6 md:px-12 font-black text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest shadow-2xl shadow-primary/20 transition-all hover:shadow-primary/40 hover:-translate-y-1">
+                            <Button onClick={() => setIsPaymentDialogOpen(true)} size="lg" className="w-full sm:w-auto h-11 sm:h-12 md:h-14 rounded-xl sm:rounded-2xl px-4 sm:px-6 md:px-6 font-semibold text-xs sm:text-xs md:text-xs uppercase tracking-wider shadow-sm transition-all hover:-translate-y-1">
                                 <DollarSign className="mr-1 sm:mr-2 h-3 w-3" /> <span className="whitespace-nowrap">Pay</span>
                             </Button>
                         )}
-                        <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 md:h-14 rounded-xl sm:rounded-2xl px-4 sm:px-6 md:px-12 font-black text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest border-2" onClick={handleMessageLandlord}>
+                        <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 md:h-14 rounded-xl sm:rounded-2xl px-4 sm:px-6 md:px-6 font-semibold text-xs sm:text-xs md:text-xs uppercase tracking-wider border" onClick={handleMessageLandlord}>
                             <MessageSquare className="mr-1 sm:mr-2 h-3 w-3" /> <span className="whitespace-nowrap">Contact</span>
                         </Button>
                     </div>
@@ -303,13 +303,13 @@ export default function TenancyDetailPage() {
             {/* Critical Action Alerts */}
             <div className="space-y-4 md:space-y-6 max-w-full">
                 {lease?.status === 'pending' && !lease.tenantSigned && (
-                    <Card className="overflow-hidden border-none bg-amber-500/10 shadow-xl shadow-amber-500/5 backdrop-blur-md text-amber-900 animate-in slide-in-from-top duration-500">
+                    <Card className="overflow-hidden border-none bg-amber-500/10 shadow-sm backdrop-blur-md text-amber-900 animate-in slide-in-from-top duration-500">
                         <CardHeader className="flex flex-row items-center gap-6 p-8">
-                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-xl">
+                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-card shadow-sm">
                                 <Signature className="h-8 w-8 text-amber-600" />
                             </div>
                             <div className="space-y-2">
-                                <CardTitle className="text-2xl font-black tracking-tight text-amber-900">Lease Signature Required</CardTitle>
+                                <CardTitle className="text-2xl font-bold tracking-tight text-amber-900">Lease Signature Required</CardTitle>
                                 <CardDescription className="text-lg font-medium text-amber-700/80 leading-relaxed">
                                     Your lease agreement for <span className="font-bold">{property.title}</span> is ready. Review and sign to activate your full tenancy.
                                 </CardDescription>
@@ -322,13 +322,13 @@ export default function TenancyDetailPage() {
                 )}
 
                 {lease?.status === 'terminating' && (
-                    <Card className="overflow-hidden border-none bg-destructive/10 shadow-xl shadow-destructive/5 backdrop-blur-md text-destructive animate-in slide-in-from-top duration-500">
+                    <Card className="overflow-hidden border-none bg-destructive/10 shadow-sm backdrop-blur-md text-destructive animate-in slide-in-from-top duration-500">
                         <CardHeader className="flex flex-row items-center gap-6 p-8">
-                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-xl">
+                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-card shadow-sm">
                                 <AlertTriangle className="h-8 w-8 text-destructive" />
                             </div>
                             <div className="space-y-2 flex-1">
-                                <CardTitle className="text-2xl font-black tracking-tight">Tenancy Ending Soon</CardTitle>
+                                <CardTitle className="text-2xl font-bold tracking-tight">Tenancy Ending Soon</CardTitle>
                                 <CardDescription className="text-lg font-medium text-destructive/80 leading-relaxed">
                                     A termination process has been initiated. You are entitled to a pro-rated refund of <span className="font-bold">{formatPrice(lease.calculatedRefund || 0, property.currency)}</span>.
                                 </CardDescription>
@@ -341,13 +341,13 @@ export default function TenancyDetailPage() {
                                             Confirm Refund Received & Vacate
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent className="max-w-md rounded-[2rem] border-none shadow-2xl p-8">
+                                    <DialogContent className="max-w-md rounded-3xl border-none shadow-sm p-8">
                                         <DialogHeader className="space-y-4">
                                             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive mx-auto">
                                                 <AlertTriangle className="h-8 w-8" />
                                             </div>
                                             <div className="space-y-2 text-center">
-                                                <DialogTitle className="text-2xl font-black tracking-tight uppercase">Confirm Vacation</DialogTitle>
+                                                <DialogTitle className="text-2xl font-bold tracking-tight">Confirm Vacation</DialogTitle>
                                                 <DialogDescription className="text-base font-medium text-muted-foreground leading-relaxed">
                                                     You are confirming that you have received your pro-rated refund.
                                                     <br /><br />
@@ -376,14 +376,14 @@ export default function TenancyDetailPage() {
 
             <Tabs defaultValue="payments" className="w-full max-w-full space-y-6 md:space-y-10">
                 <div className="w-full max-w-full overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-                    <TabsList className="flex h-12 sm:h-14 md:h-16 w-full md:w-max md:min-w-[700px] gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl md:rounded-[2rem] bg-muted/30 p-1.5 sm:p-2 backdrop-blur-md mx-auto">
-                        <TabsTrigger value="payments" className="flex-1 px-2 sm:px-3 md:px-8 rounded-lg sm:rounded-xl md:rounded-[1.5rem] text-[10px] sm:text-xs md:text-sm font-bold tracking-tight transition-all data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-primary whitespace-nowrap">
+                    <TabsList className="flex h-12 sm:h-14 md:h-16 w-full md:w-max md:min-w-[700px] gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl md:rounded-3xl bg-muted/30 p-1.5 sm:p-2 backdrop-blur-md mx-auto">
+                        <TabsTrigger value="payments" className="flex-1 px-2 sm:px-3 md:px-8 rounded-lg sm:rounded-xl md:rounded-2xl text-xs sm:text-xs md:text-sm font-bold tracking-tight transition-all data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:text-primary whitespace-nowrap">
                             Pay
                         </TabsTrigger>
-                        <TabsTrigger value="lease" className="flex-1 px-2 sm:px-3 md:px-8 rounded-lg sm:rounded-xl md:rounded-[1.5rem] text-[10px] sm:text-xs md:text-sm font-bold tracking-tight transition-all data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-primary whitespace-nowrap">
+                        <TabsTrigger value="lease" className="flex-1 px-2 sm:px-3 md:px-8 rounded-lg sm:rounded-xl md:rounded-2xl text-xs sm:text-xs md:text-sm font-bold tracking-tight transition-all data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:text-primary whitespace-nowrap">
                             Lease
                         </TabsTrigger>
-                        <TabsTrigger value="contact" className="flex-1 px-2 sm:px-3 md:px-8 rounded-lg sm:rounded-xl md:rounded-[1.5rem] text-[10px] sm:text-xs md:text-sm font-bold tracking-tight transition-all data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-primary whitespace-nowrap">
+                        <TabsTrigger value="contact" className="flex-1 px-2 sm:px-3 md:px-8 rounded-lg sm:rounded-xl md:rounded-2xl text-xs sm:text-xs md:text-sm font-bold tracking-tight transition-all data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:text-primary whitespace-nowrap">
                             Info
                         </TabsTrigger>
                     </TabsList>
@@ -392,12 +392,12 @@ export default function TenancyDetailPage() {
                 <TabsContent value="payments" className="space-y-6 md:space-y-10">
                     {/* Payment Cards Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-                        <Card className="group relative overflow-hidden border-none bg-white p-4 sm:p-6 md:p-8 shadow-xl shadow-black/[0.02] transition-all hover:shadow-2xl hover:shadow-primary/5">
+                        <Card className="group relative overflow-hidden border-none bg-card p-4 sm:p-6 md:p-8 shadow-sm transition-all hover:shadow-md">
                             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                             <div className="relative space-y-4">
-                                <p className="text-xs font-black uppercase tracking-widest text-primary/60">Next Payment Due</p>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-primary/60">Next Payment Due</p>
                                 <h3 className={cn(
-                                    "text-2xl sm:text-3xl font-black tracking-tight break-words",
+                                    "text-2xl sm:text-3xl font-bold tracking-tight break-words",
                                     tenancyState?.isRentDue && tenancyState.isLeaseActive ? "text-destructive" : "text-primary"
                                 )}>
                                     {tenancyState?.rentDueDateText || "N/A"}
@@ -406,11 +406,11 @@ export default function TenancyDetailPage() {
                             </div>
                         </Card>
 
-                        <Card className="group relative overflow-hidden border-none bg-white p-4 sm:p-6 md:p-8 shadow-xl shadow-black/[0.02] transition-all hover:shadow-2xl hover:shadow-primary/5">
+                        <Card className="group relative overflow-hidden border-none bg-card p-4 sm:p-6 md:p-8 shadow-sm transition-all hover:shadow-md">
                             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                             <div className="relative space-y-4">
-                                <p className="text-xs font-black uppercase tracking-widest text-primary/60">Lease Overview</p>
-                                <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground break-words">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-primary/60">Lease Overview</p>
+                                <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground break-words">
                                     {tenancyState?.leaseEndDate ? format(tenancyState.leaseEndDate, 'MMMM do, yyyy') : "N/A"}
                                 </h3>
                                 <p className="text-sm sm:text-base md:text-lg font-bold text-muted-foreground/80">Scheduled end of tenancy</p>
@@ -418,11 +418,11 @@ export default function TenancyDetailPage() {
                         </Card>
                     </div>
 
-                    <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
+                    <Card className="overflow-hidden border-none bg-card shadow-sm">
                         <CardHeader className="p-4 sm:p-6 md:p-8 pb-4">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div>
-                                    <CardTitle className="text-2xl font-black tracking-tight">Financial History</CardTitle>
+                                    <CardTitle className="text-2xl font-bold tracking-tight">Financial History</CardTitle>
                                     <CardDescription className="text-base font-medium">Detailed log of all your rental payments and deposits.</CardDescription>
                                 </div>
                                 <Button variant="outline" className="w-full sm:w-auto rounded-2xl font-bold border-muted/50 hover:bg-muted/10 h-12">
@@ -447,10 +447,10 @@ export default function TenancyDetailPage() {
                                             <TableRow key={t.id} className="border-muted/10 hover:bg-muted/5 transition-colors">
                                                 <TableCell className="px-4 lg:px-8 font-bold text-muted-foreground/80">{format(new Date(t.date), 'MMM dd, yyyy')}</TableCell>
                                                 <TableCell className="font-bold">{t.type}</TableCell>
-                                                <TableCell className="text-right font-black text-foreground">{formatPrice(t.amount, t.currency)}</TableCell>
+                                                <TableCell className="text-right font-bold text-foreground">{formatPrice(t.amount, t.currency)}</TableCell>
                                                 <TableCell className="text-center px-4 lg:px-8">
                                                     <Badge className={cn(
-                                                        "rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border-none",
+                                                        "rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-wider border-none",
                                                         t.status === 'Completed' ? "bg-green-500/10 text-green-600"
                                                             : t.status === 'Pending' ? "bg-amber-500/10 text-amber-600"
                                                                 : "bg-destructive/10 text-destructive"
@@ -474,11 +474,11 @@ export default function TenancyDetailPage() {
                                     <div key={t.id} className="p-4 hover:bg-muted/5 transition-colors">
                                         <div className="flex items-start justify-between mb-3">
                                             <div>
-                                                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Date</p>
+                                                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Date</p>
                                                 <p className="font-bold text-sm">{format(new Date(t.date), 'MMM dd, yyyy')}</p>
                                             </div>
                                             <Badge className={cn(
-                                                "rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest border-none",
+                                                "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider border-none",
                                                 t.status === 'Completed' ? "bg-green-500/10 text-green-600"
                                                     : t.status === 'Pending' ? "bg-amber-500/10 text-amber-600"
                                                         : "bg-destructive/10 text-destructive"
@@ -488,12 +488,12 @@ export default function TenancyDetailPage() {
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Type</p>
+                                                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Type</p>
                                                 <p className="font-bold text-sm">{t.type}</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Amount</p>
-                                                <p className="font-black text-sm text-foreground">{formatPrice(t.amount, t.currency)}</p>
+                                                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Amount</p>
+                                                <p className="font-bold text-sm text-foreground">{formatPrice(t.amount, t.currency)}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -506,13 +506,13 @@ export default function TenancyDetailPage() {
                 </TabsContent>
 
                 <TabsContent value="lease" className="space-y-10">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                        <Card className="lg:col-span-2 overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <Card className="lg:col-span-2 overflow-hidden border-none bg-card shadow-sm">
                             <CardHeader className="p-8 border-b border-muted/20 bg-muted/5 relative overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
                                 <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                     <div className="space-y-1">
-                                        <CardTitle className="text-2xl font-black tracking-tight">Lease Agreement</CardTitle>
+                                        <CardTitle className="text-2xl font-bold tracking-tight">Lease Agreement</CardTitle>
                                         <CardDescription className="font-medium">Legally binding terms of your tenancy.</CardDescription>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -547,7 +547,7 @@ export default function TenancyDetailPage() {
                         </Card>
 
                         <div className="space-y-10">
-                            <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
+                            <Card className="overflow-hidden border-none bg-card shadow-sm">
                                 <CardHeader className="p-8">
                                     <CardTitle className="text-xl font-bold tracking-tight">Signatories</CardTitle>
                                 </CardHeader>
@@ -558,7 +558,7 @@ export default function TenancyDetailPage() {
                                         </div>
                                         <div>
                                             <p className="font-bold">Tenant (You)</p>
-                                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{lease?.tenantSigned ? "Signed & Verified" : "Pending Signature"}</p>
+                                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{lease?.tenantSigned ? "Signed & Verified" : "Pending Signature"}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
@@ -567,19 +567,19 @@ export default function TenancyDetailPage() {
                                         </div>
                                         <div>
                                             <p className="font-bold">Landlord</p>
-                                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{lease?.landlordSigned ? "Signed & Verified" : "Pending Signature"}</p>
+                                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{lease?.landlordSigned ? "Signed & Verified" : "Pending Signature"}</p>
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            <Card className="overflow-hidden border-none bg-primary/5 shadow-xl shadow-primary/5">
+                            <Card className="overflow-hidden border-none bg-primary/5 shadow-sm">
                                 <CardContent className="p-8 text-center space-y-6">
-                                    <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-3xl bg-white shadow-xl">
+                                    <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-3xl bg-card shadow-sm">
                                         <FileText className="h-8 w-8 text-primary" />
                                     </div>
                                     <div className="space-y-2">
-                                        <h4 className="font-black text-xl tracking-tight">Need a Change?</h4>
+                                        <h4 className="font-bold text-xl tracking-tight">Need a Change?</h4>
                                         <p className="text-sm font-medium text-muted-foreground/80 leading-relaxed">
                                             &quot;If you need to discuss lease terms or request an amendment, please contact your landlord directly.&quot;
                                         </p>
@@ -595,11 +595,11 @@ export default function TenancyDetailPage() {
 
                 <TabsContent value="contact">
                     {landlord && (
-                        <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02] max-w-4xl mx-auto">
+                        <Card className="overflow-hidden border-none bg-card shadow-sm max-w-4xl mx-auto">
                             <div className="relative h-48 bg-primary overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-br from-black/40 to-transparent" />
                                 <div className="absolute -bottom-12 left-12">
-                                    <Avatar className="h-32 w-32 border-8 border-white shadow-2xl">
+                                    <Avatar className="h-32 w-32 border-8 border-white shadow-sm">
                                         <AvatarImage src={landlord.profileImageUrl} className="object-cover" />
                                         <AvatarFallback className="bg-muted">
                                             <UserIcon className="h-12 w-12 text-muted-foreground" />
@@ -610,26 +610,26 @@ export default function TenancyDetailPage() {
                             <CardContent className="pt-20 px-6 sm:px-12 pb-12">
                                 <div className="space-y-8">
                                     <div className="space-y-2">
-                                        <h2 className="text-3xl sm:text-4xl font-black tracking-tight">{landlord.name}</h2>
+                                        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">{landlord.name}</h2>
                                         <div className="text-lg sm:text-xl font-medium text-muted-foreground flex flex-wrap items-center gap-2">
                                             <Badge variant="secondary" className="rounded-full px-4 py-1 font-bold">Property Landlord</Badge>
                                             Verified Account
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                         <div className="space-y-4">
-                                            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Contact Email</p>
+                                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contact Email</p>
                                             <p className="text-lg font-bold text-foreground">{landlord.email}</p>
                                         </div>
                                         <div className="space-y-4">
-                                            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Communication Policy</p>
+                                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Communication Policy</p>
                                             <p className="text-lg font-bold text-foreground">Standard 24h Response</p>
                                         </div>
                                     </div>
 
                                     <div className="pt-8 border-t border-muted/20">
-                                        <Button size="lg" onClick={handleMessageLandlord} className="w-full sm:w-auto h-16 rounded-2xl px-12 font-black text-xl shadow-2xl shadow-primary/20 transition-all hover:shadow-primary/40 hover:-translate-y-1">
+                                        <Button size="lg" onClick={handleMessageLandlord} className="w-full sm:w-auto h-16 rounded-2xl px-6 font-bold text-xl shadow-sm transition-all hover:-translate-y-1">
                                             <MessageSquare className="mr-3 h-6 w-6" /> Send Message
                                         </Button>
                                     </div>

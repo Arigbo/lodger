@@ -25,7 +25,10 @@ import { Elements } from '@stripe/react-stripe-js';
 import StripeCheckoutForm from '@/components/payments/stripe-checkout-form';
 import { authHeaders } from "@/lib/api-client";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+// Loaded lazily, and only when card payments are configured.
+const STRIPE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+let stripePromise: ReturnType<typeof loadStripe> | null = null;
+const getStripe = () => (STRIPE_KEY ? (stripePromise ??= loadStripe(STRIPE_KEY)) : null);
 
 interface PaymentDialogProps {
   isOpen: boolean;
@@ -99,6 +102,14 @@ export default function PaymentDialog({
   };
 
   const initStripePayment = async () => {
+    if (!STRIPE_KEY) {
+      toast({
+        variant: 'destructive',
+        title: "Card payments unavailable",
+        description: "Online card payments aren't set up yet. Please choose bank transfer instead.",
+      });
+      return;
+    }
     setIsProcessing(true);
     try {
       const response = await fetch('/api/create-payment-intent', {
@@ -188,19 +199,19 @@ export default function PaymentDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-xl w-[95vw] p-0 border-none bg-white/80 backdrop-blur-2xl shadow-3xl rounded-[2.5rem] overflow-visible">
+      <DialogContent className="sm:max-w-xl w-[95vw] p-0 border-none bg-white/80 backdrop-blur-2xl shadow-sm rounded-3xl overflow-visible">
         <div className="flex flex-col">
           {/* Progress Header */}
           <div className="relative h-24 bg-primary p-6 flex items-center justify-between rounded-t-[2.5rem]">
             <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent" />
             <div className="relative z-10">
-              <DialogTitle className="text-xl font-black tracking-tight text-white flex items-center gap-3">
+              <DialogTitle className="text-xl font-bold tracking-tight text-white flex items-center gap-3">
                 <CreditCard className="h-6 w-6" /> Payment Process
               </DialogTitle>
               <div className="flex items-center gap-2 mt-1">
-                <div className={cn("h-1 w-8 rounded-full transition-colors", step >= 1 ? "bg-white" : "bg-white/20")} />
-                <div className={cn("h-1 w-8 rounded-full transition-colors", step >= 2 ? "bg-white" : "bg-white/20")} />
-                <div className={cn("h-1 w-8 rounded-full transition-colors", step >= 3 ? "bg-white" : "bg-white/20")} />
+                <div className={cn("h-1 w-8 rounded-full transition-colors", step >= 1 ? "bg-card" : "bg-white/20")} />
+                <div className={cn("h-1 w-8 rounded-full transition-colors", step >= 2 ? "bg-card" : "bg-white/20")} />
+                <div className={cn("h-1 w-8 rounded-full transition-colors", step >= 3 ? "bg-card" : "bg-white/20")} />
               </div>
             </div>
             <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md">
@@ -213,18 +224,18 @@ export default function PaymentDialog({
             {step === 1 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="space-y-2">
-                  <h3 className="text-2xl font-black tracking-tight">Select Duration</h3>
+                  <h3 className="text-2xl font-bold tracking-tight">Select Duration</h3>
                   <p className="text-sm font-medium text-muted-foreground">How many months of rent are you paying today?</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <Label htmlFor="months" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Months</Label>
+                    <Label htmlFor="months" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Months</Label>
                     <Select value={months.toString()} onValueChange={(val) => setMonths(parseInt(val))}>
-                      <SelectTrigger id="months" className="h-16 rounded-2xl border-muted/20 bg-muted/5 font-bold text-xl px-6 focus:ring-primary/20">
+                      <SelectTrigger id="months" className="h-11 rounded-2xl border-muted/20 bg-muted/5 font-bold text-xl px-6 focus:ring-primary/20">
                         <SelectValue placeholder="Months" />
                       </SelectTrigger>
-                      <SelectContent className="rounded-2xl border-none shadow-2xl">
+                      <SelectContent className="rounded-2xl border-none shadow-sm">
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
                           <SelectItem key={m} value={m.toString()} className="h-12 rounded-xl font-bold">
                             {m} {m === 1 ? 'Month' : 'Months'}
@@ -234,15 +245,15 @@ export default function PaymentDialog({
                     </Select>
                   </div>
                   <div className="p-6 rounded-3xl bg-primary/5 flex flex-col justify-center gap-1 border border-primary/10">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-primary/60">Total Amount</p>
-                    <p className="text-3xl font-black tracking-tighter text-primary">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-primary/60">Total Amount</p>
+                    <p className="text-3xl font-bold tracking-tight text-primary">
                       {formatPrice(totalAmount, currency)}
                     </p>
-                    <p className="text-[10px] font-bold text-muted-foreground/60 uppercase">{months} x {formatPrice(amount, currency)}</p>
+                    <p className="text-xs font-bold text-muted-foreground/60 uppercase">{months} x {formatPrice(amount, currency)}</p>
                   </div>
                 </div>
 
-                <Button onClick={() => setStep(2)} className="w-full h-16 rounded-2xl font-black text-xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02]">
+                <Button onClick={() => setStep(2)} className="w-full h-16 rounded-2xl font-bold text-xl shadow-sm transition-all hover:scale-[1.02]">
                   Next Step
                 </Button>
               </div>
@@ -252,7 +263,7 @@ export default function PaymentDialog({
             {step === 2 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                 <div className="space-y-2">
-                  <h3 className="text-2xl font-black tracking-tight">Payment Method</h3>
+                  <h3 className="text-2xl font-bold tracking-tight">Payment Method</h3>
                   <p className="text-sm font-medium text-muted-foreground">Choose your preferred way to pay.</p>
                 </div>
 
@@ -264,7 +275,7 @@ export default function PaymentDialog({
                         initStripePayment();
                       }}
                       disabled={isProcessing}
-                      className="flex items-center justify-between p-6 rounded-3xl border-2 border-muted/10 hover:border-primary hover:bg-primary/5 transition-all text-left group disabled:opacity-50"
+                      className="flex items-center justify-between p-6 rounded-3xl border border-muted/10 hover:border-primary hover:bg-primary/5 transition-all text-left group disabled:opacity-50"
                     >
                       <div className="flex items-center gap-4">
                         <div className="h-12 w-12 rounded-2xl bg-muted/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
@@ -276,7 +287,7 @@ export default function PaymentDialog({
                         </div>
                       </div>
                       {isProcessing && paymentMethod === 'Stripe' ? (
-                        <div className="h-5 w-5 border-2 border-primary border-t-transparent animate-spin rounded-full" />
+                        <div className="h-5 w-5 border border-primary border-t-transparent animate-spin rounded-full" />
                       ) : (
                         <CheckCircle className="h-6 w-6 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
                       )}
@@ -288,7 +299,7 @@ export default function PaymentDialog({
                       setPaymentMethod('Offline');
                       setStep(3);
                     }}
-                    className="flex items-center justify-between p-6 rounded-3xl border-2 border-muted/10 hover:border-primary hover:bg-primary/5 transition-all text-left group"
+                    className="flex items-center justify-between p-6 rounded-3xl border border-muted/10 hover:border-primary hover:bg-primary/5 transition-all text-left group"
                   >
                     <div className="flex items-center gap-4">
                       <div className="h-12 w-12 rounded-2xl bg-muted/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
@@ -315,11 +326,11 @@ export default function PaymentDialog({
                 {paymentMethod === 'Offline' ? (
                   <>
                     <div className="space-y-2">
-                      <h3 className="text-2xl font-black tracking-tight">Offline Payment</h3>
+                      <h3 className="text-2xl font-bold tracking-tight">Offline Payment</h3>
                       <p className="text-sm font-medium text-muted-foreground">Follow these steps to complete your offline transaction.</p>
                     </div>
 
-                    <div className="p-8 rounded-[2rem] bg-primary/5 space-y-6 border border-primary/10 text-center">
+                    <div className="p-8 rounded-3xl bg-primary/5 space-y-6 border border-primary/10 text-center">
                       <div className="relative inline-block">
                         <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-150" />
                         <Building className="h-12 w-12 text-primary relative" />
@@ -342,7 +353,7 @@ export default function PaymentDialog({
                       <Button
                         onClick={handleOfflinePayment}
                         disabled={isProcessing}
-                        className="w-full h-16 rounded-2xl font-black text-xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02]"
+                        className="w-full h-16 rounded-2xl font-bold text-xl shadow-sm transition-all hover:scale-[1.02]"
                       >
                         {isProcessing ? "Submitting..." : "I Have Paid"}
                       </Button>
@@ -354,13 +365,13 @@ export default function PaymentDialog({
                 ) : (
                   <>
                     <div className="space-y-2">
-                      <h3 className="text-2xl font-black tracking-tight">Card Payment</h3>
+                      <h3 className="text-2xl font-bold tracking-tight">Card Payment</h3>
                       <p className="text-sm font-medium text-muted-foreground">Enter your card details to complete the payment.</p>
                     </div>
 
                     <div className="p-1">
                       {clientSecret && (
-                        <Elements stripe={stripePromise} options={{ clientSecret }}>
+                        <Elements stripe={getStripe()} options={{ clientSecret }}>
                           <StripeCheckoutForm
                             amount={totalAmount}
                             currency={currency}
@@ -383,17 +394,17 @@ export default function PaymentDialog({
               <div className="flex flex-col items-center justify-center py-12 text-center space-y-8 animate-in zoom-in-95 duration-500">
                 <div className="relative">
                   <div className="absolute inset-0 bg-green-500/20 blur-3xl rounded-full scale-150 animate-pulse" />
-                  <div className="relative flex h-24 w-24 items-center justify-center rounded-[2rem] bg-green-500 shadow-2xl shadow-green-500/40">
+                  <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-green-500 shadow-sm">
                     <CheckCircle className="h-12 w-12 text-white" />
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <h3 className="text-4xl font-black tracking-tight">Payment Submitted!</h3>
+                  <h3 className="text-4xl font-bold tracking-tight">Payment Submitted!</h3>
                   <p className="text-lg font-medium text-muted-foreground/80 leading-relaxed max-w-sm mx-auto">
-                    Your request for <span className="text-primary font-black">{formatPrice(totalAmount, currency)}</span> is awaiting verification.
+                    Your request for <span className="text-primary font-bold">{formatPrice(totalAmount, currency)}</span> is awaiting verification.
                   </p>
                 </div>
-                <Button onClick={handleFinish} className="w-full h-16 rounded-2xl font-black text-xl shadow-xl shadow-primary/20 transition-all hover:-translate-y-1">
+                <Button onClick={handleFinish} className="w-full h-16 rounded-2xl font-bold text-xl shadow-sm transition-all hover:-translate-y-1">
                   Done
                 </Button>
               </div>

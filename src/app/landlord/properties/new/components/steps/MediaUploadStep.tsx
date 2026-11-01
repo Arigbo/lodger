@@ -21,15 +21,15 @@ export const MediaUploadStep = ({ form, imageAnalysis, setImageAnalysis }: Media
             className="space-y-10 md:space-y-14"
         >
             <div className="space-y-2">
-                <h2 className="text-xl md:text-3xl font-black uppercase tracking-tighter text-foreground">
-                    Visual <span className="text-primary">Narrative</span>
+                <h2 className="text-xl md:text-3xl font-bold tracking-tight text-foreground">
+                    Photos & video
                 </h2>
-                <p className="text-[10px] md:text-xs font-bold text-muted-foreground/60 uppercase tracking-widest leading-relaxed">
-                    Upload high-quality media to provide a comprehensive tour of your property.
+                <p className="text-xs md:text-xs font-bold text-muted-foreground/60 uppercase tracking-wider leading-relaxed">
+                    Clear, well-lit photos of each room help your listing stand out.
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-8">
                 <FileUpload
                     icon={Utensils}
                     label="Kitchen"

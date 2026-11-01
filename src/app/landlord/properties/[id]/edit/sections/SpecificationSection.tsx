@@ -24,7 +24,7 @@ export const SpecificationSection: React.FC<SpecificationSectionProps> = ({
         <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
           <Building className="h-5 w-5 md:h-6 md:w-6" />
         </div>
-        <h3 className="font-headline text-xl md:text-3xl font-black uppercase tracking-tighter">
+        <h3 className="font-headline text-xl md:text-3xl font-bold tracking-tight">
           Details
         </h3>
       </div>
@@ -35,7 +35,7 @@ export const SpecificationSection: React.FC<SpecificationSectionProps> = ({
           name="bedrooms"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
                 Bedrooms
               </FormLabel>
               <FormControl>
@@ -43,7 +43,7 @@ export const SpecificationSection: React.FC<SpecificationSectionProps> = ({
                   type="number"
                   placeholder="2"
                   {...field}
-                  className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest"
+                  className="h-16 rounded-2xl bg-muted/20 border border-transparent focus-visible:border-primary/20 text-xs font-semibold uppercase tracking-wider"
                 />
               </FormControl>
               <FormMessage />
@@ -55,7 +55,7 @@ export const SpecificationSection: React.FC<SpecificationSectionProps> = ({
           name="bathrooms"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
                 Bathrooms
               </FormLabel>
               <FormControl>
@@ -63,7 +63,7 @@ export const SpecificationSection: React.FC<SpecificationSectionProps> = ({
                   type="number"
                   placeholder="1"
                   {...field}
-                  className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest"
+                  className="h-16 rounded-2xl bg-muted/20 border border-transparent focus-visible:border-primary/20 text-xs font-semibold uppercase tracking-wider"
                 />
               </FormControl>
               <FormMessage />
@@ -75,7 +75,7 @@ export const SpecificationSection: React.FC<SpecificationSectionProps> = ({
           name="area"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
                 Total Area (SQFT)
               </FormLabel>
               <FormControl>
@@ -83,7 +83,7 @@ export const SpecificationSection: React.FC<SpecificationSectionProps> = ({
                   type="number"
                   placeholder="1000"
                   {...field}
-                  className="h-16 rounded-2xl bg-muted/20 border-2 border-transparent focus-visible:border-primary/20 text-xs font-black uppercase tracking-widest"
+                  className="h-16 rounded-2xl bg-muted/20 border border-transparent focus-visible:border-primary/20 text-xs font-semibold uppercase tracking-wider"
                 />
               </FormControl>
               <FormMessage />

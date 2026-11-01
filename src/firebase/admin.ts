@@ -39,6 +39,13 @@ function initializeAdmin() {
     }
 
     try {
+        // Local emulators need no credentials (set by `npm run dev:emulators`).
+        if (process.env.FIRESTORE_EMULATOR_HOST) {
+            admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-lodger' });
+            initialized = true;
+            return;
+        }
+
         // Try the JSON blob first
         const serviceAccountVar = process.env.FIREBASE_SERVICE_ACCOUNT;
         if (serviceAccountVar) {

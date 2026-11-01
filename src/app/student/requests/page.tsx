@@ -44,6 +44,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { PageHeader } from "@/components/dashboard";
 
 type AggregatedRequest = {
   request: RentalApplication;
@@ -194,17 +195,10 @@ export default function StudentRequestsPage() {
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700">
-      <div className="space-y-2">
-        <h1 className="font-headline text-4xl font-black tracking-tight text-foreground underline decoration-primary/20 underline-offset-8 uppercase">
-          Rental Requests
-        </h1>
-        <p className="text-lg text-muted-foreground font-medium">
-          &quot;Track your active rental applications and inquiries.&quot;
-        </p>
-      </div>
+      <PageHeader title="My requests" description="Track the rental requests you've sent to landlords." />
 
       {aggregatedRequests.length > 0 ? (
-        <Card className="overflow-hidden border-2 border-foreground/5 bg-white shadow-xl rounded-[2.5rem]">
+        <Card className="overflow-hidden border border-foreground/5 bg-card shadow-sm rounded-3xl">
           <div className="hidden md:block overflow-x-auto">
             <Table>
               <TableHeader>
@@ -218,7 +212,7 @@ export default function StudentRequestsPage() {
               </TableHeader>
               <TableBody>
                 {aggregatedRequests.map(({ request, landlord, property }) => (
-                  <TableRow key={request.id} className="border-muted/10 hover:bg-muted/5 transition-colors text-[10px] sm:text-xs md:text-sm">
+                  <TableRow key={request.id} className="border-muted/10 hover:bg-muted/5 transition-colors text-xs sm:text-xs md:text-sm">
                     <TableCell className="px-8 font-bold">
                       <Link href={`/student/properties/${property?.id}`} className="hover:text-primary transition-colors whitespace-nowrap">
                         {property?.title || 'Unknown Property'}
@@ -230,7 +224,7 @@ export default function StudentRequestsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge className={cn(
-                        "rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border-none",
+                        "rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-wider border-none",
                         request.status === 'approved' ? "bg-green-500/10 text-green-600" :
                           request.status === 'declined' ? "bg-red-500/10 text-red-600" :
                             "bg-primary/10 text-primary"
@@ -278,15 +272,15 @@ export default function StudentRequestsPage() {
               <div key={request.id} className="p-6 space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <Link href={`/student/properties/${property?.id}`} className="font-black text-sm uppercase tracking-tight hover:text-primary transition-colors block mb-1">
+                    <Link href={`/student/properties/${property?.id}`} className="font-bold text-sm uppercase tracking-tight hover:text-primary transition-colors block mb-1">
                       {property?.title || 'Unknown Property'}
                     </Link>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Applied: {new Date(request.applicationDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </p>
                   </div>
                   <Badge className={cn(
-                    "rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border-none",
+                    "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider border-none",
                     request.status === 'approved' ? "bg-green-500/10 text-green-600" :
                       request.status === 'declined' ? "bg-red-500/10 text-red-600" :
                         "bg-primary/10 text-primary"
@@ -296,7 +290,7 @@ export default function StudentRequestsPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-muted/20 flex items-center justify-center text-[10px] font-black uppercase">
+                  <div className="h-8 w-8 rounded-lg bg-muted/20 flex items-center justify-center text-xs font-semibold uppercase">
                     {landlord?.name?.[0] || 'L'}
                   </div>
                   <p className="text-xs font-medium text-muted-foreground">{landlord?.name || 'Unknown Landlord'}</p>
@@ -304,14 +298,14 @@ export default function StudentRequestsPage() {
 
                 <div className="flex gap-2 pt-2">
                   {request.status === 'approved' ? (
-                    <Button size="sm" className="flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest h-10" asChild>
+                    <Button size="sm" className="flex-1 rounded-xl font-semibold text-xs uppercase tracking-wider h-10" asChild>
                       <Link href="/student/leases">View Lease</Link>
                     </Button>
                   ) : request.status === 'pending' ? (
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 rounded-xl font-black text-[9px] uppercase tracking-widest h-10 border-2"
+                      className="flex-1 rounded-xl font-semibold text-xs uppercase tracking-wider h-10 border"
                       onClick={() => {
                         setRequestToEdit(request);
                         setEditMessage(request.messageToLandlord || '');
@@ -323,7 +317,7 @@ export default function StudentRequestsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="rounded-xl font-black text-[9px] uppercase tracking-widest text-red-500 h-10 px-4"
+                    className="rounded-xl font-semibold text-xs uppercase tracking-wider text-red-500 h-10 px-4"
                     onClick={() => setRequestToDelete(request.id)}
                   >
                     {request.status === 'pending' ? 'Withdraw' : 'Clear'}
@@ -334,15 +328,15 @@ export default function StudentRequestsPage() {
           </div>
         </Card>
       ) : (
-        <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
+        <Card className="overflow-hidden border-none bg-card shadow-sm">
           <CardContent className="flex flex-col items-center justify-center py-24 text-center">
             <div className="relative mb-8">
               <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150" />
-              <div className="relative flex h-24 w-24 items-center justify-center rounded-[2rem] bg-muted/30">
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-muted/30">
                 <Search className="h-10 w-10 text-primary opacity-20" />
               </div>
             </div>
-            <h2 className="text-2xl font-black tracking-tight">No Active Requests</h2>
+            <h2 className="text-2xl font-bold tracking-tight">No Active Requests</h2>
             <p className="mx-auto mt-2 max-w-sm text-muted-foreground font-medium">
               You haven&apos;t submitted any rental applications yet.
             </p>
@@ -354,17 +348,17 @@ export default function StudentRequestsPage() {
       )}
 
       <AlertDialog open={!!requestToDelete} onOpenChange={(open) => !open && setRequestToDelete(null)}>
-        <AlertDialogContent className="w-[95vw] sm:max-w-md rounded-[2.5rem] border-none shadow-3xl p-10">
+        <AlertDialogContent className="w-[95vw] sm:max-w-md rounded-3xl border-none shadow-sm p-6">
           <AlertDialogHeader className="space-y-4">
-            <AlertDialogTitle className="text-3xl font-black">Archive Inquiry?</AlertDialogTitle>
+            <AlertDialogTitle className="text-3xl font-bold">Withdraw this request?</AlertDialogTitle>
             <AlertDialogDescription className="text-lg font-medium text-muted-foreground">
               Are you sure you want to withdraw this application? This action cannot be reversed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-4 mt-8">
-            <AlertDialogCancel className="h-14 rounded-2xl border-2 font-black text-xs uppercase tracking-widest">RETAIN</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteRequest} className="h-14 rounded-2xl bg-red-500 text-white hover:bg-red-600 font-black text-xs uppercase tracking-widest shadow-xl shadow-red-500/20">
-              WITHDRAW APPLICATION
+            <AlertDialogCancel className="h-14 rounded-2xl border font-semibold text-xs uppercase tracking-wider">Keep request</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteRequest} className="h-14 rounded-2xl bg-red-500 text-white hover:bg-red-600 font-semibold text-xs uppercase tracking-wider shadow-sm">
+              Withdraw application
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -372,25 +366,25 @@ export default function StudentRequestsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={!!requestToEdit} onOpenChange={(open) => !open && setRequestToEdit(null)}>
-        <DialogContent className="sm:max-w-md w-[95vw] rounded-[2.5rem] border-none shadow-3xl p-10">
+        <DialogContent className="sm:max-w-md w-[95vw] rounded-3xl border-none shadow-sm p-6">
           <DialogHeader className="space-y-4">
-            <DialogTitle className="text-3xl font-black">Edit Application</DialogTitle>
+            <DialogTitle className="text-3xl font-bold">Edit Application</DialogTitle>
             <DialogDescription className="text-lg font-medium text-muted-foreground">
               Update your message to the landlord.
             </DialogDescription>
           </DialogHeader>
           <div className="py-8 space-y-3">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 ml-1">MESSAGE</label>
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40 ml-1">Message</label>
             <Textarea
               value={editMessage}
               onChange={(e) => setEditMessage(e.target.value)}
               placeholder="Introduce yourself and explain why you're a good fit..."
-              className="min-h-[200px] rounded-[2rem] border-2 bg-muted/5 focus:bg-white transition-all p-6 text-lg font-medium leading-relaxed"
+              className="min-h-[200px] rounded-3xl border bg-muted/5 focus:bg-card transition-all p-6 text-lg font-medium leading-relaxed"
             />
           </div>
           <DialogFooter className="gap-4">
-            <Button variant="ghost" className="h-14 rounded-2xl font-black text-xs uppercase tracking-widest" onClick={() => setRequestToEdit(null)}>CANCEL</Button>
-            <Button onClick={handleUpdateRequest} className="h-14 rounded-2xl px-10 font-black text-xs uppercase tracking-widest shadow-2xl shadow-primary/20">SAVE CHANGES</Button>
+            <Button variant="ghost" className="h-14 rounded-2xl font-semibold text-xs uppercase tracking-wider" onClick={() => setRequestToEdit(null)}>Cancel</Button>
+            <Button onClick={handleUpdateRequest} className="h-11 rounded-2xl px-6 font-semibold text-xs uppercase tracking-wider shadow-sm">Save changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

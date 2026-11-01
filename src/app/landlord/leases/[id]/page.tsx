@@ -17,6 +17,8 @@ import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import type { LeaseAgreement, UserProfile as User, Property } from '@/types';
 import Loading from '@/app/loading';
+import { EmptyState } from "@/components/dashboard";
+import { FileX } from "lucide-react";
 
 
 export default function ViewLandlordLeasePage() {
@@ -86,47 +88,18 @@ export default function ViewLandlordLeasePage() {
 
     // After main lease and user are loaded, check if they exist or if match fails
     if (!lease || !currentUser || currentUser.uid !== lease.landlordId) {
-        console.warn("Landlord Lease not found or access denied", {
-            leaseId: id,
-            leaseExists: !!lease,
-            currentUserId: currentUser?.uid,
-            leaseLandlordId: lease?.landlordId
-        });
-
         return (
-            <div className="container mx-auto max-w-2xl py-20 px-4 text-center">
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-8">
-                    <h1 className="text-2xl font-bold text-destructive mb-4">Unable to Load Lease</h1>
-                    <p className="mb-6 text-muted-foreground">
-                        We couldn't display this lease agreement. Here is the diagnostic info to help us fix it:
-                    </p>
-                    <div className="text-left bg-black/80 text-green-400 p-4 rounded-md font-mono text-xs overflow-auto mb-6">
-                        <p>Lease ID in URL: {id}</p>
-                        <p>Lease Document Found: {lease ? "YES" : "NO"}</p>
-                        <p>User Logged In: {currentUser ? "YES" : "NO"}</p>
-                        {currentUser && lease && (
-                            <>
-                                <p>Your User ID: {currentUser.uid}</p>
-                                <p>Lease Landlord ID: {lease.landlordId || "MISSING"}</p>
-                                <p>Match: {currentUser.uid === lease.landlordId ? "YES" : "FAIL"}</p>
-                            </>
-                        )}
-                        {lease && !lease.landlordId && <p className="mt-2 text-red-500 font-bold">CRITICAL: This lease agreement document has no landlordId field!</p>}
-                        {!lease && <p className="mt-2 text-amber-400">Note: If Found is NO, the ID might be wrong or the document was deleted. Database collection checked: 'leaseAgreements'</p>}
-                        {lease && currentUser && lease.landlordId && currentUser.uid !== lease.landlordId && (
-                            <p className="mt-2 text-amber-400">Note: Match is FAIL, which means you are logged in but don't own this lease.</p>
-                        )}
-                    </div>
-                    <div className="flex justify-center gap-4">
-                        <Button asChild variant="outline" className="rounded-xl">
-                            <Link href="/landlord/leases">Return to Leases</Link>
-                        </Button>
-                        <Button variant="default" className="rounded-xl" onClick={() => window.location.reload()}>
-                            Retry / Force Refresh
-                        </Button>
-                    </div>
-                </div>
-            </div>
+            <EmptyState
+                className="mx-auto mt-10 max-w-xl"
+                icon={FileX}
+                title="We couldn't open this lease"
+                description="It may have been removed, or it belongs to a different account."
+                action={
+                    <Button asChild variant="outline" className="rounded-xl">
+                        <Link href="/landlord/leases">Back to leases</Link>
+                    </Button>
+                }
+            />
         );
     }
 
@@ -153,7 +126,7 @@ export default function ViewLandlordLeasePage() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto space-y-12 pb-32 animate-in fade-in duration-700">
+        <div className="max-w-5xl mx-auto space-y-8 pb-8 animate-in fade-in duration-700">
             <style jsx global>{`
                 @media print {
                     @page { margin: 2cm; }
@@ -173,58 +146,58 @@ export default function ViewLandlordLeasePage() {
             `}</style>
 
             {/* Premium Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b-4 border-foreground/5">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b border-foreground/5">
                 <div className="space-y-4">
                     <div className="flex items-center gap-3">
                         <div className={cn(
-                            "p-2 rounded-xl bg-white shadow-lg border-2",
+                            "p-2 rounded-xl bg-card shadow-lg border",
                             lease.status === 'active' ? "border-green-500/20" :
                                 lease.status === 'pending' ? "border-primary/20" : "border-muted/20"
                         )}>
                             {getStatusIcon(lease.status)}
                         </div>
-                        <Badge variant={getStatusVariant(lease.status)} className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                        <Badge variant={getStatusVariant(lease.status)} className="px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
                             {lease.status}
                         </Badge>
                     </div>
-                    <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight text-foreground uppercase">
-                        LEASE AGREEMENT
+                    <h1 className="font-headline text-4xl md:text-3xl font-bold tracking-tight text-foreground">
+                        Lease agreement
                     </h1>
                     <p className="text-lg text-muted-foreground font-medium">
-                        Digital Contract for <Link href={`/landlord/properties/${property?.id}`} className="text-primary hover:underline">#{property?.title}</Link>
+                        For <Link href={`/landlord/properties/${property?.id}`} className="text-primary hover:underline">{property?.title}</Link>
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                    <Button variant="outline" className="h-14 rounded-2xl px-6 font-black text-xs uppercase tracking-widest gap-2 bg-white hover:bg-muted/50 transition-all border-2" onClick={() => window.print()}>
-                        <Printer className="h-4 w-4" /> PRINT
+                    <Button variant="outline" className="h-11 rounded-2xl px-6 font-semibold text-xs uppercase tracking-wider gap-2 bg-card hover:bg-muted/50 transition-all border" onClick={() => window.print()}>
+                        <Printer className="h-4 w-4" /> Print
                     </Button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main Content: The Document */}
                 <div className="lg:col-span-2 space-y-10">
                     <div className="relative group">
                         {/* Decorative Background for "Paper" effect */}
-                        <div className="absolute inset-0 bg-muted/20 -rotate-1 rounded-[3rem] -z-10 transition-transform group-hover:rotate-0" />
-                        <div className="absolute inset-0 bg-primary/5 rotate-1 rounded-[3rem] -z-10 transition-transform group-hover:rotate-0" />
+                        <div className="absolute inset-0 bg-muted/20 -rotate-1 rounded-3xl -z-10 transition-transform group-hover:rotate-0" />
+                        <div className="absolute inset-0 bg-primary/5 rotate-1 rounded-3xl -z-10 transition-transform group-hover:rotate-0" />
 
-                        <div className="relative bg-white border-2 border-foreground/5 shadow-2xl rounded-[3rem] p-8 md:p-12 min-h-[600px] flex flex-col">
+                        <div className="relative bg-card border border-foreground/5 shadow-sm rounded-3xl p-8 md:p-8 min-h-[600px] flex flex-col">
                             <div className="flex justify-between items-start mb-12">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">DOCUMENT ID</p>
-                                    <p className="font-mono text-[10px] opacity-60">#{lease.id.toUpperCase()}</p>
+                                    <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider">Document ID</p>
+                                    <p className="font-mono text-xs opacity-60">#{lease.id.toUpperCase()}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">ISSUE DATE</p>
+                                    <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider">Issue date</p>
                                     <p className="font-bold text-sm">{format(new Date(lease.startDate), 'MMMM dd, yyyy')}</p>
                                 </div>
                             </div>
 
                             <Separator className="mb-10 opacity-10" />
 
-                            <h2 className="text-xl font-black uppercase tracking-widest mb-8 text-center decoration-primary/20 underline underline-offset-8 decoration-4">
-                                CONTRACTUAL TERMS & CONDITIONS
+                            <h2 className="text-xl font-bold tracking-wider mb-8 text-center decoration-primary/20 underline underline-offset-8 decoration-4">
+                                Contractual terms & conditions
                             </h2>
 
                             <div id="lease-document" className="prose prose-sm md:prose-base max-w-none whitespace-pre-wrap leading-relaxed text-foreground/80 flex-grow">
@@ -234,19 +207,19 @@ export default function ViewLandlordLeasePage() {
                             <Separator className="my-12 opacity-10" />
 
                             {/* Formal Signature Section */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-auto pt-8 border-t-2 border-dotted border-muted/30">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-auto pt-8 border-t-2 border-dotted border-muted/30">
                                 <div className="space-y-4">
-                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest">LANDLORD SIGNATURE</p>
-                                    <div className="h-24 bg-muted/10 rounded-3xl border-2 border-dashed border-muted/30 flex items-center justify-center relative overflow-hidden">
+                                    <p className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider">Landlord signature</p>
+                                    <div className="h-24 bg-muted/10 rounded-3xl border border-dashed border-muted/30 flex items-center justify-center relative overflow-hidden">
                                         {lease.landlordSigned ? (
                                             <div className="text-center animate-in zoom-in duration-500">
                                                 <p className="text-2xl text-primary font-bold opacity-80 -rotate-3">{landlord?.name}</p>
-                                                <Badge variant="secondary" className="mt-2 text-[9px] font-black uppercase tracking-tighter bg-green-500/10 text-green-600 border-none">VERIFIED SIGNATURE</Badge>
+                                                <Badge variant="secondary" className="mt-2 text-xs font-semibold uppercase tracking-tight bg-green-500/10 text-green-600 border-none">Verified signature</Badge>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center gap-1 opacity-20">
                                                 <Hourglass className="h-6 w-6" />
-                                                <p className="text-[8px] font-black uppercase tracking-widest">AWAITING EXECUTION</p>
+                                                <p className="text-xs font-semibold uppercase tracking-wider">Awaiting signature</p>
                                             </div>
                                         )}
                                     </div>
@@ -254,17 +227,17 @@ export default function ViewLandlordLeasePage() {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest">TENANT SIGNATURE</p>
-                                    <div className="h-24 bg-muted/10 rounded-3xl border-2 border-dashed border-muted/30 flex items-center justify-center relative overflow-hidden">
+                                    <p className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider">Tenant signature</p>
+                                    <div className="h-24 bg-muted/10 rounded-3xl border border-dashed border-muted/30 flex items-center justify-center relative overflow-hidden">
                                         {lease.tenantSigned ? (
                                             <div className="text-center animate-in zoom-in duration-500">
                                                 <p className="text-2xl text-primary font-bold opacity-80 -rotate-3">{tenant?.name}</p>
-                                                <Badge variant="secondary" className="mt-2 text-[9px] font-black uppercase tracking-tighter bg-green-500/10 text-green-600 border-none">VERIFIED SIGNATURE</Badge>
+                                                <Badge variant="secondary" className="mt-2 text-xs font-semibold uppercase tracking-tight bg-green-500/10 text-green-600 border-none">Verified signature</Badge>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center gap-1 opacity-20">
                                                 <Hourglass className="h-6 w-6" />
-                                                <p className="text-[8px] font-black uppercase tracking-widest">PENDING APPROVAL</p>
+                                                <p className="text-xs font-semibold uppercase tracking-wider">Pending approval</p>
                                             </div>
                                         )}
                                     </div>
@@ -278,18 +251,18 @@ export default function ViewLandlordLeasePage() {
                 {/* Sidebar: Metadata & Actions */}
                 <div className="space-y-10">
                     {/* Metadata Card */}
-                    <Card className="rounded-[2.5rem] border-2 border-foreground/5 shadow-xl bg-white overflow-hidden">
+                    <Card className="rounded-3xl border border-foreground/5 shadow-sm bg-card overflow-hidden">
                         <CardHeader className="bg-primary/5 border-b-2 border-primary/10">
-                            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                                <CheckCircle2 className="h-4 w-4" /> CONTRACT METRICS
+                            <CardTitle className="text-xs font-semibold uppercase tracking-wider flex items-center gap-2">
+                                <CheckCircle2 className="h-4 w-4" /> Lease details
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-8 space-y-8">
                             <div className="space-y-6">
                                 <div className="flex justify-between items-center group">
                                     <div>
-                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">RENTAL ASSET</p>
-                                        <p className="font-black text-sm uppercase group-hover:text-primary transition-colors truncate max-w-[150px]">{property?.title}</p>
+                                        <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Property</p>
+                                        <p className="font-bold text-sm uppercase group-hover:text-primary transition-colors truncate max-w-[150px]">{property?.title}</p>
                                     </div>
                                     <div className="h-10 w-10 rounded-xl bg-muted/20 flex items-center justify-center">
                                         <Building className="h-5 w-5 opacity-20" />
@@ -297,8 +270,8 @@ export default function ViewLandlordLeasePage() {
                                 </div>
                                 <div className="flex justify-between items-center group">
                                     <div>
-                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">TERM DURATION</p>
-                                        <p className="font-black text-sm uppercase truncate max-w-[150px]">
+                                        <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Term duration</p>
+                                        <p className="font-bold text-sm uppercase truncate max-w-[150px]">
                                             {format(new Date(lease.startDate), 'MMM yy')} - {format(new Date(lease.endDate), 'MMM yy')}
                                         </p>
                                     </div>
@@ -308,8 +281,8 @@ export default function ViewLandlordLeasePage() {
                                 </div>
                                 <div className="flex justify-between items-center group">
                                     <div>
-                                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">MONTHLY RATE</p>
-                                        <p className="font-black text-2xl text-primary">{formatPrice(property?.price || 0, property?.currency)}</p>
+                                        <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Monthly rate</p>
+                                        <p className="font-bold text-2xl text-primary">{formatPrice(property?.price || 0, property?.currency)}</p>
                                     </div>
                                     <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center">
                                         <DollarSign className="h-5 w-5 text-green-600" />
@@ -321,25 +294,25 @@ export default function ViewLandlordLeasePage() {
 
                     {/* Action Card: Sign */}
                     {lease.status === 'pending' && !lease.landlordSigned && (
-                        <div className="relative group overflow-hidden rounded-[2.5rem] bg-foreground text-white p-8 md:p-10 shadow-2xl space-y-8 animate-in slide-in-from-right duration-700">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[5rem] -mr-8 -mt-8 transition-all group-hover:scale-110" />
+                        <div className="relative group overflow-hidden rounded-3xl bg-foreground text-white p-8 md:p-8 shadow-sm space-y-8 animate-in slide-in-from-right duration-700">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-3xl -mr-8 -mt-8 transition-all group-hover:scale-110" />
                             <div className="relative z-10 space-y-4 text-center">
-                                <h3 className="text-2xl font-black uppercase tracking-tight">EXECUTE AGREEMENT</h3>
+                                <h3 className="text-2xl font-bold tracking-tight">Sign agreement</h3>
                                 <p className="text-white/60 font-serif text-sm leading-relaxed">
                                     &quot;Your signature confirm that terms reflect the latest property updates.&quot;
                                 </p>
                                 <Button
-                                    className="w-full h-16 rounded-2xl bg-white text-foreground hover:bg-white/90 font-black text-sm uppercase tracking-widest gap-3 shadow-2xl transition-all hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-70"
+                                    className="w-full h-16 rounded-2xl bg-card text-foreground hover:bg-white/90 font-bold text-sm uppercase tracking-wider gap-3 shadow-sm transition-all hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-70"
                                     onClick={handleSignLease}
                                     disabled={isSigning}
                                 >
                                     {isSigning ? (
                                         <>
-                                            <Loader2 className="h-5 w-5 animate-spin" /> SIGNING...
+                                            <Loader2 className="h-5 w-5 animate-spin" /> Signing...
                                         </>
                                     ) : (
                                         <>
-                                            <Signature className="h-5 w-5" /> SIGN DIGITALLY
+                                            <Signature className="h-5 w-5" /> Sign digitally
                                         </>
                                     )}
                                 </Button>
@@ -348,10 +321,10 @@ export default function ViewLandlordLeasePage() {
                     )}
 
                     {lease.status === 'pending' && lease.landlordSigned && (
-                        <div className="relative group overflow-hidden rounded-[2.5rem] bg-blue-600 text-white p-8 md:p-10 shadow-2xl space-y-8 animate-in slide-in-from-right duration-700 text-center">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[5rem] -mr-8 -mt-8 transition-all group-hover:scale-110" />
+                        <div className="relative group overflow-hidden rounded-3xl bg-blue-600 text-white p-8 md:p-8 shadow-sm space-y-8 animate-in slide-in-from-right duration-700 text-center">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-3xl -mr-8 -mt-8 transition-all group-hover:scale-110" />
                             <div className="relative z-10 space-y-4">
-                                <h3 className="text-xl font-black uppercase tracking-tight">AWAITING TENANT</h3>
+                                <h3 className="text-xl font-bold tracking-tight">Awaiting tenant</h3>
                                 <p className="text-white/60 font-serif text-sm leading-relaxed">
                                     This lease has been sent to {tenant?.name} for their signature.
                                 </p>
@@ -363,7 +336,7 @@ export default function ViewLandlordLeasePage() {
                         href="/landlord/leases"
                         className={cn(
                             buttonVariants({ variant: "ghost" }),
-                            "font-black text-[10px] uppercase tracking-[0.3em] hover:tracking-[0.4em] transition-all opacity-40 hover:opacity-100"
+                            "font-semibold text-xs uppercase tracking-wider hover:tracking-wider transition-all opacity-40 hover:opacity-100"
                         )}
                     >
                         ← BACK TO ALL LEASES

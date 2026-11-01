@@ -12,6 +12,7 @@ import PropertyCard from '@/components/properties/property-card';
 import React from 'react';
 import Loading from '@/app/loading';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from "@/components/dashboard";
 
 // Helper function to split an array into chunks
 function chunkArray<T>(array: T[], size: number): T[][] {
@@ -84,21 +85,11 @@ export default function TenancyDashboardPage() {
     }
 
     return (
-        <div className="space-y-12">
-            {/* Header Section */}
-            <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-                <div className="space-y-1">
-                    <h1 className="font-headline text-4xl font-extrabold tracking-tight text-foreground">
-                        My Tenancies <Building className="inline h-8 w-8 text-primary/40 ml-2" />
-                    </h1>
-                    <p className="text-lg font-medium text-muted-foreground/80">
-                        Manage your active rental agreements and track your home details.
-                    </p>
-                </div>
-            </div>
+        <div className="space-y-8">
+            <PageHeader title="My tenancy" description="Your current home, rent schedule and lease details." />
 
             {properties && properties.length > 0 ? (
-                <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
                     {properties.map((property, idx) => (
                         <Link
                             key={property.id}
@@ -109,7 +100,7 @@ export default function TenancyDashboardPage() {
                             <div className="relative">
                                 <PropertyCard property={property} as="div" />
                                 <div className="absolute top-4 right-4 z-10">
-                                    <Badge className="bg-white/90 backdrop-blur-md text-primary font-black px-4 py-1.5 rounded-full shadow-xl border-none tracking-tighter uppercase text-[10px]">
+                                    <Badge className="bg-white/90 backdrop-blur-md text-primary font-semibold px-4 py-1.5 rounded-full shadow-sm border-none tracking-tight uppercase text-xs">
                                         Active Tenancy
                                     </Badge>
                                 </div>
@@ -122,15 +113,15 @@ export default function TenancyDashboardPage() {
                     ))}
                 </div>
             ) : (
-                <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
+                <Card className="overflow-hidden border-none bg-card shadow-sm">
                     <CardContent className="flex flex-col items-center justify-center py-24 text-center">
                         <div className="relative mb-10">
                             <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150 animate-pulse" />
-                            <div className="relative flex h-32 w-32 items-center justify-center rounded-[2.5rem] bg-muted/30 transition-transform hover:scale-110 hover:rotate-3">
+                            <div className="relative flex h-32 w-32 items-center justify-center rounded-3xl bg-muted/30 transition-transform hover:scale-110 hover:rotate-3">
                                 <Building className="h-16 w-16 text-primary opacity-20" />
                             </div>
                         </div>
-                        <h2 className="text-3xl font-black tracking-tight">No Active Tenancies</h2>
+                        <h2 className="text-3xl font-bold tracking-tight">No Active Tenancies</h2>
                         <p className="mx-auto mt-4 max-w-sm text-lg font-medium text-muted-foreground/80 leading-relaxed">
                             Once your rental application is approved and the lease is signed, your home details will appear here.
                         </p>

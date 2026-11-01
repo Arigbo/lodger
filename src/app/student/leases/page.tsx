@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import Loading from '@/app/loading';
+import { PageHeader } from "@/components/dashboard";
 
 
 type AggregatedLease = {
@@ -118,35 +119,25 @@ export default function StudentLeasesPage() {
   }
 
   return (
-    <div className="space-y-12 pb-20 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-2">
-          <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight text-foreground underline decoration-primary/20 underline-offset-8">
-            LEASES
-          </h1>
-          <p className="text-lg text-muted-foreground font-medium">
-            View and manage your lease agreements.
-          </p>
-        </div>
-        <div className="px-6 py-3 bg-primary/5 rounded-2xl border-2 border-primary/10 flex items-center gap-3">
-          <FileText className="h-5 w-5 text-primary" />
-          <span className="font-black text-sm uppercase tracking-widest">{aggregatedLeases.length} AGREEMENTS</span>
-        </div>
-      </div>
+    <div className="space-y-8 pb-20 animate-in fade-in duration-700">
+      <PageHeader
+        title="Lease agreements"
+        description={`${aggregatedLeases.length} agreement${aggregatedLeases.length === 1 ? "" : "s"} — review, sign and download your leases.`}
+      />
 
       {aggregatedLeases.length > 0 ? (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {aggregatedLeases.map(({ lease, landlord, property }) => (
-            <div key={lease.id} className="group relative overflow-hidden rounded-[2.5rem] bg-white border-2 border-muted/10 shadow-xl shadow-black/[0.02] hover:shadow-2xl hover:border-primary/20 transition-all p-8 md:p-10">
+            <div key={lease.id} className="group relative overflow-hidden rounded-3xl bg-card border border-muted/10 shadow-sm hover:shadow-md hover:border-primary/20 transition-all p-8 md:p-8">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-[5rem] -mr-8 -mt-8 transition-all group-hover:scale-110" />
 
               <div className="relative z-10 space-y-8">
                 <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                   <div className="space-y-1">
-                    <Badge variant={getStatusVariant(lease.status)} className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3">
+                    <Badge variant={getStatusVariant(lease.status)} className="px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-3">
                       {lease.status}
                     </Badge>
-                    <h3 className="text-2xl font-black tracking-tight group-hover:text-primary transition-colors">
+                    <h3 className="text-2xl font-bold tracking-tight group-hover:text-primary transition-colors">
                       {property?.title || 'Unknown Property'}
                     </h3>
                     <p className="text-muted-foreground font-medium text-sm flex items-center gap-2">
@@ -155,39 +146,39 @@ export default function StudentLeasesPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em] mb-1">LANDLORD</p>
+                    <p className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider mb-1">Landlord</p>
                     <p className="font-bold text-lg">{landlord?.name || 'Anonymous'}</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6 p-6 rounded-3xl bg-muted/20 border-2 border-white">
+                <div className="grid grid-cols-2 gap-6 p-6 rounded-3xl bg-muted/20 border border-white">
                   <div>
-                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">TERM START</p>
-                    <p className="font-black text-lg">{new Date(lease.startDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                    <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Term start</p>
+                    <p className="font-bold text-lg">{new Date(lease.startDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">TERM END</p>
-                    <p className="font-black text-lg">{new Date(lease.endDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                    <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider mb-1">Term end</p>
+                    <p className="font-bold text-lg">{new Date(lease.endDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-6 pt-4">
                   <div className="flex items-center gap-4">
                     <div className={cn("h-3 w-3 rounded-full animate-pulse", lease.status === 'active' ? "bg-green-500" : "bg-muted/40")} />
-                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground/60">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
                       {lease.status === 'active' ? 'ACTIVE LEASE' : 'EXPIRED LEASE'}
                     </span>
                   </div>
 
                   <Link href={`/student/leases/${lease.id}`} className="w-full sm:w-auto">
-                    <Button variant={lease.status === 'pending' ? "default" : "outline"} className="w-full h-14 rounded-2xl px-10 font-black text-sm uppercase tracking-widest gap-3 shadow-lg shadow-primary/5 hover:scale-105 active:scale-95 transition-all">
+                    <Button variant={lease.status === 'pending' ? "default" : "outline"} className="w-full h-14 rounded-2xl px-6 font-bold text-sm uppercase tracking-wider gap-3 shadow-lg hover:scale-105 active:scale-95 transition-all">
                       {lease.status === 'pending' ? (
                         <>
-                          <Signature className="h-4 w-4" /> REVIEW & SIGN
+                          <Signature className="h-4 w-4" /> Review & sign
                         </>
                       ) : (
                         <>
-                          <FileText className="h-4 w-4" /> VIEW DOCUMENTS
+                          <FileText className="h-4 w-4" /> View documents
                         </>
                       )}
                     </Button>
@@ -198,22 +189,22 @@ export default function StudentLeasesPage() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-[3rem] border-4 border-dotted border-muted/30 p-24 text-center space-y-8 animate-in zoom-in duration-500">
+        <div className="flex flex-col items-center justify-center rounded-3xl border border-dotted border-muted/30 p-24 text-center space-y-8 animate-in zoom-in duration-500">
           <div className="relative">
             <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-150 animate-pulse" />
-            <div className="relative h-28 w-28 flex items-center justify-center rounded-[2.5rem] bg-white shadow-2xl border-2 border-muted/10">
+            <div className="relative h-28 w-28 flex items-center justify-center rounded-3xl bg-card shadow-sm border border-muted/10">
               <FileText className="h-12 w-12 text-muted-foreground/40" />
             </div>
           </div>
           <div className="space-y-3">
-            <h3 className="text-3xl font-black">No Leases Found</h3>
+            <h3 className="text-3xl font-bold">No Leases Found</h3>
             <p className="text-lg text-muted-foreground max-w-md mx-auto">
               You don&apos;t have any lease agreements yet.
             </p>
           </div>
           <Link href="/student/properties">
-            <Button className="h-16 rounded-2xl px-12 font-black text-sm shadow-2xl hover:scale-105 transition-all">
-              EXPLORE PROPERTIES
+            <Button className="h-11 rounded-2xl px-6 font-bold text-sm shadow-sm hover:scale-105 transition-all">
+              Explore properties
             </Button>
           </Link>
         </div>

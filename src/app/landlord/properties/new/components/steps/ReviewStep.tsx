@@ -30,21 +30,21 @@ export const ReviewStep = ({ form, imageAnalysis }: ReviewStepProps) => {
         <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="space-y-8 md:space-y-12"
+            className="space-y-8 md:space-y-8"
         >
             <div className="space-y-2">
-                <h2 className="text-xl md:text-3xl font-black uppercase tracking-tighter text-foreground">
-                    Final <span className="text-primary">Verification</span>
+                <h2 className="text-xl md:text-3xl font-bold tracking-tight text-foreground">
+                    Review & publish
                 </h2>
-                <p className="text-[10px] md:text-xs font-bold text-muted-foreground/60 uppercase tracking-widest leading-relaxed">
-                    Review your property portfolio before it goes live to millions of potential tenants.
+                <p className="text-xs md:text-xs font-bold text-muted-foreground/60 uppercase tracking-wider leading-relaxed">
+                    Check everything looks right before your listing goes live.
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-8 items-start">
                 {/* Summary Card */}
                 <div className="lg:col-span-2 space-y-8">
-                    <div className="p-8 md:p-12 rounded-[2.5rem] bg-white border-2 border-foreground/5 shadow-2xl shadow-black/5 relative overflow-hidden">
+                    <div className="p-8 md:p-8 rounded-3xl bg-card border border-foreground/5 shadow-sm relative overflow-hidden">
                         {/* Receipt Aesthetic */}
                         <div className="absolute top-0 left-0 w-full h-2 bg-primary/20" />
                         
@@ -52,17 +52,17 @@ export const ReviewStep = ({ form, imageAnalysis }: ReviewStepProps) => {
                             {/* Brand & Price Header */}
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                                 <div className="space-y-2">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Listing Authority</p>
-                                    <h3 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-none">{values.title || 'Untitled Listing'}</h3>
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-primary">Listing Authority</p>
+                                    <h3 className="text-2xl md:text-4xl font-bold tracking-tight leading-none">{values.title || 'Untitled Listing'}</h3>
                                     <div className="flex items-center gap-3">
-                                        <span className="text-[10px] font-black uppercase tracking-widest bg-foreground text-white px-3 py-1 rounded-full">{values.type}</span>
+                                        <span className="text-xs font-semibold uppercase tracking-wider bg-foreground text-white px-3 py-1 rounded-full">{values.type}</span>
                                         <div className="h-1.5 w-1.5 rounded-full bg-muted" />
-                                        <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">{values.bedrooms} Bed • {values.bathrooms} Bath</p>
+                                        <p className="text-xs font-bold text-muted-foreground/60 uppercase tracking-wider">{values.bedrooms} Bed • {values.bathrooms} Bath</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 mb-1">Monthly Valuation</p>
-                                    <p className="text-3xl md:text-5xl font-black tracking-tighter text-primary">
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40 mb-1">Monthly Valuation</p>
+                                    <p className="text-3xl md:text-3xl font-bold tracking-tight text-primary">
                                         {formatPrice(values.price, values.currency)}
                                     </p>
                                 </div>
@@ -71,17 +71,17 @@ export const ReviewStep = ({ form, imageAnalysis }: ReviewStepProps) => {
                             <Separator className="opacity-50" />
 
                             {/* Detail Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-6">
                                     <div className="flex items-start gap-4">
                                         <div className="h-10 w-10 rounded-xl bg-foreground/5 flex items-center justify-center shrink-0">
                                             <MapPin className="h-5 w-5 opacity-40" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Location Hub</p>
+                                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Location Hub</p>
                                             <p className="text-sm font-bold leading-relaxed">{values.address}, {values.city}, {values.state} {values.zip}</p>
                                             {values.school && (
-                                                <p className="text-[9px] font-black text-primary uppercase tracking-tighter">Proxied: {values.school}</p>
+                                                <p className="text-xs font-semibold text-primary uppercase tracking-tight">Proxied: {values.school}</p>
                                             )}
                                         </div>
                                     </div>
@@ -90,10 +90,10 @@ export const ReviewStep = ({ form, imageAnalysis }: ReviewStepProps) => {
                                             <Sparkles className="h-5 w-5 opacity-40" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Facilities</p>
+                                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Facilities</p>
                                             <div className="flex flex-wrap gap-1.5 pt-1">
                                                 {values.amenities?.map((a: string) => (
-                                                    <span key={a} className="text-[8px] font-black uppercase tracking-tighter border border-foreground/5 px-2 py-0.5 rounded-md">{a}</span>
+                                                    <span key={a} className="text-xs font-semibold uppercase tracking-tight border border-foreground/5 px-2 py-0.5 rounded-md">{a}</span>
                                                 ))}
                                             </div>
                                         </div>
@@ -106,9 +106,9 @@ export const ReviewStep = ({ form, imageAnalysis }: ReviewStepProps) => {
                                             <FileText className="h-5 w-5 opacity-40" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Legal Framework</p>
-                                            <p className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block uppercase tracking-widest">Lease Template Ready</p>
-                                            <p className="text-[10px] font-bold text-muted-foreground/60 leading-tight pt-1">
+                                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Legal Framework</p>
+                                            <p className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block uppercase tracking-wider">Lease Template Ready</p>
+                                            <p className="text-xs font-bold text-muted-foreground/60 leading-tight pt-1">
                                                 {values.leaseTemplate?.length} characters of legal protection.
                                             </p>
                                         </div>
@@ -118,13 +118,13 @@ export const ReviewStep = ({ form, imageAnalysis }: ReviewStepProps) => {
                                             <ImageIcon className="h-5 w-5 opacity-40" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Media Assets</p>
+                                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Photos & videos</p>
                                             <div className="flex items-center gap-1.5 pt-1">
                                                 {[values.kitchenImage, values.livingRoomImage, values.bedroomImage, values.bathroomImage, values.otherImage].filter(Boolean).map((img, i) => (
                                                     <div key={i} className="h-6 w-8 bg-muted rounded border border-foreground/5" />
                                                 ))}
                                                 {values.propertyVideo && <div className="h-6 w-8 bg-primary/20 rounded border border-primary/20" />}
-                                                <span className="text-[9px] font-black text-muted-foreground ml-2">
+                                                <span className="text-xs font-semibold text-muted-foreground ml-2">
                                                     {[values.kitchenImage, values.livingRoomImage, values.bedroomImage, values.bathroomImage, values.otherImage, values.propertyVideo].filter(Boolean).length} Assets
                                                 </span>
                                             </div>
@@ -139,7 +139,7 @@ export const ReviewStep = ({ form, imageAnalysis }: ReviewStepProps) => {
                 {/* Status & Action Card */}
                 <div className="space-y-6">
                     <div className={cn(
-                        "p-8 rounded-[2rem] border-2 transition-all duration-500",
+                        "p-8 rounded-3xl border transition-all duration-500",
                         hasImageIssues 
                             ? "bg-orange-500/5 border-orange-500/20 shadow-[0_20px_40px_-15px_rgba(249,115,22,0.1)]" 
                             : "bg-emerald-500/5 border-emerald-500/20 shadow-[0_20px_40px_-15px_rgba(16,185,129,0.1)]"
@@ -153,13 +153,13 @@ export const ReviewStep = ({ form, imageAnalysis }: ReviewStepProps) => {
                             </div>
                             
                             <div className="space-y-2">
-                                <h4 className="text-sm font-black uppercase tracking-[0.2em]">
+                                <h4 className="text-sm font-bold uppercase tracking-wider">
                                     {hasImageIssues ? "Action Required" : "Audit Passed"}
                                 </h4>
-                                <p className="text-[10px] font-bold text-muted-foreground/60 leading-relaxed uppercase tracking-widest">
+                                <p className="text-xs font-bold text-muted-foreground/60 leading-relaxed uppercase tracking-wider">
                                     {hasImageIssues 
-                                        ? "One or more media assets require your attention due to AI security flags." 
-                                        : "Your listing has passed all integrity and security checks. It is ready for public release."}
+                                        ? "One or more photos were flagged by our automatic check. Please review them." 
+                                        : "Your photos passed our automatic check. Your listing is ready to publish."}
                                 </p>
                             </div>
 
@@ -167,7 +167,7 @@ export const ReviewStep = ({ form, imageAnalysis }: ReviewStepProps) => {
                                 <button 
                                     type="button"
                                     onClick={() => form.setValue('currentStep', 5)} // This depends on how the parent handles it
-                                    className="text-[9px] font-black text-orange-600 underline uppercase tracking-widest hover:text-orange-700 transition-colors"
+                                    className="text-xs font-semibold text-orange-600 underline uppercase tracking-wider hover:text-orange-700 transition-colors"
                                 >
                                     Fix Media Errors
                                 </button>
@@ -175,10 +175,10 @@ export const ReviewStep = ({ form, imageAnalysis }: ReviewStepProps) => {
                         </div>
                     </div>
 
-                    <div className="p-8 rounded-[2rem] bg-foreground text-white shadow-2xl space-y-4">
+                    <div className="p-8 rounded-3xl bg-foreground text-white shadow-sm space-y-4">
                         <div className="flex items-center gap-3">
                             <Check className="h-5 w-5 text-primary" strokeWidth={4} />
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Verified Landlord</p>
+                            <p className="text-xs font-semibold uppercase tracking-wider opacity-60">Verified Landlord</p>
                         </div>
                         <p className="text-xs font-bold leading-relaxed opacity-80 uppercase tracking-tight">
                             By submitting, you agree to our Terms of Service and Anti-Discrimination Policy.

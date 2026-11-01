@@ -26,7 +26,7 @@ export default function PropertyMap({ lat, lng, title }: PropertyMapProps) {
   const position: [number, number] = [lat, lng];
 
   return (
-    <div className="w-full h-[400px] rounded-[2rem] overflow-hidden border-4 border-foreground/5 shadow-2xl relative z-0">
+    <div className="w-full h-[400px] rounded-3xl overflow-hidden border border-foreground/5 shadow-sm relative z-0">
       <MapContainer 
         center={position} 
         zoom={13} 

@@ -23,13 +23,13 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
   handleRemoveVideo,
 }) => {
   return (
-    <div className="space-y-12">
+    <div className="space-y-8">
       <div className="space-y-10">
         <div className="inline-flex items-center gap-4">
           <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
             <ImageIcon className="h-5 w-5 md:h-6 md:w-6" />
           </div>
-          <h3 className="font-headline text-xl md:text-3xl font-black uppercase tracking-tighter">
+          <h3 className="font-headline text-xl md:text-3xl font-bold tracking-tight">
             Photos
           </h3>
         </div>
@@ -38,7 +38,7 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
           {property.images.map((url) => (
             <div
               key={url}
-              className="relative group aspect-square rounded-[2rem] overflow-hidden border-2 border-foreground/5 shadow-inner"
+              className="relative group aspect-square rounded-3xl overflow-hidden border border-foreground/5 shadow-inner"
             >
               <Image
                 {...optimizedImageProps(url)}
@@ -60,9 +60,9 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
             </div>
           ))}
 
-          <label className="relative flex flex-col items-center justify-center aspect-square rounded-[2rem] border-2 border-dashed border-foreground/10 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group">
+          <label className="relative flex flex-col items-center justify-center aspect-square rounded-3xl border border-dashed border-foreground/10 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group">
             <UploadCloud className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors" />
-            <span className="mt-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-primary">
+            <span className="mt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-primary">
               Add Photo
             </span>
             <input
@@ -82,7 +82,7 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
           <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
             <FileVideo className="h-5 w-5 md:h-6 md:w-6" />
           </div>
-          <h3 className="font-headline text-xl md:text-3xl font-black uppercase tracking-tighter">
+          <h3 className="font-headline text-xl md:text-3xl font-bold tracking-tight">
             Video
           </h3>
         </div>
@@ -91,7 +91,7 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
           {property.videos?.map((url) => (
             <div
               key={url}
-              className="relative aspect-video rounded-[2.5rem] overflow-hidden border-2 border-foreground/5 bg-black group"
+              className="relative aspect-video rounded-3xl overflow-hidden border border-foreground/5 bg-black group"
             >
               <video
                 src={url}
@@ -111,13 +111,13 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
             </div>
           ))}
 
-          <label className="relative flex flex-col items-center justify-center aspect-video rounded-[2.5rem] border-2 border-dashed border-foreground/10 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group">
+          <label className="relative flex flex-col items-center justify-center aspect-video rounded-3xl border border-dashed border-foreground/10 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group">
             {isUploading ? (
               <Loader2 className="h-10 w-10 text-primary animate-spin" />
             ) : (
               <>
                 <FileVideo className="h-10 w-10 text-muted-foreground group-hover:text-primary transition-colors" />
-                <span className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground group-hover:text-primary px-8 text-center">
+                <span className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-primary px-8 text-center">
                   Upload a Video
                 </span>
               </>

@@ -21,13 +21,13 @@ export function MessageInput({ onSendMessage, disabled }: MessageInputProps) {
     };
 
     return (
-        <div className="p-6 md:p-8 bg-white border-t-2 border-muted/10 z-20">
+        <div className="p-6 md:p-8 bg-card border-t-2 border-muted/10 z-20">
             <form onSubmit={handleSubmit} className="relative max-w-4xl mx-auto">
                 <div className="relative group">
                     <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full opacity-0 group-focus-within:opacity-20 transition-opacity -z-10" />
                     <Input
                         placeholder="Type your message..."
-                        className="h-16 md:h-20 rounded-[2.5rem] px-8 pr-20 bg-muted/20 border-2 border-transparent focus-visible:bg-white focus-visible:border-primary/50 focus-visible:ring-0 transition-all text-base md:text-lg font-medium shadow-inner"
+                        className="h-11 md:h-20 rounded-3xl px-8 pr-20 bg-muted/20 border border-transparent focus-visible:bg-card focus-visible:border-primary/50 focus-visible:ring-0 transition-all text-base md:text-lg font-medium shadow-inner"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         disabled={disabled}
@@ -35,13 +35,13 @@ export function MessageInput({ onSendMessage, disabled }: MessageInputProps) {
                     <Button
                         type="submit"
                         size="icon"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 h-12 md:h-14 w-12 md:w-14 rounded-[1.5rem] bg-foreground text-white hover:bg-primary shadow-xl transition-all hover:scale-105 active:scale-95"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 h-12 md:h-14 w-12 md:w-14 rounded-2xl bg-foreground text-white hover:bg-primary shadow-sm transition-all hover:scale-105 active:scale-95"
                         disabled={!newMessage.trim() || disabled}
                     >
                         <Send className="h-5 w-5" />
                     </Button>
                 </div>
-                <p className="mt-4 text-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
+                <p className="mt-4 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">
                     End-to-end encrypted communication
                 </p>
             </form>

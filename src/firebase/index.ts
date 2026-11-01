@@ -2,12 +2,19 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
-import { getStorage } from 'firebase/storage';
+import { connectAuthEmulator, getAuth } from 'firebase/auth';
+import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
+import { connectStorageEmulator, getStorage } from 'firebase/storage';
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
+/** Local development against `npm run emulators` (see README). */
+const USE_EMULATORS = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === 'true';
+export const EMULATOR_PROJECT_ID = 'demo-lodger';
+
+// IMPORTANT: DO NOT MODIFY THIS FUNCTION (beyond the emulator branch)
 export function initializeFirebase() {
+  if (!getApps().length && USE_EMULATORS) {
+    return getSdks(initializeApp({ ...firebaseConfig, projectId: EMULATOR_PROJECT_ID }));
+  }
   if (!getApps().length) {
     // Important! initializeApp() is called without any arguments because Firebase App Hosting
     // integrates with the initializeApp() function to provide the environment variables needed to
@@ -34,13 +41,24 @@ export function initializeFirebase() {
   return getSdks(getApp());
 }
 
+let emulatorsConnected = false;
+
 export function getSdks(firebaseApp: FirebaseApp) {
-  return {
+  const sdks = {
     firebaseApp,
     auth: getAuth(firebaseApp),
     firestore: getFirestore(firebaseApp),
-    storage: getStorage(firebaseApp)
+    storage: getStorage(firebaseApp),
   };
+
+  if (USE_EMULATORS && !emulatorsConnected) {
+    emulatorsConnected = true;
+    connectAuthEmulator(sdks.auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+    connectFirestoreEmulator(sdks.firestore, '127.0.0.1', 8080);
+    connectStorageEmulator(sdks.storage, '127.0.0.1', 9199);
+  }
+
+  return sdks;
 }
 
 export * from '@/firebase/provider';

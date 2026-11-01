@@ -27,7 +27,7 @@ const directives: Record<string, string[]> = {
     'https://apis.google.com', // Firebase Auth (Google sign-in popup)
   ],
   'style-src': ["'self'", "'unsafe-inline'"],
-  'img-src': ["'self'", 'data:', 'blob:', 'https:'], // listing/blog images may live on any HTTPS host
+  'img-src': ["'self'", 'data:', 'blob:', 'https:', ...(isDev ? ['http://127.0.0.1:9199'] : [])], // listing/blog images may live on any HTTPS host
   'media-src': ["'self'", 'blob:', 'https:'],
   'font-src': ["'self'", 'data:'],
   'connect-src': [
@@ -35,7 +35,7 @@ const directives: Record<string, string[]> = {
     'https://*.googleapis.com', // Firestore, Auth, Storage, Installations
     'https://api.stripe.com',
     'https://maps.googleapis.com',
-    ...(isDev ? ['ws:', 'wss:'] : []),
+    ...(isDev ? ['ws:', 'wss:', 'http://127.0.0.1:9099', 'http://127.0.0.1:8080', 'http://127.0.0.1:9199'] : []),
   ],
   'frame-src': [
     "'self'",
@@ -44,6 +44,7 @@ const directives: Record<string, string[]> = {
     'https://hooks.stripe.com',
     `https://${firebaseAuthDomain}`,
     'https://accounts.google.com',
+    ...(isDev ? ['http://127.0.0.1:9099'] : []),
   ],
   'worker-src': ["'self'", 'blob:'],
   'object-src': ["'none'"],

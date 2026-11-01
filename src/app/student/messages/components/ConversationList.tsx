@@ -25,9 +25,9 @@ export function ConversationList({ conversations, selectedParticipantId }: Conve
     const pathname = usePathname();
 
     return (
-        <div className="flex flex-col h-full bg-white md:bg-muted/5">
+        <div className="flex flex-col h-full bg-card md:bg-muted/5">
             <div className="p-8 border-b border-muted/10 bg-white/70 backdrop-blur-xl flex items-center justify-between">
-                <h2 className="text-xs font-black text-foreground/40 uppercase tracking-[0.25em]">Conversations</h2>
+                <h2 className="text-xs font-semibold text-foreground/40 uppercase tracking-wider">Conversations</h2>
                 <div className="h-2 w-2 rounded-full bg-primary/20 animate-pulse" />
             </div>
 
@@ -42,30 +42,30 @@ export function ConversationList({ conversations, selectedParticipantId }: Conve
                                 className={cn(
                                     "flex items-center gap-4 p-5 rounded-2xl transition-all group relative overflow-hidden",
                                     isSelected
-                                        ? "bg-foreground text-white shadow-xl shadow-foreground/10"
-                                        : "hover:bg-white hover:shadow-lg hover:shadow-black/5"
+                                        ? "bg-foreground text-white shadow-sm"
+                                        : "hover:bg-card hover:shadow-lg"
                                 )}
                                 scroll={false}
                             >
                                 <div className="relative">
-                                    <Avatar className="h-14 w-14 border-2 border-white/20 shadow-lg">
+                                    <Avatar className="h-14 w-14 border border-white/20 shadow-lg">
                                         <AvatarImage src={convo.participant.profileImageUrl} className="object-cover" />
                                         <AvatarFallback className="bg-muted text-muted-foreground">
                                             <UserIcon className="h-6 w-6" />
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className={cn(
-                                        "absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white bg-green-500",
+                                        "absolute bottom-0 right-0 h-4 w-4 rounded-full border border-white bg-green-500",
                                         isSelected && "border-foreground"
                                     )} />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-start mb-1">
-                                        <p className="font-black text-sm uppercase tracking-tight truncate pr-2">
+                                        <p className="font-bold text-sm uppercase tracking-tight truncate pr-2">
                                             {convo.participant.name}
                                         </p>
                                         <span className={cn(
-                                            "text-[10px] font-bold uppercase tracking-tighter opacity-40 whitespace-nowrap",
+                                            "text-xs font-bold uppercase tracking-tight opacity-40 whitespace-nowrap",
                                             isSelected && "text-white/60"
                                         )}>
                                             {convo.lastMessageTimestamp && convo.lastMessageTimestamp.getTime() > 0

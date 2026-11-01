@@ -428,13 +428,13 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-700">
+    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-700">
       {/* Header Section */}
-      <div className="relative overflow-hidden rounded-[3rem] bg-muted/30 p-10 md:p-14 border-2 border-white/40 shadow-xl shadow-black/[0.02]">
+      <div className="relative overflow-hidden rounded-3xl bg-muted/30 p-6 md:p-14 border border-white/40 shadow-sm">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
           <div className="relative group">
-            <Avatar className="h-32 w-32 md:h-40 md:w-40 border-8 border-white shadow-2xl transition-transform duration-500 group-hover:scale-105">
+            <Avatar className="h-32 w-32 md:h-40 md:w-40 border-8 border-white shadow-sm transition-transform duration-500 group-hover:scale-105">
               <AvatarImage
                 src={previewImage || userProfile?.profileImageUrl}
                 className="object-cover"
@@ -446,15 +446,15 @@ export default function AccountPage() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white shadow-xl hover:scale-110 active:scale-95 transition-all"
+              className="absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white shadow-sm hover:scale-110 active:scale-95 transition-all"
             >
               <Pencil className="h-5 w-5" />
             </button>
           </div>
 
           <div className="space-y-4 text-center md:text-left">
-            <h1 className="font-headline text-2xl md:text-5xl font-black tracking-tight text-foreground uppercase">
-              Account <span className="text-primary">Settings.</span>
+            <h1 className="font-headline text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              Account settings
             </h1>
             <p className="max-w-md text-lg font-medium text-muted-foreground/80 leading-relaxed font-sans">
               Manage your profile, payments, and account security.
@@ -464,16 +464,16 @@ export default function AccountPage() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full space-y-10">
-        <TabsList className="h-16 w-full max-w-md grid grid-cols-2 p-1 bg-muted/30 rounded-3xl border-2 border-white/40 shadow-inner">
+        <TabsList className="h-16 w-full max-w-md grid grid-cols-2 p-1 bg-muted/30 rounded-3xl border border-white/40 shadow-inner">
           <TabsTrigger
             value="profile"
-            className="rounded-[1.25rem] font-black text-sm uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-lg transition-all"
+            className="rounded-2xl font-bold text-sm uppercase tracking-wider data-[state=active]:bg-card data-[state=active]:shadow-lg transition-all"
           >
             Profile
           </TabsTrigger>
           <TabsTrigger
             value="settings"
-            className="rounded-[1.25rem] font-black text-sm uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-lg transition-all"
+            className="rounded-2xl font-bold text-sm uppercase tracking-wider data-[state=active]:bg-card data-[state=active]:shadow-lg transition-all"
           >
             Payments & Security
           </TabsTrigger>
@@ -483,34 +483,34 @@ export default function AccountPage() {
           value="profile"
           className="space-y-10 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500"
         >
-          <Card className="border-none bg-white shadow-xl shadow-black/[0.02] rounded-[2.5rem] overflow-hidden">
-            <CardHeader className="p-10 border-b border-muted/20">
-              <CardTitle className="text-2xl font-black uppercase">
+          <Card className="border-none bg-card shadow-sm rounded-3xl overflow-hidden">
+            <CardHeader className="p-6 border-b border-muted/20">
+              <CardTitle className="text-2xl font-bold">
                 Profile Info
               </CardTitle>
               <CardDescription className="text-lg font-medium text-muted-foreground/60">
                 This is what tenants see when they apply to your properties.
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-10">
+            <CardContent className="p-6">
               <Form {...profileForm}>
                 <form
                   onSubmit={profileForm.handleSubmit(onProfileSubmit)}
                   className="space-y-10"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-8">
                     <FormField
                       control={profileForm.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                          <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                             Full Name
                           </FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Enter your business name or full name"
-                              className="h-14 rounded-2xl border-2 bg-muted/10 focus:bg-white focus:ring-4 focus:ring-primary/10 font-bold"
+                              className="h-14 rounded-2xl border bg-muted/10 focus:bg-card focus:ring-4 focus:ring-primary/10 font-bold"
                               {...field}
                             />
                           </FormControl>
@@ -523,13 +523,13 @@ export default function AccountPage() {
                       name="phone"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                          <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                             Contact Number
                           </FormLabel>
                           <FormControl>
                             <Input
                               placeholder="(555) 000-0000"
-                              className="h-14 rounded-2xl border-2 bg-muted/10 focus:bg-white focus:ring-4 focus:ring-primary/10 font-bold"
+                              className="h-14 rounded-2xl border bg-muted/10 focus:bg-card focus:ring-4 focus:ring-primary/10 font-bold"
                               {...field}
                             />
                           </FormControl>
@@ -542,12 +542,12 @@ export default function AccountPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem className="space-y-3 md:col-span-2">
-                          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                          <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                             Primary Email
                           </FormLabel>
                           <FormControl>
                             <Input
-                              className="h-14 rounded-2xl border-2 bg-muted/10 opacity-60 font-bold"
+                              className="h-14 rounded-2xl border bg-muted/10 opacity-60 font-bold"
                               {...field}
                               disabled
                             />
@@ -564,13 +564,13 @@ export default function AccountPage() {
                       name="bio"
                       render={({ field }) => (
                         <FormItem className="space-y-3 md:col-span-2">
-                          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                          <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                             About You
                           </FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Describe your management style or property portfolio..."
-                              className="min-h-[120px] rounded-2xl border-2 bg-muted/10 focus:bg-white focus:ring-4 focus:ring-primary/10 font-bold resize-none"
+                              placeholder="Describe your management style or properties…"
+                              className="min-h-[120px] rounded-2xl border bg-muted/10 focus:bg-card focus:ring-4 focus:ring-primary/10 font-bold resize-none"
                               {...field}
                             />
                           </FormControl>
@@ -580,13 +580,13 @@ export default function AccountPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-8">
                     <FormField
                       control={profileForm.control}
                       name="country"
                       render={({ field }) => (
                         <FormItem className="flex flex-col space-y-3">
-                          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                          <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                             Country
                           </FormLabel>
                           <Combobox
@@ -618,7 +618,7 @@ export default function AccountPage() {
                       name="state"
                       render={({ field }) => (
                         <FormItem className="flex flex-col space-y-3">
-                          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                          <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                             Region
                           </FormLabel>
                           <Combobox
@@ -647,7 +647,7 @@ export default function AccountPage() {
                       name="currency"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                          <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                             Primary Currency
                           </FormLabel>
                           <Select
@@ -655,11 +655,11 @@ export default function AccountPage() {
                             value={field.value || "USD"}
                           >
                             <FormControl>
-                              <SelectTrigger className="h-14 rounded-2xl border-2 bg-muted/10 font-bold">
+                              <SelectTrigger className="h-14 rounded-2xl border bg-muted/10 font-bold">
                                 <SelectValue placeholder="USD" />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent className="rounded-2xl border-none shadow-3xl p-2">
+                            <SelectContent className="rounded-2xl border-none shadow-sm p-2">
                               <SelectItem
                                 value="USD"
                                 className="rounded-xl py-3 font-bold"
@@ -708,9 +708,9 @@ export default function AccountPage() {
                     <Button
                       type="submit"
                       size="lg"
-                      className="h-16 px-12 rounded-[1.25rem] font-black text-lg shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 transition-all"
+                      className="h-11 px-6 rounded-2xl font-bold text-lg shadow-sm hover:-translate-y-1 transition-all"
                     >
-                      UPDATE PROFILE
+                      Update profile
                     </Button>
                   </div>
                 </form>
@@ -723,31 +723,31 @@ export default function AccountPage() {
           value="settings"
           className="space-y-10 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500"
         >
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-10">
               {/* Stripe Card */}
-              <Card className="border-none bg-white shadow-xl shadow-black/[0.02] rounded-[2.5rem] overflow-hidden">
-                <CardHeader className="p-10 border-b border-muted/20">
-                  <CardTitle className="text-2xl font-black uppercase">
+              <Card className="border-none bg-card shadow-sm rounded-3xl overflow-hidden">
+                <CardHeader className="p-6 border-b border-muted/20">
+                  <CardTitle className="text-2xl font-bold">
                     Rent Payments
                   </CardTitle>
                   <CardDescription className="text-lg font-medium text-muted-foreground/60">
                     Manage how you receive rent payments.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-10 space-y-6">
+                <CardContent className="p-6 space-y-6">
                   {userProfile?.stripeAccountId ? (
                     <div className="space-y-6">
                       {stripeAccountStatus.status === "active" ? (
                         <div className="flex flex-col gap-6">
-                          <div className="flex items-center justify-between p-8 rounded-[2rem] bg-green-500/5 border-2 border-green-500/10">
+                          <div className="flex items-center justify-between p-8 rounded-3xl bg-green-500/5 border border-green-500/10">
                             <div className="flex items-center gap-6">
                               <div className="h-14 w-14 rounded-2xl bg-green-500/10 flex items-center justify-center">
                                 <Wallet className="h-7 w-7 text-green-600" />
                               </div>
                               <div>
-                                <p className="font-black uppercase tracking-tight text-green-900">
-                                  STRIPE ACTIVE
+                                <p className="font-bold uppercase tracking-tight text-green-900">
+                                  Stripe active
                                 </p>
                                 <p className="text-sm font-medium text-green-700/80">
                                   {stripeAccountStatus.message}
@@ -761,31 +761,31 @@ export default function AccountPage() {
                             <Button
                               onClick={handleGoToStripeDashboard}
                               variant="outline"
-                              className="h-14 rounded-2xl font-black text-xs uppercase tracking-widest border-2 hover:bg-muted/50 transition-all"
+                              className="h-14 rounded-2xl font-semibold text-xs uppercase tracking-wider border hover:bg-muted/50 transition-all"
                             >
-                              STREAMS & DISBURSEMENTS
+                              Payouts
                             </Button>
                             <Button
                               variant="outline"
-                              className="h-14 rounded-2xl font-black text-xs uppercase tracking-widest border-2 opacity-50 cursor-not-allowed"
+                              className="h-14 rounded-2xl font-semibold text-xs uppercase tracking-wider border opacity-50 cursor-not-allowed"
                               disabled
                             >
-                              DOWNLOAD TAX DOCUMENTS
+                              Download tax documents
                             </Button>
                           </div>
-                          <p className="text-xs font-medium text-muted-foreground/60 text-center uppercase tracking-widest">
+                          <p className="text-xs font-medium text-muted-foreground/60 text-center uppercase tracking-wider">
                             Partner ID: {userProfile.stripeAccountId}
                           </p>
                         </div>
                       ) : (
-                        <div className="flex flex-col gap-6 p-8 rounded-[2rem] bg-orange-500/5 border-2 border-orange-500/10">
+                        <div className="flex flex-col gap-6 p-8 rounded-3xl bg-orange-500/5 border border-orange-500/10">
                           <div className="flex items-center gap-6">
                             <div className="h-14 w-14 rounded-2xl bg-orange-500/10 flex items-center justify-center">
                               <Clock className="h-7 w-7 text-orange-600" />
                             </div>
                             <div>
-                              <p className="font-black uppercase tracking-tight text-orange-900">
-                                VERIFICATION PENDING
+                              <p className="font-bold uppercase tracking-tight text-orange-900">
+                                Verification pending
                               </p>
                               <p className="text-sm font-medium text-orange-700/80">
                                 {stripeAccountStatus.message}
@@ -795,16 +795,16 @@ export default function AccountPage() {
                           <div className="flex flex-col md:flex-row gap-4">
                             <Button
                               onClick={handleConnectStripe}
-                              className="flex-1 h-14 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-600/20"
+                              className="flex-1 h-14 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs uppercase tracking-wider shadow-sm"
                             >
-                              RESUME REGISTRATION
+                              Resume registration
                             </Button>
                             <Button
                               onClick={handleGoToStripeDashboard}
                               variant="outline"
-                              className="flex-1 h-14 rounded-2xl border-2 font-black text-xs uppercase tracking-widest"
+                              className="flex-1 h-14 rounded-2xl border font-semibold text-xs uppercase tracking-wider"
                             >
-                              CHECK STRIPE STATUS
+                              Check Stripe status
                             </Button>
                           </div>
                         </div>
@@ -836,9 +836,9 @@ export default function AccountPage() {
                       <Button
                         onClick={handleConnectStripe}
                         size="lg"
-                        className="h-16 px-12 rounded-2xl bg-[#635BFF] hover:bg-[#635BFF]/90 text-white font-black transition-all shadow-xl shadow-[#635BFF]/20 group"
+                        className="h-11 px-6 rounded-2xl bg-[#635BFF] hover:bg-[#635BFF]/90 text-white font-bold transition-all shadow-sm shadow-[#635BFF]/20 group"
                       >
-                        CONNECT WITH STRIPE
+                        Connect with Stripe
                         <span className="ml-2 group-hover:translate-x-1 transition-transform">
                           →
                         </span>
@@ -848,16 +848,16 @@ export default function AccountPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-none bg-white shadow-xl shadow-black/[0.02] rounded-[2.5rem]">
-                <CardHeader className="p-10">
-                  <CardTitle className="text-2xl font-black uppercase">
+              <Card className="border-none bg-card shadow-sm rounded-3xl">
+                <CardHeader className="p-6">
+                  <CardTitle className="text-2xl font-bold">
                     Security
                   </CardTitle>
                   <CardDescription className="text-lg font-medium text-muted-foreground/60">
                     Update your password here.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-10 pt-0">
+                <CardContent className="p-6 pt-0">
                   <Form {...passwordForm}>
                     <form
                       onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
@@ -868,14 +868,14 @@ export default function AccountPage() {
                         name="currentPassword"
                         render={({ field }) => (
                           <FormItem className="space-y-3">
-                            <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                            <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                               Current Password
                             </FormLabel>
                             <FormControl>
                               <Input
                                 type="password"
                                 placeholder="••••••••"
-                                className="h-14 rounded-2xl border-2 bg-muted/10 font-bold"
+                                className="h-14 rounded-2xl border bg-muted/10 font-bold"
                                 {...field}
                               />
                             </FormControl>
@@ -889,14 +889,14 @@ export default function AccountPage() {
                           name="newPassword"
                           render={({ field }) => (
                             <FormItem className="space-y-3">
-                              <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                              <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                                 New Password
                               </FormLabel>
                               <FormControl>
                                 <Input
                                   type="password"
                                   placeholder="••••••••"
-                                  className="h-14 rounded-2xl border-2 bg-muted/10 font-bold"
+                                  className="h-14 rounded-2xl border bg-muted/10 font-bold"
                                   {...field}
                                 />
                               </FormControl>
@@ -909,14 +909,14 @@ export default function AccountPage() {
                           name="confirmPassword"
                           render={({ field }) => (
                             <FormItem className="space-y-3">
-                              <FormLabel className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                              <FormLabel className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                                 Confirm New Password
                               </FormLabel>
                               <FormControl>
                                 <Input
                                   type="password"
                                   placeholder="••••••••"
-                                  className="h-14 rounded-2xl border-2 bg-muted/10 font-bold"
+                                  className="h-14 rounded-2xl border bg-muted/10 font-bold"
                                   {...field}
                                 />
                               </FormControl>
@@ -927,9 +927,9 @@ export default function AccountPage() {
                       </div>
                       <Button
                         type="submit"
-                        className="h-14 rounded-2xl px-10 font-black uppercase text-xs tracking-widest border-2"
+                        className="h-11 rounded-2xl px-6 font-semibold uppercase text-xs tracking-wider border"
                       >
-                        UPDATE PASSWORD
+                        Update password
                       </Button>
                     </form>
                   </Form>
@@ -938,15 +938,15 @@ export default function AccountPage() {
             </div>
 
             <div className="space-y-10">
-              <Card className="border-none bg-white shadow-xl shadow-black/[0.02] rounded-[2.5rem]">
-                <CardHeader className="p-10">
-                  <CardTitle className="text-xl font-black uppercase">
+              <Card className="border-none bg-card shadow-sm rounded-3xl">
+                <CardHeader className="p-6">
+                  <CardTitle className="text-xl font-bold">
                     Notifications
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-10 pt-0 space-y-6">
-                  <div className="flex items-center justify-between p-6 rounded-[1.5rem] bg-muted/10 border-2">
-                    <label className="font-black text-sm uppercase">
+                <CardContent className="p-6 pt-0 space-y-6">
+                  <div className="flex items-center justify-between p-6 rounded-2xl bg-muted/10 border">
+                    <label className="font-bold text-sm uppercase">
                       Rental Requests
                     </label>
                     <Switch
@@ -954,8 +954,8 @@ export default function AccountPage() {
                       className="data-[state=checked]:bg-primary"
                     />
                   </div>
-                  <div className="flex items-center justify-between p-6 rounded-[1.5rem] bg-muted/10 border-2">
-                    <label className="font-black text-sm uppercase">
+                  <div className="flex items-center justify-between p-6 rounded-2xl bg-muted/10 border">
+                    <label className="font-bold text-sm uppercase">
                       System Emails
                     </label>
                     <Switch
@@ -966,13 +966,13 @@ export default function AccountPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-destructive/20 bg-destructive/5 rounded-[2.5rem] overflow-hidden">
-                <CardHeader className="p-10 pb-4">
-                  <CardTitle className="text-destructive font-black uppercase">
+              <Card className="border border-destructive/20 bg-destructive/5 rounded-3xl overflow-hidden">
+                <CardHeader className="p-6 pb-4">
+                  <CardTitle className="text-destructive font-bold uppercase">
                     Danger Zone
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-10 pt-0 space-y-6">
+                <CardContent className="p-6 pt-0 space-y-6">
                   <p className="text-sm font-medium text-muted-foreground/80 leading-relaxed">
                     Deleting your account is permanent. This will remove all
                     your properties and history.
@@ -981,25 +981,25 @@ export default function AccountPage() {
                     <AlertDialogTrigger asChild>
                       <Button
                         variant="destructive"
-                        className="w-full h-14 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-destructive/10"
+                        className="w-full h-14 rounded-2xl font-semibold uppercase text-xs tracking-wider shadow-lg"
                       >
-                        DELETE ACCOUNT
+                        Delete account
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent className="rounded-[2.5rem] p-10 border-none shadow-3xl">
+                    <AlertDialogContent className="rounded-3xl p-6 border-none shadow-sm">
                       <AlertDialogHeader className="space-y-4">
-                        <AlertDialogTitle className="text-3xl font-black uppercase tracking-tight">
-                          CONFIRM DELETION
+                        <AlertDialogTitle className="text-3xl font-bold tracking-tight">
+                          Confirm deletion
                         </AlertDialogTitle>
                         <AlertDialogDescription className="text-lg font-medium leading-relaxed font-sans">
                           Are you absolutely certain? This will permanently
-                          delete your profile, hosted assets, and all
+                          delete your profile, listings and all
                           operational data.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter className="pt-8 gap-4">
-                        <AlertDialogCancel className="h-14 rounded-2xl font-bold border-2">
-                          CANCEL
+                        <AlertDialogCancel className="h-14 rounded-2xl font-bold border">
+                          Cancel
                         </AlertDialogCancel>
                         <AlertDialogAction className="h-14 rounded-2xl font-bold bg-destructive hover:bg-destructive/90 text-white">
                           YES, DELETE ACCOUNT

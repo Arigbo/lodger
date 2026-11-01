@@ -19,6 +19,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { collection, query, where, getDocs, documentId, doc, updateDoc } from 'firebase/firestore';
 import Loading from '@/app/loading';
+import { PageHeader, StatCard, StatGrid, EmptyState } from "@/components/dashboard";
 
 type AggregatedRequest = MaintenanceRequest & {
   tenantName: string;
@@ -111,7 +112,7 @@ export default function MaintenancePage() {
       console.error("Error updating status:", error);
       toast({
         variant: "destructive",
-        title: "Protocol Failure",
+        title: "Update failed",
         description: "Failed to update service status.",
       });
     }
@@ -141,56 +142,38 @@ export default function MaintenancePage() {
   }
 
   return (
-    <div className="space-y-16 pb-32 animate-in fade-in duration-1000">
-      {/* Cinematic Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b-4 border-foreground/5 px-2">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">Property Care</span>
-          </div>
-          <h1 className="font-headline text-5xl md:text-7xl font-black tracking-tighter text-foreground uppercase leading-[0.9]">
-            MAINTENANCE <br /> <span className="text-primary">LOGISTICS</span>
-          </h1>
-          <p className="text-lg text-muted-foreground font-medium mt-4">
-            Manage service requests and property upkeep.
-          </p>
-        </div>
-        <div className="flex gap-4">
-          <div className="bg-white px-8 py-5 rounded-[2rem] border-2 border-muted/10 shadow-sm flex flex-col justify-center min-w-[160px]">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">Total Requests</p>
-            <p className="text-3xl font-black tracking-tighter">{requests.length}</p>
-          </div>
-          <div className="bg-orange-600 text-white px-8 py-5 rounded-[2rem] shadow-xl shadow-orange-600/20 flex flex-col justify-center min-w-[160px]">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-1">Pending Tasks</p>
-            <p className="text-3xl font-black tracking-tighter">{requests.filter(r => r.status === 'Pending').length}</p>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-8 pb-8 animate-in fade-in duration-1000">
+      <PageHeader title="Maintenance" description="Repair requests reported by your tenants." />
+
+      <StatGrid className="lg:grid-cols-3">
+        <StatCard label="Open" value={requests.filter((r) => r.status === 'Pending').length} icon={Wrench} tone="warning" />
+        <StatCard label="In progress" value={requests.filter((r) => r.status === 'In Progress').length} icon={Wrench} tone="info" />
+        <StatCard label="Total requests" value={requests.length} icon={Wrench} className="col-span-2 lg:col-span-1" />
+      </StatGrid>
 
       <div className="space-y-10">
         <div className="flex items-center gap-4 px-2">
           <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <Wrench className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-3xl font-black uppercase tracking-tight">Active Maintenance</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Active Maintenance</h2>
         </div>
 
         {requests.length > 0 ? (
           <div className="grid grid-cols-1 gap-8">
             {requests.map((request) => (
-              <Card key={request.id} className="group relative overflow-hidden rounded-[3rem] bg-white border-2 border-foreground/5 shadow-xl hover:shadow-3xl transition-all duration-500 p-8 md:p-10">
-                <div className="flex flex-col lg:flex-row gap-10">
+              <Card key={request.id} className="group relative overflow-hidden rounded-3xl bg-card border border-foreground/5 shadow-sm hover:shadow-md transition-all duration-500 p-8 md:p-8">
+                <div className="flex flex-col lg:flex-row gap-6">
                   {/* Service Metadata */}
                   <div className="lg:w-1/4 border-r-2 border-muted/5 pr-10 space-y-6">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         {getStatusIcon(request.status)}
-                        <Badge variant="outline" className="px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border-muted/20">
+                        <Badge variant="outline" className="px-3 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider border-muted/20">
                           {request.status}
                         </Badge>
                       </div>
-                      <h3 className="text-2xl font-black uppercase tracking-tight group-hover:text-primary transition-colors leading-tight">
+                      <h3 className="text-2xl font-bold tracking-tight group-hover:text-primary transition-colors leading-tight">
                         {request.title}
                       </h3>
                     </div>
@@ -200,7 +183,7 @@ export default function MaintenancePage() {
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div>
-                          <p className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest">Logged On</p>
+                          <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider">Logged On</p>
                           <p className="text-xs font-bold">{new Date(request.requestDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                         </div>
                       </div>
@@ -209,8 +192,8 @@ export default function MaintenancePage() {
                           <AlertCircle className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div>
-                          <p className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest">Priority Level</p>
-                          <Badge variant={getPriorityVariant(request.priority)} className="h-4 px-2 text-[8px] font-black uppercase">{request.priority}</Badge>
+                          <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-wider">Priority Level</p>
+                          <Badge variant={getPriorityVariant(request.priority)} className="h-4 px-2 text-xs font-semibold uppercase">{request.priority}</Badge>
                         </div>
                       </div>
                     </div>
@@ -220,21 +203,21 @@ export default function MaintenancePage() {
                   <div className="flex-1 space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-2">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Property</p>
-                        <Link href={`/landlord/properties/${request.propertyId}`} className="group/link flex items-center gap-2 text-xl font-black uppercase tracking-tight hover:text-primary transition-colors">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Property</p>
+                        <Link href={`/landlord/properties/${request.propertyId}`} className="group/link flex items-center gap-2 text-xl font-bold tracking-tight hover:text-primary transition-colors">
                           <Building className="h-5 w-5 opacity-40" /> {request.propertyName} <ExternalLink className="h-3 w-3 opacity-0 group-hover/link:opacity-100 transition-opacity" />
                         </Link>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Tenant</p>
-                        <Link href={`/landlord/tenants/${request.tenantId}`} className="group/link flex items-center gap-2 text-xl font-black uppercase tracking-tight hover:text-primary transition-colors">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Tenant</p>
+                        <Link href={`/landlord/tenants/${request.tenantId}`} className="group/link flex items-center gap-2 text-xl font-bold tracking-tight hover:text-primary transition-colors">
                           <UserIcon className="h-5 w-5 opacity-40" /> {request.tenantName} <ExternalLink className="h-3 w-3 opacity-0 group-hover/link:opacity-100 transition-opacity" />
                         </Link>
                       </div>
                     </div>
 
-                    <div className="p-6 rounded-2xl bg-muted/10 border-2 border-muted/5 min-h-[100px]">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 mb-3">Service Details</p>
+                    <div className="p-6 rounded-2xl bg-muted/10 border border-muted/5 min-h-[100px]">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40 mb-3">Service Details</p>
                       <p className="text-sm font-medium text-muted-foreground leading-relaxed">
                         {request.description || "No tactical details provided by the tenant."}
                       </p>
@@ -243,28 +226,28 @@ export default function MaintenancePage() {
 
                   {/* Administrative Terminal */}
                   <div className="lg:w-1/5 flex lg:flex-col gap-3 justify-center">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-center text-muted-foreground/40 hidden lg:block mb-2">Manage Request</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-center text-muted-foreground/40 hidden lg:block mb-2">Manage Request</p>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button className="h-14 rounded-xl bg-foreground text-white hover:bg-primary transition-all font-black text-[10px] uppercase tracking-widest gap-2 shadow-lg">
-                          UPDATE STATUS <MoreHorizontal className="h-4 w-4" />
+                        <Button className="h-14 rounded-xl bg-foreground text-white hover:bg-primary transition-all font-semibold text-xs uppercase tracking-wider gap-2 shadow-lg">
+                          Update status <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="rounded-2xl p-2 border-2 border-foreground/5 shadow-2xl">
-                        <DropdownMenuItem onClick={() => handleUpdateStatus(request.id, 'In Progress')} className="rounded-xl focus:bg-primary focus:text-white cursor-pointer py-3 px-4 font-black text-[10px] uppercase tracking-widest">
-                          MARK IN PROGRESS
+                      <DropdownMenuContent align="end" className="rounded-2xl p-2 border border-foreground/5 shadow-sm">
+                        <DropdownMenuItem onClick={() => handleUpdateStatus(request.id, 'In Progress')} className="rounded-xl focus:bg-primary focus:text-white cursor-pointer py-3 px-4 font-semibold text-xs uppercase tracking-wider">
+                          Mark in progress
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleUpdateStatus(request.id, 'Completed')} className="rounded-xl focus:bg-emerald-500 focus:text-white cursor-pointer py-3 px-4 font-black text-[10px] uppercase tracking-widest">
-                          MARK COMPLETED
+                        <DropdownMenuItem onClick={() => handleUpdateStatus(request.id, 'Completed')} className="rounded-xl focus:bg-emerald-500 focus:text-white cursor-pointer py-3 px-4 font-semibold text-xs uppercase tracking-wider">
+                          Mark completed
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleUpdateStatus(request.id, 'Cancelled')} className="rounded-xl focus:bg-destructive focus:text-white cursor-pointer py-3 px-4 font-black text-[10px] uppercase tracking-widest text-destructive">
-                          CANCEL REQUEST
+                        <DropdownMenuItem onClick={() => handleUpdateStatus(request.id, 'Cancelled')} className="rounded-xl focus:bg-destructive focus:text-white cursor-pointer py-3 px-4 font-semibold text-xs uppercase tracking-wider text-destructive">
+                          Cancel request
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                     <Link href={`/landlord/messages?conversationId=${request.tenantId}`} className="w-full">
-                      <Button variant="outline" className="w-full h-14 rounded-xl border-2 hover:bg-muted font-black text-[10px] uppercase tracking-widest gap-2">
-                        CONTACT <ArrowRight className="h-4 w-4" />
+                      <Button variant="outline" className="w-full h-14 rounded-xl border hover:bg-muted font-semibold text-xs uppercase tracking-wider gap-2">
+                        Contact <ArrowRight className="h-4 w-4" />
                       </Button>
                     </Link>
                   </div>
@@ -273,13 +256,13 @@ export default function MaintenancePage() {
             ))}
           </div>
         ) : (
-          <Card className="rounded-[3.5rem] border-2 border-dashed border-foreground/10 bg-muted/5 p-24 text-center space-y-8">
-            <div className="h-32 w-32 rounded-[2.5rem] bg-white shadow-2xl flex items-center justify-center mx-auto relative group overflow-hidden">
+          <Card className="rounded-3xl border border-dashed border-foreground/10 bg-muted/5 p-24 text-center space-y-8">
+            <div className="h-32 w-32 rounded-3xl bg-card shadow-sm flex items-center justify-center mx-auto relative group overflow-hidden">
               <Wrench className="h-14 w-14 text-muted-foreground/20 group-hover:rotate-12 transition-transform" />
-              <div className="absolute inset-0 bg-primary/5 rounded-[2.5rem]" />
+              <div className="absolute inset-0 bg-primary/5 rounded-3xl" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-2xl font-black uppercase tracking-tight">Systems Clear</h3>
+              <h3 className="text-2xl font-bold tracking-tight">Systems Clear</h3>
               <p className="text-lg text-muted-foreground max-w-sm mx-auto">
                 No active maintenance requests found at this time.
               </p>

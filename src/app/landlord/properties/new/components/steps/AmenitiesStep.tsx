@@ -29,11 +29,11 @@ export const AmenitiesStep = ({ form }: AmenitiesStepProps) => {
       className="space-y-10 md:space-y-14"
     >
       <div className="space-y-2">
-        <h2 className="text-xl md:text-3xl font-black uppercase tracking-tighter text-foreground">
-          Lifestyle & <span className="text-primary">Facilities</span>
+        <h2 className="text-xl md:text-3xl font-bold tracking-tight text-foreground">
+          Amenities & rules
         </h2>
-        <p className="text-[10px] md:text-xs font-bold text-muted-foreground/60 uppercase tracking-widest leading-relaxed">
-          Select the premium features that define the living experience of your
+        <p className="text-xs md:text-xs font-bold text-muted-foreground/60 uppercase tracking-wider leading-relaxed">
+          Select the features that define the living experience of your
           property.
         </p>
       </div>
@@ -44,10 +44,10 @@ export const AmenitiesStep = ({ form }: AmenitiesStepProps) => {
         render={({ field }) => (
           <FormItem className="space-y-8">
             <div className="flex items-center justify-between">
-              <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
                 Available Amenities
               </FormLabel>
-              <span className="text-[9px] font-black text-primary bg-primary/5 px-2 py-0.5 rounded-full uppercase tracking-tighter">
+              <span className="text-xs font-semibold text-primary bg-primary/5 px-2 py-0.5 rounded-full uppercase tracking-tight">
                 {field.value?.length || 0} Selected
               </span>
             </div>
@@ -72,10 +72,10 @@ export const AmenitiesStep = ({ form }: AmenitiesStepProps) => {
                         field.onChange(newValue);
                       }}
                       className={cn(
-                        "relative flex flex-col items-center justify-center gap-4 p-6 rounded-[2rem] border-2 transition-all duration-500 overflow-hidden group",
+                        "relative flex flex-col items-center justify-center gap-4 p-6 rounded-3xl border transition-all duration-500 overflow-hidden group",
                         isSelected
                           ? "bg-foreground text-white border-foreground shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)]"
-                          : "bg-foreground/[0.02] border-transparent hover:border-primary/20 text-muted-foreground hover:bg-white",
+                          : "bg-foreground/[0.02] border-transparent hover:border-primary/20 text-muted-foreground hover:bg-card",
                       )}
                     >
                       <div
@@ -88,7 +88,7 @@ export const AmenitiesStep = ({ form }: AmenitiesStepProps) => {
                       >
                         <Icon className="h-6 w-6" />
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest">
+                      <span className="text-xs font-semibold uppercase tracking-wider">
                         {amenity}
                       </span>
 
@@ -118,18 +118,18 @@ export const AmenitiesStep = ({ form }: AmenitiesStepProps) => {
         name="rules"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-              House Protocol (Rules)
+            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+              House rules
             </FormLabel>
             <FormControl>
               <Textarea
                 placeholder="e.g., No parties after 10PM, Pets allowed with deposit..."
-                className="min-h-[120px] rounded-[2rem] bg-foreground/[0.02] border-2 border-transparent focus-visible:border-primary/20 font-bold text-sm p-6"
+                className="min-h-[120px] rounded-3xl bg-foreground/[0.02] border border-transparent focus-visible:border-primary/20 font-bold text-sm p-6"
                 {...field}
               />
             </FormControl>
-            <FormDescription className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-3">
-              Clear protocols reduce tenant conflicts by up to 60%.
+            <FormDescription className="text-xs font-bold text-muted-foreground/40 uppercase tracking-wider mt-3">
+              Clear rules reduce tenant conflicts by up to 60%.
             </FormDescription>
             <FormMessage />
           </FormItem>

@@ -27,7 +27,7 @@ export function MessageItem({ message, isMine, showDate, senderProfile }: Messag
             {showDate && timestamp && (
                 <div className="flex items-center gap-6 py-6 group">
                     <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-muted/20 to-transparent" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.5em] text-muted-foreground/30 px-4 group-hover:text-primary/40 transition-colors">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/30 px-4 group-hover:text-primary/40 transition-colors">
                         {format(timestamp, 'EEEE, d MMMM yyyy')}
                     </span>
                     <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-muted/20 to-transparent" />
@@ -38,17 +38,17 @@ export function MessageItem({ message, isMine, showDate, senderProfile }: Messag
                 isMine ? "flex-row-reverse" : "flex-row"
             )}>
                 <div className="flex-shrink-0 mt-1 relative group">
-                    <Avatar className="h-10 w-10 border-2 border-white shadow-xl ring-1 ring-black/5">
+                    <Avatar className="h-10 w-10 border border-white shadow-sm ring-1 ring-black/5">
                         <AvatarImage
                             src={senderProfile?.profileImageUrl}
                             className="object-cover"
                         />
-                        <AvatarFallback className="bg-muted text-muted-foreground/40 text-[10px] font-black uppercase">
+                        <AvatarFallback className="bg-muted text-muted-foreground/40 text-xs font-semibold uppercase">
                             {senderProfile?.name?.[0] || 'U'}
                         </AvatarFallback>
                     </Avatar>
                     <div className={cn(
-                        "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white shadow-sm",
+                        "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border border-white shadow-sm",
                         isMine ? "bg-primary" : "bg-green-500"
                     )} />
                 </div>
@@ -58,15 +58,15 @@ export function MessageItem({ message, isMine, showDate, senderProfile }: Messag
                     isMine ? "items-end" : "items-start"
                 )}>
                     {!isMine && (
-                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 px-1">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40 px-1">
                             {senderProfile?.name}
                         </span>
                     )}
                     <div className={cn(
-                        "px-6 py-4 rounded-[1.75rem] relative group transition-all duration-300 hover:shadow-2xl",
+                        "px-6 py-4 rounded-2xl relative group transition-all duration-300 hover:shadow-md",
                         isMine
-                            ? "bg-foreground text-white rounded-tr-none shadow-xl shadow-foreground/5"
-                            : "bg-white border border-muted/10 text-foreground rounded-tl-none shadow-lg shadow-black/5"
+                            ? "bg-foreground text-white rounded-tr-none shadow-sm"
+                            : "bg-card border border-muted/10 text-foreground rounded-tl-none shadow-lg"
                     )}>
                         <p className="text-sm md:text-[16px] leading-relaxed font-medium selection:bg-primary/20">
                             {message.text}
@@ -74,7 +74,7 @@ export function MessageItem({ message, isMine, showDate, senderProfile }: Messag
                     </div>
                     {timestamp && (
                         <div className={cn(
-                            "flex items-center gap-2 px-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground/30",
+                            "flex items-center gap-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/30",
                             isMine ? "justify-end" : "justify-start"
                         )}>
                             <span>{format(timestamp, 'h:mm a')}</span>

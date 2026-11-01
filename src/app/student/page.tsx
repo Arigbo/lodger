@@ -1,145 +1,149 @@
 "use client";
 
-import PropertyCard from "@/components/properties/property-card";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Home } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { ArrowRight, Bell, Heart, Home, MessageSquare, Search, UserCog } from "lucide-react";
 import { collection, query, where } from "firebase/firestore";
-import type { Property } from "@/types";
-import Loading from '@/app/loading';
-
+import PropertyCard from "@/components/properties/property-card";
+import { EmptyState, PageHeader, StatCard, StatGrid } from "@/components/dashboard";
+import { Button } from "@/components/ui/button";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import type { Property, RentalApplication } from "@/types";
 
 export default function StudentDashboardPage() {
-  const { user, isUserLoading } = useUser();
+  const { user, profile } = useUser();
   const firestore = useFirestore();
-  const router = useRouter();
 
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.replace('/auth/login');
-    }
-  }, [isUserLoading, user, router]);
+  const rentedQuery = useMemoFirebase(
+    () => (user ? query(collection(firestore, "properties"), where("currentTenantId", "==", user.uid)) : null),
+    [user, firestore],
+  );
+  const pendingQuery = useMemoFirebase(
+    () =>
+      user
+        ? query(
+            collection(firestore, "rentalApplications"),
+            where("tenantId", "==", user.uid),
+            where("status", "==", "pending"),
+          )
+        : null,
+    [user, firestore],
+  );
 
-  const propertiesQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(collection(firestore, 'properties'), where('currentTenantId', '==', user.uid));
-  }, [user, firestore]);
+  const { data: rented, isLoading: rentedLoading } = useCollection<Property>(rentedQuery);
+  const { data: pending, isLoading: pendingLoading } = useCollection<RentalApplication>(pendingQuery);
 
-  const applicationsQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(collection(firestore, 'rentalApplications'), where('tenantId', '==', user.uid), where('status', '==', 'pending'));
-  }, [user, firestore]);
-
-  const { data: rentedProperties, isLoading: propsLoading } = useCollection<Property>(propertiesQuery);
-  const { data: pendingApplications, isLoading: appsLoading } = useCollection<any>(applicationsQuery);
-
-  const stats = useMemo(() => ({
-    activeRents: rentedProperties?.length || 0,
-    pendingApps: pendingApplications?.length || 0,
-  }), [rentedProperties, pendingApplications]);
-
-  if (isUserLoading || propsLoading || appsLoading || !user) {
-    return <Loading />;
-  }
+  const firstName = (profile?.name || user?.displayName || "").split(" ")[0];
+  const savedCount = profile?.bookmarkedPropertyIds?.length ?? 0;
+  const loading = rentedLoading || pendingLoading;
 
   return (
-    <div className="space-y-12">
-      {/* Header Section */}
-      <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-        <div className="space-y-1">
-          <h1 className="font-headline text-4xl font-extrabold tracking-tight text-foreground">
-            Hi, {user?.displayName?.split(' ')[0] || 'there'}! 👋
-          </h1>
-          <p className="text-lg font-medium text-muted-foreground/80">
-            Welcome back to your Lodger dashboard.
-          </p>
-        </div>
-        <Button size="lg" className="rounded-2xl px-8 font-bold shadow-xl shadow-primary/20 transition-all hover:shadow-primary/40 hover:-translate-y-1 active:translate-y-0" asChild>
-          <Link href="/student/properties">Explore Properties</Link>
-        </Button>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="group relative overflow-hidden border-none bg-white p-1 transition-all hover:shadow-2xl hover:shadow-primary/5">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-          <CardHeader className="relative pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-widest text-primary/60">Currently Renting</CardDescription>
-            <CardTitle className="text-4xl font-black tracking-tighter text-primary">{stats.activeRents}</CardTitle>
-          </CardHeader>
-          <CardContent className="relative">
-            <p className="text-sm font-medium text-muted-foreground/80">Active tenancies secured</p>
-          </CardContent>
-          {/* Decorative background icon */}
-          <Home className="absolute -bottom-4 -right-4 h-24 w-24 text-primary/5 transition-transform group-hover:scale-110 group-hover:rotate-6" />
-        </Card>
-
-        <Card className="group relative overflow-hidden border-none bg-white p-1 transition-all hover:shadow-2xl hover:shadow-orange-500/5">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-          <CardHeader className="relative pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-widest text-orange-600/60">Applications</CardDescription>
-            <CardTitle className="text-4xl font-black tracking-tighter text-orange-600">{stats.pendingApps}</CardTitle>
-          </CardHeader>
-          <CardContent className="relative">
-            <p className="text-sm font-medium text-muted-foreground/80">Pending landlord approval</p>
-          </CardContent>
-        </Card>
-
-        <Card className="group relative overflow-hidden border-none bg-white p-1 transition-all hover:shadow-2xl hover:shadow-blue-500/5 hidden lg:block">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-          <CardHeader className="relative pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-widest text-blue-600/60">Account Status</CardDescription>
-            <CardTitle className="text-4xl font-black tracking-tighter text-blue-600">Verified</CardTitle>
-          </CardHeader>
-          <CardContent className="relative">
-            <p className="text-sm font-medium text-muted-foreground/80">Priority student access active</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content Section */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-headline font-bold tracking-tight">My Active Tenancies</h2>
-          {rentedProperties && rentedProperties.length > 0 && (
-            <Link href="/student/tenancy" className="text-sm font-bold text-primary hover:underline underline-offset-4">
-              View All Details →
+    <div className="space-y-10">
+      <PageHeader
+        title={firstName ? `Welcome back, ${firstName}` : "Welcome back"}
+        description="Here's what's happening with your search and your home."
+        actions={
+          <Button asChild className="rounded-xl">
+            <Link href="/student/properties">
+              <Search className="mr-2 h-4 w-4" /> Find a home
             </Link>
-          )}
-        </div>
+          </Button>
+        }
+      />
 
-        {rentedProperties && rentedProperties.length > 0 ? (
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            {rentedProperties.map(property => (
-              <Link key={property.id} href={`/student/tenancy/${property.id}`} className="group transition-all hover:-translate-y-2 block">
-                <PropertyCard property={property} as="div" />
+      <StatGrid className="lg:grid-cols-3">
+        <StatCard
+          label="Current home"
+          value={loading ? "—" : rented?.length ? rented.length : "None yet"}
+          icon={Home}
+          hint={rented?.length ? "Active tenancy" : "Apply to a listing to get started"}
+          href="/student/tenancy"
+        />
+        <StatCard
+          label="Pending requests"
+          value={loading ? "—" : pending?.length ?? 0}
+          icon={Bell}
+          tone="warning"
+          hint="Waiting for landlord approval"
+          href="/student/requests"
+        />
+        <StatCard
+          label="Saved homes"
+          value={savedCount}
+          icon={Heart}
+          tone="danger"
+          hint="Your shortlist"
+          href="/student/bookmarks"
+          className="col-span-2 lg:col-span-1"
+        />
+      </StatGrid>
+
+      <div className="grid gap-8 lg:grid-cols-3">
+        <section aria-labelledby="tenancies-heading" className="space-y-4 lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <h2 id="tenancies-heading" className="text-lg font-semibold">
+              Your home
+            </h2>
+            {!!rented?.length && (
+              <Link href="/student/tenancy" className="text-sm font-medium text-primary hover:underline">
+                Manage tenancy
               </Link>
-            ))}
+            )}
           </div>
-        ) : (
-          <Card className="overflow-hidden border-none bg-white shadow-xl shadow-black/[0.02]">
-            <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-3xl bg-muted/30 transition-transform hover:scale-110 hover:rotate-3">
-                <Home className="h-12 w-12 text-muted-foreground/50" />
-              </div>
-              <CardTitle className="text-2xl font-bold tracking-tight">No Active Tenancies</CardTitle>
-              <CardDescription className="mx-auto mt-2 max-w-sm text-base font-medium leading-relaxed">
-                You haven&apos;t secured any rentals yet. Start exploring properties and apply to your favorites!
-              </CardDescription>
-              <Button size="lg" className="mt-8 rounded-2xl px-8 font-bold" asChild>
-                <Link href="/student/properties">Start Searching</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+
+          {rented?.length ? (
+            <div className="grid gap-6 sm:grid-cols-2">
+              {rented.map((property) => (
+                <Link key={property.id} href={`/student/tenancy/${property.id}`} className="block">
+                  <PropertyCard property={property} as="div" />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={Home}
+              title="You're not renting anywhere yet"
+              description="Browse verified listings near your campus and send a request when you find the one."
+              action={
+                <Button asChild className="rounded-xl">
+                  <Link href="/student/properties">Start searching</Link>
+                </Button>
+              }
+            />
+          )}
+        </section>
+
+        <aside aria-labelledby="quick-actions-heading" className="space-y-4">
+          <h2 id="quick-actions-heading" className="text-lg font-semibold">
+            Quick actions
+          </h2>
+          <ul className="divide-y rounded-2xl border bg-card">
+            {[
+              { href: "/student/messages", icon: MessageSquare, label: "Message a landlord" },
+              { href: "/student/requests", icon: Bell, label: "Track your requests" },
+              { href: "/student/leases", icon: Home, label: "View lease agreements" },
+              {
+                href: "/student/account",
+                icon: UserCog,
+                label: profile?.phone ? "Update your profile" : "Add your phone number",
+              },
+            ].map(({ href, icon: Icon, label }) => (
+              <li key={href}>
+                <Link
+                  href={href}
+                  className="group flex items-center gap-3 px-4 py-3.5 text-sm font-medium transition-colors hover:bg-accent/50"
+                >
+                  <Icon aria-hidden className="h-4 w-4 text-primary" />
+                  <span className="flex-1">{label}</span>
+                  <ArrowRight
+                    aria-hidden
+                    className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </aside>
       </div>
     </div>
   );
 }
-
-
-
