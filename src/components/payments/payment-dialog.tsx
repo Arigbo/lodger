@@ -200,7 +200,7 @@ export default function PaymentDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-xl w-[95vw] p-0 border-none bg-white/80 backdrop-blur-2xl shadow-sm rounded-3xl overflow-visible">
+      <DialogContent className="sm:max-w-xl w-[95vw] p-0 border-none bg-white/80 backdrop-blur-2xl shadow-sm rounded-2xl overflow-visible">
         <div className="flex flex-col">
           {/* Progress Header */}
           <div className="relative h-24 bg-primary p-6 flex items-center justify-between rounded-t-[2.5rem]">
@@ -220,7 +220,7 @@ export default function PaymentDialog({
             </div>
           </div>
 
-          <div className="p-6 md:p-8 space-y-6">
+          <div className="p-6 space-y-6">
             {/* Step 1: Duration */}
             {step === 1 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -231,7 +231,7 @@ export default function PaymentDialog({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <Label htmlFor="months" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Months</Label>
+                    <Label htmlFor="months" className="text-xs font-semibold text-muted-foreground px-1">Months</Label>
                     <Select value={months.toString()} onValueChange={(val) => setMonths(parseInt(val))}>
                       <SelectTrigger id="months" className="h-11 rounded-2xl border-muted/20 bg-muted/5 font-bold text-xl px-6 focus:ring-primary/20">
                         <SelectValue placeholder="Months" />
@@ -245,12 +245,12 @@ export default function PaymentDialog({
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="p-6 rounded-3xl bg-primary/5 flex flex-col justify-center gap-1 border border-primary/10">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-primary/60">Total Amount</p>
-                    <p className="text-3xl font-bold tracking-tight text-primary">
+                  <div className="p-6 rounded-2xl bg-primary/5 flex flex-col justify-center gap-1 border border-primary/10">
+                    <p className="text-xs font-semibold text-primary/60">Total Amount</p>
+                    <p className="text-2xl font-bold tracking-tight text-primary">
                       {formatPrice(totalAmount, currency)}
                     </p>
-                    <p className="text-xs font-bold text-muted-foreground/60 uppercase">{months} x {formatPrice(amount, currency)}</p>
+                    <p className="text-xs font-bold text-muted-foreground/60">{months} x {formatPrice(amount, currency)}</p>
                   </div>
                 </div>
 
@@ -276,7 +276,7 @@ export default function PaymentDialog({
                         initStripePayment();
                       }}
                       disabled={isProcessing}
-                      className="flex items-center justify-between p-6 rounded-3xl border border-muted/10 hover:border-primary hover:bg-primary/5 transition-all text-left group disabled:opacity-50"
+                      className="flex items-center justify-between p-6 rounded-2xl border border-muted/10 hover:border-primary hover:bg-primary/5 transition-all text-left group disabled:opacity-50"
                     >
                       <div className="flex items-center gap-4">
                         <div className="h-12 w-12 rounded-2xl bg-muted/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
@@ -300,7 +300,7 @@ export default function PaymentDialog({
                       setPaymentMethod('Offline');
                       setStep(3);
                     }}
-                    className="flex items-center justify-between p-6 rounded-3xl border border-muted/10 hover:border-primary hover:bg-primary/5 transition-all text-left group"
+                    className="flex items-center justify-between p-6 rounded-2xl border border-muted/10 hover:border-primary hover:bg-primary/5 transition-all text-left group"
                   >
                     <div className="flex items-center gap-4">
                       <div className="h-12 w-12 rounded-2xl bg-muted/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
@@ -331,7 +331,7 @@ export default function PaymentDialog({
                       <p className="text-sm font-medium text-muted-foreground">Follow these steps to complete your offline transaction.</p>
                     </div>
 
-                    <div className="p-8 rounded-3xl bg-primary/5 space-y-6 border border-primary/10 text-center">
+                    <div className="p-6 rounded-2xl bg-primary/5 space-y-6 border border-primary/10 text-center">
                       <div className="relative inline-block">
                         <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-150" />
                         <Building className="h-12 w-12 text-primary relative" />
@@ -395,7 +395,7 @@ export default function PaymentDialog({
               <div className="flex flex-col items-center justify-center py-12 text-center space-y-8 animate-in zoom-in-95 duration-500">
                 <div className="relative">
                   <div className="absolute inset-0 bg-green-500/20 blur-3xl rounded-full scale-150 animate-pulse" />
-                  <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-green-500 shadow-sm">
+                  <div className="relative flex h-24 w-24 items-center justify-center rounded-2xl bg-green-500 shadow-sm">
                     <CheckCircle className="h-12 w-12 text-white" />
                   </div>
                 </div>

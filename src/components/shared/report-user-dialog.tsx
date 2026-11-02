@@ -96,7 +96,7 @@ export function ReportUserDialog({ isOpen, onClose, reportedUserId, reportedUser
 
                 <div className="grid gap-6 py-4">
                     <div className="space-y-2">
-                        <Label htmlFor="reason" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Reason</Label>
+                        <Label htmlFor="reason" className="text-xs font-semibold text-muted-foreground/80">Reason</Label>
                         <Select onValueChange={setReason} value={reason}>
                             <SelectTrigger id="reason" className="h-12 rounded-xl bg-muted/20 border-transparent focus:ring-0 font-medium">
                                 <SelectValue placeholder="Select a reason" />
@@ -112,7 +112,7 @@ export function ReportUserDialog({ isOpen, onClose, reportedUserId, reportedUser
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="description" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Description</Label>
+                        <Label htmlFor="description" className="text-xs font-semibold text-muted-foreground/80">Description</Label>
                         <Textarea
                             id="description"
                             placeholder="Please provide specific details..."
@@ -127,7 +127,7 @@ export function ReportUserDialog({ isOpen, onClose, reportedUserId, reportedUser
                     <Button variant="ghost" onClick={onClose} disabled={isSubmitting} className="rounded-xl font-bold">
                         Cancel
                     </Button>
-                    <Button onClick={handleSubmit} disabled={isSubmitting} variant="destructive" className="rounded-xl font-bold uppercase tracking-wider shadow-lg">
+                    <Button onClick={handleSubmit} disabled={isSubmitting} variant="destructive" className="rounded-xl font-bold shadow-lg">
                         {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...</> : 'Submit Report'}
                     </Button>
                 </DialogFooter>

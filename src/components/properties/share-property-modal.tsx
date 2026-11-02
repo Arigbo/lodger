@@ -54,20 +54,20 @@ export function SharePropertyModal({ isOpen, onClose, propertyId, propertyTitle 
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-md w-[95vw] rounded-3xl p-0 overflow-hidden border border-primary/20">
-                <div className="bg-primary/5 p-8 text-center space-y-4">
+            <DialogContent className="sm:max-w-md w-[95vw] rounded-2xl p-0 overflow-hidden border border-primary/20">
+                <div className="bg-primary/5 p-6 text-center space-y-4">
                     <div className="mx-auto bg-card p-4 rounded-full w-20 h-20 flex items-center justify-center shadow-sm mb-4 animate-in zoom-in duration-500">
                         <Share2 className="h-10 w-10 text-primary" />
                     </div>
                     <DialogTitle className="text-2xl font-bold tracking-tight">Property Deployed!</DialogTitle>
                     <DialogDescription className="text-base font-medium">
-                        "<span className="uppercase">{propertyTitle}</span>" has been successfully published. Share it now to attract tenants.
+                        "<span className="">{propertyTitle}</span>" has been successfully published. Share it now to attract tenants.
                     </DialogDescription>
                 </div>
 
-                <div className="p-8 space-y-6 bg-card">
+                <div className="p-6 space-y-6 bg-card">
                     <div className="space-y-2">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Property Link</p>
+                        <p className="text-xs font-semibold text-muted-foreground/60">Property Link</p>
                         <div className="flex gap-2">
                             <Input
                                 value={propertyUrl}
@@ -85,7 +85,7 @@ export function SharePropertyModal({ isOpen, onClose, propertyId, propertyTitle 
                     </div>
 
                     <div className="space-y-3">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 text-center">Or share via</p>
+                        <p className="text-xs font-semibold text-muted-foreground/60 text-center">Or share via</p>
                         <div className="flex justify-center gap-4">
                             <Button variant="outline" size="icon" className="rounded-full h-12 w-12 hover:bg-[#1DA1F2] hover:text-white hover:border-[#1DA1F2] transition-colors" onClick={() => handleShare('twitter')}>
                                 <Twitter className="h-5 w-5" />
@@ -100,7 +100,7 @@ export function SharePropertyModal({ isOpen, onClose, propertyId, propertyTitle 
                     </div>
                 </div>
                 <DialogFooter className="bg-muted/10 p-6 flex justify-center sm:justify-center">
-                    <Button onClick={onClose} variant="ghost" className="font-semibold uppercase tracking-wider text-xs">
+                    <Button onClick={onClose} variant="ghost" className="font-semibold text-xs">
                         Close & View Property
                     </Button>
                 </DialogFooter>

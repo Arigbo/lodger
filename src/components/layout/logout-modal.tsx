@@ -20,7 +20,7 @@ interface LogoutModalProps {
 export function LogoutModal({ open, onOpenChange, onConfirm }: LogoutModalProps) {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
-            <AlertDialogContent className="w-[95vw] max-w-md rounded-3xl p-6 sm:p-8">
+            <AlertDialogContent className="w-[95vw] max-w-md rounded-2xl p-6 sm:p-8">
                 <AlertDialogHeader className="space-y-2">
                     <AlertDialogTitle className="text-2xl font-bold tracking-tight">
                         Log out of Lodger?

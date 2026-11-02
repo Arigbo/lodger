@@ -268,7 +268,7 @@ export default function SearchFilters({
                           <Info className="h-3 w-3" />
                         </div>
                       </TooltipTrigger>
-                      <TooltipContent className="max-w-[200px] font-bold text-xs uppercase tracking-wider text-primary p-4 rounded-xl border">
+                      <TooltipContent className="max-w-[200px] font-bold text-xs text-primary p-4 rounded-xl border">
                         <p>{type.description}</p>
                       </TooltipContent>
                     </Tooltip>
