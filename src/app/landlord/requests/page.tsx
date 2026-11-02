@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { UserProfile, Property, RentalApplication, LeaseAgreement } from '@/types/';
-import { Check, GraduationCap, Inbox, MessageSquare, Wallet } from 'lucide-react';
+import { Check, GraduationCap, Inbox, MessageSquare, Wallet, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import LeaseGenerationDialog from '@/components/leases/lease-generation-dialog';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, query, where, addDoc, updateDoc, getDoc } from 'firebase/firestore';
@@ -102,6 +103,8 @@ export default function RentalRequestsPage() {
   const isLoading = isUserLoading || areRequestsLoading || isAggregating;
 
   const [tab, setTab] = useState<'pending' | 'approved' | 'declined'>('pending');
+  // Optional ?property= filter, used when arriving from a property page.
+  const propertyFilter = useSearchParams().get('property');
   const [requestToDecline, setRequestToDecline] = useState<AggregatedRequest | null>(null);
 
   const handleAcceptClick = (request: AggregatedRequest) => {
@@ -249,12 +252,14 @@ export default function RentalRequestsPage() {
     return <PageSkeleton variant="list" />;
   }
 
+  const scoped = propertyFilter ? aggregatedRequests.filter((r) => r.request.propertyId === propertyFilter) : aggregatedRequests;
+  const filteredTitle = propertyFilter ? scoped[0]?.property?.title ?? 'this property' : null;
   const counts = {
-    pending: aggregatedRequests.filter((r) => r.request.status === 'pending').length,
-    approved: aggregatedRequests.filter((r) => r.request.status === 'approved').length,
-    declined: aggregatedRequests.filter((r) => r.request.status === 'declined').length,
+    pending: scoped.filter((r) => r.request.status === 'pending').length,
+    approved: scoped.filter((r) => r.request.status === 'approved').length,
+    declined: scoped.filter((r) => r.request.status === 'declined').length,
   };
-  const visible = aggregatedRequests.filter((r) => r.request.status === tab);
+  const visible = scoped.filter((r) => r.request.status === tab);
 
   return (
     <div className="space-y-6">
@@ -262,6 +267,15 @@ export default function RentalRequestsPage() {
         title="Rental requests"
         description="Review students who want to rent your homes, and confirm bank-transfer payments."
       />
+
+      {filteredTitle && (
+        <div className="flex w-fit items-center gap-2 rounded-full border bg-card py-1 pl-3 pr-1 text-sm shadow-sm">
+          Showing requests for <span className="font-medium">{filteredTitle}</span>
+          <Link href="/landlord/requests" aria-label="Show all requests" className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground">
+            <X className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      )}
 
       {pendingOfflinePayments.length > 0 && (
         <SectionCard
