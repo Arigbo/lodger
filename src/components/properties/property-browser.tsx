@@ -1,108 +1,42 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
+import { ArrowRight, Home as HomeIcon, Search, SlidersHorizontal, X } from "lucide-react";
+import { collection, query, where } from "firebase/firestore";
+import { EmptyState, PageHeader } from "@/components/dashboard";
 import PropertyCard from "@/components/properties/property-card";
-import SearchFilters from "@/components/properties/search-filters";
-import type { Property, UserProfile } from "@/types";
-import type { FilterState } from "@/components/properties/search-filters";
-import {
-  Search,
-  SlidersHorizontal,
-  Home as HomeIcon,
-} from "lucide-react";
-import { haversineDistance } from "@/lib/utils";
-import { getCurrencyByCountry, convertCurrency } from "@/lib/currencies";
-import {
-  useUser,
-  useFirestore,
-  useCollection,
-  useDoc,
-  useMemoFirebase,
-} from "@/firebase";
-import { collection, query, where, doc } from "firebase/firestore";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import SearchFilters, { type FilterState } from "@/components/properties/search-filters";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { convertCurrency, getCurrencyByCountry } from "@/lib/currencies";
+import { cn, formatPrice, haversineDistance } from "@/lib/utils";
+import type { Property } from "@/types";
 
+const SORTS = [
+  { value: "newest", label: "Newest" },
+  { value: "price-asc", label: "Price: low to high" },
+  { value: "price-desc", label: "Price: high to low" },
+  { value: "bedrooms-desc", label: "Most bedrooms" },
+  { value: "area-desc", label: "Largest" },
+] as const;
 
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  GraduationCap,
-  Landmark,
-  Sparkles,
-  TrendingUp,
-  Star,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+/** Below this many listings, curated rows just repeat the same homes, so show one grid instead. */
+const MIN_FOR_SECTIONS = 7;
+const SECTION_SIZE = 8;
+const EMPTY_FILTERS: FilterState = { useCurrentLocation: false, amenities: [] };
 
-function PropertySection({
-  title,
-  description,
-  properties,
-  icon: Icon,
-  delay = 0,
-}: {
-  title: string;
-  description?: string;
-  properties: Property[];
-  icon: LucideIcon;
-  delay?: number;
-}) {
-  if (properties.length === 0) return null;
-
-  return (
-    <div
-      className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2 text-primary font-bold uppercase tracking-wider text-xs md:text-xs">
-          <Icon className="h-3.5 w-3.5 md:h-4 w-4" />
-          <span>{title}</span>
-        </div>
-        <div className="flex items-end justify-between gap-4">
-          <h2 className="text-xl md:text-3xl font-bold tracking-tight leading-tight">
-            {description || `Premium ${title}`}
-          </h2>
-        </div>
-      </div>
-
-      {/* Horizontal Scroll Carousel */}
-      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8">
-        <div className="flex gap-4 md:gap-6 overflow-x-auto pb-8 pt-2 px-4 sm:px-6 lg:px-8 no-scrollbar scroll-smooth snap-x snap-mandatory">
-          {properties.map((property) => (
-            <div
-              key={property.id}
-              className="min-w-[85vw] sm:min-w-[380px] lg:min-w-[420px] snap-start"
-            >
-              <PropertyCard
-                property={property}
-                className="h-full shadow-lg shadow-black/[0.03]"
-              />
-            </div>
-          ))}
-          {/* Final spacer for edge-to-edge feel */}
-          <div className="min-w-[20px] sm:min-w-[40px] shrink-0" />
-        </div>
-      </div>
-    </div>
-  );
+/** "2", "4+" or "3+" → a predicate on a room count. */
+function roomMatcher(value?: string) {
+  if (!value || value === "any") return null;
+  const n = parseInt(value, 10);
+  const atLeast = value.endsWith("+") || value === "4";
+  return (count: number) => (atLeast ? count >= n : count === n);
 }
-
-// Mock coordinates for major state centers removed in favor of dynamic property-based detection
 
 type PropertyBrowserProps = {
   /** Server-rendered listings shown until the live query resolves. */
@@ -112,681 +46,387 @@ type PropertyBrowserProps = {
 };
 
 export default function PropertyBrowser({ initialProperties, initialQuery = "" }: PropertyBrowserProps) {
-  const { user } = useUser();
+  const { profile, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const inDashboard = usePathname().startsWith("/student");
 
-  const userDocRef = useMemoFirebase(
-    () => (user ? doc(firestore, "users", user.uid) : null),
-    [user, firestore],
-  );
-  const { data: userProfile, isLoading: isProfileLoading } =
-    useDoc<UserProfile>(userDocRef);
-
-  const propertiesQuery = useMemoFirebase(
-    () =>
-      query(
-        collection(firestore, "properties"),
-        where("status", "==", "available"),
-      ),
-    [firestore],
-  );
-  const { data: liveProperties, isLoading: arePropertiesLoading } =
-    useCollection<Property>(propertiesQuery);
+  const propertiesQuery = useMemoFirebase(() => query(collection(firestore, "properties"), where("status", "==", "available")), [firestore]);
+  const { data: liveProperties, isLoading: arePropertiesLoading } = useCollection<Property>(propertiesQuery);
   const allProperties = liveProperties ?? initialProperties ?? null;
 
-  const [filters, setFilters] = useState<FilterState>({
-    useCurrentLocation: false,
-  });
-  const [currentLocation, setCurrentLocation] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
+  const [filters, setFilters] = useState<FilterState>({ useCurrentLocation: false });
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [schoolsInArea, setSchoolsInArea] = useState<string[] | null>(null);
   const [hasAppliedDefaults, setHasAppliedDefaults] = useState(false);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [sortBy, setSortBy] = useState("newest");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const userCurrency = useMemo(() => {
-    if (userProfile?.currency) return userProfile.currency;
-    if (userProfile?.country) return getCurrencyByCountry(userProfile.country);
-    return "USD";
-  }, [userProfile]);
+  const userCurrency = profile?.currency || (profile?.country ? getCurrencyByCountry(profile.country) : "USD");
+
+  // Start from the student's own area (state adjusted during render, not in an effect).
+  if (profile && !hasAppliedDefaults) {
+    setHasAppliedDefaults(true);
+    setFilters((prev) => ({ ...prev, country: profile.country || prev.country, state: profile.state || prev.state }));
+  }
 
   const availableStates = useMemo(() => {
-    if (!allProperties) return [];
-    let props = allProperties;
-    if (filters.country) {
-      props = props.filter((p) => p.location.country === filters.country);
-    }
+    const props = (allProperties ?? []).filter((p) => !filters.country || p.location.country === filters.country);
     return [...new Set(props.map((p) => p.location.state))];
   }, [allProperties, filters.country]);
 
-  // Pre-fill filters from the student's profile once it is available
-  // (state adjusted during render rather than in an effect).
-  if (userProfile && !hasAppliedDefaults) {
-    setHasAppliedDefaults(true);
-    setFilters((prev) => ({
-      ...prev,
-      country: userProfile.country || prev.country,
-      state: userProfile.state || prev.state,
-      school: userProfile.school || prev.school,
-    }));
-  }
+  const types = useMemo(() => [...new Set((allProperties ?? []).map((p) => p.type))].sort(), [allProperties]);
 
-  const filteredProperties = useMemo(() => {
-    if (!allProperties) return [];
-    let properties = allProperties;
-
-    // Filter by availability first (already done in the query, but good for safety)
-    properties = properties.filter((p) => p.status === "available");
+  const results = useMemo(() => {
+    let list = (allProperties ?? []).filter((p) => p.status === "available");
 
     if (filters.useCurrentLocation && currentLocation) {
-      properties = properties.filter((p) => {
-        if (p.location.lat && p.location.lng) {
-          const distance = haversineDistance(currentLocation, {
-            lat: p.location.lat,
-            lng: p.location.lng,
-          });
-          return distance < 10; // 10km radius
-        }
-        return false;
-      });
+      list = list.filter((p) => p.location.lat && p.location.lng && haversineDistance(currentLocation, { lat: p.location.lat, lng: p.location.lng }) < 10);
     } else {
-      if (filters.country) {
-        properties = properties.filter(
-          (p) => p.location.country === filters.country,
-        );
-      }
-
-      if (filters.state) {
-        properties = properties.filter((p) =>
-          p.location.state.toLowerCase().includes(filters.state!.toLowerCase()),
-        );
-      }
-
-      if (filters.city) {
-        properties = properties.filter((p) =>
-          p.location.city.toLowerCase().includes(filters.city!.toLowerCase()),
-        );
-      }
-
-      if (filters.school) {
-        properties = properties.filter((p) =>
-          p.location.school
-            ?.toLowerCase()
-            .includes(filters.school!.toLowerCase()),
-        );
-      }
-    }
-
-    if (filters.price) {
-      properties = properties.filter((p) => {
-        const priceInUserCurrency = convertCurrency(
-          p.price,
-          p.currency,
-          userCurrency,
-        );
-        return priceInUserCurrency <= filters.price!;
-      });
-    }
-
-    if (filters.propertyType && filters.propertyType !== "any") {
-      properties = properties.filter((p) => p.type === filters.propertyType);
-    }
-
-    if (filters.bedrooms && filters.bedrooms !== "any") {
-      if (filters.bedrooms === "4") {
-        properties = properties.filter((p) => p.bedrooms >= 4);
-      } else {
-        properties = properties.filter(
-          (p) => p.bedrooms === parseInt(filters.bedrooms!),
-        );
-      }
-    }
-
-    if (filters.bathrooms && filters.bathrooms !== "any") {
-      if (filters.bathrooms === "3") {
-        properties = properties.filter((p) => p.bathrooms >= 3);
-      } else {
-        properties = properties.filter(
-          (p) => p.bathrooms === parseInt(filters.bathrooms!),
-        );
-      }
-    }
-
-    if (filters.amenities && filters.amenities.length > 0) {
-      properties = properties.filter((p) =>
-        filters.amenities!.every((amenity) => p.amenities.includes(amenity)),
-      );
-    }
-
-    if (searchQuery) {
-      const lowerQuery = searchQuery.toLowerCase().trim();
-      properties = properties.filter(
+      const has = (value: string | undefined, needle?: string) => !needle || (value ?? "").toLowerCase().includes(needle.toLowerCase());
+      list = list.filter(
         (p) =>
-          p.title.toLowerCase().includes(lowerQuery) ||
-          p.location.address.toLowerCase().includes(lowerQuery) ||
-          p.location.city.toLowerCase().includes(lowerQuery) ||
-          p.location.state.toLowerCase().includes(lowerQuery) ||
-          p.location.school?.toLowerCase().includes(lowerQuery) ||
-          p.type.toLowerCase().includes(lowerQuery),
+          (!filters.country || p.location.country === filters.country) &&
+          has(p.location.state, filters.state) &&
+          has(p.location.city, filters.city) &&
+          has(p.location.school, filters.school),
       );
     }
 
-    // Sorting
-    properties.sort((a, b) => {
-      const priceA = convertCurrency(a.price, a.currency, userCurrency);
-      const priceB = convertCurrency(b.price, b.currency, userCurrency);
+    if (filters.price) list = list.filter((p) => convertCurrency(p.price, p.currency, userCurrency) <= filters.price!);
+    if (filters.propertyType && filters.propertyType !== "any") list = list.filter((p) => p.type === filters.propertyType);
+    const beds = roomMatcher(filters.bedrooms);
+    if (beds) list = list.filter((p) => beds(p.bedrooms));
+    const baths = roomMatcher(filters.bathrooms);
+    if (baths) list = list.filter((p) => baths(p.bathrooms));
+    if (filters.amenities?.length) list = list.filter((p) => filters.amenities!.every((a) => p.amenities?.includes(a)));
 
+    const term = searchQuery.trim().toLowerCase();
+    if (term) {
+      list = list.filter((p) =>
+        [p.title, p.location.address, p.location.city, p.location.state, p.location.school, p.type].some((v) => v?.toLowerCase().includes(term)),
+      );
+    }
+
+    const price = (p: Property) => convertCurrency(p.price, p.currency, userCurrency);
+    return [...list].sort((a, b) => {
       switch (sortBy) {
         case "price-asc":
-          return priceA - priceB;
+          return price(a) - price(b);
         case "price-desc":
-          return priceB - priceA;
+          return price(b) - price(a);
         case "bedrooms-desc":
           return b.bedrooms - a.bedrooms;
         case "area-desc":
-          return b.area - a.area;
-        case "newest":
+          return (b.area || 0) - (a.area || 0);
         default:
-          return b.id.localeCompare(a.id); // Fallback to ID for reverse chronological-ish order
+          return b.id.localeCompare(a.id);
       }
     });
+  }, [allProperties, filters, currentLocation, searchQuery, sortBy, userCurrency]);
 
-    return properties;
-  }, [
-    filters,
-    currentLocation,
-    allProperties,
-    searchQuery,
-    sortBy,
-    userCurrency,
-  ]);
+  // Chips for every filter the student has set, each removable on its own.
+  const chips: { key: keyof FilterState | "q"; label: string }[] = [
+    ...(searchQuery.trim() ? [{ key: "q" as const, label: `“${searchQuery.trim()}”` }] : []),
+    ...(filters.useCurrentLocation ? [{ key: "useCurrentLocation" as const, label: "Within 10 km of you" }] : []),
+    ...(filters.school ? [{ key: "school" as const, label: `Near ${filters.school}` }] : []),
+    ...(filters.city ? [{ key: "city" as const, label: filters.city }] : []),
+    ...(filters.state ? [{ key: "state" as const, label: filters.state }] : []),
+    ...(filters.propertyType && filters.propertyType !== "any" ? [{ key: "propertyType" as const, label: filters.propertyType }] : []),
+    ...(filters.price ? [{ key: "price" as const, label: `Up to ${formatPrice(filters.price, userCurrency)}` }] : []),
+    ...(filters.bedrooms && filters.bedrooms !== "any" ? [{ key: "bedrooms" as const, label: `${filters.bedrooms.replace(/^4$/, "4+")} bed` }] : []),
+    ...(filters.bathrooms && filters.bathrooms !== "any" ? [{ key: "bathrooms" as const, label: `${filters.bathrooms} bath` }] : []),
+    ...(filters.amenities ?? []).map((a) => ({ key: "amenities" as const, label: a })),
+  ];
+  // Location defaults from the profile don't count as "searching".
+  const userFilterCount = chips.filter((c) => !(c.key === "state" && filters.state === profile?.state)).length;
+  const isSearching = userFilterCount > 0 || sortBy !== "newest";
 
-  const sections = useMemo(() => {
-    if (!allProperties || allProperties.length === 0) return [];
-
-    const nearSchool = allProperties.filter(
-      (p) =>
-        userProfile?.school &&
-        p.location.school?.toLowerCase() === userProfile.school.toLowerCase(),
-    );
-
-    const inCity = allProperties.filter(
-      (p) =>
-        userProfile?.city &&
-        p.location.city?.toLowerCase() === userProfile.city.toLowerCase(),
-    );
-
-    const budgetFriendly = [...allProperties].sort((a, b) => {
-      const priceA = convertCurrency(a.price, a.currency, userCurrency);
-      const priceB = convertCurrency(b.price, b.currency, userCurrency);
-      return priceA - priceB;
-    });
-
-    // Refined "Highly Recommended" Logic (Multi-factor ranking)
-    const highlyRecommended = [...allProperties].sort((a, b) => {
-      const getScore = (p: Property) => {
-        let score = 0;
-        // Amenities count (0-50 points)
-        score += Math.min((p.amenities?.length || 0) * 5, 50);
-
-        // Proximity to student's school (50 points)
-        if (
-          userProfile?.school &&
-          p.location.school?.toLowerCase() === userProfile.school.toLowerCase()
-        ) {
-          score += 50;
-        }
-
-        return score;
-      };
-
-      const scoreA = getScore(a);
-      const scoreB = getScore(b);
-
-      if (scoreA !== scoreB) return scoreB - scoreA;
-      return b.id.localeCompare(a.id); // Tie-breaker: Newest first
-    });
-
-    const recentlyAdded = [...allProperties].sort((a, b) =>
-      b.id.localeCompare(a.id),
-    );
-
-    return [
-      {
-        id: "near-school",
-        title: "Near Your School",
-        description: `Apartments near ${userProfile?.school || "University"}`,
-        icon: GraduationCap,
-        properties: nearSchool,
-      },
-      {
-        id: "recommended",
-        title: "Highly Recommended",
-        description: "Recommended for you",
-        icon: Star,
-        properties: highlyRecommended,
-      },
-      {
-        id: "in-city",
-        title: "In Your City",
-        description: `Best listings in ${userProfile?.city || "your area"}`,
-        icon: Landmark,
-        properties: inCity,
-      },
-      {
-        id: "budget",
-        title: "Budget Friendly",
-        description: "Homes within your budget",
-        icon: TrendingUp,
-        properties: budgetFriendly,
-      },
-      {
-        id: "recent",
-        title: "Recently Added",
-        description: "Freshly listed for you",
-        icon: Sparkles,
-        properties: recentlyAdded,
-      },
-    ];
-  }, [allProperties, userProfile, userCurrency]);
-
-  const isSearching = useMemo(() => {
-    if (searchQuery.trim().length > 0) return true;
-
-    // Count non-default filters
-    const activeFilterCount = Object.keys(filters).filter((k) => {
-      if (k === "useCurrentLocation") return filters[k];
-      if (filters[k as keyof FilterState] === undefined) return false;
-      if (k === "amenities") return filters[k] && filters[k]!.length > 0;
-      // Ignore defaults applied from profile
-      if (
-        ["country", "state", "school"].includes(k) &&
-        filters[k as keyof FilterState] ===
-          userProfile?.[k as keyof UserProfile]
-      )
-        return false;
-      return true;
-    }).length;
-
-    return activeFilterCount > 0 || sortBy !== "newest";
-  }, [filters, searchQuery, sortBy, userProfile]);
-
-  const handleFilterChange = (newFilters: FilterState) => {
-    if (newFilters.useCurrentLocation === false) {
+  const removeChip = (chip: (typeof chips)[number]) => {
+    if (chip.key === "q") return setSearchQuery("");
+    if (chip.key === "amenities") return setFilters((f) => ({ ...f, amenities: (f.amenities ?? []).filter((a) => a !== chip.label) }));
+    if (chip.key === "useCurrentLocation") {
       setCurrentLocation(null);
       setSchoolsInArea(null);
+      return setFilters((f) => ({ ...f, useCurrentLocation: false }));
     }
-    setFilters(newFilters);
-  };
-
-  const handleLocationSuccess = (coords: { lat: number; lng: number }) => {
-    if (!allProperties || allProperties.length === 0) return;
-    setCurrentLocation(coords);
-
-    // Find the closest property to determine the user's current region
-    let closestProperty: Property | null = null;
-    let minDistance = Infinity;
-
-    for (const property of allProperties) {
-      if (property.location.lat && property.location.lng) {
-        const distance = haversineDistance(coords, {
-          lat: property.location.lat,
-          lng: property.location.lng,
-        });
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestProperty = property;
-        }
-      }
-    }
-
-    // If we found a property within a reasonable range (e.g. 50km), we assume the user is in that region
-    // defaulting to the country/state/city of that property.
-    if (closestProperty && minDistance < 50) {
-      const regionState = closestProperty.location.state;
-      const regionCountry = closestProperty.location.country;
-
-      // Find all schools in this state to populate the dropdown
-      const schools = [
-        ...new Set(
-          allProperties
-            .filter(
-              (p) => p.location.state === regionState && p.location.school,
-            )
-            .map((p) => p.location.school!),
-        ),
-      ];
-
-      setSchoolsInArea(schools);
-
-      setFilters((prev) => ({
-        ...prev,
-        useCurrentLocation: true,
-        country: regionCountry,
-        state: regionState,
-        // We don't automatically set city as that might be too specific, but we set the broader region
-        school: undefined,
-      }));
-    } else {
-      // If no property is close, we still enable location search (filtering by radius)
-      // but we don't pre-select filters because we can't determine a supported region.
-      setSchoolsInArea([]);
-      setFilters((prev) => ({
-        ...prev,
-        useCurrentLocation: true,
-      }));
-    }
+    setFilters((f) => ({ ...f, [chip.key]: undefined }));
   };
 
   const resetFilters = () => {
-    // Reset all filters to an empty state
-    setFilters({
-      country: undefined,
-      state: undefined,
-      city: undefined,
-      school: undefined,
-      useCurrentLocation: false,
-      price: undefined,
-      propertyType: undefined,
-      bedrooms: undefined,
-      bathrooms: undefined,
-      amenities: [],
-    });
+    setFilters(EMPTY_FILTERS);
     setCurrentLocation(null);
     setSchoolsInArea(null);
     setSearchQuery("");
     setSortBy("newest");
   };
 
-  const isLoading = (isProfileLoading || arePropertiesLoading) && !initialProperties;
+  const handleFilterChange = (next: FilterState) => {
+    if (next.useCurrentLocation === false) {
+      setCurrentLocation(null);
+      setSchoolsInArea(null);
+    }
+    setFilters(next);
+  };
 
-  if (isLoading) {
-    return <PropertyGridSkeleton />;
-  }
+  const handleLocationSuccess = (coords: { lat: number; lng: number }) => {
+    if (!allProperties?.length) return;
+    setCurrentLocation(coords);
+    // Use the nearest listing (within 50 km) to work out which region the student is in.
+    let closest: Property | null = null;
+    let minDistance = Infinity;
+    for (const p of allProperties) {
+      if (!p.location.lat || !p.location.lng) continue;
+      const d = haversineDistance(coords, { lat: p.location.lat, lng: p.location.lng });
+      if (d < minDistance) [closest, minDistance] = [p, d];
+    }
+    if (closest && minDistance < 50) {
+      const region = closest.location;
+      setSchoolsInArea([...new Set(allProperties.filter((p) => p.location.state === region.state && p.location.school).map((p) => p.location.school!))]);
+      setFilters((f) => ({ ...f, useCurrentLocation: true, country: region.country, state: region.state, school: undefined }));
+    } else {
+      setSchoolsInArea([]);
+      setFilters((f) => ({ ...f, useCurrentLocation: true }));
+    }
+  };
+
+  const school = profile?.school;
+  const sections = useMemo(() => {
+    const all = allProperties ?? [];
+    if (all.length < MIN_FOR_SECTIONS) return [];
+    const schoolKey = school?.toLowerCase();
+    const prices = all.map((p) => convertCurrency(p.price, p.currency, userCurrency)).sort((a, b) => a - b);
+    const median = prices[Math.floor(prices.length / 2)];
+    const candidates = [
+      { id: "near-school", title: school ? `Near ${school}` : "", items: schoolKey ? all.filter((p) => p.location.school?.toLowerCase() === schoolKey) : [] },
+      { id: "new", title: "Just listed", items: [...all].sort((a, b) => b.id.localeCompare(a.id)) },
+      {
+        id: "budget",
+        title: "Good value",
+        items: all.filter((p) => convertCurrency(p.price, p.currency, userCurrency) <= median).sort((a, b) => a.price - b.price),
+      },
+      { id: "well-equipped", title: "Well equipped", items: all.filter((p) => (p.amenities?.length ?? 0) >= 5) },
+    ];
+    const seeAll: Record<string, (() => void) | undefined> = {
+      "near-school": school ? () => setFilters((f) => ({ ...f, school })) : undefined,
+      budget: () => setSortBy("price-asc"),
+    };
+    return candidates
+      .filter((s) => s.title && s.items.length > 0)
+      .map((s) => ({ ...s, items: s.items.slice(0, SECTION_SIZE), seeAll: s.items.length > SECTION_SIZE || s.id === "near-school" ? seeAll[s.id] : undefined }));
+  }, [allProperties, school, userCurrency]);
+
+  const loading = (isUserLoading || arePropertiesLoading) && !initialProperties;
+  if (loading) return <BrowserSkeleton inDashboard={inDashboard} />;
+
+  const total = allProperties?.length ?? 0;
 
   return (
-    <div className="w-full py-8 space-y-8 animate-in fade-in duration-700 overflow-x-visible">
-      {/* Simple Search & Filter Section */}
-      <div className="space-y-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-            Find your next <span className="text-primary">home</span>
-          </h1>
-          <div className="h-1 w-12 bg-primary rounded-full" />
-        </div>
+    <div className={cn("space-y-6", !inDashboard && "py-8")}>
+      {inDashboard ? (
+        <PageHeader title="Browse homes" description={`${total} home${total === 1 ? "" : "s"} available to rent right now.`} />
+      ) : (
+        <header>
+          <h1 className="font-headline text-3xl font-bold tracking-tight sm:text-4xl">Find your student home</h1>
+          <p className="mt-2 text-muted-foreground">
+            {total} home{total === 1 ? "" : "s"} available near campus. Request one in minutes, free.
+          </p>
+        </header>
+      )}
 
-        <div className="flex flex-col lg:flex-row items-center gap-4">
-          <div className="relative group flex-1 w-full">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+      {/* Toolbar */}
+      <div className={cn("space-y-3", !inDashboard && "sticky top-16 z-20 -mx-4 bg-background/95 px-4 py-3 backdrop-blur sm:mx-0 sm:px-0")}>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search aria-hidden className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by name, city, or university..."
-              className="h-14 pl-14 pr-6 rounded-2xl border-muted/20 bg-card shadow-sm text-lg font-medium placeholder:text-muted-foreground/40 focus-visible:ring-2 focus-visible:ring-primary/10 transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by area, university or name"
+              aria-label="Search homes"
+              className="h-11 rounded-xl pl-10"
             />
           </div>
-
-          <div className="flex items-center gap-3 w-full lg:w-auto">
-            {/* Mobile: Sheet */}
-            <div className="lg:hidden w-full">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="h-14 w-full rounded-2xl px-6 gap-3 border-muted/20 bg-card shadow-sm font-bold hover:bg-primary/5 hover:text-primary transition-all"
-                  >
-                    <SlidersHorizontal className="h-5 w-5" />
-                    Filters
-                    <Badge className="bg-primary/10 text-primary border-none font-bold h-5 w-5 p-0 flex items-center justify-center">
-                      {
-                        Object.keys(filters).filter(
-                          (k) =>
-                            filters[k as keyof FilterState] !== undefined &&
-                            filters[k as keyof FilterState] !== false,
-                        ).length
-                      }
-                    </Badge>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent
-                  side="bottom"
-                  className="h-[90vh] p-0 rounded-t-3xl"
-                >
-                  <div className="bg-muted/30 p-6 border-b flex items-center justify-between">
-                    <h3 className="font-bold text-lg text-foreground">
-                      Filter Properties
-                    </h3>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={resetFilters}
-                      className="text-primary hover:text-primary hover:bg-primary/10 font-bold rounded-xl px-4"
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                  <div className="h-[calc(90vh-80px)] overflow-y-auto p-6 custom-scrollbar">
-                    <SearchFilters
-                      onFilterChange={handleFilterChange}
-                      onReset={resetFilters}
-                      initialFilters={filters}
-                      onLocationSuccess={handleLocationSuccess}
-                      schoolsInArea={schoolsInArea}
-                      availableStates={availableStates}
-                      userCurrency={userCurrency}
-                      className="border-0 shadow-none p-0"
-                    />
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
-
-            {/* Desktop: Popover */}
-            <div className="hidden lg:block">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="h-11 rounded-2xl px-6 gap-3 border-muted/20 bg-card shadow-sm font-bold hover:bg-primary/5 hover:text-primary transition-all"
-                  >
-                    <SlidersHorizontal className="h-5 w-5" />
-                    Filters
-                    <Badge className="bg-primary/10 text-primary border-none font-bold h-5 w-5 p-0 flex items-center justify-center">
-                      {
-                        Object.keys(filters).filter(
-                          (k) =>
-                            filters[k as keyof FilterState] !== undefined &&
-                            filters[k as keyof FilterState] !== false,
-                        ).length
-                      }
-                    </Badge>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-[90vw] max-w-[500px] p-0 rounded-3xl overflow-hidden border-none shadow-sm mt-2"
-                  align="end"
-                >
-                  <div className="bg-muted/30 p-6 border-b flex items-center justify-between">
-                    <h3 className="font-bold text-lg text-foreground">
-                      Filter Properties
-                    </h3>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={resetFilters}
-                      className="text-primary hover:text-primary hover:bg-primary/10 font-bold rounded-xl px-4"
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                  <div className="max-h-[70vh] overflow-y-auto p-6 custom-scrollbar">
-                    <SearchFilters
-                      onFilterChange={handleFilterChange}
-                      onReset={resetFilters}
-                      initialFilters={filters}
-                      onLocationSuccess={handleLocationSuccess}
-                      schoolsInArea={schoolsInArea}
-                      availableStates={availableStates}
-                      userCurrency={userCurrency}
-                      className="border-0 shadow-none p-0"
-                    />
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="h-14 w-full lg:w-[220px] rounded-2xl border-muted/20 bg-card shadow-sm font-bold px-6 focus:ring-2 focus:ring-primary/10">
-                <SelectValue placeholder="Sort" />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl border-none shadow-sm p-2 mt-2">
-                <SelectItem
-                  value="newest"
-                  className="rounded-xl py-2.5 font-bold"
-                >
-                  Newest First
-                </SelectItem>
-                <SelectItem
-                  value="price-asc"
-                  className="rounded-xl py-2.5 font-bold"
-                >
-                  Price: Low to High
-                </SelectItem>
-                <SelectItem
-                  value="price-desc"
-                  className="rounded-xl py-2.5 font-bold"
-                >
-                  Price: High to Low
-                </SelectItem>
-                <SelectItem
-                  value="bedrooms-desc"
-                  className="rounded-xl py-2.5 font-bold"
-                >
-                  Bedrooms: Most First
-                </SelectItem>
-                <SelectItem
-                  value="area-desc"
-                  className="rounded-xl py-2.5 font-bold"
-                >
-                  Area: Largest First
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="space-y-8">
-        {!allProperties || allProperties.length === 0 ? (
-          /* System Empty State (No properties listed yet) */
-          <Card className="overflow-hidden border-none bg-card shadow-sm">
-            <CardContent className="flex flex-col items-center justify-center py-32 text-center">
-              <div className="relative mb-12">
-                <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150 animate-pulse" />
-                <div className="relative flex h-40 w-40 items-center justify-center rounded-3xl bg-muted/30">
-                  <HomeIcon className="h-20 w-20 text-primary opacity-20" />
-                </div>
-              </div>
-              <h3 className="text-4xl font-bold tracking-tight">
-                Landlords are trying to give you the best
-              </h3>
-              <p className="mx-auto mt-6 max-w-sm text-xl font-medium text-muted-foreground/80 leading-relaxed">
-                Check back soon — new homes are listed every week.
-              </p>
-            </CardContent>
-          </Card>
-        ) : isSearching ? (
-          /* Search Results View */
-          <div className="space-y-8 animate-in fade-in duration-500">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h2 className="text-xl md:text-2xl font-bold tracking-tight">
-                {filteredProperties.length} Homes Found
-              </h2>
-              {searchQuery && (
-                <p className="text-muted-foreground font-medium">
-                  Showing results for &quot;
-                  <span className="text-foreground font-bold">
-                    {searchQuery}
+          <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="h-11 rounded-xl px-3 sm:px-4">
+                <SlidersHorizontal className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Filters</span>
+                {userFilterCount > 0 && (
+                  <span className="ml-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs text-primary-foreground">
+                    {userFilterCount}
                   </span>
-                  &quot;
-                </p>
-              )}
-            </div>
-
-            {filteredProperties.length > 0 ? (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-                {filteredProperties.map((property, idx) => (
-                  <div
-                    key={property.id}
-                    className="animate-in fade-in slide-in-from-bottom-6 duration-700 hover:-translate-y-2 transition-all"
-                    style={{ animationDelay: `${idx * 100}ms` }}
-                  >
-                    <PropertyCard property={property} />
-                  </div>
-                ))}
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
+              <SheetHeader className="border-b p-5 text-left">
+                <SheetTitle>Filters</SheetTitle>
+                <SheetDescription>{results.length} homes match</SheetDescription>
+              </SheetHeader>
+              <div className="flex-1 overflow-y-auto p-5">
+                <SearchFilters
+                  onFilterChange={handleFilterChange}
+                  initialFilters={filters}
+                  onLocationSuccess={handleLocationSuccess}
+                  schoolsInArea={schoolsInArea}
+                  availableStates={availableStates}
+                  userCurrency={userCurrency}
+                />
               </div>
-            ) : (
-              <Card className="overflow-hidden border-none bg-card shadow-sm">
-                <CardContent className="flex flex-col items-center justify-center py-32 text-center">
-                  <div className="relative mb-12">
-                    <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150 animate-pulse" />
-                    <div className="relative flex h-40 w-40 items-center justify-center rounded-3xl bg-muted/30">
-                      <Search className="h-20 w-20 text-primary opacity-20" />
-                    </div>
-                  </div>
-                  <h3 className="text-4xl font-bold tracking-tight">
-                    No homes match your search
-                  </h3>
-                  <p className="mx-auto mt-6 max-w-sm text-xl font-medium text-muted-foreground/80 leading-relaxed">
-                    Try adjusting your filters or search terms to find more
-                    accommodations.
-                  </p>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="mt-12 rounded-2xl px-6 h-11 font-bold text-lg border-primary/20 hover:bg-primary/5"
-                    onClick={resetFilters}
-                  >
-                    Reset All Filters
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        ) : (
-          /* Curated Sections View */
-          <div className="space-y-20">
-            {sections.map((section, idx) => (
-              <PropertySection
-                key={section.id}
-                title={section.title}
-                description={section.description}
-                icon={section.icon}
-                properties={section.properties}
-                delay={idx * 100}
-              />
-            ))}
+              <div className="flex gap-2 border-t p-4">
+                <Button variant="ghost" className="flex-1" onClick={resetFilters}>
+                  Clear all
+                </Button>
+                <Button className="flex-1" onClick={() => setFiltersOpen(false)}>
+                  Show {results.length} home{results.length === 1 ? "" : "s"}
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="hidden h-11 w-44 rounded-xl sm:flex" aria-label="Sort homes">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORTS.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Quick type filters */}
+        {types.length > 1 && (
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+            {[{ value: "any", label: "All types" }, ...types.map((t) => ({ value: t, label: t }))].map((t) => {
+              const active = (filters.propertyType || "any") === t.value;
+              return (
+                <button
+                  key={t.value}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setFilters((f) => ({ ...f, propertyType: t.value === "any" ? undefined : t.value }))}
+                  className={cn(
+                    "shrink-0 rounded-full border px-3.5 py-1.5 text-sm transition-colors",
+                    active ? "border-foreground bg-foreground text-background" : "hover:bg-accent",
+                  )}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
+
+      {total === 0 ? (
+        <EmptyState icon={HomeIcon} title="No homes listed yet" description="New homes are added every week. Check back soon." />
+      ) : isSearching ? (
+        <section aria-live="polite" className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="mr-1 text-sm font-medium">
+              {results.length} home{results.length === 1 ? "" : "s"}
+            </p>
+            {chips.map((chip) => (
+              <button
+                key={`${chip.key}-${chip.label}`}
+                type="button"
+                onClick={() => removeChip(chip)}
+                className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium hover:bg-muted/70"
+                aria-label={`Remove filter ${chip.label}`}
+              >
+                {chip.label} <X aria-hidden className="h-3 w-3" />
+              </button>
+            ))}
+            {chips.length > 1 && (
+              <button type="button" onClick={resetFilters} className="text-xs font-medium text-muted-foreground underline-offset-2 hover:underline">
+                Clear all
+              </button>
+            )}
+          </div>
+          {results.length ? (
+            <ResultsGrid properties={results} />
+          ) : (
+            <EmptyState
+              icon={Search}
+              title="No homes match"
+              description="Try removing a filter or searching a nearby area."
+              action={
+                <Button variant="outline" className="rounded-xl" onClick={resetFilters}>
+                  Clear all filters
+                </Button>
+              }
+            />
+          )}
+        </section>
+      ) : sections.length ? (
+        <div className="space-y-10">
+          {sections.map((section) => (
+            <section key={section.id} aria-labelledby={`row-${section.id}`}>
+              <div className="mb-3 flex items-end justify-between gap-4">
+                <h2 id={`row-${section.id}`} className="font-headline text-lg font-bold tracking-tight sm:text-xl">
+                  {section.title}
+                </h2>
+                {section.seeAll && (
+                  <button
+                    type="button"
+                    onClick={section.seeAll}
+                    className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                  >
+                    See all <ArrowRight aria-hidden className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+                {section.items.map((p, i) => (
+                  <div key={p.id} className="w-[78%] shrink-0 snap-start sm:w-[45%] lg:w-[calc(25%-0.75rem)]">
+                    <PropertyCard property={p} priority={i < 2} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+          <section aria-labelledby="row-all">
+            <h2 id="row-all" className="mb-3 font-headline text-lg font-bold tracking-tight sm:text-xl">
+              All homes
+            </h2>
+            <ResultsGrid properties={results} />
+          </section>
+        </div>
+      ) : (
+        <ResultsGrid properties={results} />
+      )}
     </div>
   );
 }
 
-function PropertyGridSkeleton() {
+function ResultsGrid({ properties }: { properties: Property[] }) {
   return (
-    <div className="w-full space-y-8 py-8" aria-busy="true" aria-label="Loading properties">
-      <div className="h-10 w-64 animate-pulse rounded-xl bg-muted" />
-      <div className="h-14 w-full animate-pulse rounded-2xl bg-muted" />
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="space-y-3">
-            <div className="aspect-[4/3] animate-pulse rounded-3xl bg-muted" />
-            <div className="h-5 w-3/4 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+    <ul className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {properties.map((p, i) => (
+        <li key={p.id}>
+          <PropertyCard property={p} priority={i < 4} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function BrowserSkeleton({ inDashboard }: { inDashboard: boolean }) {
+  return (
+    <div className={cn("space-y-6", !inDashboard && "py-8")} aria-busy="true" aria-label="Loading homes">
+      <Skeleton className="h-9 w-64 rounded-lg" />
+      <Skeleton className="h-11 w-full rounded-xl" />
+      <div className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {Array.from({ length: 8 }, (_, i) => (
+          <div key={i} className="space-y-2.5">
+            <Skeleton className="aspect-[4/3] rounded-xl" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3.5 w-1/2" />
+            <Skeleton className="h-4 w-1/3" />
           </div>
         ))}
       </div>

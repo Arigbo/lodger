@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -27,6 +20,7 @@ import { PROPERTY_TYPES } from "@/types/property-types";
 import { Combobox } from "@/components/ui/combobox";
 import { SchoolCombobox } from "@/components/shared/school-combobox";
 import { cn, formatPrice } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type FilterState = {
@@ -44,7 +38,6 @@ export type FilterState = {
 
 type SearchFiltersProps = {
   onFilterChange: (filters: FilterState) => void;
-  onReset: () => void;
   initialFilters?: FilterState;
   onLocationSuccess: (coords: { lat: number; lng: number }) => void;
   schoolsInArea?: string[] | null;
@@ -55,7 +48,6 @@ type SearchFiltersProps = {
 
 export default function SearchFilters({
   onFilterChange,
-  onReset,
   initialFilters,
   onLocationSuccess,
   schoolsInArea,
@@ -63,6 +55,7 @@ export default function SearchFilters({
   userCurrency = "USD",
   className,
 }: SearchFiltersProps) {
+  const { toast } = useToast();
   const [filters, setFilters] = useState<FilterState>(initialFilters || {});
   const [price, setPrice] = useState(initialFilters?.price || 3000);
 
@@ -101,12 +94,6 @@ export default function SearchFilters({
     handleInputChange("amenities", newAmenities);
   };
 
-  const handleReset = () => {
-    setPrice(
-      userCurrency === "NGN" ? 1000000 : userCurrency === "GHS" ? 10000 : 3000,
-    );
-    onReset();
-  };
 
   const handleCurrentLocation = () => {
     if (navigator.geolocation) {
@@ -119,9 +106,11 @@ export default function SearchFilters({
         },
         (error) => {
           console.error("Geolocation error:", error);
-          alert(
-            "Could not get your location. Please ensure location services are enabled and try again.",
-          );
+          toast({
+            variant: "destructive",
+            title: "Couldn't get your location",
+            description: "Allow location access in your browser, then try again.",
+          });
           // Reset location state if it fails
           const newFilters = { ...filters, useCurrentLocation: false };
           setFilters(newFilters);
@@ -129,16 +118,12 @@ export default function SearchFilters({
         },
       );
     } else {
-      alert("Geolocation is not supported by this browser.");
+      toast({ variant: "destructive", title: "Location isn't available in this browser" });
     }
   };
 
   return (
-    <Card className={cn("h-full", className)}>
-      <CardHeader>
-        <CardTitle className="font-headline">Filter & Sort</CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-6">
+    <div className={cn("grid gap-6", className)}>
         <div className="grid gap-2">
           <Label htmlFor="country">Country</Label>
           <Combobox
@@ -352,12 +337,6 @@ export default function SearchFilters({
             ))}
           </div>
         </div>
-      </CardContent>
-      <CardFooter className="flex-col gap-2">
-        <Button variant="ghost" className="w-full" onClick={handleReset}>
-          Reset All Filters
-        </Button>
-      </CardFooter>
-    </Card>
+    </div>
   );
 }

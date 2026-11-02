@@ -1,235 +1,125 @@
-
-'use client';
+"use client";
 
 import Image from "next/image";
-import { optimizedImageProps } from "@/config/images";
 import Link from "next/link";
-import type { Property } from "@/types";
-import { cn, formatPrice } from "@/lib/utils";
-import { getCurrencyByCountry, convertCurrency } from "@/lib/currencies";
-import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
-import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
-import { useMemo } from "react";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { BedDouble, Bath, Ruler, MapPin, Building, PlusCircle, Heart, GraduationCap } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { Building2, GraduationCap, Heart, MapPin } from "lucide-react";
+import { arrayRemove, arrayUnion, doc, updateDoc } from "firebase/firestore";
+import { optimizedImageProps } from "@/config/images";
+import { useFirestore, useUser } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { cn, formatPrice } from "@/lib/utils";
+import type { Property } from "@/types";
 
 type PropertyCardProps = {
   property: Property;
-  as?: 'link' | 'div';
+  /** "div" renders without a link, for cards wrapped in another link. */
+  as?: "link" | "div";
   className?: string;
+  /** Load the image eagerly (first cards above the fold). */
+  priority?: boolean;
 };
 
-export default function PropertyCard({ property, as = 'link', className }: PropertyCardProps) {
-  const image = property.images?.[0];
+export default function PropertyCard({ property, as = "link", className, priority }: PropertyCardProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { toast } = useToast();
+  const { user, profile } = useUser();
+  const firestore = useFirestore();
 
-  // Keep users inside their current area of the app; everyone else gets the
-  // public, indexable listing URL.
-  const linkHref = pathname.startsWith('/landlord')
+  // Keep people inside their area of the app; everyone else gets the public, indexable URL.
+  const href = pathname.startsWith("/landlord")
     ? `/landlord/properties/${property.id}`
-    : pathname.startsWith('/student')
+    : pathname.startsWith("/student")
       ? `/student/properties/${property.id}`
       : `/properties/${property.id}`;
 
-  const { user, profile: userProfile } = useUser();
-  const firestore = useFirestore();
-  const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const image = property.images?.[0];
+  const saved = !!profile?.bookmarkedPropertyIds?.includes(property.id);
+  const canSave = !pathname.startsWith("/landlord") && profile?.role !== "landlord";
+  const let_ = property.status !== "available";
+  const facts = [
+    `${property.bedrooms} bed`,
+    `${property.bathrooms} bath`,
+    property.area ? `${property.area} sq ft` : null,
+  ].filter(Boolean);
 
-  const isBookmarked = useMemo(() => {
-    return userProfile?.bookmarkedPropertyIds?.includes(property.id);
-  }, [userProfile, property.id]);
-
-  const toggleBookmark = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!user || !userDocRef) {
-      toast({
-        variant: "destructive",
-        title: "Login required",
-        description: "Please log in to bookmark properties",
-      });
+  const toggleSave = async () => {
+    if (!user) {
+      router.push(`/auth/login?redirect=${encodeURIComponent(`/student/properties/${property.id}`)}`);
       return;
     }
-
     try {
-      if (isBookmarked) {
-        await updateDoc(userDocRef, {
-          bookmarkedPropertyIds: arrayRemove(property.id)
-        });
-        toast({
-          title: "Removed from bookmarks",
-          description: `${property.title} has been removed from your saved properties.`,
-        });
-      } else {
-        await updateDoc(userDocRef, {
-          bookmarkedPropertyIds: arrayUnion(property.id)
-        });
-        toast({
-          title: "Added to bookmarks",
-          description: `${property.title} has been saved to your bookmarks.`,
-        });
-      }
-    } catch (error) {
-      console.error("Error toggling bookmark:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update bookmarks",
+      await updateDoc(doc(firestore, "users", user.uid), {
+        bookmarkedPropertyIds: saved ? arrayRemove(property.id) : arrayUnion(property.id),
       });
+      toast({ title: saved ? "Removed from saved homes" : "Saved to your shortlist" });
+    } catch (error) {
+      console.error("Saving home failed:", error);
+      toast({ variant: "destructive", title: "Could not update saved homes" });
     }
   };
 
-  const userCurrency = useMemo(() => {
-    if (userProfile?.currency) return userProfile.currency;
-    if (userProfile?.country) return getCurrencyByCountry(userProfile.country);
-    return null;
-  }, [userProfile]);
-
-  const CardContentComponent = (
-    <Card className={cn(
-      "group h-full overflow-hidden border-none bg-background/50 backdrop-blur-sm transition-all duration-500 hover:shadow-md hover:-translate-y-2 ring-1 ring-border/50 hover:ring-primary/30",
-      className
-    )}>
-      <CardHeader className="p-0">
-        <div className="relative h-64 w-full overflow-hidden">
-          {image ? (
-            <Image
-              {...optimizedImageProps(image)}
-              alt={property.title}
-              fill
-              className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center bg-muted/30 text-muted-foreground gap-3">
-              <Building className="h-12 w-12 opacity-20" />
-              <span className="text-xs font-bold uppercase tracking-wider opacity-50 font-sans">No Image Preview</span>
-            </div>
-          )}
-
-          {/* Overlay Gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-60 transition-opacity duration-500 group-hover:opacity-40" />
-
-          {/* Badges */}
-          <div className="absolute top-4 left-4 flex flex-col gap-2">
-            <Badge className="bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 px-2.5 py-1 text-xs font-bold uppercase tracking-wider">
-              {property.type}
-            </Badge>
-            {property.status === 'occupied' && (
-              <Badge variant="destructive" className="shadow-lg border-none px-2.5 py-1 text-xs font-bold uppercase tracking-wider">
-                Occupied
-              </Badge>
-            )}
-          </div>
-
-          {/* Bookmark Button */}
-          {!pathname.startsWith('/landlord') && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "absolute top-4 right-4 z-20 h-10 w-10 rounded-full border border-white/20 backdrop-blur-md transition-all hover:scale-110",
-                isBookmarked ? "bg-primary text-primary-foreground border-primary" : "bg-white/10 text-white hover:bg-white/20"
-              )}
-              onClick={toggleBookmark}
-            >
-              <Heart className={cn("h-5 w-5", isBookmarked && "fill-current")} />
-            </Button>
-          )}
-
-          <div className="absolute bottom-4 right-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-xl shadow-sm">
-              <p className="text-white text-lg font-bold tracking-tight">
-                {userCurrency && userCurrency !== property.currency
-                  ? formatPrice(convertCurrency(property.price, property.currency, userCurrency), userCurrency)
-                  : formatPrice(property.price, property.currency)}
-                <span className="text-white/60 text-xs font-normal ml-1">/mo</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="p-6 space-y-4">
-        <div>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-primary uppercase tracking-wider mb-1">
-            <MapPin className="h-3 w-3" />
-            <span>{property.location.city}</span>
-          </div>
-          {property.location.school && (
-            <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
-              <GraduationCap className="h-3 w-3" />
-              <span>Near {property.location.school}</span>
-            </div>
-          )}
-          <h3 className="font-headline text-xl font-bold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary line-clamp-2">
-            {property.title}
-          </h3>
-          <p className="mt-2 text-sm text-muted-foreground line-clamp-1 font-medium">
-            {property.location.address}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4 pt-2 border-t border-border/50">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <BedDouble className="h-4 w-4 text-primary/70" />
-              <span className="text-sm font-bold text-foreground">{property.bedrooms}</span>
-            </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">Beds</span>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Bath className="h-4 w-4 text-primary/70" />
-              <span className="text-sm font-bold text-foreground">{property.bathrooms}</span>
-            </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">Baths</span>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Ruler className="h-4 w-4 text-primary/70" />
-              <span className="text-sm font-bold text-foreground">{property.area}</span>
-            </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">Sqft</span>
-          </div>
-        </div>
-      </CardContent>
-
-      <CardFooter className="px-6 pb-6 pt-0 flex items-center justify-between">
-        <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary transition-all duration-1000 ease-out"
-            style={{ width: property.status === 'occupied' ? '100%' : '30%' }}
-          />
-        </div>
-        <div className="ml-4 shrink-0">
-          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
-            <PlusCircle className="h-4 w-4" />
-          </div>
-        </div>
-      </CardFooter>
-    </Card>
-  );
-
-  if (as === 'div') {
-    return (
-      <div className="group block cursor-pointer">
-        {CardContentComponent}
-      </div>
-    )
-  }
-
   return (
-    <Link href={linkHref} className="group block">
-      {CardContentComponent}
-    </Link>
+    <article className={cn("group relative flex h-full flex-col", className)}>
+      {as === "link" && (
+        <Link href={href} className="absolute inset-0 z-10 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+          <span className="sr-only">{property.title}</span>
+        </Link>
+      )}
+
+      <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-muted">
+        {image ? (
+          <Image
+            {...optimizedImageProps(image)}
+            alt=""
+            fill
+            priority={priority}
+            sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
+            className={cn("object-cover transition-transform duration-500 group-hover:scale-[1.04]", let_ && "grayscale-[40%]")}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-muted-foreground">
+            <Building2 aria-hidden className="h-10 w-10 opacity-30" />
+          </div>
+        )}
+
+        <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur">
+          {let_ ? "Currently let" : property.type}
+        </span>
+
+        {canSave && (
+          <button
+            type="button"
+            onClick={toggleSave}
+            aria-pressed={saved}
+            aria-label={saved ? `Remove ${property.title} from saved homes` : `Save ${property.title}`}
+            className="absolute right-3 top-3 z-20 rounded-full bg-background/90 p-2 shadow-sm backdrop-blur transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Heart className={cn("h-4 w-4", saved ? "fill-red-500 text-red-500" : "text-foreground")} />
+          </button>
+        )}
+      </div>
+
+      <div className="mt-3 flex flex-1 flex-col">
+        <h3 className="line-clamp-1 font-semibold leading-snug group-hover:underline group-hover:underline-offset-2">{property.title}</h3>
+        <p className="mt-0.5 flex items-center gap-1 truncate text-sm text-muted-foreground">
+          {property.location?.school ? (
+            <>
+              <GraduationCap aria-hidden className="h-3.5 w-3.5 shrink-0" /> Near {property.location.school}
+            </>
+          ) : (
+            <>
+              <MapPin aria-hidden className="h-3.5 w-3.5 shrink-0" /> {[property.location?.address, property.location?.city].filter(Boolean).join(", ")}
+            </>
+          )}
+        </p>
+        <p className="mt-0.5 text-sm text-muted-foreground">{facts.join(" · ")}</p>
+        <p className="mt-auto pt-2">
+          <span className="font-semibold">{formatPrice(property.price, property.currency)}</span>
+          <span className="text-sm text-muted-foreground"> / month</span>
+        </p>
+      </div>
+    </article>
   );
 }
