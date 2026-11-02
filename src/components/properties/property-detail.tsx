@@ -1,88 +1,110 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
-import { formatPrice, cn } from "@/lib/utils";
-import { getCurrencyByCountry, convertCurrency } from "@/lib/currencies";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import {
-  Star,
-  BedDouble,
   Bath,
-  Ruler,
+  BedDouble,
+  Building2,
+  ChevronLeft,
+  GraduationCap,
+  Heart,
+  Info,
   MapPin,
   MessageSquare,
+  Ruler,
   Share2,
-  Mail,
-  Building,
-  GraduationCap,
-  ChevronLeft,
-  Heart,
+  ShieldCheck,
+  Star,
 } from "lucide-react";
-import PropertyCard from "@/components/properties/property-card";
-import type {
-  Property,
-  UserProfile,
-  PropertyReview,
-} from "@/types";
-import React, { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "@/components/ui/dialog";
-import Link from "next/link";
 import { FaWhatsapp } from "react-icons/fa";
-import { useToast } from "@/hooks/use-toast";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  useUser,
-  useFirestore,
-  useDoc,
-  useCollection,
-  useMemoFirebase,
-} from "@/firebase";
-import {
-  doc,
-  collection,
-  query,
-  where,
-  addDoc,
-  serverTimestamp,
-  updateDoc,
-  arrayUnion,
   arrayRemove,
+  arrayUnion,
+  collection,
+  doc,
   limit,
+  query,
+  updateDoc,
+  where,
 } from "firebase/firestore";
-import { sendNotification } from "@/lib/notifications";
+import { EmptyState } from "@/components/dashboard";
+import PropertyCard from "@/components/properties/property-card";
 import { PropertyGallery } from "@/components/properties/property-gallery";
-import { PropertyHeroCarousel } from "@/components/properties/property-hero-carousel";
+import {
+  RequestToRent,
+  useRentState,
+} from "@/components/properties/request-to-rent";
+import { ReviewDialog } from "@/components/properties/review-dialog";
 import { SharePropertyModal } from "@/components/properties/share-property-modal";
-import dynamic from "next/dynamic";
-import type { Firestore } from "firebase/firestore";
-
-const PropertyMap = dynamic(() => import("@/components/properties/property-map"), {
-  ssr: false,
-  loading: () => (
-    <div className="h-[400px] w-full rounded-3xl bg-muted animate-pulse" />
-  ),
-});
-
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  useCollection,
+  useDoc,
+  useFirestore,
+  useMemoFirebase,
+  useUser,
+} from "@/firebase";
+import { useToast } from "@/hooks/use-toast";
 import { AMENITY_ICONS, DEFAULT_ICON } from "@/lib/amenity-icons";
+import { convertCurrency, getCurrencyByCountry } from "@/lib/currencies";
+import { cn, formatPrice } from "@/lib/utils";
+import type { Property, PropertyReview, UserProfile } from "@/types";
+
+const PropertyMap = dynamic(
+  () => import("@/components/properties/property-map"),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-full w-full" />,
+  },
+);
+
+const AMENITIES_PREVIEW = 8;
+
+function Stars({ value, className }: { value: number; className?: string }) {
+  return (
+    <span className={cn("flex", className)} aria-label={`${value} out of 5`}>
+      {Array.from({ length: 5 }, (_, i) => (
+        <Star
+          key={i}
+          aria-hidden
+          className={cn(
+            "h-3.5 w-3.5",
+            i < Math.round(value)
+              ? "fill-amber-400 text-amber-400"
+              : "text-muted-foreground/30",
+          )}
+        />
+      ))}
+    </span>
+  );
+}
+
+function Section({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="border-t pt-8">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <h2 className="font-headline text-xl font-bold tracking-tight">
+          {title}
+        </h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
 
 export default function PropertyDetail({
   initialProperty,
@@ -91,63 +113,39 @@ export default function PropertyDetail({
   initialProperty: Property | null;
   propertyId: string;
 }) {
-  const id = propertyId;
   const firestore = useFirestore();
   const pathname = usePathname();
-  const browseHref = pathname.startsWith("/student") ? "/student/properties" : "/properties";
-  const { toast } = useToast();
-  const { user } = useUser();
-  const router = useRouter();
-
-  const [requestMessage, setRequestMessage] = useState("");
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const inDashboard = pathname.startsWith("/student");
+  const browseHref = inDashboard ? "/student/properties" : "/properties";
 
   const propertyRef = useMemoFirebase(
-    () => (id ? doc(firestore, "properties", id) : null),
-    [firestore, id],
+    () => doc(firestore, "properties", propertyId),
+    [firestore, propertyId],
   );
-  const { data: propertyData, isLoading: isPropertyLoading } =
-    useDoc<Property>(propertyRef);
-
-  // Use initial property if real-time data hasn't loaded yet
-  const property = propertyData || initialProperty;
+  const { data: live, isLoading } = useDoc<Property>(propertyRef);
+  const property = live || initialProperty;
 
   const landlordRef = useMemoFirebase(
-    () => (property ? doc(firestore, "users", property.landlordId) : null),
-    [firestore, property],
+    () =>
+      property?.landlordId
+        ? doc(firestore, "users", property.landlordId)
+        : null,
+    [firestore, property?.landlordId],
   );
-  const { data: landlord } =
-    useDoc<UserProfile>(landlordRef);
+  const { data: landlord } = useDoc<UserProfile>(landlordRef);
 
   const reviewsQuery = useMemoFirebase(
     () =>
-      id
-        ? query(
-            collection(firestore, "propertyReviews"),
-            where("propertyId", "==", id),
-          )
-        : null,
-    [firestore, id],
+      query(
+        collection(firestore, "propertyReviews"),
+        where("propertyId", "==", propertyId),
+      ),
+    [firestore, propertyId],
   );
-  const { data: reviews } =
-    useCollection<PropertyReview>(reviewsQuery);
-
-  const userProfileRef = useMemoFirebase(
-    () => (user ? doc(firestore, "users", user.uid) : null),
-    [firestore, user],
-  );
-  const { data: userProfile } =
-    useDoc<UserProfile>(userProfileRef);
-
-
-  const userCurrency = React.useMemo(() => {
-    if (userProfile?.currency) return userProfile.currency;
-    if (userProfile?.country) return getCurrencyByCountry(userProfile.country);
-    return "USD";
-  }, [userProfile]);
+  const { data: reviews } = useCollection<PropertyReview>(reviewsQuery);
 
   const city = property?.location?.city;
-  const similarPropertiesQuery = useMemoFirebase(
+  const similarQuery = useMemoFirebase(
     () =>
       city
         ? query(
@@ -159,790 +157,573 @@ export default function PropertyDetail({
         : null,
     [firestore, city],
   );
-  const { data: cityProperties } = useCollection<Property>(similarPropertiesQuery);
+  const { data: cityHomes } = useCollection<Property>(similarQuery);
 
-  const similarProperties = React.useMemo(
-    () => (cityProperties || []).filter((p) => p.id !== id).slice(0, 3),
-    [cityProperties, id],
-  );
-
-  const isBookmarked = !!property && !!userProfile?.bookmarkedPropertyIds?.includes(property.id);
-
-  if (!property && isPropertyLoading) {
+  if (!property && isLoading) {
     return (
-      <div className="container mx-auto max-w-7xl space-y-6 px-4 py-10 lg:px-8" aria-busy="true">
-        <div className="aspect-[16/7] w-full animate-pulse rounded-3xl bg-muted" />
-        <div className="h-10 w-2/3 animate-pulse rounded-xl bg-muted" />
-        <div className="h-5 w-1/3 animate-pulse rounded bg-muted" />
+      <div
+        className={cn(
+          "space-y-6",
+          !inDashboard && "mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8",
+        )}
+        aria-busy="true"
+      >
+        <Skeleton className="h-8 w-2/3 rounded-xl" />
+        <Skeleton className="aspect-[2/1] w-full rounded-2xl" />
+        <Skeleton className="h-5 w-1/3" />
       </div>
     );
   }
 
   if (!property) {
     return (
-      <div className="flex flex-col items-center justify-center text-center py-20">
-        <div className="rounded-full bg-secondary p-4">
-          <Building className="h-10 w-10 text-muted-foreground" />
-        </div>
-        <h1 className="mt-6 text-2xl font-bold">Property Not Found</h1>
-        <p className="mt-2 text-muted-foreground">
-          The property you are looking for does not exist or is no longer
-          available.
-        </p>
-        <Button asChild className="mt-6">
-          <Link href={browseHref}>Browse Other Properties</Link>
-        </Button>
-      </div>
+      <EmptyState
+        className="mx-auto my-16 max-w-xl"
+        icon={Building2}
+        title="This home isn't available"
+        description="It may have been removed by the landlord."
+        action={
+          <Button asChild className="rounded-xl">
+            <Link href={browseHref}>Browse other homes</Link>
+          </Button>
+        }
+      />
     );
   }
 
-  const averageRating =
-    reviews && reviews.length > 0
-      ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
-      : 0;
-
-  const handleMessageLandlord = () => {
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Not Logged In",
-        description: "You must be logged in to message a landlord.",
-      });
-      router.push("/auth/login");
-      return;
-    }
-    if (landlord) {
-      router.push(`/student/messages?contact=${landlord.id}`);
-    }
-  };
-
-  const handleSendRequest = async () => {
-    if (!user || !landlord || !property) {
-      toast({
-        variant: "destructive",
-        title: "Login or Data Missing",
-        description:
-          "You must be logged in and property data must be loaded to send a request.",
-      });
-      if (!user) router.push("/auth/login");
-      return;
-    }
-
-    const rentalRequestsRef = collection(firestore, "rentalApplications");
-    const applicationData = {
-      propertyId: property.id,
-      tenantId: user.uid,
-      landlordId: property.landlordId,
-      messageToLandlord: requestMessage,
-      applicationDate: new Date().toISOString(),
-      status: "pending" as const,
-    };
-
-    try {
-      const newApplicationRef = await addDoc(
-        rentalRequestsRef,
-        applicationData,
-      );
-      await updateDoc(newApplicationRef, { id: newApplicationRef.id });
-
-      const messagesRef = collection(firestore, "messages");
-      await addDoc(messagesRef, {
-        text:
-          requestMessage || `Hi, I'm interested in renting ${property.title}.`,
-        senderId: user.uid,
-        recipientId: landlord.id,
-        participantIds: [user.uid, landlord.id].sort(),
-        timestamp: serverTimestamp(),
-        read: false,
-      });
-
-      await sendNotification({
-        toUserId: landlord.id,
-        type: "NEW_REQUEST",
-        firestore: firestore,
-        senderName: userProfile?.name || "A student",
-        propertyName: property.title,
-        link: `/landlord/requests`,
-      });
-
-      toast({
-        title: "Request Sent!",
-        description: "Your rental request has been sent to the landlord.",
-      });
-      router.push(`/student/messages?conversationId=${landlord.id}`);
-    } catch (error) {
-      console.error("Error sending rental request:", error);
-      toast({
-        variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description:
-          "Could not send your rental request. Please try again later.",
-      });
-    }
-  };
-
-  const toggleBookmark = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!user || !userProfileRef || !property) {
-      toast({
-        variant: "destructive",
-        title: "Login Required",
-        description: "Please log in to bookmark properties",
-      });
-      return;
-    }
-    try {
-      if (isBookmarked) {
-        await updateDoc(userProfileRef, {
-          bookmarkedPropertyIds: arrayRemove(property.id),
-        });
-        toast({ title: "Removed from bookmarks" });
-      } else {
-        await updateDoc(userProfileRef, {
-          bookmarkedPropertyIds: arrayUnion(property.id),
-        });
-        toast({ title: "Added to bookmarks" });
-      }
-    } catch (error) {
-      console.error("Error toggling bookmark:", error);
-    }
-  };
-
   return (
-    <div className="min-h-screen pb-20">
-      <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-0">
-        <nav aria-label="Breadcrumb">
-          <Button variant="ghost" size="sm" asChild className="gap-2 hover:gap-3 transition-all">
-            <Link href={browseHref}>
-              <ChevronLeft className="h-4 w-4" /> Back to properties
-            </Link>
-          </Button>
-        </nav>
-      </div>
-
-      <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-4">
-        <PropertyHeroCarousel images={property.images} title={property.title} />
-      </div>
-
-      <div className="container mx-auto max-w-7xl px-4 lg:px-8 mt-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                <Badge
-                  variant="secondary"
-                  className="bg-primary/10 text-primary border-none px-4 py-1 text-xs font-bold uppercase tracking-wider"
-                >
-                  {property.type}
-                </Badge>
-                {property.status === "occupied" && (
-                  <Badge
-                    variant="destructive"
-                    className="px-4 py-1 text-xs font-bold uppercase tracking-wider"
-                  >
-                    Occupied
-                  </Badge>
-                )}
-              </div>
-              <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                <h1 className="font-headline text-4xl md:text-3xl font-bold tracking-tight text-foreground leading-[1.1] flex-1">
-                  {property.title}
-                </h1>
-                <div className="flex items-center gap-3 shrink-0 md:mt-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className={cn(
-                      "h-14 w-14 rounded-2xl border transition-all hover:scale-105",
-                      isBookmarked
-                        ? "bg-red-50 border-red-100 text-red-500 hover:bg-red-100"
-                        : "bg-card hover:border-primary/20",
-                    )}
-                    onClick={toggleBookmark}
-                  >
-                    <Heart
-                      className={cn("h-6 w-6", isBookmarked && "fill-current")}
-                    />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-14 w-14 rounded-2xl border bg-card hover:border-primary/20 transition-all hover:scale-105"
-                    onClick={() => setIsShareModalOpen(true)}
-                  >
-                    <Share2 className="h-6 w-6" />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-muted-foreground font-medium">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  <span>
-                    {property.location?.address}, {property.location?.city}
-                  </span>
-                </div>
-                {property.location?.school && (
-                  <div className="flex items-center gap-2">
-                    <GraduationCap className="h-5 w-5 text-primary" />
-                    <span>Near {property.location?.school}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-yellow-500 fill-current" />
-                  <span className="text-foreground">
-                    {averageRating.toFixed(1)}
-                  </span>
-                  <span className="text-sm font-normal">
-                    ({reviews?.length || 0} reviews)
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
-                <BedDouble className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
-                <p className="text-xl font-bold">{property.bedrooms}</p>
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Bedrooms
-                </p>
-              </div>
-              <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
-                <Bath className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
-                <p className="text-xl font-bold">{property.bathrooms}</p>
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Bathrooms
-                </p>
-              </div>
-              <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
-                <Ruler className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
-                <p className="text-xl font-bold">{property.area}</p>
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Square Feet
-                </p>
-              </div>
-              <div className="bg-muted/30 p-6 rounded-3xl border border-border/50 flex flex-col items-center text-center group hover:bg-primary/5 hover:border-primary/20 transition-all">
-                <Building className="h-8 w-8 text-primary mb-3 transition-transform group-hover:scale-110" />
-                <p className="text-xl font-bold whitespace-nowrap">
-                  {property.type}
-                </p>
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Property Type
-                </p>
-              </div>
-            </div>
-
-            <Separator className="bg-foreground/5 h-0.5 rounded-full" />
-
-            {/* Location Section - Always Visible */}
-            {property.location?.lat && property.location?.lng && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-2xl font-bold tracking-tight uppercase">
-                    Location
-                  </h3>
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase text-muted-foreground/40 tracking-wider">
-                    <MapPin className="h-3 w-3 text-primary" />
-                    {Number(property.location?.lat || 0).toFixed(4)},{" "}
-                    {Number(property.location?.lng || 0).toFixed(4)}
-                  </div>
-                </div>
-                <div className="rounded-3xl overflow-hidden border border-foreground/[0.02] shadow-sm">
-                  <PropertyMap
-                    lat={Number(property.location?.lat || 0)}
-                    lng={Number(property.location?.lng || 0)}
-                    title={property.title}
-                  />
-                </div>
-              </div>
-            )}
-
-            <Separator className="bg-foreground/5 h-0.5 rounded-full" />
-
-            <Tabs defaultValue="gallery" className="w-full">
-              <TabsList className="w-full justify-start bg-transparent border-b rounded-none px-0 h-auto gap-8 mb-8">
-                <TabsTrigger
-                  value="gallery"
-                  className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4"
-                >
-                  Gallery
-                </TabsTrigger>
-                <TabsTrigger
-                  value="overview"
-                  className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4"
-                >
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger
-                  value="amenities"
-                  className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4"
-                >
-                  Amenities
-                </TabsTrigger>
-                <TabsTrigger
-                  value="rules"
-                  className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4"
-                >
-                  House Rules
-                </TabsTrigger>
-                <TabsTrigger
-                  value="reviews"
-                  className="text-base font-bold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4"
-                >
-                  Reviews
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="gallery" className="mt-0 space-y-6">
-                <PropertyGallery
-                  images={property.images}
-                  videos={property.videos}
-                  title={property.title}
-                />
-              </TabsContent>
-              <TabsContent value="overview" className="mt-0 space-y-6">
-                <h3 className="text-2xl font-bold tracking-tight">
-                  About this property
-                </h3>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  {property.description}
-                </p>
-              </TabsContent>
-              <TabsContent value="amenities" className="mt-0">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {Array.isArray(property.amenities) &&
-                    property.amenities.map((amenity) => (
-                      <div
-                        key={amenity}
-                        className="flex items-center gap-3 p-4 rounded-2xl border bg-card/50 backdrop-blur-sm group hover:border-primary/30 transition-all"
-                      >
-                        <div className="bg-primary/10 p-2 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-all">
-                          {React.createElement(
-                            AMENITY_ICONS[amenity] || DEFAULT_ICON,
-                            { className: "h-5 w-5" },
-                          )}
-                        </div>
-                        <span className="font-bold text-sm tracking-tight">
-                          {amenity}
-                        </span>
-                      </div>
-                    ))}
-                </div>
-              </TabsContent>
-              <TabsContent value="rules" className="mt-0">
-                <div className="bg-muted/20 p-8 rounded-3xl border border-dashed border-border">
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Array.isArray(property.rules) ? (
-                      property.rules.map((rule) => (
-                        <li
-                          key={rule}
-                          className="flex items-start gap-3 text-muted-foreground font-medium"
-                        >
-                          <div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                          {rule}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="flex items-start gap-3 text-muted-foreground font-medium">
-                        <div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                        {property.rules}
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              </TabsContent>
-              <TabsContent value="reviews" className="mt-0 space-y-8">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-2xl font-bold tracking-tight">
-                    Student reviews
-                  </h3>
-                  <ReviewButton
-                    propertyId={property.id}
-                    userId={user?.uid}
-                    firestore={firestore}
-                    userProfile={userProfile}
-                  />
-                </div>
-                {reviews && reviews.length > 0 ? (
-                  <div className="space-y-6">
-                    {reviews.map((review) => (
-                      <div
-                        key={review.id}
-                        className="p-6 rounded-3xl border bg-card/50 backdrop-blur-sm space-y-4"
-                      >
-                        <div className="flex items-center gap-4">
-                          <Avatar className="h-12 w-12 border border-background shadow-lg">
-                            <AvatarImage
-                              src={review.tenantImageUrl}
-                              className="object-cover"
-                            />
-                            <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                              {review.tenantName?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-bold text-lg leading-none">
-                              {review.tenantName}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <div className="flex italic">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={cn(
-                                      "h-3 w-3",
-                                      i < review.rating
-                                        ? "text-yellow-500 fill-current"
-                                        : "text-muted/30",
-                                    )}
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-xs text-muted-foreground font-bold">
-                                {new Date(review.reviewDate).toLocaleDateString(
-                                  undefined,
-                                  { month: "long", year: "numeric" },
-                                )}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-muted-foreground leading-relaxed font-medium">
-                          {review.comment}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed flex flex-col items-center gap-3">
-                    <Star className="h-8 w-8 text-muted/30" />
-                    <p className="text-muted-foreground font-bold">
-                      No reviews yet for this property.
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </div>
-
-          <div className="space-y-6">
-            <div className="sticky top-12 space-y-6">
-              <Card className="border-none bg-background shadow-[0_0_50px_-12px_rgba(0,0,0,0.12)] rounded-3xl overflow-hidden">
-                <CardHeader className="bg-[#0A0A0A] text-white p-8">
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge
-                      variant="secondary"
-                      className="bg-white/10 text-white border-white/20 px-3 py-0.5 text-xs font-bold uppercase tracking-wider"
-                    >
-                      Pricing
-                    </Badge>
-                    <div className="flex items-center gap-1 text-white/60">
-                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                      <span className="text-sm font-bold text-white">
-                        {averageRating.toFixed(1)}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-3xl md:text-4xl font-bold tracking-tight truncate">
-                    {userCurrency && userCurrency !== property.currency
-                      ? formatPrice(
-                          convertCurrency(
-                            property.price,
-                            property.currency,
-                            userCurrency,
-                          ),
-                          userCurrency,
-                        )
-                      : formatPrice(property.price, property.currency)}
-                    <span className="text-base md:text-lg font-normal text-white/40 ml-1">
-                      /mo
-                    </span>
-                  </p>
-                </CardHeader>
-                <CardContent className="p-8 space-y-6">
-                  <div className="space-y-4">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          className="w-full h-14 rounded-2xl text-lg font-bold shadow-sm"
-                          disabled={property.status === "occupied"}
-                        >
-                          Request to Rent
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-lg rounded-3xl">
-                        <DialogHeader>
-                          <DialogTitle className="text-2xl font-bold uppercase">
-                            Application for {property.title}
-                          </DialogTitle>
-                          <DialogDescription className="text-base font-medium">
-                            Start a conversation with {landlord?.name}. Your
-                            request will include a text message.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="py-6 space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="message">Your Message</Label>
-                            <Textarea
-                              id="message"
-                              placeholder="Describe yourself..."
-                              className="min-h-[150px] active:ring-primary"
-                              value={requestMessage}
-                              onChange={(e) =>
-                                setRequestMessage(e.target.value)
-                              }
-                            />
-                          </div>
-                        </div>
-                        <DialogFooter className="gap-3">
-                          <DialogClose asChild>
-                            <Button
-                              variant="outline"
-                              className="h-12 rounded-xl flex-1 border"
-                            >
-                              Cancel
-                            </Button>
-                          </DialogClose>
-                          <Button
-                            onClick={handleSendRequest}
-                            className="h-12 rounded-xl flex-1"
-                          >
-                            Send Request
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                    <Button
-                      variant="outline"
-                      className="w-full h-14 rounded-2xl text-lg font-bold border hover:bg-muted/50"
-                      onClick={handleMessageLandlord}
-                    >
-                      <MessageSquare className="mr-3 h-5 w-5" /> Message Host
-                    </Button>
-                  </div>
-                  <div className="space-y-4 pt-4 border-t border-border/50">
-                    <div className="flex items-center justify-between text-sm font-bold uppercase tracking-wider text-muted-foreground/60">
-                      <span>Landlord Stats</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs text-muted-foreground font-medium">
-                          Response Rate
-                        </span>
-                        <span className="font-bold">100%</span>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs text-muted-foreground font-medium">
-                          Response Time
-                        </span>
-                        <span className="font-bold">Under 1hr</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {landlord && (
-                <Card className="border-none bg-muted/30 rounded-3xl p-6 hover:bg-muted/40 transition-colors group">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16 shadow-sm border border-background group-hover:scale-105 transition-transform">
-                      <AvatarImage
-                        src={landlord.profileImageUrl}
-                        className="object-cover"
-                      />
-                      <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
-                        {landlord.name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-primary mb-1">
-                        Meet Your Host
-                      </p>
-                      <h4 className="text-xl font-headline font-bold">
-                        {landlord.name}
-                      </h4>
-                      <div className="flex items-center gap-3 mt-2">
-                        <a
-                          href={`mailto:${landlord.email}`}
-                          className="text-muted-foreground hover:text-primary"
-                        >
-                          <Mail className="h-4 w-4" />
-                        </a>
-                        {landlord.whatsappUrl && (
-                          <Link
-                            href={landlord.whatsappUrl}
-                            target="_blank"
-                            className="text-muted-foreground hover:text-primary"
-                          >
-                            <FaWhatsapp className="h-4 w-4" />
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  {landlord.bio && (
-                    <p className="mt-4 text-sm text-muted-foreground line-clamp-3 font-medium leading-relaxed">
-                      "{landlord.bio}"
-                    </p>
-                  )}
-                </Card>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {similarProperties.length > 0 && (
-          <div className="mt-20 border-t pt-20">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-3xl font-bold tracking-tight">
-                  Similar Properties
-                </h2>
-                <p className="text-muted-foreground mt-2">
-                  Explore other homes.
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                className="text-primary font-bold gap-2"
-                asChild
-              >
-                <Link href={browseHref}>
-                  View All <ChevronLeft className="h-4 w-4 rotate-180" />
-                </Link>
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {similarProperties.map((similarProperty) => (
-                <PropertyCard
-                  key={similarProperty.id}
-                  property={similarProperty}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-        <SharePropertyModal
-          isOpen={isShareModalOpen}
-          onClose={() => setIsShareModalOpen(false)}
-          propertyId={property.id}
-          propertyTitle={property.title}
-        />
-      </div>
-    </div>
+    <PropertyView
+      property={property}
+      landlord={landlord}
+      reviews={reviews ?? []}
+      cityHomes={cityHomes ?? []}
+      inDashboard={inDashboard}
+      browseHref={browseHref}
+    />
   );
 }
 
-function ReviewButton({
-  propertyId,
-  userId,
-  firestore,
-  userProfile,
-}: {
-  propertyId: string;
-  userId?: string;
-  firestore: Firestore;
-  userProfile?: UserProfile | null;
-}) {
-  const [isTenant, setIsTenant] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState("");
+type PropertyViewProps = {
+  property: Property;
+  landlord: UserProfile | null;
+  reviews: PropertyReview[];
+  cityHomes: Property[];
+  inDashboard: boolean;
+  browseHref: string;
+};
+
+function PropertyView({
+  property,
+  landlord,
+  reviews,
+  cityHomes,
+  inDashboard,
+  browseHref,
+}: PropertyViewProps) {
+  const firestore = useFirestore();
+  const router = useRouter();
   const { toast } = useToast();
+  const { user, profile } = useUser();
+  const [shareOpen, setShareOpen] = useState(false);
+  const [showAllAmenities, setShowAllAmenities] = useState(false);
+  const rentState = useRentState(property);
+  const isStudent = profile?.role === "student";
+  const saved = !!profile?.bookmarkedPropertyIds?.includes(property.id);
+  const rating = reviews.length
+    ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+    : 0;
+  const viewerCurrency =
+    profile?.currency ||
+    (profile?.country ? getCurrencyByCountry(profile.country) : undefined);
+  const converted =
+    viewerCurrency && viewerCurrency !== property.currency
+      ? formatPrice(
+          convertCurrency(property.price, property.currency, viewerCurrency),
+          viewerCurrency,
+        )
+      : null;
+  const address = [
+    property.location?.address,
+    property.location?.city,
+    property.location?.state,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const hasMap = !!(property.location?.lat && property.location?.lng);
+  const amenities = Array.isArray(property.amenities) ? property.amenities : [];
+  const rules = Array.isArray(property.rules)
+    ? property.rules
+    : property.rules
+      ? [String(property.rules)]
+      : [];
+  const similar = cityHomes.filter((p) => p.id !== property.id).slice(0, 3);
+  const alreadyReviewed =
+    !!user && reviews.some((r) => r.tenantId === user.uid);
+  const canContact =
+    rentState.kind !== "owner" && rentState.kind !== "other-landlord";
+  const loginHref = `/auth/login?redirect=${encodeURIComponent(`/student/properties/${property.id}`)}`;
 
-  React.useEffect(() => {
-    if (!userId || !firestore) return;
-    const checkTenancy = async () => {
-      const q = query(
-        collection(firestore, "leaseAgreements"),
-        where("tenantId", "==", userId),
-        where("propertyId", "==", propertyId),
-      );
-      const { getDocs } = await import("firebase/firestore");
-      const snap = await getDocs(q);
-      if (!snap.empty) setIsTenant(true);
-    };
-    checkTenancy();
-  }, [userId, propertyId, firestore]);
-
-  const handleSubmit = async () => {
-    if (!userId || !userProfile) return;
+  const toggleSave = async () => {
+    if (!user) return router.push(loginHref);
+    if (!isStudent)
+      return toast({ title: "Saving homes is for student accounts" });
     try {
-      await addDoc(collection(firestore, "propertyReviews"), {
-        propertyId,
-        tenantId: userId,
-        tenantName: userProfile.name,
-        tenantImageUrl: userProfile.profileImageUrl,
-        rating,
-        comment,
-        reviewDate: new Date().toISOString(),
+      await updateDoc(doc(firestore, "users", user.uid), {
+        bookmarkedPropertyIds: saved
+          ? arrayRemove(property.id)
+          : arrayUnion(property.id),
       });
-      toast({ title: "Review Submitted!" });
-      setIsOpen(false);
-    } catch (error) {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not submit review.",
+        title: saved ? "Removed from saved homes" : "Saved",
+        description: saved ? undefined : "Find it any time under Saved homes.",
       });
+    } catch (error) {
+      console.error("Saving home failed:", error);
+      toast({ variant: "destructive", title: "Could not update saved homes" });
     }
   };
 
-  if (!isTenant) return null;
+  const messageLandlord = () => {
+    if (!user) return router.push(loginHref);
+    if (landlord)
+      router.push(`/student/messages?conversationId=${landlord.id}`);
+  };
+
+  const price = (
+    <>
+      <span className="text-2xl font-bold tracking-tight">
+        {formatPrice(property.price, property.currency)}
+      </span>
+      <span className="text-sm text-muted-foreground"> / month</span>
+    </>
+  );
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="rounded-xl border-primary text-primary hover:bg-primary hover:text-white font-bold h-10 px-6"
-        >
-          Leave a Review
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md rounded-3xl">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold uppercase">
-            Rate your stay
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-6 py-4">
-          <div className="flex justify-center gap-2">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <button
-                key={s}
-                onClick={() => setRating(s)}
-                className={cn(
-                  "h-10 w-10 rounded-xl transition-all",
-                  rating >= s
-                    ? "bg-yellow-100 text-yellow-600 scale-110 shadow-lg"
-                    : "bg-muted/30 text-muted/40 hover:bg-muted",
-                )}
+    <div
+      className={cn(
+        "pb-28 lg:pb-12",
+        !inDashboard && "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8",
+      )}
+    >
+      <Link
+        href={browseHref}
+        className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+      >
+        <ChevronLeft aria-hidden className="h-4 w-4" /> All homes
+      </Link>
+
+      {/* Title */}
+      <header className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+            {property.type}
+            {property.status !== "available" && (
+              <span className="ml-2 text-muted-foreground">
+                · Currently let
+              </span>
+            )}
+          </p>
+          <h1 className="mt-1 font-headline text-2xl font-bold tracking-tight sm:text-3xl">
+            {property.title}
+          </h1>
+          <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <MapPin aria-hidden className="h-4 w-4" /> {address}
+            </span>
+            {property.location?.school && (
+              <span className="flex items-center gap-1">
+                <GraduationCap aria-hidden className="h-4 w-4" /> Near{" "}
+                {property.location.school}
+              </span>
+            )}
+            {reviews.length > 0 && (
+              <a
+                href="#reviews"
+                className="flex items-center gap-1 hover:text-foreground"
               >
-                {s}
-              </button>
+                <Star
+                  aria-hidden
+                  className="h-4 w-4 fill-amber-400 text-amber-400"
+                />
+                <span className="font-medium text-foreground">
+                  {rating.toFixed(1)}
+                </span>{" "}
+                ({reviews.length})
+              </a>
+            )}
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-lg"
+            onClick={() => setShareOpen(true)}
+          >
+            <Share2 className="mr-1.5 h-4 w-4" /> Share
+          </Button>
+          {rentState.kind !== "owner" &&
+            rentState.kind !== "other-landlord" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "rounded-lg",
+                  saved && "border-red-200 text-red-600 hover:text-red-600",
+                )}
+                onClick={toggleSave}
+                aria-pressed={saved}
+              >
+                <Heart
+                  className={cn("mr-1.5 h-4 w-4", saved && "fill-current")}
+                />{" "}
+                {saved ? "Saved" : "Save"}
+              </Button>
+            )}
+        </div>
+      </header>
+
+      <PropertyGallery
+        className="mt-6"
+        images={property.images ?? []}
+        videos={property.videos}
+        title={property.title}
+      />
+
+      <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-3">
+        <div className="min-w-0 space-y-8 lg:col-span-2">
+          {/* Key facts */}
+          <ul className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
+            {[
+              {
+                icon: BedDouble,
+                text: `${property.bedrooms} bedroom${property.bedrooms === 1 ? "" : "s"}`,
+              },
+              {
+                icon: Bath,
+                text: `${property.bathrooms} bathroom${property.bathrooms === 1 ? "" : "s"}`,
+              },
+              ...(property.area
+                ? [{ icon: Ruler, text: `${property.area} sq ft` }]
+                : []),
+              { icon: Building2, text: property.type },
+            ].map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-center gap-2">
+                <span className="rounded-lg bg-muted p-2">
+                  <Icon aria-hidden className="h-4 w-4" />
+                </span>
+                {text}
+              </li>
+            ))}
+          </ul>
+
+          {property.description && (
+            <Section title="About this home">
+              <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
+                {property.description}
+              </p>
+            </Section>
+          )}
+
+          {amenities.length > 0 && (
+            <Section title="What this home offers">
+              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {(showAllAmenities
+                  ? amenities
+                  : amenities.slice(0, AMENITIES_PREVIEW)
+                ).map((amenity) => {
+                  const Icon = AMENITY_ICONS[amenity] || DEFAULT_ICON;
+                  return (
+                    <li
+                      key={amenity}
+                      className="flex items-center gap-3 text-sm"
+                    >
+                      <Icon
+                        aria-hidden
+                        className="h-5 w-5 text-muted-foreground"
+                      />{" "}
+                      {amenity}
+                    </li>
+                  );
+                })}
+              </ul>
+              {amenities.length > AMENITIES_PREVIEW && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4 rounded-lg"
+                  onClick={() => setShowAllAmenities((v) => !v)}
+                >
+                  {showAllAmenities
+                    ? "Show fewer"
+                    : `Show all ${amenities.length} amenities`}
+                </Button>
+              )}
+            </Section>
+          )}
+
+          {rules.length > 0 && (
+            <Section title="House rules">
+              <ul className="grid grid-cols-1 gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+                {rules.map((rule) => (
+                  <li key={rule} className="flex gap-2">
+                    <span
+                      aria-hidden
+                      className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                    />{" "}
+                    {rule}
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
+
+          <Section title="Where you'll live">
+            {hasMap && (
+              <PropertyMap
+                lat={Number(property.location.lat)}
+                lng={Number(property.location.lng)}
+                title={property.title}
+                className="relative z-0 h-72 w-full overflow-hidden rounded-2xl border"
+              />
+            )}
+            <p className="mt-3 text-sm">
+              {address}
+              {property.location?.school && (
+                <span className="text-muted-foreground">
+                  {" "}
+                  · near {property.location.school}
+                </span>
+              )}
+            </p>
+          </Section>
+
+          <div id="reviews" className="scroll-mt-24">
+            <Section
+              title={
+                reviews.length
+                  ? `${rating.toFixed(1)} · ${reviews.length} review${reviews.length === 1 ? "" : "s"}`
+                  : "Reviews"
+              }
+              action={
+                <ReviewDialog
+                  propertyId={property.id}
+                  alreadyReviewed={alreadyReviewed}
+                />
+              }
+            >
+              {reviews.length ? (
+                <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  {reviews.map((review) => (
+                    <li key={review.id} className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={review.tenantImageUrl} alt="" />
+                          <AvatarFallback>
+                            {review.tenantName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {review.tenantName ?? "Former tenant"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(review.reviewDate).toLocaleDateString(
+                              undefined,
+                              { month: "long", year: "numeric" },
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <Stars value={review.rating} />
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {review.comment}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No reviews yet. Students who rent here can review it
+                  afterwards.
+                </p>
+              )}
+            </Section>
+          </div>
+
+          {landlord && (
+            <Section title="Your landlord">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <Avatar className="h-14 w-14">
+                  <AvatarImage src={landlord.profileImageUrl} alt="" />
+                  <AvatarFallback className="text-lg">
+                    {landlord.name?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">{landlord.name}</p>
+                  {landlord.createdAt && (
+                    <p className="text-sm text-muted-foreground">
+                      On Lodger since{" "}
+                      {new Date(landlord.createdAt).getFullYear()}
+                    </p>
+                  )}
+                  {landlord.bio && (
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                      {landlord.bio}
+                    </p>
+                  )}
+                  {canContact && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-lg"
+                        onClick={messageLandlord}
+                      >
+                        <MessageSquare className="mr-1.5 h-4 w-4" /> Message{" "}
+                        {landlord.name.split(" ")[0]}
+                      </Button>
+                      {landlord.whatsappUrl && user && (
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="rounded-lg"
+                        >
+                          <a
+                            href={landlord.whatsappUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <FaWhatsapp className="mr-1.5 h-4 w-4" /> WhatsApp
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <p className="mt-6 flex items-start gap-2 rounded-xl bg-muted/50 p-3 text-xs text-muted-foreground">
+                <ShieldCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
+                Keep payments in Lodger. Never send money before you&apos;ve
+                signed the lease here.
+              </p>
+            </Section>
+          )}
+        </div>
+
+        {/* Booking card */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-24 space-y-4 rounded-2xl border bg-card p-6 shadow-sm">
+            <div>
+              <p>{price}</p>
+              {converted && (
+                <p className="text-xs text-muted-foreground">
+                  About {converted} / month
+                </p>
+              )}
+            </div>
+            <ul className="space-y-1.5 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "h-2 w-2 rounded-full",
+                    property.status === "available"
+                      ? "bg-emerald-500"
+                      : "bg-muted-foreground/40",
+                  )}
+                />
+                {property.status === "available"
+                  ? "Available to rent"
+                  : "Currently let"}
+              </li>
+              <li className="flex items-center gap-2">
+                <BedDouble aria-hidden className="h-4 w-4" />{" "}
+                {property.bedrooms} bed · {property.bathrooms} bath
+              </li>
+            </ul>
+            <RequestToRent
+              property={property}
+              landlord={landlord}
+              state={rentState}
+            />
+            {canContact && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full"
+                onClick={messageLandlord}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" /> Ask a question
+              </Button>
+            )}
+            {rentState.kind === "open" && (
+              <p className="flex gap-2 text-xs text-muted-foreground">
+                <Info aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                Requesting is free. You only pay after the landlord accepts and
+                you sign the lease.
+              </p>
+            )}
+          </div>
+        </aside>
+      </div>
+
+      {similar.length > 0 && (
+        <section className="mt-16 border-t pt-10">
+          <div className="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="font-headline text-xl font-bold tracking-tight">
+                More homes in {property.location?.city}
+              </h2>
+              <p className="text-sm text-muted-foreground">Available now</p>
+            </div>
+            <Link
+              href={browseHref}
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              See all
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {similar.map((p) => (
+              <PropertyCard key={p.id} property={p} />
             ))}
           </div>
-          <div className="space-y-2">
-            <Label className="font-bold uppercase tracking-wider text-xs text-muted-foreground pl-1">
-              Your experience
-            </Label>
-            <Textarea
-              placeholder="What was it like living here?"
-              className="min-h-[120px] rounded-2xl bg-muted/20 border-border/50 focus:ring-primary p-4"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-            />
-          </div>
+        </section>
+      )}
+
+      {/* Mobile action bar */}
+      <div
+        className={cn(
+          "fixed inset-x-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur-xl lg:hidden",
+          inDashboard
+            ? "bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-0"
+            : "bottom-0 pb-[calc(0.75rem+env(safe-area-inset-bottom))]",
+        )}
+      >
+        <div className="min-w-0">
+          <p className="truncate">{price}</p>
+          {converted && (
+            <p className="truncate text-xs text-muted-foreground">
+              About {converted}
+            </p>
+          )}
         </div>
-        <DialogFooter>
-          <Button
-            onClick={handleSubmit}
-            className="w-full h-12 rounded-xl text-lg font-bold"
-          >
-            Post Review
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <RequestToRent
+          property={property}
+          landlord={landlord}
+          state={rentState}
+          compact
+        />
+      </div>
+
+      <SharePropertyModal
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+        propertyId={property.id}
+        propertyTitle={property.title}
+      />
+    </div>
   );
 }
