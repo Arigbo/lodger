@@ -117,7 +117,7 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
 
     return (
         <FormItem className="h-full flex flex-col">
-            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 flex items-center justify-between gap-2 mb-3">
+            <FormLabel className="text-xs font-semibold text-muted-foreground/60 flex items-center justify-between gap-2 mb-3">
                 <span className="flex items-center gap-2">
                     <Icon className="h-3.5 w-3.5 text-primary/60" /> 
                     {label}
@@ -148,14 +148,14 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
             
             <FormControl>
                 <div className={cn(
-                    "flex-1 min-h-[14rem] relative group/dropzone rounded-3xl p-1 transition-all duration-500",
+                    "flex-1 min-h-[14rem] relative group/dropzone rounded-xl p-1 transition-all duration-500",
                     isIssue ? "bg-orange-500/5 shadow-[0_0_40px_-15px_rgba(249,115,22,0.1)]" : "bg-foreground/[0.02] hover:bg-foreground/[0.04]"
                 )}>
                     {/* Background Noise/Gradient */}
-                    <div className="absolute inset-0 rounded-3xl opacity-[0.03] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
+                    <div className="absolute inset-0 rounded-xl opacity-[0.03] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
                     
                     <div className={cn(
-                        "h-full w-full rounded-3xl border border-dashed flex flex-col items-center justify-center transition-all duration-700 relative overflow-hidden",
+                        "h-full w-full rounded-xl border border-dashed flex flex-col items-center justify-center transition-all duration-700 relative overflow-hidden",
                         isScanning ? "border-primary/40 bg-primary/5" :
                         isIssue ? "border-orange-500/30" :
                         field.value?.[0] ? "border-emerald-500/20 bg-emerald-500/[0.02]" : "border-muted/10 group-hover/dropzone:border-primary/30"
@@ -172,7 +172,7 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
                                 >
                                     <div className="relative">
                                         <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150 animate-pulse" />
-                                        <div className="h-20 w-20 rounded-3xl bg-card shadow-sm flex items-center justify-center relative z-10">
+                                        <div className="h-20 w-20 rounded-xl bg-card shadow-sm flex items-center justify-center relative z-10">
                                             <Loader2 className="h-10 w-10 text-primary animate-spin" />
                                         </div>
                                     </div>
@@ -186,7 +186,7 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
                                     key="preview"
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    className="w-full h-full flex flex-col items-center justify-center p-8 space-y-4"
+                                    className="w-full h-full flex flex-col items-center justify-center p-5 space-y-4"
                                 >
                                     <div className="relative group/preview shadow-sm rounded-2xl overflow-hidden aspect-video w-full max-w-[200px]">
                                         <img 
@@ -207,13 +207,13 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
                                     </div>
                                     
                                     <div className="text-center space-y-1">
-                                        <p className="text-xs font-semibold uppercase tracking-tight text-foreground/80 truncate max-w-[180px]">
+                                        <p className="text-xs font-semibold tracking-tight text-foreground/80 truncate max-w-[180px]">
                                             {field.value[0].name}
                                         </p>
                                         <div className="flex items-center justify-center gap-4">
                                             <label htmlFor={field.name} className="flex items-center gap-1.5 cursor-pointer text-muted-foreground hover:text-primary transition-colors">
                                                 <RefreshCw className="h-3 w-3" />
-                                                <span className="text-xs font-semibold uppercase tracking-wider">Replace</span>
+                                                <span className="text-xs font-semibold">Replace</span>
                                                 <input id={field.name} type="file" className="sr-only" accept="image/*" onChange={(e) => handleFileChange(e.target.files)} />
                                             </label>
                                         </div>
@@ -222,7 +222,7 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
                                             <motion.p 
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
-                                                className="text-xs font-semibold text-orange-600 uppercase tracking-tight mt-3 flex items-center justify-center gap-1.5 bg-orange-50 px-3 py-1 rounded-full border border-orange-100"
+                                                className="text-xs font-semibold text-orange-600 tracking-tight mt-3 flex items-center justify-center gap-1.5 bg-orange-50 px-3 py-1 rounded-full border border-orange-100"
                                             >
                                                 <AlertCircle className="h-2.5 w-2.5" />
                                                 {analysis.reason || "This may not be a photo of the home"}
@@ -235,7 +235,7 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
                                     key="existing"
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
-                                    className="w-full h-full flex flex-col items-center justify-center p-8 space-y-4"
+                                    className="w-full h-full flex flex-col items-center justify-center p-5 space-y-4"
                                 >
                                     <div className="relative shadow-sm rounded-2xl overflow-hidden aspect-video w-full max-w-[200px]">
                                         <img src={existingUrl} alt={`${label} (saved)`} className="w-full h-full object-cover" />
@@ -262,13 +262,13 @@ export const FileUpload = ({ field, label, description, icon: Icon, onAnalysisCh
                                 >
                                     <div className="relative group-hover/dropzone:scale-110 transition-transform duration-500">
                                         <div className="absolute inset-0 bg-primary/5 blur-xl rounded-full scale-150 opacity-0 group-hover/dropzone:opacity-100 transition-opacity" />
-                                        <div className="h-20 w-20 rounded-3xl bg-card shadow-lg border border-muted/10 flex items-center justify-center relative z-10 transition-shadow group-hover/dropzone:shadow-sm">
+                                        <div className="h-20 w-20 rounded-xl bg-card shadow-lg border border-muted/10 flex items-center justify-center relative z-10 transition-shadow group-hover/dropzone:shadow-sm">
                                             <UploadCloud className="h-10 w-10 text-muted-foreground/30 group-hover/dropzone:text-primary transition-colors" />
                                         </div>
                                     </div>
                                     <div className="text-center space-y-2">
                                         <label htmlFor={field.name} className="cursor-pointer">
-                                            <span className="text-xs font-semibold uppercase tracking-wider text-foreground group-hover/dropzone:text-primary transition-colors">
+                                            <span className="text-xs font-semibold text-foreground group-hover/dropzone:text-primary transition-colors">
                                                 Add {label}
                                             </span>
                                             <input id={field.name} type="file" className="sr-only" accept="image/*" onChange={(e) => handleFileChange(e.target.files)} />

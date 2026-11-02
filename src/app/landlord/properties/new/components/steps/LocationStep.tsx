@@ -28,7 +28,7 @@ const LocationPickerMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-[400px] w-full rounded-3xl bg-muted animate-pulse border border-foreground/5" />
+      <div className="h-[400px] w-full rounded-xl bg-muted animate-pulse border border-foreground/5" />
     ),
   },
 );
@@ -46,13 +46,13 @@ export const LocationStep = ({ form }: LocationStepProps) => {
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="space-y-8 md:space-y-8"
+      className="space-y-8"
     >
       <div className="space-y-2">
-        <h2 className="text-xl md:text-3xl font-bold tracking-tight text-foreground">
+        <h2 className="font-headline text-xl font-bold tracking-tight sm:text-2xl">
           Location
         </h2>
-        <p className="text-xs md:text-xs font-bold text-muted-foreground/60 uppercase tracking-wider leading-relaxed">
+        <p className="text-sm text-muted-foreground">
           Pin your property on the map and tell students which campus it is near.
         </p>
       </div>
@@ -63,14 +63,14 @@ export const LocationStep = ({ form }: LocationStepProps) => {
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <FormLabel>
                 Street Address
               </FormLabel>
               <FormControl>
                 <Input
                   placeholder="Enter full physical address"
                   {...field}
-                  className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border border-transparent focus-visible:border-primary/20 font-bold text-sm tracking-tight"
+                  
                 />
               </FormControl>
               <FormMessage />
@@ -78,22 +78,22 @@ export const LocationStep = ({ form }: LocationStepProps) => {
           )}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-6">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <FormField
             control={form.control}
             name="country"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <FormLabel>
                   Nation
                 </FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border border-transparent focus:ring-0 text-xs md:text-xs font-semibold uppercase tracking-wider">
+                    <SelectTrigger >
                       <SelectValue placeholder="Select Country" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent className="rounded-2xl border font-semibold text-xs uppercase">
+                  <SelectContent className="rounded-lg">
                     {countries.map((country) => (
                       <SelectItem key={country.iso2} value={country.name}>
                         {country.name}
@@ -110,14 +110,14 @@ export const LocationStep = ({ form }: LocationStepProps) => {
             name="state"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <FormLabel>
                   Province / State
                 </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Region name"
                     {...field}
-                    className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border border-transparent focus-visible:border-primary/20 font-bold text-sm"
+                   
                   />
                 </FormControl>
                 <FormMessage />
@@ -126,20 +126,20 @@ export const LocationStep = ({ form }: LocationStepProps) => {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-6">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <FormField
             control={form.control}
             name="city"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <FormLabel>
                   Municipality (City)
                 </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="City name"
                     {...field}
-                    className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border border-transparent focus-visible:border-primary/20 font-bold text-sm"
+                   
                   />
                 </FormControl>
                 <FormMessage />
@@ -151,14 +151,14 @@ export const LocationStep = ({ form }: LocationStepProps) => {
             name="zip"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <FormLabel>
                   Registry (Postal Code)
                 </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="ZIP code"
                     {...field}
-                    className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border border-transparent focus-visible:border-primary/20 font-bold text-sm"
+                   
                   />
                 </FormControl>
                 <FormMessage />
@@ -168,8 +168,8 @@ export const LocationStep = ({ form }: LocationStepProps) => {
         </div>
       </div>
 
-      <div className="p-8 rounded-3xl bg-primary/5 border border-primary/10 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
+      <div className="p-5 rounded-xl bg-primary/5 border border-primary/10 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-5 opacity-10 group-hover:scale-110 transition-transform duration-700">
           <MapPin className="h-20 w-20 text-primary" />
         </div>
 
@@ -178,7 +178,7 @@ export const LocationStep = ({ form }: LocationStepProps) => {
           name="school"
           render={({ field }) => (
             <FormItem className="relative z-10">
-              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-primary">
+              <FormLabel className="text-xs font-medium text-primary">
                 Academic Proximity
               </FormLabel>
               <FormControl>
@@ -189,7 +189,7 @@ export const LocationStep = ({ form }: LocationStepProps) => {
                   />
                 </div>
               </FormControl>
-              <FormDescription className="text-xs font-bold text-primary/40 uppercase tracking-wider mt-4">
+              <FormDescription className="text-xs font-bold text-primary/40 mt-4">
                 Strategic placement near educational hubs increases conversion
                 by 40%.
               </FormDescription>
@@ -212,20 +212,20 @@ export const LocationStep = ({ form }: LocationStepProps) => {
         {/* Simplified Instructions */}
         <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-muted/30 border border-border/50">
           <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="text-sm font-medium">
             Use the{" "}
-            <span className="text-foreground">"Get Accurate Location"</span>{" "}
+            <span className="text-foreground">&ldquo;Use my location&rdquo;</span>{" "}
             button on the map for precision.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-6">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <FormField
             control={form.control}
             name="lat"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <FormLabel>
                   Latitude
                 </FormLabel>
                 <FormControl>
@@ -240,7 +240,7 @@ export const LocationStep = ({ form }: LocationStepProps) => {
                         e.target.value === "" ? "" : parseFloat(e.target.value),
                       )
                     }
-                    className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border border-transparent focus-visible:border-primary/20 font-bold text-sm"
+                   
                   />
                 </FormControl>
                 <FormMessage />
@@ -252,7 +252,7 @@ export const LocationStep = ({ form }: LocationStepProps) => {
             name="lng"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <FormLabel>
                   Longitude
                 </FormLabel>
                 <FormControl>
@@ -267,7 +267,7 @@ export const LocationStep = ({ form }: LocationStepProps) => {
                         e.target.value === "" ? "" : parseFloat(e.target.value),
                       )
                     }
-                    className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border border-transparent focus-visible:border-primary/20 font-bold text-sm"
+                   
                   />
                 </FormControl>
                 <FormMessage />

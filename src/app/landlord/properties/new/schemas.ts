@@ -27,7 +27,7 @@ export const formSchema = z.object({
     country: z.string().min(2, 'Country is required.'),
     city: z.string().min(2, 'City is required.'),
     state: z.string().min(2, 'State is required.'),
-    zip: z.string().min(2, 'Zip code is required.'),
+    zip: z.string().optional(),
     school: z.string().optional(),
     bedrooms: z.coerce.number().int().min(0, 'Bedrooms must be 0 or more.'),
     bathrooms: z.coerce.number().int().min(1, 'Must have at least 1 bathroom.'),

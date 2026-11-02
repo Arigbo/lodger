@@ -22,6 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { currencySymbols } from '@/lib/currencies';
 import { motion } from "framer-motion";
 import type { PropertyForm } from "../../types";
 
@@ -34,14 +35,14 @@ export const BasicInfoStep = ({ form }: BasicInfoStepProps) => {
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="space-y-8 md:space-y-8"
+      className="space-y-8"
     >
       {/* Introductory Header for the Step */}
       <div className="space-y-2">
-        <h2 className="text-xl md:text-3xl font-bold tracking-tight text-foreground">
+        <h2 className="font-headline text-xl font-bold tracking-tight sm:text-2xl">
           Basic details
         </h2>
-        <p className="text-xs md:text-xs font-bold text-muted-foreground/60 uppercase tracking-wider leading-relaxed">
+        <p className="text-sm text-muted-foreground">
           Give your listing a name, choose the property type and set the rent.
         </p>
       </div>
@@ -52,14 +53,14 @@ export const BasicInfoStep = ({ form }: BasicInfoStepProps) => {
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <FormLabel>
                 Listing title
               </FormLabel>
               <FormControl>
                 <Input
                   placeholder="e.g. Bright self-contain near UNILAG gate"
                   {...field}
-                  className="h-14 md:h-20 rounded-2xl md:rounded-3xl bg-foreground/[0.02] border border-transparent focus-visible:border-primary/20 focus-visible:bg-card text-base md:text-2xl font-bold tracking-tight transition-all duration-500 shadow-sm"
+                  className="h-11 text-base"
                 />
               </FormControl>
               <FormMessage />
@@ -72,16 +73,16 @@ export const BasicInfoStep = ({ form }: BasicInfoStepProps) => {
           name="type"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <FormLabel>
                 Property type
               </FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border border-transparent focus:ring-0 text-xs md:text-xs font-semibold uppercase tracking-wider transition-all">
+                  <SelectTrigger className="h-11">
                     <SelectValue placeholder="Select property type" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className="rounded-2xl border font-semibold text-xs uppercase shadow-sm">
+                <SelectContent>
                   {PROPERTY_TYPES.map((type) => (
                     <SelectItem
                       key={type.value}
@@ -99,7 +100,7 @@ export const BasicInfoStep = ({ form }: BasicInfoStepProps) => {
                               <Info className="h-3.5 w-3.5" />
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent className="max-w-[200px] font-bold text-xs uppercase tracking-wider text-primary p-4 rounded-xl border">
+                          <TooltipContent className="max-w-[220px] text-xs">
                             <p>{type.description}</p>
                           </TooltipContent>
                         </Tooltip>
@@ -114,26 +115,21 @@ export const BasicInfoStep = ({ form }: BasicInfoStepProps) => {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-6 p-6 md:p-8 rounded-3xl bg-foreground/[0.02] border border-foreground/[0.03]">
+      <div className="grid grid-cols-1 gap-5 rounded-xl border bg-muted/30 p-4 md:grid-cols-2">
         <FormField
           control={form.control}
           name="price"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <FormLabel>
                 Monthly rent
               </FormLabel>
               <FormControl>
-                <div className="relative group">
-                  <Input
-                    type="number"
-                    placeholder="0.00"
-                    {...field}
-                    className="h-14 md:h-16 rounded-2xl bg-card border border-transparent focus-visible:border-primary/20 text-xl md:text-2xl font-bold text-primary transition-all pl-10"
-                  />
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 font-bold text-lg">
-                    $
+                <div className="relative">
+                  <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    {currencySymbols[form.watch("currency")] ?? form.watch("currency")}
                   </span>
+                  <Input type="number" inputMode="decimal" min={0} placeholder="0" {...field} className="h-11 bg-background pl-10 text-base font-semibold" />
                 </div>
               </FormControl>
               <FormMessage />
@@ -145,20 +141,21 @@ export const BasicInfoStep = ({ form }: BasicInfoStepProps) => {
           name="currency"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <FormLabel>
                 Currency
               </FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
-                  <SelectTrigger className="h-14 md:h-16 rounded-2xl bg-card border border-transparent focus:ring-0 text-xs md:text-xs font-semibold uppercase tracking-wider shadow-sm">
-                    <SelectValue placeholder="CURRENCY" />
+                  <SelectTrigger className="h-11 bg-background">
+                    <SelectValue placeholder="Currency" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className="rounded-2xl border font-semibold text-xs uppercase">
-                  <SelectItem value="USD">USD ($)</SelectItem>
-                  <SelectItem value="EUR">EUR (€)</SelectItem>
-                  <SelectItem value="GBP">GBP (£)</SelectItem>
-                  <SelectItem value="NGN">NGN (₦)</SelectItem>
+                <SelectContent className="rounded-lg">
+                  {["NGN", "GHS", "KES", "ZAR", "USD", "GBP", "EUR"].map((code) => (
+                    <SelectItem key={code} value={code}>
+                      {code} ({currencySymbols[code] ?? code})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -167,21 +164,21 @@ export const BasicInfoStep = ({ form }: BasicInfoStepProps) => {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-6 md:gap-6">
+      <div className="grid grid-cols-2 gap-5">
         <FormField
           control={form.control}
           name="bedrooms"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
-                Sleep Areas (Beds)
+              <FormLabel>
+                Bedrooms
               </FormLabel>
               <FormControl>
                 <Input
                   type="number"
-                  placeholder="0"
+                  placeholder="1"
+                  min={1}
                   {...field}
-                  className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border border-transparent focus-visible:border-primary/20 text-sm font-bold uppercase tracking-wider"
                 />
               </FormControl>
               <FormMessage />
@@ -193,15 +190,15 @@ export const BasicInfoStep = ({ form }: BasicInfoStepProps) => {
           name="bathrooms"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
-                Sanitary Units (Baths)
+              <FormLabel>
+                Bathrooms
               </FormLabel>
               <FormControl>
                 <Input
                   type="number"
-                  placeholder="0"
+                  placeholder="1"
+                  min={1}
                   {...field}
-                  className="h-14 md:h-16 rounded-2xl bg-foreground/[0.02] border border-transparent focus-visible:border-primary/20 text-sm font-bold uppercase tracking-wider"
                 />
               </FormControl>
               <FormMessage />

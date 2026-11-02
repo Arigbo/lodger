@@ -33,13 +33,13 @@ export const ReviewStep = ({ form, imageAnalysis, onEditMedia }: ReviewStepProps
         <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="space-y-8 md:space-y-8"
+            className="space-y-8"
         >
             <div className="space-y-2">
-                <h2 className="text-xl md:text-3xl font-bold tracking-tight text-foreground">
+                <h2 className="font-headline text-xl font-bold tracking-tight sm:text-2xl">
                     Review & publish
                 </h2>
-                <p className="text-xs md:text-xs font-bold text-muted-foreground/60 uppercase tracking-wider leading-relaxed">
+                <p className="text-sm text-muted-foreground">
                     Check everything looks right before your listing goes live.
                 </p>
             </div>
@@ -47,25 +47,25 @@ export const ReviewStep = ({ form, imageAnalysis, onEditMedia }: ReviewStepProps
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-8 items-start">
                 {/* Summary Card */}
                 <div className="lg:col-span-2 space-y-8">
-                    <div className="p-8 md:p-8 rounded-3xl bg-card border border-foreground/5 shadow-sm relative overflow-hidden">
+                    <div className="p-5 rounded-xl bg-card border border-foreground/5 shadow-sm relative overflow-hidden">
                         {/* Receipt Aesthetic */}
                         <div className="absolute top-0 left-0 w-full h-2 bg-primary/20" />
                         
-                        <div className="space-y-10">
+                        <div className="space-y-6">
                             {/* Brand & Price Header */}
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                                 <div className="space-y-2">
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-primary">Listing Authority</p>
-                                    <h3 className="text-2xl md:text-4xl font-bold tracking-tight leading-none">{values.title || 'Untitled Listing'}</h3>
+                                    <p className="text-xs font-medium text-primary">Listing Authority</p>
+                                    <h3 className="text-xl sm:text-2xl font-bold tracking-tight leading-none">{values.title || 'Untitled Listing'}</h3>
                                     <div className="flex items-center gap-3">
-                                        <span className="text-xs font-semibold uppercase tracking-wider bg-foreground text-white px-3 py-1 rounded-full">{values.type}</span>
+                                        <span className="text-xs font-semibold bg-muted px-3 py-1 rounded-full">{values.type}</span>
                                         <div className="h-1.5 w-1.5 rounded-full bg-muted" />
-                                        <p className="text-xs font-bold text-muted-foreground/60 uppercase tracking-wider">{values.bedrooms} Bed • {values.bathrooms} Bath</p>
+                                        <p className="text-xs font-bold text-muted-foreground/60">{values.bedrooms} Bed • {values.bathrooms} Bath</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40 mb-1">Monthly Valuation</p>
-                                    <p className="text-3xl md:text-3xl font-bold tracking-tight text-primary">
+                                    <p className="text-xs font-semibold text-muted-foreground/40 mb-1">Monthly Valuation</p>
+                                    <p className="text-2xl sm:text-xl font-bold tracking-tight text-primary">
                                         {formatPrice(values.price, values.currency)}
                                     </p>
                                 </div>
@@ -81,10 +81,10 @@ export const ReviewStep = ({ form, imageAnalysis, onEditMedia }: ReviewStepProps
                                             <MapPin className="h-5 w-5 opacity-40" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Location Hub</p>
+                                            <p className="text-xs text-muted-foreground">Location Hub</p>
                                             <p className="text-sm font-bold leading-relaxed">{values.address}, {values.city}, {values.state} {values.zip}</p>
                                             {values.school && (
-                                                <p className="text-xs font-semibold text-primary uppercase tracking-tight">Proxied: {values.school}</p>
+                                                <p className="text-xs font-semibold text-primary tracking-tight">Proxied: {values.school}</p>
                                             )}
                                         </div>
                                     </div>
@@ -93,10 +93,10 @@ export const ReviewStep = ({ form, imageAnalysis, onEditMedia }: ReviewStepProps
                                             <Sparkles className="h-5 w-5 opacity-40" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Facilities</p>
+                                            <p className="text-xs text-muted-foreground">Facilities</p>
                                             <div className="flex flex-wrap gap-1.5 pt-1">
                                                 {values.amenities?.map((a: string) => (
-                                                    <span key={a} className="text-xs font-semibold uppercase tracking-tight border border-foreground/5 px-2 py-0.5 rounded-md">{a}</span>
+                                                    <span key={a} className="text-xs font-semibold tracking-tight border border-foreground/5 px-2 py-0.5 rounded-md">{a}</span>
                                                 ))}
                                             </div>
                                         </div>
@@ -109,8 +109,8 @@ export const ReviewStep = ({ form, imageAnalysis, onEditMedia }: ReviewStepProps
                                             <FileText className="h-5 w-5 opacity-40" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Legal Framework</p>
-                                            <p className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block uppercase tracking-wider">Lease Template Ready</p>
+                                            <p className="text-xs text-muted-foreground">Legal Framework</p>
+                                            <p className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block">Lease Template Ready</p>
                                             <p className="text-xs font-bold text-muted-foreground/60 leading-tight pt-1">
                                                 {values.leaseTemplate?.length} characters of legal protection.
                                             </p>
@@ -121,7 +121,7 @@ export const ReviewStep = ({ form, imageAnalysis, onEditMedia }: ReviewStepProps
                                             <ImageIcon className="h-5 w-5 opacity-40" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/40">Photos & videos</p>
+                                            <p className="text-xs text-muted-foreground">Photos & videos</p>
                                             <div className="flex items-center gap-1.5 pt-1">
                                                 {[values.kitchenImage, values.livingRoomImage, values.bedroomImage, values.bathroomImage, values.otherImage].filter(Boolean).map((img, i) => (
                                                     <div key={i} className="h-6 w-8 bg-muted rounded border border-foreground/5" />
@@ -142,24 +142,24 @@ export const ReviewStep = ({ form, imageAnalysis, onEditMedia }: ReviewStepProps
                 {/* Status & Action Card */}
                 <div className="space-y-6">
                     <div className={cn(
-                        "p-8 rounded-3xl border transition-all duration-500",
+                        "p-5 rounded-xl border transition-all duration-500",
                         hasImageIssues 
                             ? "bg-orange-500/5 border-orange-500/20 shadow-[0_20px_40px_-15px_rgba(249,115,22,0.1)]" 
                             : "bg-emerald-500/5 border-emerald-500/20 shadow-[0_20px_40px_-15px_rgba(16,185,129,0.1)]"
                     )}>
                         <div className="flex flex-col items-center text-center gap-6">
                             <div className={cn(
-                                "h-16 w-16 rounded-3xl flex items-center justify-center shadow-lg transition-transform hover:scale-110 duration-500",
+                                "h-16 w-16 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-110 duration-500",
                                 hasImageIssues ? "bg-orange-500 text-white" : "bg-emerald-500 text-white"
                             )}>
                                 {hasImageIssues ? <AlertCircle className="h-8 w-8" /> : <ShieldCheck className="h-8 w-8" />}
                             </div>
                             
                             <div className="space-y-2">
-                                <h4 className="text-sm font-bold uppercase tracking-wider">
+                                <h4 className="text-sm font-bold">
                                     {hasImageIssues ? "Action Required" : "Audit Passed"}
                                 </h4>
-                                <p className="text-xs font-bold text-muted-foreground/60 leading-relaxed uppercase tracking-wider">
+                                <p className="text-xs font-bold text-muted-foreground/60 leading-relaxed">
                                     {hasImageIssues 
                                         ? "One or more photos were flagged by our automatic check. Please review them." 
                                         : "Your photos passed our automatic check. Your listing is ready to publish."}
@@ -170,7 +170,7 @@ export const ReviewStep = ({ form, imageAnalysis, onEditMedia }: ReviewStepProps
                                 <button 
                                     type="button"
                                     onClick={onEditMedia}
-                                    className="text-xs font-semibold text-orange-600 underline uppercase tracking-wider hover:text-orange-700 transition-colors"
+                                    className="text-xs font-semibold text-orange-600 underline hover:text-orange-700 transition-colors"
                                 >
                                     Review flagged photos
                                 </button>
@@ -178,12 +178,12 @@ export const ReviewStep = ({ form, imageAnalysis, onEditMedia }: ReviewStepProps
                         </div>
                     </div>
 
-                    <div className="p-8 rounded-3xl bg-foreground text-white shadow-sm space-y-4">
+                    <div className="p-5 rounded-xl border bg-muted/40 space-y-4">
                         <div className="flex items-center gap-3">
                             <Check className="h-5 w-5 text-primary" strokeWidth={4} />
-                            <p className="text-xs font-semibold uppercase tracking-wider opacity-60">Verified Landlord</p>
+                            <p className="text-xs font-semibold opacity-60">Verified Landlord</p>
                         </div>
-                        <p className="text-xs font-bold leading-relaxed opacity-80 uppercase tracking-tight">
+                        <p className="text-xs font-bold leading-relaxed opacity-80 tracking-tight">
                             By submitting, you agree to our Terms of Service and Anti-Discrimination Policy.
                         </p>
                     </div>

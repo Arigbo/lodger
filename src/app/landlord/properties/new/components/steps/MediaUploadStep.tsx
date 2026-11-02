@@ -22,13 +22,13 @@ export const MediaUploadStep = ({ form, setImageAnalysis, savedMedia = {}, onRem
         <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="space-y-10 md:space-y-14"
+            className="space-y-8"
         >
             <div className="space-y-2">
-                <h2 className="text-xl md:text-3xl font-bold tracking-tight text-foreground">
+                <h2 className="font-headline text-xl font-bold tracking-tight sm:text-2xl">
                     Photos & video
                 </h2>
-                <p className="text-xs md:text-xs font-bold text-muted-foreground/60 uppercase tracking-wider leading-relaxed">
+                <p className="text-sm text-muted-foreground">
                     Clear, well-lit photos of each room help your listing stand out.
                 </p>
             </div>

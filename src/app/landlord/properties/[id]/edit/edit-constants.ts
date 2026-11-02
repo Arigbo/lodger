@@ -18,6 +18,7 @@ export const DEFAULT_EDIT_VALUES: EditFormValues = {
   area: 0,
   amenities: [] as string[],
   rules: '',
+  leaseTemplate: '',
 };
 
 export const MOCK_RATES: Record<string, number> = {

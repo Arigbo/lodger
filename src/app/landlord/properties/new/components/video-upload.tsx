@@ -56,15 +56,15 @@ export const VideoUpload = ({ field, label, description, icon: Icon }: VideoUplo
 
     return (
         <FormItem className="h-full">
-            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 flex items-center gap-2 mb-3">
+            <FormLabel className="text-xs font-semibold text-muted-foreground/60 flex items-center gap-2 mb-3">
                 <Icon className="h-3.5 w-3.5 text-primary/60" /> 
                 {label}
                 <span className="sr-only">{description}</span>
             </FormLabel>
             <FormControl>
-                <div className="relative group/video rounded-3xl p-1 bg-foreground/[0.02] hover:bg-foreground/[0.04] transition-all duration-500">
+                <div className="relative group/video rounded-xl p-1 bg-foreground/[0.02] hover:bg-foreground/[0.04] transition-all duration-500">
                     <div className={cn(
-                        "min-h-[16rem] rounded-3xl border border-dashed flex flex-col items-center justify-center transition-all duration-700 relative overflow-hidden",
+                        "min-h-[16rem] rounded-xl border border-dashed flex flex-col items-center justify-center transition-all duration-700 relative overflow-hidden",
                         isUploading ? "border-primary/40 bg-primary/5" :
                         field.value?.[0] ? "border-primary/20 bg-black" : "border-muted/10 group-hover/video:border-primary/30"
                     )}>
@@ -78,7 +78,7 @@ export const VideoUpload = ({ field, label, description, icon: Icon }: VideoUplo
                                     className="flex flex-col items-center gap-4"
                                 >
                                     <Loader2 className="h-10 w-10 text-primary animate-spin" />
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-primary animate-pulse">Syncing Video...</p>
+                                    <p className="text-xs font-semibold text-primary animate-pulse">Syncing Video...</p>
                                 </motion.div>
                             ) : field.value?.[0] ? (
                                 <motion.div 
@@ -96,7 +96,7 @@ export const VideoUpload = ({ field, label, description, icon: Icon }: VideoUplo
                                             <Play className="h-7 w-7 ml-1 fill-current" />
                                         </div>
                                         <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-3">
-                                            <p className="text-xs font-semibold text-white uppercase tracking-wider truncate max-w-[120px]">
+                                            <p className="text-xs font-semibold text-white truncate max-w-[120px]">
                                                 {field.value[0].name}
                                             </p>
                                             <button 
@@ -115,17 +115,17 @@ export const VideoUpload = ({ field, label, description, icon: Icon }: VideoUplo
                                     animate={{ opacity: 1 }}
                                     className="flex flex-col items-center gap-6"
                                 >
-                                    <div className="h-20 w-20 rounded-3xl bg-card shadow-lg border border-muted/10 flex items-center justify-center group-hover/video:scale-110 transition-transform duration-500">
+                                    <div className="h-20 w-20 rounded-xl bg-card shadow-lg border border-muted/10 flex items-center justify-center group-hover/video:scale-110 transition-transform duration-500">
                                         <Film className="h-10 w-10 text-muted-foreground/30 group-hover/video:text-primary transition-colors" />
                                     </div>
                                     <div className="text-center space-y-2">
                                         <label htmlFor={field.name} className="cursor-pointer">
-                                            <span className="text-xs font-semibold uppercase tracking-wider text-foreground group-hover/video:text-primary transition-colors">
+                                            <span className="text-xs font-semibold text-foreground group-hover/video:text-primary transition-colors">
                                                 Add Walkthrough
                                             </span>
                                             <input id={field.name} type="file" className="sr-only" accept="video/*" onChange={(e) => handleFileChange(e.target.files)} />
                                         </label>
-                                        <p className="text-xs font-bold text-muted-foreground/40 uppercase tracking-wider">MP4, WebM, MOV • 50MB Max</p>
+                                        <p className="text-xs font-bold text-muted-foreground/40">MP4, WebM, MOV • 50MB Max</p>
                                     </div>
                                 </motion.div>
                             )}

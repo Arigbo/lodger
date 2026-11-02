@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowRight, Sparkles, X } from "lucide-react";
@@ -40,7 +40,11 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
   if (isUserLoading || !isAuthorized) return <ShellSkeleton />;
 
   return (
-    <div className="min-h-screen bg-muted/40">
+    <div
+      className="min-h-screen bg-muted/40"
+      // Fixed bars (e.g. save bars) use this to line up with the content area.
+      style={{ "--sidebar-width": collapsed ? "76px" : "260px" } as CSSProperties}
+    >
       <title>{`${getDashboardPageTitle(role, pathname)} · ${siteConfig.name}`}</title>
       <a
         href="#main-content"

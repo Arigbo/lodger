@@ -320,7 +320,7 @@ function PropertyWizard({ draft }: { draft: PropertyDraft | null }) {
                     city: values.city,
                     state: values.state,
                     country: values.country,
-                    zip: values.zip,
+                    zip: values.zip ?? "",
                     school: values.school,
                     lat: values.lat || undefined,
                     lng: values.lng || undefined,

@@ -7,7 +7,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Home } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { EditFormValues } from "@/app/landlord/properties/[id]/edit/edit-schemas";
 import { Combobox } from "@/components/ui/combobox";
@@ -20,7 +19,7 @@ const LocationPickerMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-[400px] w-full rounded-3xl bg-muted animate-pulse border border-foreground/5 mb-6" />
+      <div className="h-[400px] w-full rounded-xl bg-muted animate-pulse border border-foreground/5 mb-6" />
     ),
   },
 );
@@ -35,15 +34,7 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
   const lng = form.watch("lng");
 
   return (
-    <div className="space-y-10">
-      <div className="inline-flex items-center gap-4">
-        <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-          <Home className="h-5 w-5 md:h-6 md:w-6" />
-        </div>
-        <h3 className="font-headline text-xl md:text-3xl font-bold tracking-tight">
-          Location
-        </h3>
-      </div>
+    <div className="space-y-6">
 
       <div className="space-y-8">
         <FormField
@@ -51,27 +42,27 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <FormLabel>
                 Street Address
               </FormLabel>
               <FormControl>
                 <Input
                   placeholder="123 UNIVERSITY AVE"
                   {...field}
-                  className="h-16 rounded-2xl bg-muted/20 border border-transparent focus-visible:border-primary/20 text-xs font-semibold uppercase tracking-wider"
+                 
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <FormField
             control={form.control}
             name="country"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <FormLabel>
                   Country
                 </FormLabel>
                 <FormControl>
@@ -98,7 +89,7 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
             name="state"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <FormLabel>
                   State/Province
                 </FormLabel>
                 <FormControl>
@@ -127,20 +118,20 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
             )}
           />
         </div>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <FormField
             control={form.control}
             name="city"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <FormLabel>
                   City
                 </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="URBANVILLE"
                     {...field}
-                    className="h-16 rounded-2xl bg-muted/20 border border-transparent focus-visible:border-primary/20 text-xs font-semibold uppercase tracking-wider"
+                   
                   />
                 </FormControl>
                 <FormMessage />
@@ -152,14 +143,14 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
             name="zip"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <FormLabel>
                   ZIP Code
                 </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="90210"
                     {...field}
-                    className="h-16 rounded-2xl bg-muted/20 border border-transparent focus-visible:border-primary/20 text-xs font-semibold uppercase tracking-wider"
+                   
                   />
                 </FormControl>
                 <FormMessage />
@@ -185,7 +176,7 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
             name="school"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <FormLabel>
                   Nearby School/University
                 </FormLabel>
                 <FormControl>
@@ -201,21 +192,21 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
 
           <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-muted/30 border border-border/50">
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="text-sm font-medium">
               Click the{" "}
-              <span className="text-foreground">"Get Accurate Location"</span>{" "}
+              <span className="text-foreground">&ldquo;Use my location&rdquo;</span>{" "}
               button on the map for better accuracy.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <FormField
             control={form.control}
             name="lat"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <FormLabel>
                   Latitude
                 </FormLabel>
                 <FormControl>
@@ -229,7 +220,7 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
                         e.target.value === "" ? "" : parseFloat(e.target.value),
                       )
                     }
-                    className="h-16 rounded-2xl bg-muted/20 border border-transparent focus-visible:border-primary/20 text-xs font-semibold uppercase tracking-wider"
+                   
                   />
                 </FormControl>
                 <FormMessage />
@@ -241,7 +232,7 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
             name="lng"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <FormLabel>
                   Longitude
                 </FormLabel>
                 <FormControl>
@@ -255,7 +246,7 @@ export const GeographySection: React.FC<GeographySectionProps> = ({ form }) => {
                         e.target.value === "" ? "" : parseFloat(e.target.value),
                       )
                     }
-                    className="h-16 rounded-2xl bg-muted/20 border border-transparent focus-visible:border-primary/20 text-xs font-semibold uppercase tracking-wider"
+                   
                   />
                 </FormControl>
                 <FormMessage />

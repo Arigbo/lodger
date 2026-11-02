@@ -27,13 +27,13 @@ export const AmenitiesStep = ({ form }: AmenitiesStepProps) => {
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="space-y-10 md:space-y-14"
+      className="space-y-8"
     >
       <div className="space-y-2">
-        <h2 className="text-xl md:text-3xl font-bold tracking-tight text-foreground">
+        <h2 className="font-headline text-xl font-bold tracking-tight sm:text-2xl">
           Amenities & rules
         </h2>
-        <p className="text-xs md:text-xs font-bold text-muted-foreground/60 uppercase tracking-wider leading-relaxed">
+        <p className="text-sm text-muted-foreground">
           Select the features that define the living experience of your
           property.
         </p>
@@ -45,10 +45,10 @@ export const AmenitiesStep = ({ form }: AmenitiesStepProps) => {
         render={({ field }) => (
           <FormItem className="space-y-8">
             <div className="flex items-center justify-between">
-              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <FormLabel>
                 Available Amenities
               </FormLabel>
-              <span className="text-xs font-semibold text-primary bg-primary/5 px-2 py-0.5 rounded-full uppercase tracking-tight">
+              <span className="text-xs font-semibold text-primary bg-primary/5 px-2 py-0.5 rounded-full tracking-tight">
                 {field.value?.length || 0} Selected
               </span>
             </div>
@@ -73,10 +73,10 @@ export const AmenitiesStep = ({ form }: AmenitiesStepProps) => {
                         field.onChange(newValue);
                       }}
                       className={cn(
-                        "relative flex flex-col items-center justify-center gap-4 p-6 rounded-3xl border transition-all duration-500 overflow-hidden group",
+                        "relative flex flex-col items-center justify-center gap-4 p-6 rounded-xl border transition-all duration-500 overflow-hidden group",
                         isSelected
-                          ? "bg-foreground text-white border-foreground shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)]"
-                          : "bg-foreground/[0.02] border-transparent hover:border-primary/20 text-muted-foreground hover:bg-card",
+                          ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary"
+                          : "bg-background text-muted-foreground hover:bg-accent",
                       )}
                     >
                       <div
@@ -89,7 +89,7 @@ export const AmenitiesStep = ({ form }: AmenitiesStepProps) => {
                       >
                         <Icon className="h-6 w-6" />
                       </div>
-                      <span className="text-xs font-semibold uppercase tracking-wider">
+                      <span className="text-xs font-semibold">
                         {amenity}
                       </span>
 
@@ -119,17 +119,17 @@ export const AmenitiesStep = ({ form }: AmenitiesStepProps) => {
         name="rules"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+            <FormLabel>
               House rules
             </FormLabel>
             <FormControl>
               <Textarea
                 placeholder="e.g., No parties after 10PM, Pets allowed with deposit..."
-                className="min-h-[120px] rounded-3xl bg-foreground/[0.02] border border-transparent focus-visible:border-primary/20 font-bold text-sm p-6"
+                className="min-h-[120px]"
                 {...field}
               />
             </FormControl>
-            <FormDescription className="text-xs font-bold text-muted-foreground/40 uppercase tracking-wider mt-3">
+            <FormDescription className="text-xs font-bold text-muted-foreground/40 mt-3">
               Clear rules reduce tenant conflicts by up to 60%.
             </FormDescription>
             <FormMessage />

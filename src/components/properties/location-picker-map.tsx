@@ -153,24 +153,19 @@ export default function LocationPickerMap({
           size="sm"
           onClick={handleGetCurrentLocation}
           disabled={isGettingLocation}
-          className="bg-card hover:bg-white/90 text-black font-semibold uppercase tracking-wider text-xs h-10 px-4 rounded-xl border shadow-sm flex gap-2"
+          className="bg-card hover:bg-white/90 text-black font-semibold text-xs h-10 px-4 rounded-xl border shadow-sm flex gap-2"
         >
           {isGettingLocation ? (
             <Loader2 className="h-3 w-3 animate-spin" />
           ) : (
             <Target className="h-3 w-3" />
           )}
-          {isGettingLocation ? "Finding..." : "Get Accurate Location"}
+          {isGettingLocation ? "Finding you…" : "Use my location"}
         </Button>
       </div>
 
       <div className="absolute bottom-4 left-4 z-[1000] bg-background/80 backdrop-blur-md px-4 py-2 rounded-xl border border-primary/20 shadow-lg">
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-          Map Interaction Active
-        </p>
-        <p className="text-xs font-bold text-muted-foreground uppercase mt-1">
-          Click or drag marker for precision
-        </p>
+        <p className="text-xs text-muted-foreground">Click the map or drag the pin to the exact spot</p>
       </div>
     </div>
   );

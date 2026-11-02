@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { UploadCloud, X, Loader2, ImageIcon, FileVideo } from "lucide-react";
+import { UploadCloud, X, Loader2, FileVideo } from "lucide-react";
 import Image from "next/image";
 import { optimizedImageProps } from "@/config/images";
 import { Property } from "@/types";
@@ -24,21 +24,14 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
 }) => {
   return (
     <div className="space-y-8">
-      <div className="space-y-10">
-        <div className="inline-flex items-center gap-4">
-          <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-            <ImageIcon className="h-5 w-5 md:h-6 md:w-6" />
-          </div>
-          <h3 className="font-headline text-xl md:text-3xl font-bold tracking-tight">
-            Photos
-          </h3>
-        </div>
+      <div className="space-y-6">
+        <h3 className="text-sm font-semibold">Photos</h3>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {property.images.map((url) => (
             <div
               key={url}
-              className="relative group aspect-square rounded-3xl overflow-hidden border border-foreground/5 shadow-inner"
+              className="relative group aspect-square rounded-xl overflow-hidden border border-foreground/5 shadow-inner"
             >
               <Image
                 {...optimizedImageProps(url)}
@@ -60,9 +53,9 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
             </div>
           ))}
 
-          <label className="relative flex flex-col items-center justify-center aspect-square rounded-3xl border border-dashed border-foreground/10 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group">
+          <label className="relative flex flex-col items-center justify-center aspect-square rounded-xl border border-dashed border-foreground/10 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group">
             <UploadCloud className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors" />
-            <span className="mt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-primary">
+            <span className="mt-2 text-xs font-semibold text-muted-foreground group-hover:text-primary">
               Add Photo
             </span>
             <input
@@ -77,21 +70,14 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
         </div>
       </div>
 
-      <div className="space-y-10">
-        <div className="inline-flex items-center gap-4">
-          <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-            <FileVideo className="h-5 w-5 md:h-6 md:w-6" />
-          </div>
-          <h3 className="font-headline text-xl md:text-3xl font-bold tracking-tight">
-            Video
-          </h3>
-        </div>
+      <div className="space-y-6">
+        <h3 className="text-sm font-semibold">Video</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {property.videos?.map((url) => (
             <div
               key={url}
-              className="relative aspect-video rounded-3xl overflow-hidden border border-foreground/5 bg-black group"
+              className="relative aspect-video rounded-xl overflow-hidden border border-foreground/5 bg-black group"
             >
               <video
                 src={url}
@@ -111,13 +97,13 @@ export const MediaSection: React.FC<MediaSectionProps> = ({
             </div>
           ))}
 
-          <label className="relative flex flex-col items-center justify-center aspect-video rounded-3xl border border-dashed border-foreground/10 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group">
+          <label className="relative flex flex-col items-center justify-center aspect-video rounded-xl border border-dashed border-foreground/10 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group">
             {isUploading ? (
               <Loader2 className="h-10 w-10 text-primary animate-spin" />
             ) : (
               <>
                 <FileVideo className="h-10 w-10 text-muted-foreground group-hover:text-primary transition-colors" />
-                <span className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-primary px-8 text-center">
+                <span className="mt-4 text-xs font-semibold text-muted-foreground group-hover:text-primary px-8 text-center">
                   Upload a Video
                 </span>
               </>

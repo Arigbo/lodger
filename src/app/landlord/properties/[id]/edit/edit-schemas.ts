@@ -10,7 +10,7 @@ export const editFormSchema = z.object({
   country: z.string().min(2, 'Country is required.'),
   city: z.string().min(2, 'City is required.'),
   state: z.string().min(2, 'State is required.'),
-  zip: z.string().min(5, 'ZIP code is required.'),
+  zip: z.string().optional(),
   school: z.string().optional(),
   lat: z.coerce.number().optional().or(z.literal('')),
   lng: z.coerce.number().optional().or(z.literal('')),
@@ -19,6 +19,7 @@ export const editFormSchema = z.object({
   area: z.coerce.number().positive('Area must be a positive number.'),
   amenities: z.array(z.string()).default([]),
   rules: z.string().optional(),
+  leaseTemplate: z.string().optional(),
 });
 
 export type EditFormValues = z.infer<typeof editFormSchema>;

@@ -6,7 +6,6 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { Wifi } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { EditFormValues } from "@/app/landlord/properties/[id]/edit/edit-schemas";
 import { amenities as allAmenities } from "@/types";
@@ -18,15 +17,7 @@ interface AmenitiesSectionProps {
 
 export const AmenitiesSection: React.FC<AmenitiesSectionProps> = ({ form }) => {
   return (
-    <div className="space-y-10">
-      <div className="inline-flex items-center gap-4">
-        <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-          <Wifi className="h-5 w-5 md:h-6 md:w-6" />
-        </div>
-        <h3 className="font-headline text-xl md:text-3xl font-bold tracking-tight">
-          Amenities
-        </h3>
-      </div>
+    <div className="space-y-6">
 
       <FormField
         control={form.control}
@@ -44,7 +35,7 @@ export const AmenitiesSection: React.FC<AmenitiesSectionProps> = ({ form }) => {
                       key={amenity}
                       type="button"
                       className={cn(
-                        "relative flex flex-col items-center justify-center p-6 rounded-3xl border transition-all cursor-pointer group",
+                        "relative flex flex-col items-center justify-center p-6 rounded-xl border transition-all cursor-pointer group",
                         isChecked
                           ? "border-primary bg-primary/5 shadow-lg shadow-primary/5"
                           : "border-transparent bg-muted/20 hover:bg-muted/30",
@@ -68,7 +59,7 @@ export const AmenitiesSection: React.FC<AmenitiesSectionProps> = ({ form }) => {
                       >
                         <Icon className="h-5 w-5" />
                       </div>
-                      <span className="text-xs font-semibold uppercase tracking-wider text-center">
+                      <span className="text-xs font-semibold text-center">
                         {amenity}
                       </span>
                     </button>
