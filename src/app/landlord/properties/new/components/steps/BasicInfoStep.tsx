@@ -25,6 +25,9 @@ import {
 } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
 import type { PropertyForm } from "../../types";
+import { siteConfig } from "@/config/site";
+
+const commissionPercent = Math.round(siteConfig.platformCommissionRate * 100);
 
 interface BasicInfoStepProps {
   form: PropertyForm;
@@ -138,16 +141,14 @@ export const BasicInfoStep = ({ form }: BasicInfoStepProps) => {
                 </div>
               </FormControl>
               <FormMessage />
-              <FormDescription
-                breakdown={
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                    <Info className="h-3.5 w-3.5" />
-                    20% of the total amount will be deducted as commission.
-                    <br />
-                    You will receive the remaining 80% of the total amount.
-                  </p>
-                }
-              />
+              <FormDescription className="flex items-start gap-2 text-xs text-muted-foreground">
+                <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden />
+                <span>
+                  {commissionPercent}% of the total amount will be deducted as
+                  commission. You will receive the remaining{" "}
+                  {100 - commissionPercent}%.
+                </span>
+              </FormDescription>
             </FormItem>
           )}
         />

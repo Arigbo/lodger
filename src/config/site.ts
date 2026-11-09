@@ -24,6 +24,8 @@ export const siteConfig = {
   ],
   blogUrl: 'https://lodger-blog.vercel.app/',
   supportEmail: 'support@lodger.com',
+  /** Share of each rent payment Lodger keeps; shown to landlords when they set a price. */
+  platformCommissionRate: 0.2,
   themeColor: '#77773c',
   social: {
     twitter: '',
